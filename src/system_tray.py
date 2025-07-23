@@ -151,41 +151,11 @@ class SystemTray:
             pystray.MenuItem("-", None),  # Separator
             
             # Action items
-            pystray.MenuItem("Show Status", self._show_status),
-            pystray.MenuItem("-", None),  # Separator
             pystray.MenuItem("Exit", self._quit_application)
         ]
         
         return pystray.Menu(*menu_items)
     
-    def _show_status(self, icon=None, item=None):
-        """
-        Show current application status (called from menu)
-        
-        This provides a quick way to see what the app is doing.
-        """
-        if self.state_manager:
-            try:
-                status = self.state_manager.get_application_status()
-                
-                status_text = f"""
-Whisper Speech-to-Text Status:
-
-Recording: {'Yes' if status.get('recording', False) else 'No'}
-Processing: {'Yes' if status.get('processing', False) else 'No'}
-Last Transcription: {status.get('last_transcription', 'None')[:50] + '...' if status.get('last_transcription') and len(status.get('last_transcription', '')) > 50 else status.get('last_transcription', 'None')}
-
-Model: {status.get('whisper_model_info', {}).get('model_size', 'Unknown')}
-"""
-            except Exception as e:
-                status_text = f"Error getting status: {e}"
-        else:
-            status_text = "Status manager not available"
-        
-        # In a real Windows environment, this would show a message box
-        # For now, just log it
-        self.logger.info(f"Status requested: {status_text.strip()}")
-        print(f"\n=== APP STATUS ===\n{status_text.strip()}\n")
     
     def _quit_application(self, icon=None, item=None):
         """
@@ -224,7 +194,7 @@ Model: {status.get('whisper_model_info', {}).get('model_size', 'Unknown')}
         if self.icon and new_state in self.icons:
             try:
                 self.icon.icon = self.icons[new_state]
-                self.icon.title = f"Whisper App - {new_state.title()}"
+                self.icon.title = f"Whisper Key - {new_state.title()}"
                 self.logger.debug(f"Tray icon updated: {old_state} -> {new_state}")
             except Exception as e:
                 self.logger.error(f"Failed to update tray icon: {e}")
@@ -246,9 +216,9 @@ Model: {status.get('whisper_model_info', {}).get('model_size', 'Unknown')}
         try:
             # Create the tray icon
             self.icon = pystray.Icon(
-                name="whisper-app",
+                name="whisper-key",
                 icon=self.icons.get("idle"),
-                title="Whisper Speech-to-Text",
+                title="Whisper Key",
                 menu=self._create_menu()
             )
             
