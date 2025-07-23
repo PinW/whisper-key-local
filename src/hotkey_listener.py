@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 # This import trick prevents circular imports (advanced concept)
 if TYPE_CHECKING:
-    from state_manager import StateManager
+    from .state_manager import StateManager
 
 class HotkeyListener:
     """

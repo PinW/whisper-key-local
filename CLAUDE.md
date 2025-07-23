@@ -21,5 +21,6 @@ All settings in `config.yaml`:
 - `python tools/key_helper.py` - Find key combinations for config
 
 ## Development Notes
-- All testing is done by user on windows (you are in WSL)
+- DO NOT TEST (you are in WSL, and the app is run from windows)
+- Ask the user to test for you if needed
 - Don't commit before i test

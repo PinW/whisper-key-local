@@ -11,9 +11,9 @@ start recording, when to transcribe, and when to paste the results.
 import logging
 import time
 from typing import Optional
-from audio_recorder import AudioRecorder
-from whisper_engine import WhisperEngine
-from clipboard_manager import ClipboardManager
+from .audio_recorder import AudioRecorder
+from .whisper_engine import WhisperEngine
+from .clipboard_manager import ClipboardManager
 
 class StateManager:
     """
