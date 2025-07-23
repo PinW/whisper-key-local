@@ -211,17 +211,6 @@ class SystemTray:
             except Exception as e:
                 self.logger.error(f"Error reading auto-paste setting: {e}")
 
-            # Get preserve clipboard setting for checkmark display
-            preserve_clipboard_enabled = False
-            try:
-                if self.config_manager:
-                    self.logger.debug("Getting preserve clipboard setting from config_manager")
-                    preserve_clipboard_enabled = self.config_manager.get_setting('clipboard', 'preserve_clipboard', False)
-                    self.logger.debug(f"Preserve clipboard enabled: {preserve_clipboard_enabled}")
-                else:
-                    self.logger.debug("No config_manager available, preserve clipboard disabled")
-            except Exception as e:
-                self.logger.error(f"Error reading preserve clipboard setting: {e}")
 
             # Get current model size for radio buttons
             current_model = "tiny"
@@ -264,7 +253,6 @@ class SystemTray:
                     # Settings
                     pystray.MenuItem("Settings", None, enabled=False),
                     pystray.MenuItem("Auto-paste transcriptions", self._toggle_auto_paste, checked=lambda item: auto_paste_enabled),
-                    pystray.MenuItem("Preserve Clipboard", self._toggle_preserve_clipboard, checked=lambda item: preserve_clipboard_enabled),
                     pystray.MenuItem("Model Selection", pystray.Menu(*model_menu_items)),
                     pystray.Menu.SEPARATOR,  # Separator
                     # Dynamic Start/Stop Recording action as primary
@@ -328,37 +316,6 @@ class SystemTray:
                 
         except Exception as e:
             self.logger.error(f"Error toggling auto-paste setting: {e}")
-
-    def _toggle_preserve_clipboard(self, icon=None, item=None):
-        """
-        Toggle the preserve clipboard setting from the system tray menu.
-        
-        Called when the Preserve Clipboard menu item is clicked.
-        
-        This method toggles the preserve_clipboard setting and saves it to user settings.
-        """
-        if not self.config_manager:
-            self.logger.warning("Cannot toggle preserve clipboard: config_manager not available")
-            return
-        
-        try:
-            # Get current setting
-            current_value = self.config_manager.get_setting('clipboard', 'preserve_clipboard', False)
-            new_value = not current_value
-            
-            # Update the setting (ConfigManager will handle user-friendly logging)
-            self.config_manager.update_user_setting('clipboard', 'preserve_clipboard', new_value)
-            
-            # Update the state manager's clipboard config so changes take effect immediately
-            if self.state_manager:
-                self.state_manager.clipboard_config['preserve_clipboard'] = new_value
-            
-            # Refresh the menu to show the new checkmark state
-            if self.icon:
-                self.icon.menu = self._create_menu()
-                
-        except Exception as e:
-            self.logger.error(f"Error toggling preserve clipboard setting: {e}")
 
     def _select_model(self, model_size: str):
         """

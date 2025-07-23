@@ -9,6 +9,7 @@
     - Model selection
 - GUI
     - Advanced settings
+        - Preserve clipboard option
     - Progress bar for downloading models
 
 
