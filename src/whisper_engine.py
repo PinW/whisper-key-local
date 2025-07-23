@@ -23,7 +23,8 @@ class WhisperEngine:
     This class loads the Whisper AI model and converts audio data into text.
     """
     
-    def __init__(self, model_size: str = "tiny", device: str = "cpu", compute_type: str = "int8"):
+    def __init__(self, model_size: str = "tiny", device: str = "cpu", compute_type: str = "int8", 
+                 language: str = None, beam_size: int = 5):
         """
         Initialize the Whisper transcription engine
         
@@ -31,6 +32,8 @@ class WhisperEngine:
         - model_size: Size of Whisper model ("tiny", "base", "small") - bigger = more accurate but slower
         - device: "cpu" or "cuda" (GPU) - we'll use CPU since it works everywhere
         - compute_type: "int8" for efficiency, "float16" for better quality
+        - language: Language code (e.g., "en") or None for auto-detection
+        - beam_size: Search beam size for transcription (higher = more accurate but slower)
         
         For beginners: 
         - "tiny" model is ~39MB and fastest (good for learning)
@@ -40,6 +43,8 @@ class WhisperEngine:
         self.model_size = model_size
         self.device = device
         self.compute_type = compute_type
+        self.language = language
+        self.beam_size = beam_size
         self.model = None
         self.logger = logging.getLogger(__name__)
         
@@ -110,8 +115,8 @@ class WhisperEngine:
             # This is where we ask the AI: "What words do you hear in this audio?"
             segments, info = self.model.transcribe(
                 audio_data,
-                beam_size=5,  # How many possibilities to consider (higher = more accurate but slower)
-                language=None,  # Auto-detect language (you could specify "en" for English)
+                beam_size=self.beam_size,  # How many possibilities to consider (configurable)
+                language=self.language,  # Language setting from config (None = auto-detect)
                 condition_on_previous_text=False  # Don't use context from previous transcriptions
             )
             

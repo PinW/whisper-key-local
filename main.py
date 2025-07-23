@@ -11,26 +11,38 @@ play music itself, but tells all the musicians (our modules) when to start and s
 
 import logging
 import time
+from src.config_manager import ConfigManager
 from src.audio_recorder import AudioRecorder
 from src.hotkey_listener import HotkeyListener
 from src.whisper_engine import WhisperEngine
 from src.clipboard_manager import ClipboardManager
 from src.state_manager import StateManager
 
-def setup_logging():
+def setup_logging(config_manager: ConfigManager):
     """
-    Configure logging to help us debug issues
+    Configure logging based on configuration settings
     
     Logging is like leaving breadcrumbs - it helps us understand what our 
     program is doing and find problems when they occur.
     """
+    log_config = config_manager.get_logging_config()
+    
+    # Set up handlers based on configuration
+    handlers = []
+    
+    # Add file handler if enabled
+    if log_config['file']['enabled']:
+        handlers.append(logging.FileHandler(log_config['file']['filename']))
+    
+    # Add console handler if enabled  
+    if log_config['console']['enabled']:
+        handlers.append(logging.StreamHandler())
+    
+    # Configure logging
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, log_config['level']),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler('whisper_app.log'),
-            logging.StreamHandler()  # This prints to console too
-        ]
+        handlers=handlers
     )
 
 def main():
@@ -40,19 +52,38 @@ def main():
     print("Starting Windows Whisper Speech-to-Text App...")
     print("This is a learning project - we'll explain each step!")
     
-    # Set up logging first so we can track what happens
-    setup_logging()
-    logger = logging.getLogger(__name__)
-    
     try:
-        # Initialize all our components
-        # Think of this like setting up all the tools before starting work
+        # Load configuration first
+        print("Loading configuration...")
+        config_manager = ConfigManager()
+        
+        # Set up logging based on configuration
+        setup_logging(config_manager)
+        logger = logging.getLogger(__name__)
+        
+        # Get configuration for each component
+        whisper_config = config_manager.get_whisper_config()
+        audio_config = config_manager.get_audio_config()
+        hotkey_config = config_manager.get_hotkey_config()
         
         logger.info("Initializing application components...")
         
-        # Create our main components (we'll build these next)
-        audio_recorder = AudioRecorder()
-        whisper_engine = WhisperEngine()
+        # Create our main components with configuration
+        audio_recorder = AudioRecorder(
+            sample_rate=audio_config['sample_rate'],
+            channels=audio_config['channels'],
+            dtype=audio_config['dtype'],
+            max_duration=audio_config['max_duration']
+        )
+        
+        whisper_engine = WhisperEngine(
+            model_size=whisper_config['model_size'],
+            device=whisper_config['device'],
+            compute_type=whisper_config['compute_type'],
+            language=whisper_config['language'],
+            beam_size=whisper_config['beam_size']
+        )
+        
         clipboard_manager = ClipboardManager()
         
         # The state manager coordinates everything
@@ -63,10 +94,13 @@ def main():
         )
         
         # Set up hotkey listener (this detects when you press the recording key)
-        hotkey_listener = HotkeyListener(state_manager=state_manager)
+        hotkey_listener = HotkeyListener(
+            state_manager=state_manager,
+            hotkey=hotkey_config['combination']
+        )
         
         logger.info("All components initialized successfully!")
-        print("Application ready! Press Ctrl+Shift+Space to start recording.")
+        print(f"Application ready! Press {hotkey_config['combination'].upper().replace('+', ' + ')} to start recording.")
         print("Press Ctrl+C to quit.")
         
         # Keep the application running

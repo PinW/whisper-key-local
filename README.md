@@ -23,13 +23,14 @@ All required Python packages should already be installed:
 - `sounddevice` - Audio recording
 - `global-hotkeys` - System-wide hotkey detection  
 - `pyperclip` - Clipboard operations
+- `pyyaml` - Configuration file parsing
 
 ### Running the App
 
 1. **Test Components First** (Recommended for learning):
    ```powershell
    cd \\wsl$\Ubuntu\home\pin\whisper-key-local
-   python run_tests.py
+   python tests/run_component_tests.py
    ```
    This runs individual tests for each component so you understand how they work.
 
@@ -38,10 +39,17 @@ All required Python packages should already be installed:
    python main.py
    ```
 
-3. **Use the App**:
-   - Press `Ctrl+Shift+Space` to start recording
+3. **Configuration** (Optional):
+   - Edit `config.yaml` to customize settings:
+     - Change Whisper model size (tiny/base/small)
+     - Modify hotkey combination
+     - Adjust audio settings
+     - Configure logging preferences
+
+4. **Use the App**:
+   - Press your configured hotkey (default: `Ctrl+Shift+Space`) to start recording
    - Speak clearly into your microphone  
-   - Press `Ctrl+Shift+Space` again to stop recording
+   - Press the hotkey again to stop recording
    - The transcribed text is copied to your clipboard
    - Paste anywhere with `Ctrl+V`
 
@@ -53,19 +61,19 @@ This project is designed for learning. Each component is explained in detail:
 Run these to understand how each part works:
 
 ```powershell
-python test_clipboard.py    # Learn clipboard operations
-python test_audio.py        # Learn audio recording
-python test_whisper.py      # Learn AI transcription  
-python test_hotkeys.py      # Learn global hotkeys
+python tests/component/test_clipboard.py    # Learn clipboard operations
+python tests/component/test_audio.py        # Learn audio recording
+python tests/component/test_whisper.py      # Learn AI transcription  
+python tests/component/test_hotkeys.py      # Learn global hotkeys
 ```
 
 ### Code Architecture
 - `main.py` - Application entry point and coordinator
-- `audio_recorder.py` - Microphone recording with sounddevice
-- `whisper_engine.py` - AI transcription with faster-whisper
-- `hotkey_listener.py` - Global hotkey detection
-- `clipboard_manager.py` - Clipboard copy/paste operations
-- `state_manager.py` - Coordinates all components
+- `src/audio_recorder.py` - Microphone recording with sounddevice
+- `src/whisper_engine.py` - AI transcription with faster-whisper
+- `src/hotkey_listener.py` - Global hotkey detection
+- `src/clipboard_manager.py` - Clipboard copy/paste operations
+- `src/state_manager.py` - Coordinates all components
 
 ## 🛠️ Development Setup
 
@@ -103,7 +111,7 @@ This project uses a hybrid WSL + Windows approach:
 - Verify all packages are installed in Windows Python environment
 
 ### Getting Help
-1. Run `python run_tests.py` to identify which component is failing
+1. Run `python tests/run_component_tests.py` to identify which component is failing
 2. Check the log file `whisper_app.log` for detailed error messages
 3. Test individual components with their respective test scripts
 

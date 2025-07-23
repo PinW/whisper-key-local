@@ -1,0 +1,147 @@
+# Windows Whisper Speech-to-Text Configuration
+# 
+# This file contains all the settings you can customize for the application.
+# Edit the values below and restart the app to apply changes.
+
+# =============================================================================
+# WHISPER AI MODEL SETTINGS
+# =============================================================================
+whisper:
+  # Model size - affects accuracy vs speed tradeoff
+  # Options: "tiny", "base", "small", "medium", "large"
+  # - tiny: ~39MB, fastest, good for most use cases
+  # - base: ~74MB, better accuracy, still fast
+  # - small: ~244MB, high accuracy, slower
+  # - medium: ~769MB, very high accuracy, much slower
+  # - large: ~1550MB, best accuracy, very slow (not recommended for real-time)
+  model_size: "tiny"
+  
+  # Processing device - where the AI runs
+  # Options: "cpu", "cuda" (for NVIDIA GPUs)
+  # Note: "cuda" requires compatible GPU and drivers
+  device: "cpu"
+  
+  # Compute precision - affects speed vs accuracy
+  # Options: "int8", "float16", "float32"
+  # - int8: fastest, good quality (recommended)
+  # - float16: balanced (requires GPU for best performance)
+  # - float32: highest quality, slowest
+  compute_type: "int8"
+  
+  # Language detection
+  # Options: null (auto-detect), "en", "es", "fr", "de", etc.
+  # Set to specific language code to force language, or null for auto-detection
+  language: null
+  
+  # Transcription quality settings
+  beam_size: 5  # Higher = more accurate but slower (1-10)
+
+# =============================================================================
+# HOTKEY CONFIGURATION
+# =============================================================================
+hotkey:
+  # Key combination to start/stop recording
+  # Format: modifier+modifier+key (use lowercase)
+  # Common modifiers: ctrl, shift, alt, win
+  # Examples:
+  #   - "ctrl+shift+space"     (default)
+  #   - "ctrl+alt+r"
+  #   - "win+shift+v"
+  #   - "ctrl+shift+f12"
+  combination: "ctrl+shift+space"
+
+# =============================================================================
+# AUDIO RECORDING SETTINGS
+# =============================================================================
+audio:
+  # Sample rate for recording (Hz)
+  # Higher = better quality but larger files
+  # Common values: 16000, 22050, 44100, 48000
+  # Note: Whisper works best with 16000 Hz
+  sample_rate: 16000
+  
+  # Audio channels
+  # 1 = mono (recommended for speech)
+  # 2 = stereo
+  channels: 1
+  
+  # Recording format
+  # Options: "float32", "int16", "int24", "int32"
+  # float32 recommended for best quality
+  dtype: "float32"
+  
+  # Maximum recording duration (seconds)
+  # Set to 0 for unlimited recording
+  max_duration: 30
+
+# =============================================================================
+# CLIPBOARD BEHAVIOR
+# =============================================================================
+clipboard:
+  # Automatically paste after transcription
+  # true = paste immediately to active window
+  # false = only copy to clipboard (paste manually with Ctrl+V)
+  auto_paste: false
+  
+  # Add extra formatting to transcribed text
+  # Options: "none", "capitalize", "sentence"
+  # - none: exact transcription
+  # - capitalize: Capitalize first letter
+  # - sentence: Capitalize first letter and add period if missing
+  text_formatting: "none"
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+logging:
+  # Log level - how much detail to log
+  # Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+  # - DEBUG: Very detailed (for troubleshooting)
+  # - INFO: General information (recommended)
+  # - WARNING: Only warnings and errors
+  # - ERROR: Only errors
+  level: "INFO"
+  
+  # Log file settings
+  file:
+    enabled: true
+    filename: "whisper_app.log"
+    max_size_mb: 10  # Rotate log when it gets this big
+    backup_count: 3  # Keep this many old log files
+  
+  # Console output
+  console:
+    enabled: true
+    colored: true  # Use colored output in terminal (if supported)
+
+# =============================================================================
+# PERFORMANCE SETTINGS
+# =============================================================================
+performance:
+  # CPU threads to use for processing
+  # 0 = auto-detect (recommended)
+  # Higher numbers may speed up transcription on multi-core systems
+  cpu_threads: 0
+  
+  # Memory management
+  # true = clear model cache between transcriptions (saves memory)
+  # false = keep model in memory (faster but uses more RAM)
+  clear_cache: false
+
+# =============================================================================
+# ADVANCED SETTINGS
+# =============================================================================
+advanced:
+  # Voice Activity Detection (VAD)
+  # Automatically detect when speech starts/stops
+  vad:
+    enabled: false  # Not implemented yet
+    threshold: 0.5  # Sensitivity (0.0-1.0)
+  
+  # Model download settings
+  model_cache_dir: null  # null = use default cache directory
+  
+  # Debugging options
+  debug:
+    save_audio_files: false  # Save recorded audio for debugging
+    audio_output_dir: "debug_audio"  # Where to save debug audio files

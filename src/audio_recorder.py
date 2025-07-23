@@ -22,19 +22,24 @@ class AudioRecorder:
     This class knows how to record audio, start/stop recording, and store the audio data.
     """
     
-    def __init__(self, sample_rate: int = 16000, channels: int = 1):
+    def __init__(self, sample_rate: int = 16000, channels: int = 1, dtype: str = "float32", 
+                 max_duration: int = 30):
         """
         Initialize the audio recorder
         
         Parameters:
         - sample_rate: How many audio samples per second (16000 is good for speech)
         - channels: 1 for mono (single channel), 2 for stereo
+        - dtype: Audio data type ("float32", "int16", etc.)
+        - max_duration: Maximum recording length in seconds (0 = unlimited)
         
         For beginners: Think of sample_rate like photo resolution - higher means 
         better quality but bigger file size. 16000 is perfect for speech recognition.
         """
         self.sample_rate = sample_rate
         self.channels = channels
+        self.dtype = dtype
+        self.max_duration = max_duration
         self.is_recording = False
         self.audio_data = []  # This will store our recorded audio
         self.recording_thread = None
