@@ -18,12 +18,19 @@ A local speech-to-text application that runs OpenAI's Whisper AI on your compute
 - Microphone access
 
 ### Installation
-All required Python packages should already be installed:
+Install the required Python packages:
+```powershell
+pip install faster-whisper sounddevice global-hotkeys pyperclip pyyaml pywin32 pyautogui
+```
+
+**Package descriptions:**
 - `faster-whisper` - Fast AI speech recognition
 - `sounddevice` - Audio recording
 - `global-hotkeys` - System-wide hotkey detection  
 - `pyperclip` - Clipboard operations
 - `pyyaml` - Configuration file parsing
+- `pywin32` - Windows API access for direct paste method
+- `pyautogui` - Key simulation for Ctrl+V auto-paste (recommended for best compatibility)
 
 ### Running the App
 
@@ -43,6 +50,9 @@ All required Python packages should already be installed:
    - Edit `config.yaml` to customize settings:
      - Change Whisper model size (tiny/base/small)
      - Modify hotkey combination (use `python tools/key_helper.py` to find key combinations)
+     - Configure auto-paste behavior:
+       - `auto_paste: true/false` - Enable/disable automatic pasting
+       - `paste_method: "key_simulation"/"windows_api"` - Choose paste method
      - Adjust audio settings
      - Configure logging preferences
 
@@ -50,8 +60,8 @@ All required Python packages should already be installed:
    - Press your configured hotkey (default: `Ctrl+Shift+Space`) to start recording
    - Speak clearly into your microphone  
    - Press the hotkey again to stop recording
-   - The transcribed text is copied to your clipboard
-   - Paste anywhere with `Ctrl+V`
+   - The transcribed text is automatically pasted into the active application
+   - If auto-paste is disabled, text is copied to clipboard for manual pasting with `Ctrl+V`
 
 ## 📚 Learning Guide
 
@@ -120,6 +130,13 @@ This interactive tool will:
 - First run downloads the AI model (~39MB for tiny model)
 - Subsequent runs are much faster
 - Check internet connection for initial download
+
+**Auto-paste not working:**
+- Install `pyautogui` for key simulation: `pip install pyautogui`
+- Try switching paste methods in `config.yaml`:
+  - `paste_method: "key_simulation"` (works with most apps)
+  - `paste_method: "windows_api"` (faster but less compatible)
+- If both methods fail, set `auto_paste: false` to use manual clipboard pasting
 
 **Import errors:**
 - Ensure you're running Python from Windows, not WSL
