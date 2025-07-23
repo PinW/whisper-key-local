@@ -91,13 +91,13 @@ class StateManager:
             print("🎤 Recording started! Speak now...")
             print("Press the hotkey again to stop recording.")
             
-            # Update system tray to show recording state
-            if self.system_tray:
-                self.system_tray.update_state("recording")
-            
             success = self.audio_recorder.start_recording()
             
-            if not success:
+            if success:
+                # Update system tray to show recording state only if recording actually started
+                if self.system_tray:
+                    self.system_tray.update_state("recording")
+            else:
                 print("❌ Failed to start recording!")
                 self.logger.error("Failed to start audio recording")
                 # Reset tray to idle state on failure

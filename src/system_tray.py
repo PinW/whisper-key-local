@@ -132,8 +132,6 @@ class SystemTray:
     def _create_menu(self):
         """
         Create the context menu that appears when you right-click the tray icon
-        
-        This menu gives users quick access to common actions without opening the main app.
         """
         # Get current hotkey from config for display
         hotkey_text = "Unknown"
@@ -143,20 +141,51 @@ class SystemTray:
                 hotkey_text = self.config.get('hotkey', {}).get('combination', 'ctrl+`')
             except:
                 pass
-        
+
+        # Determine current state for menu logic
+        is_processing = False
+        is_recording = False
+        if self.state_manager:
+            try:
+                status = self.state_manager.get_application_status()
+                is_processing = status.get('processing', False)
+                is_recording = status.get('recording', False)
+            except Exception as e:
+                self.logger.error(f"Error getting state for tray menu: {e}")
+
+        # Dynamic action label and enabled state
+        if is_processing:
+            action_label = "Processing..."
+            action_enabled = False
+        elif is_recording:
+            action_label = "Stop Recording"
+            action_enabled = True
+        else:
+            action_label = "Start Recording"
+            action_enabled = True
+
         menu_items = [
-            # Status display (not clickable)
-            pystray.MenuItem(f"Status: {self.current_state.title()}", None, enabled=False),
-            pystray.MenuItem(f"Hotkey: {hotkey_text.upper()}", None, enabled=False),
+            # Title & Hotkey display
+            pystray.MenuItem(f"Whisper Key: {hotkey_text.upper()}", None, enabled=False),
             pystray.Menu.SEPARATOR,  # Separator
-            
+            # Dynamic Start/Stop Recording action
+            pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled),
+            pystray.Menu.SEPARATOR,  # Separator
             # Action items
             pystray.MenuItem("Exit", self._quit_application)
         ]
-        
         return pystray.Menu(*menu_items)
-    
-    
+
+    def _tray_toggle_recording(self, icon=None, item=None):
+        """
+        Called when the Start/Stop Recording menu item is clicked.
+        """
+        if self.state_manager:
+            try:
+                self.state_manager.toggle_recording()
+            except Exception as e:
+                self.logger.error(f"Error toggling recording from tray: {e}")
+
     def _quit_application(self, icon=None, item=None):
         """
         Quit the entire application (called from menu)
@@ -195,6 +224,8 @@ class SystemTray:
             try:
                 self.icon.icon = self.icons[new_state]
                 self.icon.title = f"Whisper Key - {new_state.title()}"
+                # Refresh the menu to update the Start/Stop action
+                self.icon.menu = self._create_menu()
                 self.logger.debug(f"Tray icon updated: {old_state} -> {new_state}")
             except Exception as e:
                 self.logger.error(f"Failed to update tray icon: {e}")
