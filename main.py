@@ -11,6 +11,7 @@ play music itself, but tells all the musicians (our modules) when to start and s
 
 import logging
 import time
+import warnings
 from src.config_manager import ConfigManager
 from src.audio_recorder import AudioRecorder
 from src.hotkey_listener import HotkeyListener
@@ -28,34 +29,46 @@ def setup_logging(config_manager: ConfigManager):
     """
     log_config = config_manager.get_logging_config()
     
-    # Set up handlers based on configuration
-    handlers = []
+    # Create root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)  # Set to lowest level, handlers will filter
+    
+    # Clear any existing handlers
+    root_logger.handlers.clear()
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
     # Add file handler if enabled
     if log_config['file']['enabled']:
-        handlers.append(logging.FileHandler(log_config['file']['filename']))
+        file_handler = logging.FileHandler(log_config['file']['filename'])
+        file_handler.setLevel(getattr(logging, log_config['level']))
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
     
-    # Add console handler if enabled  
+    # Add console handler if enabled with separate level
     if log_config['console']['enabled']:
-        handlers.append(logging.StreamHandler())
-    
-    # Configure logging
-    logging.basicConfig(
-        level=getattr(logging, log_config['level']),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=handlers
-    )
+        console_handler = logging.StreamHandler()
+        console_level = log_config['console'].get('level', 'WARNING')  # Default to WARNING if not set
+        console_handler.setLevel(getattr(logging, console_level))
+        console_handler.setFormatter(formatter)
+        root_logger.addHandler(console_handler)
 
 def main():
     """
     Main application function that ties everything together
     """
-    print("Starting Windows Whisper Speech-to-Text App...")
+    print("Starting Whisper Key... Windows Whisper Speech-to-Text App...")
     
     try:
         # Load configuration first (will use user settings from AppData)
         print("Loading configuration...")
         config_manager = ConfigManager()
+        
+        # Handle warning suppression based on config
+        advanced_config = config_manager.config.get('advanced', {})
+        if advanced_config.get('suppress_warnings', False):
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
         
         # Show where settings are loaded from
         if config_manager.use_user_settings:

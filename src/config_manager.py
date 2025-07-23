@@ -242,6 +242,14 @@ class ConfigManager:
             self.logger.warning(f"Invalid log level '{self.config['logging']['level']}', using 'INFO'")
             self.config['logging']['level'] = 'INFO'
         
+        # Validate console logging level
+        console_level = self.config['logging']['console'].get('level', 'WARNING')
+        if console_level not in valid_log_levels:
+            self.logger.warning(f"Invalid console log level '{console_level}', using 'WARNING'")
+            self.config['logging']['console']['level'] = 'WARNING'
+        else:
+            self.config['logging']['console']['level'] = console_level
+        
         # Validate text formatting
         valid_formatting = ['none', 'capitalize', 'sentence']
         text_formatting = self.config['clipboard'].get('text_formatting', 'none')

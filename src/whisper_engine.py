@@ -15,6 +15,7 @@ from typing import Optional, Tuple
 import tempfile
 import os
 import wave
+import time
 
 class WhisperEngine:
     """
@@ -104,6 +105,9 @@ class WhisperEngine:
             self.logger.info("Starting transcription...")
             print("Transcribing audio...")
             
+            # Start timing the transcription process
+            start_time = time.time()
+            
             # Whisper expects audio as a 1D array (flat list of numbers)
             if len(audio_data.shape) > 1:
                 audio_data = audio_data.flatten()
@@ -129,11 +133,15 @@ class WhisperEngine:
             # Clean up the text (remove extra spaces, etc.)
             transcribed_text = transcribed_text.strip()
             
+            # Calculate transcription time
+            end_time = time.time()
+            transcription_time = end_time - start_time
+            
             # Log some info about what we transcribed
             detected_language = info.language
             confidence = info.language_probability
             
-            self.logger.info(f"Transcription complete. Language: {detected_language} (confidence: {confidence:.2f})")
+            self.logger.info(f"Transcription complete. Language: {detected_language} (confidence: {confidence:.2f}) - Time: {transcription_time:.2f}s")
             self.logger.info(f"Transcribed text: '{transcribed_text}'")
             
             if transcribed_text:
