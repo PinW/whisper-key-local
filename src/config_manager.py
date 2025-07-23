@@ -16,6 +16,32 @@ import shutil
 from typing import Dict, Any, Optional
 from pathlib import Path
 
+def deep_merge_config(default_config: Dict[str, Any], user_config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Deep merge user configuration on top of default configuration
+    
+    Parameters:
+    - default_config: The base configuration with all default values
+    - user_config: User's configuration that may have missing keys
+    
+    Returns:
+    - Merged configuration with user values overlaid on defaults
+    
+    For beginners: This is like combining two dictionaries where the user's
+    settings override the defaults, but missing user settings keep the defaults.
+    """
+    result = default_config.copy()
+    
+    for key, value in user_config.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            # Recursively merge nested dictionaries
+            result[key] = deep_merge_config(result[key], value)
+        else:
+            # Override with user value
+            result[key] = value
+    
+    return result
+
 class ConfigManager:
     """
     Manages configuration loading and validation for the application
@@ -100,112 +126,78 @@ class ConfigManager:
                     self.logger.error(f"Failed to create initial user settings: {e}")
                     raise
             else:
-                # Create empty user settings with defaults if no config.yaml exists
-                self.logger.warning(f"Default config {self.default_config_path} not found, creating user settings with defaults")
-                self._save_config_to_file(self.user_settings_path)
+                # If no default config.yaml exists, we can't create user settings
+                # This is a critical error since we need config.yaml as our source of truth
+                error_msg = f"Default config {self.default_config_path} not found - cannot create user settings"
+                self.logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
     
     def _load_config(self):
         """
-        Load configuration from YAML file with fallback defaults
+        Load configuration using two-stage loading:
+        Stage 1: Load default config.yaml as baseline
+        Stage 2: Load user config and merge on top of defaults
         """
-        # Define default configuration
-        self.default_config = {
-            'whisper': {
-                'model_size': 'tiny',
-                'device': 'cpu',
-                'compute_type': 'int8',
-                'language': None,
-                'beam_size': 5
-            },
-            'hotkey': {
-                'combination': 'ctrl+shift+space'
-            },
-            'audio': {
-                'sample_rate': 16000,
-                'channels': 1,
-                'dtype': 'float32',
-                'max_duration': 30
-            },
-            'clipboard': {
-                'auto_paste': False,
-                'paste_method': 'key_simulation',
-                'text_formatting': 'none'
-            },
-            'logging': {
-                'level': 'INFO',
-                'file': {
-                    'enabled': True,
-                    'filename': 'whisper_app.log',
-                    'max_size_mb': 10,
-                    'backup_count': 3
-                },
-                'console': {
-                    'enabled': True,
-                    'colored': True
-                }
-            },
-            'performance': {
-                'cpu_threads': 0,
-                'clear_cache': False
-            },
-            'system_tray': {
-                'enabled': True,
-                'tooltip': 'Whisper Key',
-                'notifications': False
-            },
-            'advanced': {
-                'vad': {
-                    'enabled': False,
-                    'threshold': 0.5
-                },
-                'model_cache_dir': None,
-                'debug': {
-                    'save_audio_files': False,
-                    'audio_output_dir': 'debug_audio'
-                }
-            }
-        }
+        # Stage 1: Load default configuration from config.yaml
+        default_config = self._load_default_config()
         
-        # Start with defaults
-        self.config = self.default_config.copy()
-        
-        # Try to load user configuration
-        if os.path.exists(self.config_path):
+        # Stage 2: Load user configuration and merge with defaults
+        if self.use_user_settings and os.path.exists(self.config_path):
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     user_config = yaml.safe_load(f)
                 
                 if user_config:
-                    # Merge user config with defaults (deep merge)
-                    self.config = self._deep_merge(self.default_config, user_config)
-                    self.logger.info(f"Loaded configuration from {self.config_path}")
+                    # Deep merge user config on top of defaults
+                    self.config = deep_merge_config(default_config, user_config)
+                    self.logger.info(f"Loaded user configuration from {self.config_path}")
                 else:
-                    self.logger.warning(f"Config file {self.config_path} is empty, using defaults")
+                    # Empty user config, use defaults
+                    self.config = default_config
+                    self.logger.warning(f"User config file {self.config_path} is empty, using defaults")
                     
             except yaml.YAMLError as e:
-                self.logger.error(f"Error parsing YAML config: {e}")
+                self.logger.error(f"Error parsing user YAML config: {e}")
                 self.logger.warning("Using default configuration")
+                self.config = default_config
             except Exception as e:
-                self.logger.error(f"Error loading config file: {e}")
+                self.logger.error(f"Error loading user config file: {e}")
                 self.logger.warning("Using default configuration")
+                self.config = default_config
         else:
-            self.logger.info(f"Config file {self.config_path} not found, using defaults")
-    
-    def _deep_merge(self, default: Dict[str, Any], user: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Deep merge user configuration with defaults
-        
-        This ensures that if user only specifies some settings, the rest come from defaults.
-        """
-        result = default.copy()
-        
-        for key, value in user.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-                result[key] = self._deep_merge(result[key], value)
+            # No user config or not using user settings, use defaults
+            self.config = default_config
+            if self.use_user_settings:
+                self.logger.info(f"User config file {self.config_path} not found, using defaults")
             else:
-                result[key] = value
+                self.logger.info("Using default configuration (user settings disabled)")
+    
+    def _load_default_config(self) -> Dict[str, Any]:
+        """
+        Load the default configuration from config.yaml
         
-        return result
+        Returns:
+        - Default configuration dictionary loaded from config.yaml
+        
+        This ensures config.yaml is the single source of truth for all defaults.
+        """
+        try:
+            with open(self.default_config_path, 'r', encoding='utf-8') as f:
+                default_config = yaml.safe_load(f)
+            
+            if default_config:
+                self.logger.info(f"Loaded default configuration from {self.default_config_path}")
+                return default_config
+            else:
+                self.logger.error(f"Default config file {self.default_config_path} is empty")
+                raise ValueError("Default configuration is empty")
+                
+        except yaml.YAMLError as e:
+            self.logger.error(f"Error parsing default YAML config: {e}")
+            raise
+        except Exception as e:
+            self.logger.error(f"Error loading default config file: {e}")
+            raise
     
     def _validate_config(self):
         """
@@ -252,20 +244,37 @@ class ConfigManager:
         
         # Validate text formatting
         valid_formatting = ['none', 'capitalize', 'sentence']
-        if self.config['clipboard']['text_formatting'] not in valid_formatting:
-            self.logger.warning(f"Invalid text formatting '{self.config['clipboard']['text_formatting']}', using 'none'")
+        text_formatting = self.config['clipboard'].get('text_formatting', 'none')
+        if text_formatting not in valid_formatting:
+            self.logger.warning(f"Invalid text formatting '{text_formatting}', using 'none'")
             self.config['clipboard']['text_formatting'] = 'none'
+        else:
+            self.config['clipboard']['text_formatting'] = text_formatting
         
         # Validate auto_paste setting
-        if not isinstance(self.config['clipboard']['auto_paste'], bool):
-            self.logger.warning(f"Invalid auto_paste value '{self.config['clipboard']['auto_paste']}', using False")
-            self.config['clipboard']['auto_paste'] = False
+        auto_paste = self.config['clipboard'].get('auto_paste', True)
+        if not isinstance(auto_paste, bool):
+            self.logger.warning(f"Invalid auto_paste value '{auto_paste}', using True")
+            self.config['clipboard']['auto_paste'] = True
+        else:
+            self.config['clipboard']['auto_paste'] = auto_paste
         
         # Validate paste_method setting
         valid_paste_methods = ['key_simulation', 'windows_api']
-        if self.config['clipboard']['paste_method'] not in valid_paste_methods:
-            self.logger.warning(f"Invalid paste_method '{self.config['clipboard']['paste_method']}', using 'key_simulation'")
+        paste_method = self.config['clipboard'].get('paste_method', 'key_simulation')
+        if paste_method not in valid_paste_methods:
+            self.logger.warning(f"Invalid paste_method '{paste_method}', using 'key_simulation'")
             self.config['clipboard']['paste_method'] = 'key_simulation'
+        else:
+            self.config['clipboard']['paste_method'] = paste_method
+        
+        # Validate preserve_clipboard setting
+        preserve_clipboard = self.config['clipboard'].get('preserve_clipboard', True)
+        if not isinstance(preserve_clipboard, bool):
+            self.logger.warning(f"Invalid preserve_clipboard value '{preserve_clipboard}', using True")
+            self.config['clipboard']['preserve_clipboard'] = True
+        else:
+            self.config['clipboard']['preserve_clipboard'] = preserve_clipboard
     
     # Getter methods for easy access to configuration sections
     

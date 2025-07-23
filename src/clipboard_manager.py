@@ -335,6 +335,128 @@ class ClipboardManager:
         
         return success
     
+    def preserve_and_paste(self, text: str, paste_method: str = "key_simulation", show_notification: bool = True) -> bool:
+        """
+        Copy text to clipboard, paste it, then restore original clipboard content
+        
+        Parameters:
+        - text: Text to copy and paste
+        - paste_method: Method to use ("key_simulation" or "windows_api")  
+        - show_notification: Whether to print status messages
+        
+        Returns:
+        - True if all operations succeeded (save original, copy, paste, restore), False otherwise
+        
+        This method preserves the user's existing clipboard content while pasting the transcription.
+        """
+        if not text:
+            if show_notification:
+                print("No text to copy and paste!")
+            return False
+        
+        # Step 1: Save current clipboard content
+        original_content = None
+        try:
+            original_content = pyperclip.paste()
+            self.logger.info(f"Saved original clipboard content: '{(original_content[:50] + '...') if original_content and len(original_content) > 50 else original_content}'")
+        except Exception as e:
+            self.logger.warning(f"Failed to save original clipboard content: {e}")
+            # Continue anyway - we'll just warn the user
+        
+        # Step 2: Copy the transcription text to clipboard
+        copy_success = self.copy_text(text)
+        if not copy_success:
+            if show_notification:
+                print("❌ Failed to copy transcription to clipboard")
+            return False
+        
+        # Step 3: Paste the transcription
+        paste_success = False
+        method_used = ""
+        
+        # Try the preferred method first
+        if paste_method == "key_simulation":
+            paste_success = self._paste_via_key_simulation()
+            method_used = "key simulation"
+            
+            # Fallback to Windows API if key simulation fails
+            if not paste_success and WINDOWS_API_AVAILABLE:
+                self.logger.info("Key simulation failed, trying Windows API fallback")
+                paste_success = self._paste_via_windows_api()
+                method_used = "Windows API (fallback)"
+                
+        elif paste_method == "windows_api":
+            paste_success = self._paste_via_windows_api()
+            method_used = "Windows API"
+            
+            # Fallback to key simulation if Windows API fails
+            if not paste_success and KEY_SIMULATION_AVAILABLE:
+                self.logger.info("Windows API failed, trying key simulation fallback")
+                paste_success = self._paste_via_key_simulation()
+                method_used = "key simulation (fallback)"
+        
+        else:
+            self.logger.error(f"Unknown paste method: {paste_method}")
+            paste_success = False
+        
+        # Step 4: Restore original clipboard content (if we saved it successfully)
+        restore_success = True
+        if original_content is not None:
+            try:
+                pyperclip.copy(original_content)
+                time.sleep(0.1)  # Small delay to ensure clipboard is updated
+                self.logger.info("Restored original clipboard content")
+            except Exception as e:
+                self.logger.error(f"Failed to restore original clipboard content: {e}")
+                restore_success = False
+        
+        # Provide user feedback
+        if paste_success and show_notification:
+            display_text = text if len(text) <= 100 else text[:97] + "..."
+            if restore_success:
+                print(f"✓ Auto-pasted via {method_used}: '{display_text}' (original clipboard restored)")
+            else:
+                print(f"✓ Auto-pasted via {method_used}: '{display_text}' (warning: original clipboard not restored)")
+        elif not paste_success and show_notification:
+            print("❌ Auto-paste failed with all methods")
+            if original_content is not None and restore_success:
+                print("✓ Original clipboard content restored")
+        
+        return paste_success
+    
+    def _paste_via_key_simulation(self) -> bool:
+        """Helper method for key simulation paste (without copying first)"""
+        if not KEY_SIMULATION_AVAILABLE:
+            return False
+            
+        try:
+            time.sleep(0.2)  # Brief delay before pasting
+            pyautogui.hotkey('ctrl', 'v')
+            self.logger.info("Executed Ctrl+V key combination")
+            return True
+        except Exception as e:
+            self.logger.error(f"Key simulation paste failed: {e}")
+            return False
+    
+    def _paste_via_windows_api(self) -> bool:
+        """Helper method for Windows API paste (without copying first)"""
+        if not WINDOWS_API_AVAILABLE:
+            return False
+        
+        try:
+            hwnd = self.get_active_window_handle()
+            if not hwnd:
+                self.logger.error("Could not get active window handle for paste")
+                return False
+            
+            # Send WM_PASTE message to the active window
+            win32gui.SendMessage(hwnd, win32con.WM_PASTE, 0, 0)
+            self.logger.info(f"Sent WM_PASTE message to window handle {hwnd}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Windows API paste failed: {e}")
+            return False
+    
     def get_clipboard_info(self) -> dict:
         """
         Get information about current clipboard state (for debugging)

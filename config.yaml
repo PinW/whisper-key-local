@@ -95,6 +95,11 @@ clipboard:
   # - capitalize: Capitalize first letter
   # - sentence: Capitalize first letter and add period if missing
   text_formatting: "none"
+  
+  # Preserve existing clipboard content when pasting
+  # true = save current clipboard, paste transcription, then restore original clipboard
+  # false = replace clipboard with transcription (default behavior)
+  preserve_clipboard: true
 
 # =============================================================================
 # LOGGING CONFIGURATION
