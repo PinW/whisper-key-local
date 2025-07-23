@@ -6,10 +6,12 @@ main.py                    # Entry point
 src/
 ├── audio_recorder.py      # sounddevice recording
 ├── whisper_engine.py      # faster-whisper transcription
-├── clipboard_manager.py   # pyperclip operations
+├── clipboard_manager.py   # clipboard operations with auto-paste
 ├── hotkey_listener.py     # global hotkey detection
+├── config_manager.py      # YAML configuration management
 └── state_manager.py       # component coordination
 tests/component/           # Individual component tests
+tools/key_helper.py        # Interactive key configuration utility
 ```
 
 ## Component Responsibilities
@@ -31,11 +33,21 @@ tests/component/           # Individual component tests
 - Return text transcription with confidence scores
 
 ### clipboard_manager.py
-- Paste transcribed text to active application
-- Handle different input contexts
-- Error recovery for paste failures
+- Copy transcribed text to clipboard with notifications
+- Auto-paste functionality via Windows API or key simulation
+- Support for multiple paste methods (windows_api, key_simulation)
+- Fallback mechanisms when paste methods fail
+- Active window detection and direct message sending
+
+### config_manager.py
+- Load and validate YAML configuration files
+- Provide default configuration values
+- Validate settings for audio, whisper, hotkeys, clipboard, and logging
+- Support for auto-paste and paste method configuration
 
 ### state_manager.py
-- Coordinate between components
-- Handle configuration and model selection
-- Manage logging and errors
+- Coordinate workflow between all components
+- Handle recording/processing state transitions
+- Implement auto-paste logic based on configuration
+- Manage error handling and user notifications
+- Process complete recording-to-paste pipeline
