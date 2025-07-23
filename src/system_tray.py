@@ -168,8 +168,8 @@ class SystemTray:
             # Title & Hotkey display
             pystray.MenuItem(f"Whisper Key: {hotkey_text.upper()}", None, enabled=False),
             pystray.Menu.SEPARATOR,  # Separator
-            # Dynamic Start/Stop Recording action
-            pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled),
+            # Dynamic Start/Stop Recording action as primary
+            pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled, default=True),
             pystray.Menu.SEPARATOR,  # Separator
             # Action items
             pystray.MenuItem("Exit", self._quit_application)
