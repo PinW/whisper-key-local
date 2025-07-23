@@ -218,11 +218,12 @@ class SystemTray:
                     # Title & Hotkey display
                     pystray.MenuItem(f"Whisper Key: {hotkey_text.upper()}", None, enabled=False),
                     pystray.Menu.SEPARATOR,  # Separator
+                    # Settings
+                    pystray.MenuItem("Settings", None, enabled=False),
+                    pystray.MenuItem("Auto-paste transcriptions", self._toggle_auto_paste, checked=lambda item: auto_paste_enabled),
+                    pystray.Menu.SEPARATOR,  # Separator
                     # Dynamic Start/Stop Recording action as primary
                     pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled, default=True),
-                    pystray.Menu.SEPARATOR,  # Separator
-                    # Settings
-                    pystray.MenuItem("Auto-paste transcriptions", self._toggle_auto_paste, checked=lambda item: auto_paste_enabled),
                     pystray.Menu.SEPARATOR,  # Separator
                     # Action items
                     pystray.MenuItem("Exit", self._quit_application)
