@@ -1,11 +1,12 @@
 # Windows Whisper Speech-to-Text App
 
-A local speech-to-text application that runs OpenAI's Whisper AI on your computer. Press a hotkey anywhere in Windows to record speech, and the transcribed text is automatically copied to your clipboard for pasting in any application.
+One global hotkey to start/stop recording, transcribe locally, and automatically paste the transcription wherever your cursor is.
 
 ## 🎯 Features
 
-- **Global Hotkey**: Press `Ctrl+Shift+Space` from any application to start/stop recording
+- **Global Hotkey**: Press `Ctrl+Tilde` from any application to start/stop recording
 - **Local AI**: Uses Whisper AI running entirely on your computer (no internet required)
+- **Automatic Pasting**: Transcribed text inserted where your cursor is as soon as it is processed
 - **Automatic Clipboard**: Transcribed text is automatically copied for pasting with `Ctrl+V`
 - **Privacy-First**: All processing happens locally - your voice data never leaves your computer
 - **Beginner-Friendly**: Extensively commented code for learning Python and AI concepts
@@ -14,7 +15,7 @@ A local speech-to-text application that runs OpenAI's Whisper AI on your compute
 
 ### Prerequisites
 - Windows 10/11
-- Python 3.8+ installed on Windows (not WSL)
+- Python 3.8+ installed on Windows
 - Microphone access
 
 ### Installation
