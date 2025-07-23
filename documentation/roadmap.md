@@ -1,21 +1,22 @@
 # Windows Whisper Speech-to-Text App - Roadmap
 
 ## Next
-- As a user, I want auto-paste on stop so I don't need to hit CTRL+V
-- As a user, I want a system tray icon to see recording status and access settings
-- As a user, I want visual feedback when recording starts and stops
-- As a user I want a start/stop sound
-- As a user I want options so I can personalize my experience
+- Start/stop sound
+- Better icons
+    - Add them to repo
+- Settings
+    - Hotkey management
+    - Model selection
 
 ## Backlog
+- As a user I want auto-stop recording so I don't need to hit the hotkey again when i'm bored
+- As a user I want verbal stop recording command si I don't need to hit the hotkey
 
 ### Distribution
 - As a user, I want to download and run a Windows executable without installing Python (and dependencies)
 - As a user, I want a simple installer that sets up the app automatically
 
 ### Enhanced Experience  
-- As a user, I want a system tray icon to see recording status and access settings
-- As a user, I want visual feedback when recording starts and stops
 - As a user, I want to customize my hotkey combinations
 - As a user, I want to choose between Windows API and key simulation for pasting (broader app compatibility)
 - As a user, I want to save different configuration profiles for different use cases
@@ -29,7 +30,6 @@
 - As a user, I want to export transcriptions to text files
 
 ### Performance
-- As a user, I want GPU acceleration for faster transcription
 - As a user, I want real-time transcription as I speak
 - As a user, I want the app to use minimal system resources
 
