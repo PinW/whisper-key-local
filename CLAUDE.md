@@ -21,4 +21,5 @@ All settings in `config.yaml`:
 - `python tools/key_helper.py` - Find key combinations for config
 
 ## Development Notes
-- don't commit before i test
+- All testing is done by user on windows (you are in WSL)
+- Don't commit before i test

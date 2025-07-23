@@ -48,7 +48,7 @@ hotkey:
   #   - "ctrl+alt+r"
   #   - "win+shift+v"
   #   - "ctrl+shift+f12"
-  combination: "ctrl+shift+space"
+  combination: "ctrl+`"
 
 # =============================================================================
 # AUDIO RECORDING SETTINGS
