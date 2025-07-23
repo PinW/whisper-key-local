@@ -65,6 +65,7 @@ def main():
         whisper_config = config_manager.get_whisper_config()
         audio_config = config_manager.get_audio_config()
         hotkey_config = config_manager.get_hotkey_config()
+        clipboard_config = config_manager.get_clipboard_config()
         
         logger.info("Initializing application components...")
         
@@ -90,7 +91,8 @@ def main():
         state_manager = StateManager(
             audio_recorder=audio_recorder,
             whisper_engine=whisper_engine,
-            clipboard_manager=clipboard_manager
+            clipboard_manager=clipboard_manager,
+            clipboard_config=clipboard_config
         )
         
         # Set up hotkey listener (this detects when you press the recording key)
@@ -101,6 +103,13 @@ def main():
         
         logger.info("All components initialized successfully!")
         print(f"Application ready! Press {hotkey_config['combination'].upper().replace('+', ' + ')} to start recording.")
+        
+        # Show auto-paste status
+        if clipboard_config.get('auto_paste', False):
+            print("🚀 Auto-paste is ENABLED - transcribed text will be pasted automatically")
+        else:
+            print("📋 Auto-paste is DISABLED - you'll need to paste manually with Ctrl+V")
+        
         print("Press Ctrl+C to quit.")
         
         # Keep the application running

@@ -9,6 +9,9 @@ Local faster-whisper speech-to-text with global hotkey. Uses tiny model by defau
 - **Default model**: tiny (39MB)
 - **Platform**: Windows 10+ (runs on Windows Python, dev in WSL)
 
+## Roadmap
+See `documentation/roadmap.md`
+
 ## Architecture
 See `documentation/components.md` for detailed component structure and responsibilities.
 

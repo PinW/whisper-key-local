@@ -81,7 +81,7 @@ clipboard:
   # Automatically paste after transcription
   # true = paste immediately to active window
   # false = only copy to clipboard (paste manually with Ctrl+V)
-  auto_paste: false
+  auto_paste: true
   
   # Add extra formatting to transcribed text
   # Options: "none", "capitalize", "sentence"

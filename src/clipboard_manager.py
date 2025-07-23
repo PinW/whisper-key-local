@@ -13,6 +13,14 @@ import pyperclip
 import time
 from typing import Optional
 
+try:
+    import win32gui
+    import win32con
+    import win32clipboard
+    WINDOWS_API_AVAILABLE = True
+except ImportError:
+    WINDOWS_API_AVAILABLE = False
+
 class ClipboardManager:
     """
     A class that handles clipboard operations (copy/paste functionality)
@@ -150,6 +158,108 @@ class ClipboardManager:
             self.logger.error(f"Failed to clear clipboard: {e}")
             return False
     
+    def get_active_window_handle(self) -> Optional[int]:
+        """
+        Get the handle of the currently active window
+        
+        Returns:
+        - Window handle (HWND) as integer, or None if Windows API unavailable
+        """
+        if not WINDOWS_API_AVAILABLE:
+            self.logger.warning("Windows API not available for getting active window")
+            return None
+            
+        try:
+            hwnd = win32gui.GetForegroundWindow()
+            if hwnd:
+                window_title = win32gui.GetWindowText(hwnd)
+                self.logger.info(f"Active window: '{window_title}' (handle: {hwnd})")
+                return hwnd
+            else:
+                self.logger.warning("No active window found")
+                return None
+        except Exception as e:
+            self.logger.error(f"Failed to get active window handle: {e}")
+            return None
+    
+    def auto_paste_text(self, text: str) -> bool:
+        """
+        Automatically paste text into the active application using Windows API
+        
+        Parameters:
+        - text: The text to paste
+        
+        Returns:
+        - True if successful, False if failed
+        
+        This method copies text to clipboard and then sends a WM_PASTE message
+        directly to the active window, bypassing keyboard simulation.
+        """
+        if not WINDOWS_API_AVAILABLE:
+            self.logger.error("Windows API not available for auto-paste")
+            return False
+            
+        if not text:
+            self.logger.warning("Attempted to auto-paste empty text")
+            return False
+        
+        try:
+            # First, copy text to clipboard
+            if not self.copy_text(text):
+                self.logger.error("Failed to copy text to clipboard for auto-paste")
+                return False
+            
+            # Get the active window handle
+            hwnd = self.get_active_window_handle()
+            if not hwnd:
+                self.logger.error("No active window available for auto-paste")
+                return False
+            
+            # Send WM_PASTE message directly to the active window
+            self.logger.info(f"Sending WM_PASTE to window handle: {hwnd}")
+            result = win32gui.SendMessage(hwnd, win32con.WM_PASTE, 0, 0)
+            
+            # Note: SendMessage return value doesn't reliably indicate success for WM_PASTE
+            # We'll assume success if no exception was thrown
+            self.logger.info("Auto-paste command sent successfully")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to auto-paste text: {e}")
+            return False
+    
+    def copy_and_paste(self, text: str, show_notification: bool = True) -> bool:
+        """
+        Copy text to clipboard and automatically paste it using Windows API
+        
+        Parameters:
+        - text: Text to copy and paste
+        - show_notification: Whether to print status messages
+        
+        Returns:
+        - True if both copy and paste succeeded, False otherwise
+        
+        This is the main method for auto-paste functionality.
+        """
+        if not text:
+            if show_notification:
+                print("No text to copy and paste!")
+            return False
+        
+        # First attempt auto-paste
+        success = self.auto_paste_text(text)
+        
+        if success and show_notification:
+            display_text = text if len(text) <= 100 else text[:97] + "..."
+            print(f"✓ Auto-pasted: '{display_text}'")
+            print("Text has been inserted directly into the active application!")
+        elif not success:
+            if show_notification:
+                print("❌ Auto-paste failed, text remains in clipboard for manual paste")
+            # Text is already in clipboard from auto_paste_text attempt
+        
+        return success
+    
     def get_clipboard_info(self) -> dict:
         """
         Get information about current clipboard state (for debugging)
@@ -158,14 +268,31 @@ class ClipboardManager:
         """
         try:
             content = pyperclip.paste()
-            return {
+            info = {
                 "has_content": bool(content),
                 "content_length": len(content) if content else 0,
-                "preview": content[:50] + "..." if content and len(content) > 50 else content
+                "preview": content[:50] + "..." if content and len(content) > 50 else content,
+                "windows_api_available": WINDOWS_API_AVAILABLE
             }
+            
+            # Add active window info if Windows API is available
+            if WINDOWS_API_AVAILABLE:
+                hwnd = self.get_active_window_handle()
+                if hwnd:
+                    try:
+                        window_title = win32gui.GetWindowText(hwnd)
+                        info["active_window"] = {
+                            "handle": hwnd,
+                            "title": window_title
+                        }
+                    except:
+                        info["active_window"] = {"handle": hwnd, "title": "Unknown"}
+            
+            return info
         except Exception as e:
             return {
                 "has_content": False,
                 "content_length": 0,
-                "error": str(e)
+                "error": str(e),
+                "windows_api_available": WINDOWS_API_AVAILABLE
             }

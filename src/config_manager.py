@@ -187,6 +187,11 @@ class ConfigManager:
         if self.config['clipboard']['text_formatting'] not in valid_formatting:
             self.logger.warning(f"Invalid text formatting '{self.config['clipboard']['text_formatting']}', using 'none'")
             self.config['clipboard']['text_formatting'] = 'none'
+        
+        # Validate auto_paste setting
+        if not isinstance(self.config['clipboard']['auto_paste'], bool):
+            self.logger.warning(f"Invalid auto_paste value '{self.config['clipboard']['auto_paste']}', using False")
+            self.config['clipboard']['auto_paste'] = False
     
     # Getter methods for easy access to configuration sections
     

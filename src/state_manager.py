@@ -23,7 +23,7 @@ class StateManager:
     """
     
     def __init__(self, audio_recorder: AudioRecorder, whisper_engine: WhisperEngine, 
-                 clipboard_manager: ClipboardManager):
+                 clipboard_manager: ClipboardManager, clipboard_config: dict):
         """
         Initialize the state manager with all our components
         
@@ -31,6 +31,7 @@ class StateManager:
         - audio_recorder: The AudioRecorder instance for capturing audio
         - whisper_engine: The WhisperEngine instance for transcription
         - clipboard_manager: The ClipboardManager instance for clipboard operations
+        - clipboard_config: Configuration settings for clipboard behavior
         
         For beginners: We pass in all the other components so this class can 
         control them and make them work together.
@@ -38,6 +39,7 @@ class StateManager:
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
         self.clipboard_manager = clipboard_manager
+        self.clipboard_config = clipboard_config
         
         # Application state variables
         self.is_processing = False  # Are we currently doing transcription?
@@ -45,6 +47,7 @@ class StateManager:
         self.logger = logging.getLogger(__name__)
         
         self.logger.info("StateManager initialized with all components")
+        self.logger.info(f"Auto-paste enabled: {self.clipboard_config.get('auto_paste', False)}")
     
     def toggle_recording(self):
         """
@@ -126,18 +129,34 @@ class StateManager:
                 self.is_processing = False
                 return
             
-            # Step 3: Copy to clipboard
-            print("📋 Copying to clipboard...")
-            success = self.clipboard_manager.copy_and_notify(transcribed_text)
+            # Step 3: Handle clipboard/paste based on configuration
+            auto_paste_enabled = self.clipboard_config.get('auto_paste', False)
             
-            if success:
-                # Store for future reference
-                self.last_transcription = transcribed_text
-                self.logger.info("Complete workflow successful")
-                print("✅ Ready to paste! Use Ctrl+V in any application.")
+            if auto_paste_enabled:
+                print("🚀 Auto-pasting text...")
+                success = self.clipboard_manager.copy_and_paste(transcribed_text)
+                
+                if success:
+                    # Store for future reference
+                    self.last_transcription = transcribed_text
+                    self.logger.info("Complete workflow with auto-paste successful")
+                else:
+                    # Auto-paste failed, but text is still in clipboard
+                    self.last_transcription = transcribed_text
+                    self.logger.warning("Auto-paste failed, falling back to manual paste")
+                    print("✅ Text copied to clipboard. Use Ctrl+V to paste manually.")
             else:
-                print("❌ Failed to copy to clipboard!")
-                self.logger.error("Failed to copy transcription to clipboard")
+                print("📋 Copying to clipboard...")
+                success = self.clipboard_manager.copy_and_notify(transcribed_text)
+                
+                if success:
+                    # Store for future reference
+                    self.last_transcription = transcribed_text
+                    self.logger.info("Complete workflow successful")
+                    print("✅ Ready to paste! Use Ctrl+V in any application.")
+                else:
+                    print("❌ Failed to copy to clipboard!")
+                    self.logger.error("Failed to copy transcription to clipboard")
             
         except Exception as e:
             self.logger.error(f"Error in recording/processing workflow: {e}")
