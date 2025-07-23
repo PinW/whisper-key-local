@@ -42,7 +42,7 @@ All required Python packages should already be installed:
 3. **Configuration** (Optional):
    - Edit `config.yaml` to customize settings:
      - Change Whisper model size (tiny/base/small)
-     - Modify hotkey combination
+     - Modify hotkey combination (use `python tools/key_helper.py` to find key combinations)
      - Adjust audio settings
      - Configure logging preferences
 
@@ -87,6 +87,20 @@ This project uses a hybrid WSL + Windows approach:
 - Windows Python can access system APIs (microphone, hotkeys, clipboard)
 - Best of both environments
 
+## 🛠️ Configuration Tools
+
+### Key Helper Utility
+Use the key helper to find the right key combination for your hotkey:
+
+```powershell
+python tools/key_helper.py
+```
+
+This interactive tool will:
+- Detect any key combination you press
+- Show you the exact format to use in `config.yaml`
+- Help you avoid conflicts with other applications
+
 ## 🔧 Troubleshooting
 
 ### Common Issues
@@ -94,6 +108,7 @@ This project uses a hybrid WSL + Windows approach:
 **Hotkeys not working globally:**
 - Try running PowerShell as Administrator
 - Check for antivirus blocking global hotkey registration
+- Use `python tools/key_helper.py` to test key detection
 - Test different hotkey combinations in `test_hotkeys.py`
 
 **Microphone not detected:**

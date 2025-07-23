@@ -1,7 +1,5 @@
 # Windows Whisper Speech-to-Text App - Roadmap
 
-## Future User Stories
-
 ### Distribution
 - As a user, I want to download and run a Windows executable without installing Python
 - As a user, I want a simple installer that sets up the app automatically

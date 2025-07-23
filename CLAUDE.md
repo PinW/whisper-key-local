@@ -14,11 +14,8 @@ See `documentation/components.md` for detailed component structure and responsib
 
 ## Configuration
 All settings in `config.yaml`:
-- **Whisper**: model size, language, beam_size
-- **Hotkey**: combination (default: ctrl+shift+space) 
-- **Audio**: sample_rate, channels, max_duration
-- **Logging**: level, file/console output
 
 ## Commands
 - `python main.py` - Run app
 - `python tests/run_component_tests.py` - Test suite
+- `python tools/key_helper.py` - Find key combinations for config
