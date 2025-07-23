@@ -14,7 +14,7 @@ import os
 import time
 import threading
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from hotkey_listener import HotkeyListener
+from src.hotkey_listener import HotkeyListener
 
 class MockStateManager:
     """

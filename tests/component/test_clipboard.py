@@ -12,7 +12,7 @@ in a real application - we want to make sure it can handle text properly.
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from clipboard_manager import ClipboardManager
+from src.clipboard_manager import ClipboardManager
 
 def test_basic_clipboard():
     """

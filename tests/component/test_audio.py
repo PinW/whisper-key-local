@@ -13,7 +13,7 @@ import sys
 import os
 import time
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from audio_recorder import AudioRecorder
+from src.audio_recorder import AudioRecorder
 
 def test_audio_recording():
     """

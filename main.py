@@ -11,11 +11,11 @@ play music itself, but tells all the musicians (our modules) when to start and s
 
 import logging
 import time
-from audio_recorder import AudioRecorder
-from hotkey_listener import HotkeyListener
-from whisper_engine import WhisperEngine
-from clipboard_manager import ClipboardManager
-from state_manager import StateManager
+from src.audio_recorder import AudioRecorder
+from src.hotkey_listener import HotkeyListener
+from src.whisper_engine import WhisperEngine
+from src.clipboard_manager import ClipboardManager
+from src.state_manager import StateManager
 
 def setup_logging():
     """

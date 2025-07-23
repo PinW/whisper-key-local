@@ -14,8 +14,8 @@ import os
 import time
 import numpy as np
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from whisper_engine import WhisperEngine
-from audio_recorder import AudioRecorder
+from src.whisper_engine import WhisperEngine
+from src.audio_recorder import AudioRecorder
 
 def test_whisper_model_loading():
     """
