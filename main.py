@@ -106,7 +106,9 @@ def main():
         
         # Show auto-paste status
         if clipboard_config.get('auto_paste', False):
-            print("🚀 Auto-paste is ENABLED - transcribed text will be pasted automatically")
+            paste_method = clipboard_config.get('paste_method', 'key_simulation')
+            method_name = "key simulation (Ctrl+V)" if paste_method == "key_simulation" else "Windows API"
+            print(f"🚀 Auto-paste is ENABLED using {method_name}")
         else:
             print("📋 Auto-paste is DISABLED - you'll need to paste manually with Ctrl+V")
         

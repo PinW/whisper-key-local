@@ -83,6 +83,12 @@ clipboard:
   # false = only copy to clipboard (paste manually with Ctrl+V)
   auto_paste: true
   
+  # Method for auto-pasting (when auto_paste is true)
+  # Options: "key_simulation", "windows_api"
+  # - key_simulation: Simulates Ctrl+V keypress (recommended - works with most apps)
+  # - windows_api: Direct Windows API paste (faster but less compatible)
+  paste_method: "key_simulation"
+  
   # Add extra formatting to transcribed text
   # Options: "none", "capitalize", "sentence"
   # - none: exact transcription

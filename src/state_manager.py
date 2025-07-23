@@ -134,7 +134,8 @@ class StateManager:
             
             if auto_paste_enabled:
                 print("🚀 Auto-pasting text...")
-                success = self.clipboard_manager.copy_and_paste(transcribed_text)
+                paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
+                success = self.clipboard_manager.copy_and_paste(transcribed_text, paste_method)
                 
                 if success:
                     # Store for future reference

@@ -10,7 +10,7 @@
 ## Backlog
 
 ### Distribution
-- As a user, I want to download and run a Windows executable without installing Python
+- As a user, I want to download and run a Windows executable without installing Python (and dependencies)
 - As a user, I want a simple installer that sets up the app automatically
 
 ### Enhanced Experience  

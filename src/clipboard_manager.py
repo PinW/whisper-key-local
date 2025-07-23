@@ -21,6 +21,15 @@ try:
 except ImportError:
     WINDOWS_API_AVAILABLE = False
 
+try:
+    import pyautogui
+    KEY_SIMULATION_AVAILABLE = True
+    # Configure pyautogui for better performance and safety
+    pyautogui.FAILSAFE = True  # Move mouse to corner to abort
+    pyautogui.PAUSE = 0.1  # Small delay between actions
+except ImportError:
+    KEY_SIMULATION_AVAILABLE = False
+
 class ClipboardManager:
     """
     A class that handles clipboard operations (copy/paste functionality)
@@ -228,35 +237,101 @@ class ClipboardManager:
             self.logger.error(f"Failed to auto-paste text: {e}")
             return False
     
-    def copy_and_paste(self, text: str, show_notification: bool = True) -> bool:
+    def simulate_paste_keypress(self, text: str) -> bool:
         """
-        Copy text to clipboard and automatically paste it using Windows API
+        Automatically paste text using keyboard simulation (Ctrl+V)
+        
+        Parameters:
+        - text: The text to paste
+        
+        Returns:
+        - True if successful, False if failed
+        
+        This method copies text to clipboard and simulates Ctrl+V keypress,
+        which is compatible with most applications.
+        """
+        if not KEY_SIMULATION_AVAILABLE:
+            self.logger.error("pyautogui not available for key simulation")
+            return False
+            
+        if not text:
+            self.logger.warning("Attempted to paste empty text via key simulation")
+            return False
+        
+        try:
+            # First, copy text to clipboard
+            if not self.copy_text(text):
+                self.logger.error("Failed to copy text to clipboard for key simulation")
+                return False
+            
+            # Small delay to ensure clipboard is ready
+            time.sleep(0.05)
+            
+            # Simulate Ctrl+V keypress
+            self.logger.info("Simulating Ctrl+V keypress")
+            pyautogui.hotkey('ctrl', 'v')
+            
+            self.logger.info("Key simulation paste completed successfully")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to simulate paste keypress: {e}")
+            return False
+    
+    def copy_and_paste(self, text: str, paste_method: str = "key_simulation", show_notification: bool = True) -> bool:
+        """
+        Copy text to clipboard and automatically paste it using specified method
         
         Parameters:
         - text: Text to copy and paste
+        - paste_method: Method to use ("key_simulation" or "windows_api")
         - show_notification: Whether to print status messages
         
         Returns:
         - True if both copy and paste succeeded, False otherwise
         
-        This is the main method for auto-paste functionality.
+        This is the main method for auto-paste functionality with method selection.
         """
         if not text:
             if show_notification:
                 print("No text to copy and paste!")
             return False
         
-        # First attempt auto-paste
-        success = self.auto_paste_text(text)
+        success = False
+        method_used = ""
         
+        # Try the preferred method first
+        if paste_method == "key_simulation":
+            success = self.simulate_paste_keypress(text)
+            method_used = "key simulation"
+            
+            # Fallback to Windows API if key simulation fails
+            if not success and WINDOWS_API_AVAILABLE:
+                self.logger.info("Key simulation failed, trying Windows API fallback")
+                success = self.auto_paste_text(text)
+                method_used = "Windows API (fallback)"
+                
+        elif paste_method == "windows_api":
+            success = self.auto_paste_text(text)
+            method_used = "Windows API"
+            
+            # Fallback to key simulation if Windows API fails
+            if not success and KEY_SIMULATION_AVAILABLE:
+                self.logger.info("Windows API failed, trying key simulation fallback")
+                success = self.simulate_paste_keypress(text)
+                method_used = "key simulation (fallback)"
+        
+        else:
+            self.logger.error(f"Unknown paste method: {paste_method}")
+            return False
+        
+        # Provide user feedback
         if success and show_notification:
             display_text = text if len(text) <= 100 else text[:97] + "..."
-            print(f"✓ Auto-pasted: '{display_text}'")
-            print("Text has been inserted directly into the active application!")
-        elif not success:
-            if show_notification:
-                print("❌ Auto-paste failed, text remains in clipboard for manual paste")
-            # Text is already in clipboard from auto_paste_text attempt
+            print(f"✓ Auto-pasted via {method_used}: '{display_text}'")
+        elif not success and show_notification:
+            print("❌ Auto-paste failed with all methods, text remains in clipboard for manual paste")
+            # Text should still be in clipboard from the copy attempts
         
         return success
     
@@ -272,7 +347,8 @@ class ClipboardManager:
                 "has_content": bool(content),
                 "content_length": len(content) if content else 0,
                 "preview": content[:50] + "..." if content and len(content) > 50 else content,
-                "windows_api_available": WINDOWS_API_AVAILABLE
+                "windows_api_available": WINDOWS_API_AVAILABLE,
+                "key_simulation_available": KEY_SIMULATION_AVAILABLE
             }
             
             # Add active window info if Windows API is available
@@ -294,5 +370,6 @@ class ClipboardManager:
                 "has_content": False,
                 "content_length": 0,
                 "error": str(e),
-                "windows_api_available": WINDOWS_API_AVAILABLE
+                "windows_api_available": WINDOWS_API_AVAILABLE,
+                "key_simulation_available": KEY_SIMULATION_AVAILABLE
             }

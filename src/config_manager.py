@@ -66,6 +66,7 @@ class ConfigManager:
             },
             'clipboard': {
                 'auto_paste': False,
+                'paste_method': 'key_simulation',
                 'text_formatting': 'none'
             },
             'logging': {
@@ -192,6 +193,12 @@ class ConfigManager:
         if not isinstance(self.config['clipboard']['auto_paste'], bool):
             self.logger.warning(f"Invalid auto_paste value '{self.config['clipboard']['auto_paste']}', using False")
             self.config['clipboard']['auto_paste'] = False
+        
+        # Validate paste_method setting
+        valid_paste_methods = ['key_simulation', 'windows_api']
+        if self.config['clipboard']['paste_method'] not in valid_paste_methods:
+            self.logger.warning(f"Invalid paste_method '{self.config['clipboard']['paste_method']}', using 'key_simulation'")
+            self.config['clipboard']['paste_method'] = 'key_simulation'
     
     # Getter methods for easy access to configuration sections
     
