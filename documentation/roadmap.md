@@ -7,7 +7,10 @@
 - Settings
     - Hotkey management
     - Model selection
-    - Copy to clipboard?
+- GUI
+    - Advanced settings
+    - Progress bar for downloading models
+
 
 ## Backlog
 - As a user I want auto-stop recording so I don't need to hit the hotkey again when i'm lazy

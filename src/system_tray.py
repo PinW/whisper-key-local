@@ -223,6 +223,37 @@ class SystemTray:
             except Exception as e:
                 self.logger.error(f"Error reading preserve clipboard setting: {e}")
 
+            # Get current model size for radio buttons
+            current_model = "tiny"
+            try:
+                if self.config_manager:
+                    self.logger.debug("Getting model size from config_manager")
+                    current_model = self.config_manager.get_setting('whisper', 'model_size', 'tiny')
+                    self.logger.debug(f"Current model: {current_model}")
+                else:
+                    self.logger.debug("No config_manager available, using default model")
+            except Exception as e:
+                self.logger.error(f"Error reading model size setting: {e}")
+
+            # Create model selection submenu
+            # Create helper function to dynamically check current model
+            def is_current_model(model_name):
+                if not self.config_manager:
+                    return model_name == "tiny"  # Default fallback
+                try:
+                    current = self.config_manager.get_setting('whisper', 'model_size', 'tiny')
+                    return current == model_name
+                except:
+                    return model_name == "tiny"
+            
+            model_menu_items = [
+                pystray.MenuItem("Tiny (~39MB, fastest)", lambda icon, item: self._select_model("tiny"), radio=True, checked=lambda item: is_current_model("tiny")),
+                pystray.MenuItem("Base (~74MB, balanced)", lambda icon, item: self._select_model("base"), radio=True, checked=lambda item: is_current_model("base")),
+                pystray.MenuItem("Small (~244MB, accurate)", lambda icon, item: self._select_model("small"), radio=True, checked=lambda item: is_current_model("small")),
+                pystray.MenuItem("Medium (~769MB, very accurate)", lambda icon, item: self._select_model("medium"), radio=True, checked=lambda item: is_current_model("medium")),
+                pystray.MenuItem("Large (~1550MB, best accuracy)", lambda icon, item: self._select_model("large"), radio=True, checked=lambda item: is_current_model("large"))
+            ]
+
             # Create menu items
             try:
                 self.logger.debug("Creating menu items...")
@@ -234,6 +265,7 @@ class SystemTray:
                     pystray.MenuItem("Settings", None, enabled=False),
                     pystray.MenuItem("Auto-paste transcriptions", self._toggle_auto_paste, checked=lambda item: auto_paste_enabled),
                     pystray.MenuItem("Preserve Clipboard", self._toggle_preserve_clipboard, checked=lambda item: preserve_clipboard_enabled),
+                    pystray.MenuItem("Model Selection", pystray.Menu(*model_menu_items)),
                     pystray.Menu.SEPARATOR,  # Separator
                     # Dynamic Start/Stop Recording action as primary
                     pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled, default=True),
@@ -327,6 +359,49 @@ class SystemTray:
                 
         except Exception as e:
             self.logger.error(f"Error toggling preserve clipboard setting: {e}")
+
+    def _select_model(self, model_size: str):
+        """
+        Select a new Whisper AI model size from the system tray menu.
+        
+        This method updates the model_size setting and immediately applies the change
+        to the WhisperEngine for real-time effect.
+        
+        Parameters:
+        - model_size: The new model size ("tiny", "base", "small", "medium", "large")
+        """
+        if not self.config_manager:
+            self.logger.warning("Cannot select model: config_manager not available")
+            return
+        
+        try:
+            # Get current model to check if it's actually changing
+            current_model = self.config_manager.get_setting('whisper', 'model_size', 'tiny')
+            
+            if current_model == model_size:
+                self.logger.debug(f"Model already set to {model_size}, no change needed")
+                return
+            
+            self.logger.info(f"Changing Whisper model from {current_model} to {model_size}")
+            
+            # Update the setting (ConfigManager will handle user-friendly logging)
+            self.config_manager.update_user_setting('whisper', 'model_size', model_size)
+            
+            # Apply the change immediately to the WhisperEngine
+            if self.state_manager and hasattr(self.state_manager, 'whisper_engine'):
+                try:
+                    self.logger.debug("Applying model change to WhisperEngine")
+                    self.state_manager.whisper_engine.change_model(model_size)
+                except Exception as engine_error:
+                    self.logger.error(f"Failed to change model in WhisperEngine: {engine_error}")
+                    # Continue anyway - the setting was saved and will apply on next restart
+            
+            # Refresh the menu to show the new radio button selection
+            if self.icon:
+                self.icon.menu = self._create_menu()
+                
+        except Exception as e:
+            self.logger.error(f"Error selecting model {model_size}: {e}")
 
     def _quit_application(self, icon=None, item=None):
         """
