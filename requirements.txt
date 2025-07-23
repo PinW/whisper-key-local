@@ -1,0 +1,15 @@
+# Core dependencies for Windows Whisper Speech-to-Text App
+faster-whisper>=0.10.0
+numpy>=1.24.0
+sounddevice>=0.4.6
+global-hotkeys>=1.0.0
+pyperclip>=1.8.2
+PyYAML>=6.0
+
+# Auto-paste dependencies
+pywin32>=306      # Windows API integration for clipboard/window management
+pyautogui>=0.9.54 # Keyboard simulation for Ctrl+V
+
+# System tray dependencies
+pystray>=0.19.5
+Pillow>=10.0.0

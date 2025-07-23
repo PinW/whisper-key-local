@@ -9,6 +9,7 @@ src/
 ├── clipboard_manager.py   # clipboard operations with auto-paste
 ├── hotkey_listener.py     # global hotkey detection
 ├── config_manager.py      # YAML configuration management
+├── system_tray.py         # system tray icon and menu
 └── state_manager.py       # component coordination
 tests/component/           # Individual component tests
 tools/key_helper.py        # Interactive key configuration utility
@@ -45,9 +46,17 @@ tools/key_helper.py        # Interactive key configuration utility
 - Validate settings for audio, whisper, hotkeys, clipboard, and logging
 - Support for auto-paste and paste method configuration
 
+### system_tray.py
+- Display system tray icon with status indicators
+- Show different icons for idle/recording/processing states
+- Provide context menu for app controls and status
+- Run in separate thread to avoid blocking main application
+- Handle graceful startup/shutdown with fallback support
+
 ### state_manager.py
 - Coordinate workflow between all components
 - Handle recording/processing state transitions
 - Implement auto-paste logic based on configuration
 - Manage error handling and user notifications
 - Process complete recording-to-paste pipeline
+- Update system tray status during state changes

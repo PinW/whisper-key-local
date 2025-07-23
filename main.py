@@ -17,6 +17,7 @@ from src.hotkey_listener import HotkeyListener
 from src.whisper_engine import WhisperEngine
 from src.clipboard_manager import ClipboardManager
 from src.state_manager import StateManager
+from src.system_tray import SystemTray
 
 def setup_logging(config_manager: ConfigManager):
     """
@@ -66,6 +67,7 @@ def main():
         audio_config = config_manager.get_audio_config()
         hotkey_config = config_manager.get_hotkey_config()
         clipboard_config = config_manager.get_clipboard_config()
+        tray_config = config_manager.config.get('system_tray', {})
         
         logger.info("Initializing application components...")
         
@@ -87,12 +89,40 @@ def main():
         
         clipboard_manager = ClipboardManager()
         
+        # Initialize system tray (optional - may not be available)
+        system_tray = None
+        if tray_config.get('enabled', True):  # Default to enabled
+            try:
+                # Create tray with reference to full configuration for hotkey display
+                tray_full_config = {
+                    'hotkey': hotkey_config,
+                    'system_tray': tray_config
+                }
+                system_tray = SystemTray(config=tray_full_config)
+                
+                if system_tray.is_available():
+                    logger.info("System tray initialized successfully")
+                    print("💻 System tray icon will be available")
+                else:
+                    logger.warning("System tray dependencies not available")
+                    print("⚠️  System tray not available (pystray/Pillow not installed)")
+                    system_tray = None
+                    
+            except Exception as e:
+                logger.error(f"Failed to initialize system tray: {e}")
+                print(f"⚠️  System tray initialization failed: {e}")
+                system_tray = None
+        else:
+            logger.info("System tray disabled in configuration")
+            print("📟 System tray disabled in configuration")
+        
         # The state manager coordinates everything
         state_manager = StateManager(
             audio_recorder=audio_recorder,
             whisper_engine=whisper_engine,
             clipboard_manager=clipboard_manager,
-            clipboard_config=clipboard_config
+            clipboard_config=clipboard_config,
+            system_tray=system_tray
         )
         
         # Set up hotkey listener (this detects when you press the recording key)
@@ -100,6 +130,18 @@ def main():
             state_manager=state_manager,
             hotkey=hotkey_config['combination']
         )
+        
+        # Start system tray if available
+        if system_tray:
+            # Set state manager reference for tray to access app status
+            system_tray.state_manager = state_manager
+            tray_started = system_tray.start()
+            if tray_started:
+                logger.info("System tray started successfully")
+                print("🔄 System tray icon is now running")
+            else:
+                logger.warning("Failed to start system tray")
+                print("⚠️  System tray failed to start")
         
         logger.info("All components initialized successfully!")
         print(f"Application ready! Press {hotkey_config['combination'].upper().replace('+', ' + ')} to start recording.")
@@ -129,10 +171,22 @@ def main():
         logger.info("Application shutting down...")
         print("\nShutting down application...")
         
+        # Clean shutdown of state manager (includes system tray)
+        try:
+            state_manager.shutdown()
+        except:
+            pass  # StateManager may not be initialized if error occurred early
+        
     except Exception as e:
         # This catches any unexpected errors
         logger.error(f"Unexpected error: {e}")
         print(f"Error occurred: {e}")
+        
+        # Clean shutdown on error
+        try:
+            state_manager.shutdown()
+        except:
+            pass  # StateManager may not be initialized if error occurred early
 
 if __name__ == "__main__":
     # This line means "only run main() if this file is executed directly"

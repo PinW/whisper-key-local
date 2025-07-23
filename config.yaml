@@ -135,6 +135,22 @@ performance:
   clear_cache: false
 
 # =============================================================================
+# SYSTEM TRAY SETTINGS
+# =============================================================================
+system_tray:
+  # Enable/disable system tray icon
+  # true = show icon in system tray with status and menu
+  # false = run without system tray (console mode only)
+  enabled: true
+  
+  # Tooltip text when hovering over tray icon
+  tooltip: "Whisper Speech-to-Text"
+  
+  # Show desktop notifications for important events
+  # Note: Requires additional setup on some systems
+  notifications: false
+
+# =============================================================================
 # ADVANCED SETTINGS
 # =============================================================================
 advanced:

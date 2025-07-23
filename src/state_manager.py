@@ -14,6 +14,7 @@ from typing import Optional
 from .audio_recorder import AudioRecorder
 from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager
+from .system_tray import SystemTray
 
 class StateManager:
     """
@@ -23,7 +24,8 @@ class StateManager:
     """
     
     def __init__(self, audio_recorder: AudioRecorder, whisper_engine: WhisperEngine, 
-                 clipboard_manager: ClipboardManager, clipboard_config: dict):
+                 clipboard_manager: ClipboardManager, clipboard_config: dict,
+                 system_tray: Optional[SystemTray] = None):
         """
         Initialize the state manager with all our components
         
@@ -32,6 +34,7 @@ class StateManager:
         - whisper_engine: The WhisperEngine instance for transcription
         - clipboard_manager: The ClipboardManager instance for clipboard operations
         - clipboard_config: Configuration settings for clipboard behavior
+        - system_tray: Optional SystemTray instance for status display
         
         For beginners: We pass in all the other components so this class can 
         control them and make them work together.
@@ -40,6 +43,7 @@ class StateManager:
         self.whisper_engine = whisper_engine
         self.clipboard_manager = clipboard_manager
         self.clipboard_config = clipboard_config
+        self.system_tray = system_tray
         
         # Application state variables
         self.is_processing = False  # Are we currently doing transcription?
@@ -48,6 +52,10 @@ class StateManager:
         
         self.logger.info("StateManager initialized with all components")
         self.logger.info(f"Auto-paste enabled: {self.clipboard_config.get('auto_paste', False)}")
+        
+        # Initialize system tray to idle state
+        if self.system_tray:
+            self.system_tray.update_state("idle")
     
     def toggle_recording(self):
         """
@@ -83,11 +91,18 @@ class StateManager:
             print("🎤 Recording started! Speak now...")
             print("Press the hotkey again to stop recording.")
             
+            # Update system tray to show recording state
+            if self.system_tray:
+                self.system_tray.update_state("recording")
+            
             success = self.audio_recorder.start_recording()
             
             if not success:
                 print("❌ Failed to start recording!")
                 self.logger.error("Failed to start audio recording")
+                # Reset tray to idle state on failure
+                if self.system_tray:
+                    self.system_tray.update_state("idle")
             
         except Exception as e:
             self.logger.error(f"Error starting recording: {e}")
@@ -111,12 +126,19 @@ class StateManager:
             self.logger.info("Stopping recording and processing...")
             print("🛑 Recording stopped! Processing audio...")
             
+            # Update system tray to show processing state
+            if self.system_tray:
+                self.system_tray.update_state("processing")
+            
             # Step 1: Get the recorded audio
             audio_data = self.audio_recorder.stop_recording()
             
             if audio_data is None:
                 print("❌ No audio data recorded!")
                 self.is_processing = False
+                # Reset tray to idle state on failure
+                if self.system_tray:
+                    self.system_tray.update_state("idle")
                 return
             
             # Step 2: Transcribe the audio using Whisper AI
@@ -127,6 +149,9 @@ class StateManager:
                 print("❌ No speech detected or transcription failed!")
                 self.logger.warning("Transcription returned empty result")
                 self.is_processing = False
+                # Reset tray to idle state on failure
+                if self.system_tray:
+                    self.system_tray.update_state("idle")
                 return
             
             # Step 3: Handle clipboard/paste based on configuration
@@ -166,6 +191,9 @@ class StateManager:
         finally:
             # Always reset processing flag so we can handle the next recording
             self.is_processing = False
+            # Reset tray to idle state when done
+            if self.system_tray:
+                self.system_tray.update_state("idle")
     
     def get_application_status(self) -> dict:
         """
@@ -173,13 +201,19 @@ class StateManager:
         
         Returns a dictionary with status information about all parts of our app.
         """
-        return {
+        status = {
             "recording": self.audio_recorder.get_recording_status(),
             "processing": self.is_processing,
             "last_transcription": self.last_transcription,
             "whisper_model_info": self.whisper_engine.get_model_info(),
             "clipboard_info": self.clipboard_manager.get_clipboard_info()
         }
+        
+        # Add system tray info if available
+        if self.system_tray:
+            status["system_tray"] = self.system_tray.get_status_info()
+        
+        return status
     
     def manual_transcribe_test(self, duration_seconds: int = 5):
         """
@@ -218,6 +252,10 @@ class StateManager:
         # Stop recording if active
         if self.audio_recorder.get_recording_status():
             self.audio_recorder.stop_recording()
+        
+        # Stop system tray if running
+        if self.system_tray:
+            self.system_tray.stop()
         
         # Note: Other components don't need special shutdown procedures
         # but we could add them here if needed
