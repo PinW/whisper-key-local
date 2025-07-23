@@ -35,19 +35,12 @@ pip install faster-whisper sounddevice global-hotkeys pyperclip pyyaml pywin32 p
 
 ### Running the App
 
-1. **Test Components First** (Recommended for learning):
-   ```powershell
-   cd \\wsl$\Ubuntu\home\pin\whisper-key-local
-   python tests/run_component_tests.py
-   ```
-   This runs individual tests for each component so you understand how they work.
-
-2. **Run the Full Application**:
+1. **Run the Full Application**:
    ```powershell
    python main.py
    ```
 
-3. **Configuration** (Optional):
+2. **Configuration** (Optional):
    - Edit `config.yaml` to customize settings:
      - Change Whisper model size (tiny/base/small)
      - Modify hotkey combination (use `python tools/key_helper.py` to find key combinations)
@@ -57,46 +50,12 @@ pip install faster-whisper sounddevice global-hotkeys pyperclip pyyaml pywin32 p
      - Adjust audio settings
      - Configure logging preferences
 
-4. **Use the App**:
+3. **Use the App**:
    - Press your configured hotkey (default: `Ctrl+Shift+Space`) to start recording
    - Speak clearly into your microphone  
    - Press the hotkey again to stop recording
    - The transcribed text is automatically pasted into the active application
    - If auto-paste is disabled, text is copied to clipboard for manual pasting with `Ctrl+V`
-
-## 📚 Learning Guide
-
-This project is designed for learning. Each component is explained in detail:
-
-### Individual Component Tests
-Run these to understand how each part works:
-
-```powershell
-python tests/component/test_clipboard.py    # Learn clipboard operations
-python tests/component/test_audio.py        # Learn audio recording
-python tests/component/test_whisper.py      # Learn AI transcription  
-python tests/component/test_hotkeys.py      # Learn global hotkeys
-```
-
-### Code Architecture
-- `main.py` - Application entry point and coordinator
-- `src/audio_recorder.py` - Microphone recording with sounddevice
-- `src/whisper_engine.py` - AI transcription with faster-whisper
-- `src/hotkey_listener.py` - Global hotkey detection
-- `src/clipboard_manager.py` - Clipboard copy/paste operations
-- `src/state_manager.py` - Coordinates all components
-
-## 🛠️ Development Setup
-
-This project uses a hybrid WSL + Windows approach:
-- **Development**: Files are edited in WSL
-- **Execution**: Python runs on Windows (for system API access)
-- **Execution Path**: Windows PowerShell navigates to WSL directory
-
-### Why This Approach?
-- WSL provides better development tools and file management
-- Windows Python can access system APIs (microphone, hotkeys, clipboard)
-- Best of both environments
 
 ## 🛠️ Configuration Tools
 
@@ -139,54 +98,10 @@ This interactive tool will:
   - `paste_method: "windows_api"` (faster but less compatible)
 - If both methods fail, set `auto_paste: false` to use manual clipboard pasting
 
-**Import errors:**
-- Ensure you're running Python from Windows, not WSL
-- Verify all packages are installed in Windows Python environment
-
-### Getting Help
+### Testing Tools
 1. Run `python tests/run_component_tests.py` to identify which component is failing
 2. Check the log file `whisper_app.log` for detailed error messages
 3. Test individual components with their respective test scripts
-
-## 🎓 Learning Objectives
-
-By studying this project, you'll learn:
-
-1. **Python Application Architecture**
-   - Modular design with separate responsibilities
-   - Class-based programming
-   - Error handling and logging
-
-2. **Audio Processing**
-   - Recording audio from microphone
-   - Working with numpy arrays for audio data
-   - Sample rates and audio formats
-
-3. **AI Integration**
-   - Using pre-trained AI models locally
-   - Speech-to-text transcription
-   - Model management and optimization
-
-4. **System Integration**
-   - Global hotkeys across applications
-   - Clipboard operations
-   - Background service patterns
-
-5. **Threading and Concurrency**
-   - Background audio recording
-   - Non-blocking user interfaces
-   - Coordinating multiple components
-
-## 📈 Next Steps
-
-After mastering the basics, consider these enhancements:
-
-- **GUI Interface**: Add a system tray icon for visual feedback
-- **Model Selection**: Allow switching between tiny/base/small models
-- **Custom Hotkeys**: Add hotkey customization in settings
-- **Language Support**: Add multi-language transcription
-- **Voice Activity Detection**: Automatically start/stop on speech
-- **Transcription History**: Save and search previous transcriptions
 
 ## 🔒 Privacy & Security
 
