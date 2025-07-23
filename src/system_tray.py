@@ -30,6 +30,7 @@ except ImportError:
 # Type checking imports (won't cause circular imports)
 if TYPE_CHECKING:
     from .state_manager import StateManager
+    from .config_manager import ConfigManager
 
 class SystemTray:
     """
@@ -41,20 +42,30 @@ class SystemTray:
     - Running in a separate thread to avoid blocking the main app
     """
     
-    def __init__(self, state_manager: Optional['StateManager'] = None, config: dict = None):
+    def __init__(self, state_manager: Optional['StateManager'] = None, config: dict = None, 
+                 config_manager: Optional['ConfigManager'] = None):
         """
         Initialize the system tray manager
         
         Parameters:
         - state_manager: Reference to the main StateManager for status updates
         - config: Configuration dictionary for tray settings
+        - config_manager: Reference to ConfigManager for reading/writing settings
         
         For beginners: We pass in the state_manager so this tray can know what 
-        the app is currently doing and show the right icon.
+        the app is currently doing and show the right icon. We also pass the
+        config_manager so we can read and change user settings from the menu.
         """
         self.state_manager = state_manager
         self.config = config or {}
+        self.config_manager = config_manager
         self.logger = logging.getLogger(__name__)
+        
+        # Log initialization parameters for debugging
+        self.logger.debug(f"SystemTray.__init__ called with:")
+        self.logger.debug(f"  state_manager: {type(state_manager).__name__ if state_manager else 'None'}")
+        self.logger.debug(f"  config keys: {list(self.config.keys()) if self.config else 'None'}")
+        self.logger.debug(f"  config_manager: {type(config_manager).__name__ if config_manager else 'None'}")
         
         # Tray state
         self.icon = None
@@ -65,12 +76,21 @@ class SystemTray:
         # Check if system tray is available
         if not TRAY_AVAILABLE:
             self.logger.warning("System tray not available - pystray or Pillow not installed")
+            self.logger.debug(f"TRAY_AVAILABLE = {TRAY_AVAILABLE}, pystray = {pystray}, Image = {Image}")
             return
         
-        # Load tray icons
-        self._load_icons()
+        self.logger.debug("System tray dependencies are available")
         
-        self.logger.info("SystemTray initialized")
+        # Load tray icons
+        try:
+            self.logger.debug("Loading tray icons...")
+            self._load_icons()
+            self.logger.debug(f"Loaded {len(self.icons)} icons: {list(self.icons.keys())}")
+        except Exception as e:
+            self.logger.error(f"Failed to load tray icons: {e}")
+            raise
+        
+        self.logger.info("SystemTray initialized successfully")
     
     def _load_icons(self):
         """
@@ -133,48 +153,96 @@ class SystemTray:
         """
         Create the context menu that appears when you right-click the tray icon
         """
-        # Get current hotkey from config for display
-        hotkey_text = "Unknown"
-        if self.state_manager:
+        try:
+            self.logger.debug("Creating tray menu...")
+            
+            # Get current hotkey from config for display
+            hotkey_text = "Unknown"
             try:
-                # Try to get hotkey info from state manager or config
-                hotkey_text = self.config.get('hotkey', {}).get('combination', 'ctrl+`')
-            except:
-                pass
-
-        # Determine current state for menu logic
-        is_processing = False
-        is_recording = False
-        if self.state_manager:
-            try:
-                status = self.state_manager.get_application_status()
-                is_processing = status.get('processing', False)
-                is_recording = status.get('recording', False)
+                if self.state_manager:
+                    self.logger.debug("Getting hotkey from state_manager config")
+                    hotkey_text = self.config.get('hotkey', {}).get('combination', 'ctrl+`')
+                else:
+                    self.logger.debug("No state_manager available, using default hotkey")
+                    hotkey_text = self.config.get('hotkey', {}).get('combination', 'ctrl+`')
+                
+                self.logger.debug(f"Hotkey text: {hotkey_text}")
             except Exception as e:
-                self.logger.error(f"Error getting state for tray menu: {e}")
+                self.logger.error(f"Error getting hotkey text: {e}")
+                hotkey_text = "ctrl+`"
 
-        # Dynamic action label and enabled state
-        if is_processing:
-            action_label = "Processing..."
-            action_enabled = False
-        elif is_recording:
-            action_label = "Stop Recording"
-            action_enabled = True
-        else:
-            action_label = "Start Recording"
-            action_enabled = True
+            # Determine current state for menu logic
+            is_processing = False
+            is_recording = False
+            try:
+                if self.state_manager:
+                    self.logger.debug("Getting application status from state_manager")
+                    status = self.state_manager.get_application_status()
+                    is_processing = status.get('processing', False)
+                    is_recording = status.get('recording', False)
+                    self.logger.debug(f"App status - processing: {is_processing}, recording: {is_recording}")
+                else:
+                    self.logger.debug("No state_manager available, using default states")
+            except Exception as e:
+                self.logger.error(f"Error getting application status: {e}")
 
-        menu_items = [
-            # Title & Hotkey display
-            pystray.MenuItem(f"Whisper Key: {hotkey_text.upper()}", None, enabled=False),
-            pystray.Menu.SEPARATOR,  # Separator
-            # Dynamic Start/Stop Recording action as primary
-            pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled, default=True),
-            pystray.Menu.SEPARATOR,  # Separator
-            # Action items
-            pystray.MenuItem("Exit", self._quit_application)
-        ]
-        return pystray.Menu(*menu_items)
+            # Dynamic action label and enabled state
+            if is_processing:
+                action_label = "Processing..."
+                action_enabled = False
+            elif is_recording:
+                action_label = "Stop Recording"
+                action_enabled = True
+            else:
+                action_label = "Start Recording"
+                action_enabled = True
+            
+            self.logger.debug(f"Action label: '{action_label}', enabled: {action_enabled}")
+
+            # Get auto-paste setting for checkmark display
+            auto_paste_enabled = False
+            try:
+                if self.config_manager:
+                    self.logger.debug("Getting auto-paste setting from config_manager")
+                    auto_paste_enabled = self.config_manager.get_setting('clipboard', 'auto_paste', False)
+                    self.logger.debug(f"Auto-paste enabled: {auto_paste_enabled}")
+                else:
+                    self.logger.debug("No config_manager available, auto-paste disabled")
+            except Exception as e:
+                self.logger.error(f"Error reading auto-paste setting: {e}")
+
+            # Create menu items
+            try:
+                self.logger.debug("Creating menu items...")
+                menu_items = [
+                    # Title & Hotkey display
+                    pystray.MenuItem(f"Whisper Key: {hotkey_text.upper()}", None, enabled=False),
+                    pystray.Menu.SEPARATOR,  # Separator
+                    # Dynamic Start/Stop Recording action as primary
+                    pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled, default=True),
+                    pystray.Menu.SEPARATOR,  # Separator
+                    # Settings
+                    pystray.MenuItem("Auto-paste transcriptions", self._toggle_auto_paste, checked=lambda item: auto_paste_enabled),
+                    pystray.Menu.SEPARATOR,  # Separator
+                    # Action items
+                    pystray.MenuItem("Exit", self._quit_application)
+                ]
+                self.logger.debug(f"Created {len(menu_items)} menu items")
+                
+                # Create the menu
+                menu = pystray.Menu(*menu_items)
+                self.logger.debug("pystray.Menu created successfully")
+                return menu
+                
+            except Exception as e:
+                self.logger.error(f"Error creating menu items: {e}")
+                raise
+                
+        except Exception as e:
+            self.logger.error(f"Error in _create_menu: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+            raise
 
     def _tray_toggle_recording(self, icon=None, item=None):
         """
@@ -185,6 +253,35 @@ class SystemTray:
                 self.state_manager.toggle_recording()
             except Exception as e:
                 self.logger.error(f"Error toggling recording from tray: {e}")
+
+    def _toggle_auto_paste(self, icon=None, item=None):
+        """
+        Called when the Auto-paste transcriptions menu item is clicked.
+        
+        This method toggles the auto-paste setting and saves it to user settings.
+        """
+        if not self.config_manager:
+            self.logger.warning("Cannot toggle auto-paste: config_manager not available")
+            return
+        
+        try:
+            # Get current setting
+            current_value = self.config_manager.get_setting('clipboard', 'auto_paste', False)
+            new_value = not current_value
+            
+            # Update the setting (ConfigManager will handle user-friendly logging)
+            self.config_manager.update_user_setting('clipboard', 'auto_paste', new_value)
+            
+            # Update the state manager's clipboard config so changes take effect immediately
+            if self.state_manager:
+                self.state_manager.clipboard_config['auto_paste'] = new_value
+            
+            # Refresh the menu to show the new checkmark state
+            if self.icon:
+                self.icon.menu = self._create_menu()
+                
+        except Exception as e:
+            self.logger.error(f"Error toggling auto-paste setting: {e}")
 
     def _quit_application(self, icon=None, item=None):
         """
@@ -236,8 +333,11 @@ class SystemTray:
         
         This method starts the tray functionality without blocking the main application.
         """
+        self.logger.debug("SystemTray.start() called")
+        
         if not TRAY_AVAILABLE:
             self.logger.warning("Cannot start system tray - dependencies not available")
+            self.logger.debug(f"TRAY_AVAILABLE = {TRAY_AVAILABLE}")
             return False
         
         if self.is_running:
@@ -245,17 +345,51 @@ class SystemTray:
             return True
         
         try:
+            # Validate icons are loaded
+            if not hasattr(self, 'icons') or not self.icons:
+                self.logger.error("No icons loaded - cannot create tray icon")
+                return False
+            
+            self.logger.debug(f"Available icons: {list(self.icons.keys())}")
+            idle_icon = self.icons.get("idle")
+            if idle_icon is None:
+                self.logger.error("Idle icon not found in loaded icons")
+                return False
+            
+            self.logger.debug(f"Using idle icon: {type(idle_icon)}")
+            
+            # Create menu first (separate from icon creation for better error isolation)
+            try:
+                self.logger.debug("Creating tray menu...")
+                menu = self._create_menu()
+                self.logger.debug("Tray menu created successfully")
+            except Exception as menu_error:
+                self.logger.error(f"Failed to create tray menu: {menu_error}")
+                raise
+            
             # Create the tray icon
-            self.icon = pystray.Icon(
-                name="whisper-key",
-                icon=self.icons.get("idle"),
-                title="Whisper Key",
-                menu=self._create_menu()
-            )
+            try:
+                self.logger.debug("Creating pystray.Icon...")
+                self.icon = pystray.Icon(
+                    name="whisper-key",
+                    icon=idle_icon,
+                    title="Whisper Key",
+                    menu=menu
+                )
+                self.logger.debug("pystray.Icon created successfully")
+            except Exception as icon_error:
+                self.logger.error(f"Failed to create pystray.Icon: {icon_error}")
+                raise
             
             # Start the tray icon in a separate thread
-            self.thread = threading.Thread(target=self._run_tray, daemon=True)
-            self.thread.start()
+            try:
+                self.logger.debug("Starting tray thread...")
+                self.thread = threading.Thread(target=self._run_tray, daemon=True)
+                self.thread.start()
+                self.logger.debug("Tray thread started successfully")
+            except Exception as thread_error:
+                self.logger.error(f"Failed to start tray thread: {thread_error}")
+                raise
             
             self.is_running = True
             self.logger.info("System tray started successfully")
@@ -263,6 +397,8 @@ class SystemTray:
             
         except Exception as e:
             self.logger.error(f"Failed to start system tray: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return False
     
     def _run_tray(self):

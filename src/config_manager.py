@@ -12,6 +12,7 @@ configuration file and provides all the settings to other parts of the program.
 import os
 import logging
 import yaml
+import shutil
 from typing import Dict, Any, Optional
 from pathlib import Path
 
@@ -23,16 +24,27 @@ class ConfigManager:
     with proper validation and fallback defaults.
     """
     
-    def __init__(self, config_path: str = "config.yaml"):
+    def __init__(self, config_path: str = "config.yaml", use_user_settings: bool = True):
         """
         Initialize the configuration manager
         
         Parameters:
-        - config_path: Path to the YAML configuration file
+        - config_path: Path to the default YAML configuration file
+        - use_user_settings: Whether to use user-specific settings from AppData
         """
-        self.config_path = config_path
+        self.default_config_path = config_path
+        self.use_user_settings = use_user_settings
         self.config = {}
         self.logger = logging.getLogger(__name__)
+        
+        # Determine actual config path to use
+        if use_user_settings:
+            self.user_settings_path = self._get_user_settings_path()
+            self.config_path = self.user_settings_path
+            # Create user settings if they don't exist
+            self._ensure_user_settings_exist()
+        else:
+            self.config_path = config_path
         
         # Load the configuration
         self._load_config()
@@ -41,6 +53,56 @@ class ConfigManager:
         self._validate_config()
         
         self.logger.info("Configuration loaded successfully")
+    
+    def _get_user_settings_path(self) -> str:
+        r"""
+        Get the path to user settings file in Windows AppData
+        
+        Returns the path to user_settings.yaml in %APPDATA%\whisperkey\
+        """
+        # Get Windows AppData path
+        appdata = os.getenv('APPDATA')
+        if not appdata:
+            # Fallback for non-Windows systems or if APPDATA not set
+            home = os.path.expanduser('~')
+            appdata = os.path.join(home, 'AppData', 'Roaming')
+        
+        # Create whisperkey directory path
+        whisperkey_dir = os.path.join(appdata, 'whisperkey')
+        user_settings_file = os.path.join(whisperkey_dir, 'user_settings.yaml')
+        
+        return user_settings_file
+    
+    def _ensure_user_settings_exist(self):
+        """
+        Ensure user settings directory and file exist
+        
+        Creates the directory and copies default config if user_settings.yaml doesn't exist
+        """
+        user_settings_dir = os.path.dirname(self.user_settings_path)
+        
+        # Create directory if it doesn't exist
+        if not os.path.exists(user_settings_dir):
+            try:
+                os.makedirs(user_settings_dir, exist_ok=True)
+                self.logger.info(f"Created user settings directory: {user_settings_dir}")
+            except Exception as e:
+                self.logger.error(f"Failed to create user settings directory: {e}")
+                raise
+        
+        # Copy default config if user settings don't exist
+        if not os.path.exists(self.user_settings_path):
+            if os.path.exists(self.default_config_path):
+                try:
+                    shutil.copy2(self.default_config_path, self.user_settings_path)
+                    self.logger.info(f"Created initial user settings from {self.default_config_path}")
+                except Exception as e:
+                    self.logger.error(f"Failed to create initial user settings: {e}")
+                    raise
+            else:
+                # Create empty user settings with defaults if no config.yaml exists
+                self.logger.warning(f"Default config {self.default_config_path} not found, creating user settings with defaults")
+                self._save_config_to_file(self.user_settings_path)
     
     def _load_config(self):
         """
@@ -85,6 +147,11 @@ class ConfigManager:
             'performance': {
                 'cpu_threads': 0,
                 'clear_cache': False
+            },
+            'system_tray': {
+                'enabled': True,
+                'tooltip': 'Whisper Key',
+                'notifications': False
             },
             'advanced': {
                 'vad': {
@@ -249,6 +316,18 @@ class ConfigManager:
             self.logger.warning(f"Setting '{section}.{key}' not found, using default: {default}")
             return default
     
+    def _save_config_to_file(self, file_path: str):
+        """
+        Helper method to save configuration to a specific file
+        """
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                yaml.dump(self.config, f, default_flow_style=False, indent=2)
+            self.logger.info(f"Configuration saved to {file_path}")
+        except Exception as e:
+            self.logger.error(f"Error saving configuration to {file_path}: {e}")
+            raise
+    
     def save_config(self, output_path: Optional[str] = None):
         """
         Save current configuration to YAML file
@@ -256,14 +335,159 @@ class ConfigManager:
         This can be useful for creating a config file with current settings.
         """
         output_file = output_path or self.config_path
+        self._save_config_to_file(output_file)
+    
+    def save_user_settings(self):
+        """
+        Save current configuration to user settings file
+        
+        Only works if user settings are enabled
+        """
+        if not self.use_user_settings:
+            self.logger.warning("User settings not enabled, cannot save user settings")
+            return
+        
+        self._save_config_to_file(self.user_settings_path)
+    
+    def _get_setting_display_info(self, section: str, key: str, value: Any) -> dict:
+        """
+        Get display information for a setting change (emoji, description, etc.)
+        
+        This centralizes the mapping of settings to user-friendly descriptions.
+        """
+        # Setting display mappings - add new settings here as needed
+        setting_info = {
+            'clipboard': {
+                'auto_paste': {
+                    'emoji': '📋',
+                    'ascii': '[Clipboard]',
+                    'name': 'Auto-paste',
+                    'true_desc': 'enabled',
+                    'false_desc': 'disabled'
+                }
+            },
+            'whisper': {
+                'model_size': {
+                    'emoji': '🧠',
+                    'ascii': '[AI]',
+                    'name': 'AI Model',
+                    'format': 'value'  # Just show the value
+                }
+            },
+            'hotkey': {
+                'combination': {
+                    'emoji': '⌨️',
+                    'ascii': '[Hotkey]',
+                    'name': 'Hotkey',
+                    'format': 'value'
+                }
+            },
+            'audio': {
+                'sample_rate': {
+                    'emoji': '🎵',
+                    'ascii': '[Audio]',
+                    'name': 'Audio Quality',
+                    'format': 'value'
+                }
+            }
+        }
+        
+        # Get section info
+        section_info = setting_info.get(section, {})
+        key_info = section_info.get(key, {})
+        
+        # Default fallback
+        if not key_info:
+            return {
+                'emoji': '⚙️',
+                'ascii': '[Setting]',
+                'name': f'{section}.{key}',
+                'description': str(value)
+            }
+        
+        # Handle boolean settings
+        if isinstance(value, bool):
+            if 'true_desc' in key_info and 'false_desc' in key_info:
+                description = key_info['true_desc'] if value else key_info['false_desc']
+            else:
+                description = 'enabled' if value else 'disabled'
+        # Handle other value types
+        else:
+            if key_info.get('format') == 'value':
+                description = str(value)
+            else:
+                description = str(value)
+        
+        return {
+            'emoji': key_info.get('emoji', '⚙️'),
+            'ascii': key_info.get('ascii', '[Setting]'),
+            'name': key_info.get('name', key),
+            'description': description
+        }
+
+    def update_user_setting(self, section: str, key: str, value: Any):
+        """
+        Update a specific user setting and save to file
+        
+        Parameters:
+        - section: Configuration section (e.g., 'whisper', 'hotkey')
+        - key: Setting key within the section
+        - value: New value for the setting
+        """
+        if not self.use_user_settings:
+            self.logger.warning("User settings not enabled, cannot update user setting")
+            return
         
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
-                yaml.dump(self.config, f, default_flow_style=False, indent=2)
-            self.logger.info(f"Configuration saved to {output_file}")
+            # Store old value for comparison
+            old_value = None
+            if section in self.config and key in self.config[section]:
+                old_value = self.config[section][key]
+            
+            # Update the setting
+            if section not in self.config:
+                self.config[section] = {}
+            
+            self.config[section][key] = value
+            
+            # Get display information for this setting
+            display_info = self._get_setting_display_info(section, key, value)
+            
+            # Get display components
+            emoji = display_info['emoji']
+            ascii_prefix = display_info['ascii']
+            name = display_info['name']
+            description = display_info['description']
+            
+            # Create user-friendly messages
+            if old_value != value:  # Only log if value actually changed
+                # Use ASCII version for logging (avoids Unicode encoding errors on Windows)
+                log_message = f"{ascii_prefix} {name} {description}"
+                self.logger.info(log_message)
+                
+                # Use emoji version for console output (usually works fine)
+                console_message = f"{emoji} {name} {description}"
+                print(console_message)
+            
+            # Technical log for debugging
+            self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
+            
+            # Save to user settings file
+            self.save_user_settings()
+            
         except Exception as e:
-            self.logger.error(f"Error saving configuration: {e}")
+            self.logger.error(f"Error updating user setting {section}.{key}: {e}")
             raise
+    
+    def get_user_settings_path(self) -> Optional[str]:
+        """
+        Get the path to the user settings file
+        
+        Returns None if user settings are not enabled
+        """
+        if self.use_user_settings:
+            return self.user_settings_path
+        return None
     
     def reload_config(self):
         """

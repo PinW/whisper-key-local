@@ -15,6 +15,7 @@ from .audio_recorder import AudioRecorder
 from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
+from .config_manager import ConfigManager
 
 class StateManager:
     """
@@ -25,7 +26,7 @@ class StateManager:
     
     def __init__(self, audio_recorder: AudioRecorder, whisper_engine: WhisperEngine, 
                  clipboard_manager: ClipboardManager, clipboard_config: dict,
-                 system_tray: Optional[SystemTray] = None):
+                 system_tray: Optional[SystemTray] = None, config_manager: Optional[ConfigManager] = None):
         """
         Initialize the state manager with all our components
         
@@ -35,6 +36,7 @@ class StateManager:
         - clipboard_manager: The ClipboardManager instance for clipboard operations
         - clipboard_config: Configuration settings for clipboard behavior
         - system_tray: Optional SystemTray instance for status display
+        - config_manager: Optional ConfigManager instance for settings management
         
         For beginners: We pass in all the other components so this class can 
         control them and make them work together.
@@ -44,6 +46,7 @@ class StateManager:
         self.clipboard_manager = clipboard_manager
         self.clipboard_config = clipboard_config
         self.system_tray = system_tray
+        self.config_manager = config_manager
         
         # Application state variables
         self.is_processing = False  # Are we currently doing transcription?

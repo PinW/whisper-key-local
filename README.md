@@ -9,7 +9,6 @@ One global hotkey to start/stop recording, transcribe locally, and automatically
 - **Automatic Pasting**: Transcribed text inserted where your cursor is as soon as it is processed
 - **Automatic Clipboard**: Transcribed text is automatically copied for pasting with `Ctrl+V`
 - **Privacy-First**: All processing happens locally - your voice data never leaves your computer
-- **Beginner-Friendly**: Extensively commented code for learning Python and AI concepts
 
 ## 🚀 Quick Start
 
@@ -109,7 +108,3 @@ This interactive tool will:
 - No internet connection required after initial model download
 - No voice data is sent to external servers
 - Transcriptions are only stored in clipboard temporarily
-
----
-
-*This is a learning project designed to teach Python, AI integration, and system programming concepts through a practical, useful application.*

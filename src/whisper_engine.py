@@ -36,7 +36,7 @@ class WhisperEngine:
         - beam_size: Search beam size for transcription (higher = more accurate but slower)
         
         For beginners: 
-        - "tiny" model is ~39MB and fastest (good for learning)
+        - "tiny" model is ~39MB and fastest
         - "base" model is ~74MB and more accurate
         - "small" model is ~244MB and very accurate but slower
         """

@@ -7,6 +7,8 @@
 - Settings
     - Hotkey management
     - Model selection
+    - Auto paste?
+    - Copy to clipboard?
 
 ## Backlog
 - As a user I want auto-stop recording so I don't need to hit the hotkey again when i'm bored

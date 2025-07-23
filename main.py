@@ -51,12 +51,18 @@ def main():
     Main application function that ties everything together
     """
     print("Starting Windows Whisper Speech-to-Text App...")
-    print("This is a learning project - we'll explain each step!")
     
     try:
-        # Load configuration first
+        # Load configuration first (will use user settings from AppData)
         print("Loading configuration...")
         config_manager = ConfigManager()
+        
+        # Show where settings are loaded from
+        if config_manager.use_user_settings:
+            settings_path = config_manager.get_user_settings_path()
+            print(f"📁 Using user settings from: {settings_path}")
+        else:
+            print(f"📁 Using default settings from: {config_manager.config_path}")
         
         # Set up logging based on configuration
         setup_logging(config_manager)
@@ -93,12 +99,20 @@ def main():
         system_tray = None
         if tray_config.get('enabled', True):  # Default to enabled
             try:
+                logger.debug("Initializing system tray...")
+                logger.debug(f"Tray config: {tray_config}")
+                logger.debug(f"Hotkey config: {hotkey_config}")
+                logger.debug(f"Config manager type: {type(config_manager)}")
+                
                 # Create tray with reference to full configuration for hotkey display
                 tray_full_config = {
                     'hotkey': hotkey_config,
                     'system_tray': tray_config
                 }
-                system_tray = SystemTray(config=tray_full_config)
+                logger.debug(f"Creating SystemTray with config: {tray_full_config}")
+                
+                system_tray = SystemTray(state_manager=None, config=tray_full_config, config_manager=config_manager)
+                logger.debug("SystemTray object created")
                 
                 if system_tray.is_available():
                     logger.info("System tray initialized successfully")
@@ -110,6 +124,8 @@ def main():
                     
             except Exception as e:
                 logger.error(f"Failed to initialize system tray: {e}")
+                import traceback
+                logger.error(f"SystemTray initialization traceback: {traceback.format_exc()}")
                 print(f"⚠️  System tray initialization failed: {e}")
                 system_tray = None
         else:
@@ -122,7 +138,8 @@ def main():
             whisper_engine=whisper_engine,
             clipboard_manager=clipboard_manager,
             clipboard_config=clipboard_config,
-            system_tray=system_tray
+            system_tray=system_tray,
+            config_manager=config_manager
         )
         
         # Set up hotkey listener (this detects when you press the recording key)
@@ -133,15 +150,25 @@ def main():
         
         # Start system tray if available
         if system_tray:
-            # Set state manager reference for tray to access app status
-            system_tray.state_manager = state_manager
-            tray_started = system_tray.start()
-            if tray_started:
-                logger.info("System tray started successfully")
-                print("🔄 System tray icon is now running")
-            else:
-                logger.warning("Failed to start system tray")
-                print("⚠️  System tray failed to start")
+            try:
+                logger.debug("Setting state_manager reference on system_tray")
+                # Set state manager reference for tray to access app status
+                system_tray.state_manager = state_manager
+                logger.debug("Starting system tray...")
+                
+                tray_started = system_tray.start()
+                if tray_started:
+                    logger.info("System tray started successfully")
+                    print("🔄 System tray icon is now running")
+                else:
+                    logger.warning("Failed to start system tray")
+                    print("⚠️  System tray failed to start")
+                    
+            except Exception as e:
+                logger.error(f"Exception during system tray start: {e}")
+                import traceback
+                logger.error(f"SystemTray start traceback: {traceback.format_exc()}")
+                print(f"⚠️  System tray start failed with exception: {e}")
         
         logger.info("All components initialized successfully!")
         print(f"Application ready! Press {hotkey_config['combination'].upper().replace('+', ' + ')} to start recording.")
