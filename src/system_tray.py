@@ -148,7 +148,7 @@ class SystemTray:
             # Status display (not clickable)
             pystray.MenuItem(f"Status: {self.current_state.title()}", None, enabled=False),
             pystray.MenuItem(f"Hotkey: {hotkey_text.upper()}", None, enabled=False),
-            pystray.MenuItem("-", None),  # Separator
+            pystray.Menu.SEPARATOR,  # Separator
             
             # Action items
             pystray.MenuItem("Exit", self._quit_application)
