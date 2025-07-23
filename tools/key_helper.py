@@ -65,51 +65,16 @@ class KeyHelper:
             'f5': 'f5', 'f6': 'f6', 'f7': 'f7', 'f8': 'f8',
             'f9': 'f9', 'f10': 'f10', 'f11': 'f11', 'f12': 'f12',
             
-            # Special characters and punctuation
-            'grave': 'grave',
-            'tilde': 'tilde', 
-            '`': 'grave',
-            '~': 'tilde',
-            'minus': 'minus',
-            'underscore': 'underscore',
-            '-': 'minus',
-            '_': 'underscore',
-            'equal': 'equal',
-            'plus': 'plus',
-            '=': 'equal',
-            '+': 'plus',
-            'bracket_left': 'bracketleft',
-            'brace_left': 'braceleft',
-            '[': 'bracketleft',
-            '{': 'braceleft',
-            'bracket_right': 'bracketright',
-            'brace_right': 'braceright',
-            ']': 'bracketright',
-            '}': 'braceright',
-            'backslash': 'backslash',
-            'pipe': 'pipe',
-            '\\': 'backslash',
-            '|': 'pipe',
-            'semicolon': 'semicolon',
-            'colon': 'colon',
-            ';': 'semicolon',
-            ':': 'colon',
-            'quote': 'quote',
-            'doublequote': 'doublequote',
-            "'": 'quote',
-            '"': 'doublequote',
-            'comma': 'comma',
-            'less': 'less',
-            ',': 'comma',
-            '<': 'less',
-            'period': 'period',
-            'greater': 'greater',
-            '.': 'period',
-            '>': 'greater',
-            'slash': 'slash',
-            'question': 'question',
-            '/': 'slash',
-            '?': 'question'
+            # Special characters and punctuation (tested working keys)
+            '`': '`',
+            '-': '-',
+            '[': '[',
+            ']': ']',
+            '\\': '\\',
+            ';': ';',
+            "'": "'",
+            '.': '.',
+            '/': '/'
         }
         
         self.hotkey_bindings = []
@@ -144,18 +109,16 @@ class KeyHelper:
             # Numbers
             '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
             
-            # Special characters and punctuation
-            'grave', 'tilde', '`', '~',  # Tilde/grave accent key
-            'minus', 'underscore', '-', '_',  # Minus/underscore
-            'equal', 'plus', '=', '+',  # Equal/plus
-            'bracket_left', 'brace_left', '[', '{',  # Left brackets
-            'bracket_right', 'brace_right', ']', '}',  # Right brackets
-            'backslash', 'pipe', '\\', '|',  # Backslash/pipe
-            'semicolon', 'colon', ';', ':',  # Semicolon/colon
-            'quote', 'doublequote', "'", '"',  # Quotes
-            'comma', 'less', ',', '<',  # Comma/less than
-            'period', 'greater', '.', '>',  # Period/greater than
-            'slash', 'question', '/', '?',  # Slash/question mark
+            # Special characters and punctuation  
+            '`',  # Grave/backtick key
+            '-',  # Minus/underscore
+            '[',  # Left brackets
+            ']',  # Right brackets
+            '\\', # Backslash/pipe
+            ';',  # Semicolon/colon
+            "'",  # Quotes
+            '.',  # Period/greater than
+            '/',  # Slash/question mark
             
             # Function keys
             'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12',
