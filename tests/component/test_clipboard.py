@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""
+Clipboard Management Test Script
+
+This script tests the clipboard functionality independently.
+Perfect for learning how our ClipboardManager class works!
+
+For beginners: This is like testing a copy-paste function before using it 
+in a real application - we want to make sure it can handle text properly.
+"""
+
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from clipboard_manager import ClipboardManager
+
+def test_basic_clipboard():
+    """
+    Test basic clipboard copy and paste functionality
+    
+    This function demonstrates the core clipboard operations:
+    1. Copy text to clipboard
+    2. Read text back from clipboard
+    3. Verify it matches what we copied
+    """
+    print("=== Basic Clipboard Test ===")
+    print("Testing clipboard copy and paste functionality...")
+    print()
+    
+    try:
+        # Create a ClipboardManager instance
+        print("1. Creating ClipboardManager...")
+        clipboard = ClipboardManager()
+        print("✓ ClipboardManager created successfully!")
+        print()
+        
+        # Test copying some text
+        test_text = "Hello from the Whisper app test! This is a clipboard test."
+        print(f"2. Copying test text: '{test_text}'")
+        
+        success = clipboard.copy_text(test_text)
+        if success:
+            print("✓ Text copied to clipboard successfully!")
+        else:
+            print("❌ Failed to copy text to clipboard!")
+            return
+        
+        # Test reading it back
+        print("\n3. Reading text back from clipboard...")
+        retrieved_text = clipboard.paste_text()
+        
+        if retrieved_text:
+            print(f"✓ Retrieved text: '{retrieved_text}'")
+            
+            # Verify it matches
+            if retrieved_text == test_text:
+                print("✓ Perfect match! Clipboard is working correctly.")
+            else:
+                print("⚠  Text doesn't match exactly:")
+                print(f"   Expected: '{test_text}'")
+                print(f"   Got:      '{retrieved_text}'")
+        else:
+            print("❌ Failed to retrieve text from clipboard!")
+        
+        print()
+        print("=== Basic Clipboard Test Complete ===")
+        
+    except Exception as e:
+        print(f"❌ Error during clipboard test: {e}")
+
+def test_copy_and_notify():
+    """
+    Test the copy_and_notify method (what our main app will use)
+    
+    This demonstrates the user-friendly copy method with notifications.
+    """
+    print("\n=== Copy and Notify Test ===")
+    print("Testing the user-friendly copy method...")
+    print()
+    
+    try:
+        clipboard = ClipboardManager()
+        
+        # Test with normal text
+        print("1. Testing with normal text:")
+        test_text = "This text will be copied with user notification!"
+        success = clipboard.copy_and_notify(test_text)
+        
+        if success:
+            print("   ✓ Copy with notification succeeded!")
+        else:
+            print("   ❌ Copy with notification failed!")
+        
+        # Test with very long text (should be truncated in display)
+        print("\n2. Testing with long text (should truncate display):")
+        long_text = "This is a very long piece of text that should be truncated in the user notification but fully copied to clipboard. " * 3
+        success = clipboard.copy_and_notify(long_text)
+        
+        if success:
+            print("   ✓ Long text copy succeeded!")
+            # Verify full text was actually copied
+            retrieved = clipboard.paste_text()
+            if retrieved == long_text:
+                print("   ✓ Full text was copied correctly (despite truncated display)")
+            else:
+                print("   ⚠  Full text may not have been copied correctly")
+        
+        # Test with empty text
+        print("\n3. Testing with empty text:")
+        success = clipboard.copy_and_notify("")
+        if not success:
+            print("   ✓ Correctly rejected empty text!")
+        else:
+            print("   ⚠  Should have rejected empty text")
+        
+        print()
+        
+    except Exception as e:
+        print(f"❌ Error during copy and notify test: {e}")
+
+def interactive_clipboard_test():
+    """
+    Interactive test where you can type text and see it copied to clipboard
+    
+    This lets you experiment with the clipboard functionality manually.
+    """
+    print("\n=== Interactive Clipboard Test ===")
+    print("Type text to copy to clipboard, or 'quit' to exit.")
+    print("After copying, you can test pasting in another application!")
+    print()
+    
+    try:
+        clipboard = ClipboardManager()
+        
+        while True:
+            text = input("Enter text to copy (or 'quit'): ")
+            
+            if text.lower() == 'quit':
+                print("Goodbye!")
+                break
+            
+            if text.strip():  # Only process non-empty text
+                success = clipboard.copy_and_notify(text)
+                if success:
+                    print("👍 Now try pasting with Ctrl+V in another application!")
+                    
+                    # Show clipboard info
+                    info = clipboard.get_clipboard_info()
+                    print(f"   Clipboard info: {info}")
+                else:
+                    print("❌ Copy failed!")
+            else:
+                print("Please enter some text to copy.")
+            
+            print()  # Empty line for readability
+    
+    except Exception as e:
+        print(f"❌ Error in interactive test: {e}")
+
+def test_clipboard_info():
+    """
+    Test the clipboard information method
+    
+    This shows how we can check clipboard status for debugging.
+    """
+    print("\n=== Clipboard Info Test ===")
+    print("Testing clipboard information functionality...")
+    print()
+    
+    try:
+        clipboard = ClipboardManager()
+        
+        # Get current clipboard info
+        print("1. Current clipboard status:")
+        info = clipboard.get_clipboard_info()
+        print(f"   Has content: {info.get('has_content', 'Unknown')}")
+        print(f"   Content length: {info.get('content_length', 'Unknown')}")
+        if info.get('preview'):
+            print(f"   Preview: '{info['preview']}'")
+        
+        # Copy something and check again
+        print("\n2. After copying test text:")
+        test_text = "Test text for clipboard info demonstration"
+        clipboard.copy_text(test_text)
+        
+        info = clipboard.get_clipboard_info()
+        print(f"   Has content: {info.get('has_content', 'Unknown')}")
+        print(f"   Content length: {info.get('content_length', 'Unknown')}")
+        if info.get('preview'):
+            print(f"   Preview: '{info['preview']}'")
+        
+        print()
+        
+    except Exception as e:
+        print(f"❌ Error during clipboard info test: {e}")
+
+if __name__ == "__main__":
+    """
+    Main execution when script is run directly
+    """
+    print("Windows Whisper App - Clipboard Test")
+    print("=" * 45)
+    
+    # Run all tests
+    test_basic_clipboard()
+    test_copy_and_notify()
+    test_clipboard_info()
+    
+    # Ask if user wants interactive mode
+    print("\nWould you like to try the interactive clipboard test?")
+    response = input("This lets you type text and copy it manually (y/n): ").lower()
+    
+    if response in ['y', 'yes']:
+        interactive_clipboard_test()
+    
+    print("\nClipboard test complete! Next, try running 'python test_whisper.py'")
