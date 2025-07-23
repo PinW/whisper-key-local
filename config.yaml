@@ -144,7 +144,7 @@ system_tray:
   enabled: true
   
   # Tooltip text when hovering over tray icon
-  tooltip: "Whisper Speech-to-Text"
+  tooltip: "Whisper Key"
   
   # Show desktop notifications for important events
   # Note: Requires additional setup on some systems
