@@ -1,6 +1,7 @@
 # Windows Whisper Speech-to-Text App - Roadmap
 
 ## Next
+- Show transcription processing time message above the actual output
 - Start/stop sound
 - Better icons
     - Add them to repo
@@ -11,6 +12,10 @@
     - Advanced settings
         - Preserve clipboard option
     - Progress bar for downloading models
+
+## Performance
+- whisper.cpp (replace faster-whisper) for even better CPU-based STT
+    - add options for English only models (even faster)
 
 
 ## Backlog

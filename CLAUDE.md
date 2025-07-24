@@ -26,4 +26,4 @@ All settings in `config.yaml`:
 ## Development Notes
 - DO NOT TEST (you are in WSL, and the app is run from windows)
 - Ask the user to test for you if needed
-- Don't commit before i test
+- Don't commit before I test
