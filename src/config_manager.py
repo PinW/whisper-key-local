@@ -11,7 +11,7 @@ configuration file and provides all the settings to other parts of the program.
 
 import os
 import logging
-import yaml
+from ruamel.yaml import YAML
 import shutil
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -144,8 +144,9 @@ class ConfigManager:
         # Stage 2: Load user configuration and merge with defaults
         if self.use_user_settings and os.path.exists(self.config_path):
             try:
+                yaml = YAML()
                 with open(self.config_path, 'r', encoding='utf-8') as f:
-                    user_config = yaml.safe_load(f)
+                    user_config = yaml.load(f)
                 
                 if user_config:
                     # Deep merge user config on top of defaults
@@ -156,7 +157,7 @@ class ConfigManager:
                     self.config = default_config
                     self.logger.warning(f"User config file {self.config_path} is empty, using defaults")
                     
-            except yaml.YAMLError as e:
+            except Exception as e:
                 self.logger.error(f"Error parsing user YAML config: {e}")
                 self.logger.warning("Using default configuration")
                 self.config = default_config
@@ -182,8 +183,9 @@ class ConfigManager:
         This ensures config.yaml is the single source of truth for all defaults.
         """
         try:
+            yaml = YAML()
             with open(self.default_config_path, 'r', encoding='utf-8') as f:
-                default_config = yaml.safe_load(f)
+                default_config = yaml.load(f)
             
             if default_config:
                 self.logger.info(f"Loaded default configuration from {self.default_config_path}")
@@ -192,11 +194,11 @@ class ConfigManager:
                 self.logger.error(f"Default config file {self.default_config_path} is empty")
                 raise ValueError("Default configuration is empty")
                 
-        except yaml.YAMLError as e:
-            self.logger.error(f"Error parsing default YAML config: {e}")
-            raise
         except Exception as e:
-            self.logger.error(f"Error loading default config file: {e}")
+            if "YAML" in str(e):
+                self.logger.error(f"Error parsing default YAML config: {e}")
+            else:
+                self.logger.error(f"Error loading default config file: {e}")
             raise
     
     def _validate_config(self):
@@ -288,7 +290,13 @@ class ConfigManager:
     
     def get_whisper_config(self) -> Dict[str, Any]:
         """Get Whisper AI configuration settings"""
-        return self.config['whisper'].copy()
+        whisper_config = self.config['whisper'].copy()
+        
+        # Convert 'auto' language setting to None for whisper system compatibility
+        if whisper_config.get('language') == 'auto':
+            whisper_config['language'] = None
+            
+        return whisper_config
     
     def get_hotkey_config(self) -> Dict[str, Any]:
         """Get hotkey configuration settings"""
@@ -336,10 +344,30 @@ class ConfigManager:
     def _save_config_to_file(self, file_path: str):
         """
         Helper method to save configuration to a specific file
+        Preserves YAML comments and formatting using ruamel.yaml
         """
         try:
+            yaml = YAML()
+            yaml.preserve_quotes = True
+            yaml.indent(mapping=2, sequence=4, offset=2)
+            
+            # Read the original file to preserve structure and comments
+            original_data = None
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    original_data = yaml.load(f)
+            
+            # Update the original data with our current config
+            if original_data is not None:
+                self._update_yaml_data(original_data, self.config)
+                data_to_save = original_data
+            else:
+                data_to_save = self.config
+            
+            # Write back with preserved formatting
             with open(file_path, 'w', encoding='utf-8') as f:
-                yaml.dump(self.config, f, default_flow_style=False, indent=2)
+                yaml.dump(data_to_save, f)
+            
             self.logger.info(f"Configuration saved to {file_path}")
         except Exception as e:
             self.logger.error(f"Error saving configuration to {file_path}: {e}")
@@ -516,3 +544,18 @@ class ConfigManager:
         self._load_config()
         self._validate_config()
         self.logger.info("Configuration reloaded successfully")
+    
+    def _update_yaml_data(self, original_data: Dict[str, Any], new_data: Dict[str, Any]):
+        """
+        Update original YAML data with new values while preserving structure
+        
+        This recursively updates the original data structure with new values,
+        maintaining comments and formatting from the original file.
+        """
+        for key, value in new_data.items():
+            if key in original_data and isinstance(original_data[key], dict) and isinstance(value, dict):
+                # Recursively update nested dictionaries
+                self._update_yaml_data(original_data[key], value)
+            else:
+                # Update with new value
+                original_data[key] = value

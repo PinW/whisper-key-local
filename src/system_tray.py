@@ -236,11 +236,11 @@ class SystemTray:
                     return model_name == "tiny"
             
             model_menu_items = [
-                pystray.MenuItem("Tiny (~39MB, fastest)", lambda icon, item: self._select_model("tiny"), radio=True, checked=lambda item: is_current_model("tiny")),
-                pystray.MenuItem("Base (~74MB, balanced)", lambda icon, item: self._select_model("base"), radio=True, checked=lambda item: is_current_model("base")),
-                pystray.MenuItem("Small (~244MB, accurate)", lambda icon, item: self._select_model("small"), radio=True, checked=lambda item: is_current_model("small")),
-                pystray.MenuItem("Medium (~769MB, very accurate)", lambda icon, item: self._select_model("medium"), radio=True, checked=lambda item: is_current_model("medium")),
-                pystray.MenuItem("Large (~1550MB, best accuracy)", lambda icon, item: self._select_model("large"), radio=True, checked=lambda item: is_current_model("large"))
+                pystray.MenuItem("Tiny (75MB, fastest)", lambda icon, item: self._select_model("tiny"), radio=True, checked=lambda item: is_current_model("tiny")),
+                pystray.MenuItem("Base (142MB, balanced)", lambda icon, item: self._select_model("base"), radio=True, checked=lambda item: is_current_model("base")),
+                pystray.MenuItem("Small (466MB, accurate)", lambda icon, item: self._select_model("small"), radio=True, checked=lambda item: is_current_model("small")),
+                pystray.MenuItem("Medium (1.5GB, very accurate)", lambda icon, item: self._select_model("medium"), radio=True, checked=lambda item: is_current_model("medium")),
+                pystray.MenuItem("Large (2.9GB, best accuracy)", lambda icon, item: self._select_model("large"), radio=True, checked=lambda item: is_current_model("large"))
             ]
 
             # Create menu items
@@ -253,7 +253,7 @@ class SystemTray:
                     # Settings
                     pystray.MenuItem("Settings", None, enabled=False),
                     pystray.MenuItem("Auto-paste transcriptions", self._toggle_auto_paste, checked=lambda item: auto_paste_enabled),
-                    pystray.MenuItem("Model Selection", pystray.Menu(*model_menu_items)),
+                    pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_menu_items)),
                     pystray.Menu.SEPARATOR,  # Separator
                     # Dynamic Start/Stop Recording action as primary
                     pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled, default=True),
