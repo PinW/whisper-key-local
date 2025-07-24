@@ -6,7 +6,7 @@ Local faster-whisper speech-to-text with global hotkey. Uses tiny model by defau
 
 ## Tech Stack
 - **Python** with faster-whisper, sounddevice, global-hotkeys, pyperclip
-- **Default model**: tiny (39MB)
+- **Default model**: tiny (75MB)
 - **Platform**: Windows 10+ (runs on Windows Python, dev in WSL)
 
 ## Roadmap

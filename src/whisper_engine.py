@@ -35,9 +35,9 @@ class WhisperEngine:
         - language: Language code (e.g., "en") or None for auto-detection
         
         For beginners: 
-        - "tiny" model is ~39MB and fastest
-        - "base" model is ~74MB and more accurate
-        - "small" model is ~244MB and very accurate but slower
+        - "tiny" model is ~75MB and fastest
+        - "base" model is ~142MB and more accurate
+        - "small" model is ~466MB and very accurate but slower
         - n_threads replaces device/compute_type - whisper.cpp auto-optimizes for CPU
         """
         self.model_size = model_size

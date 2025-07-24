@@ -9,11 +9,11 @@
 whisper:
   # Model size - affects accuracy vs speed tradeoff
   # Options: "tiny", "base", "small", "medium", "large"
-  # - tiny: ~39MB, fastest, good for most use cases
-  # - base: ~74MB, better accuracy, still fast
-  # - small: ~244MB, high accuracy, slower
-  # - medium: ~769MB, very high accuracy, much slower
-  # - large: ~1550MB, best accuracy, very slow (not recommended for real-time)
+  # - tiny: ~75MB, fastest, good for most use cases
+  # - base: ~142MB, better accuracy, still fast
+  # - small: ~466MB, high accuracy, slower
+  # - medium: ~1.5GB, very high accuracy, much slower
+  # - large: ~2.9GB, best accuracy, very slow (not recommended for real-time)
   # Note: whisper.cpp automatically optimizes for CPU (no device/precision config needed)
   model_size: "tiny"
   

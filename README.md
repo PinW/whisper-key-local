@@ -94,7 +94,7 @@ This interactive tool will:
 - Verify default recording device in Windows sound settings
 
 **Whisper model download slow:**
-- First run downloads the AI model (~39MB for tiny model)
+- First run downloads the AI model (~75MB for tiny model)
 - Subsequent runs are much faster
 - Check internet connection for initial download
 
