@@ -36,9 +36,9 @@ class WhisperEngine:
         - verbose_whisper: Show detailed whisper.cpp C++ library messages during model loading
         
         For beginners: 
-        - "tiny" model is ~75MB and fastest
-        - "base" model is ~142MB and more accurate
-        - "small" model is ~466MB and very accurate but slower
+        - "tiny" model is 75MB and fastest
+        - "base" model is 142MB and more accurate
+        - "small" model is 466MB and very accurate but slower
         - n_threads replaces device/compute_type - whisper.cpp auto-optimizes for CPU
         - verbose_whisper controls technical C++ library output (usually keep False)
         """
