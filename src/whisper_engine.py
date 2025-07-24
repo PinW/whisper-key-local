@@ -64,7 +64,12 @@ class WhisperEngine:
             # Create the Whisper model
             # This is where the AI "brain" gets loaded into memory
             model_params = {
-                'model': self.model_size
+                'model': self.model_size,
+                # Suppress verbose whisper.cpp C++ library output
+                'redirect_whispercpp_logs_to': None,  # Redirect to devnull (suppress)
+                'print_realtime': False,              # Disable real-time printing  
+                'print_progress': False,              # Disable progress printing
+                'print_timestamps': False             # Disable timestamp printing
             }
             # A value of 0 for n_threads can crash the underlying C++ library.
             # By not passing the parameter, the library uses its own safe default.
