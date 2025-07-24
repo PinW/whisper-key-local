@@ -25,7 +25,7 @@ class WhisperEngine:
     """
     
     def __init__(self, model_size: str = "tiny", n_threads: int = 0, 
-                 language: str = None, beam_size: int = 5):
+                 language: str = None):
         """
         Initialize the Whisper transcription engine
         
@@ -33,7 +33,6 @@ class WhisperEngine:
         - model_size: Size of Whisper model ("tiny", "base", "small") - bigger = more accurate but slower
         - n_threads: Number of CPU threads to use (0 = auto-detect, higher = faster on multi-core)
         - language: Language code (e.g., "en") or None for auto-detection
-        - beam_size: Search beam size for transcription (higher = more accurate but slower)
         
         For beginners: 
         - "tiny" model is ~39MB and fastest
@@ -44,7 +43,6 @@ class WhisperEngine:
         self.model_size = model_size
         self.n_threads = n_threads
         self.language = language
-        self.beam_size = beam_size
         self.model = None
         self.logger = logging.getLogger(__name__)
         
@@ -67,7 +65,7 @@ class WhisperEngine:
             # This is where the AI "brain" gets loaded into memory
             self.model = Model(
                 model=self.model_size,
-                n_threads=self.n_threads if self.n_threads > 0 else None
+                n_threads=self.n_threads if self.n_threads > 0 else 0
             )
             
             self.logger.info("Whisper model loaded successfully")
@@ -115,11 +113,9 @@ class WhisperEngine:
             
             # Transcribe the audio
             # This is where we ask the AI: "What words do you hear in this audio?"
-            segments, info = self.model.transcribe(
+            segments = self.model.transcribe(
                 audio_data,
-                beam_size=self.beam_size,  # How many possibilities to consider (configurable)
-                language=self.language,  # Language setting from config (None = auto-detect)
-                condition_on_previous_text=False  # Don't use context from previous transcriptions
+                language=self.language  # Language setting from config (None = auto-detect)
             )
             
             # Collect all the transcribed text segments
@@ -135,11 +131,7 @@ class WhisperEngine:
             end_time = time.time()
             transcription_time = end_time - start_time
             
-            # Log some info about what we transcribed
-            detected_language = info.language
-            confidence = info.language_probability
-            
-            self.logger.info(f"Transcription complete. Language: {detected_language} (confidence: {confidence:.2f}) - Time: {transcription_time:.2f}s")
+            self.logger.info(f"Transcription complete - Time: {transcription_time:.2f}s")
             self.logger.info(f"Transcribed text: '{transcribed_text}'")
             
             if transcribed_text:
@@ -169,7 +161,7 @@ class WhisperEngine:
         try:
             self.logger.info(f"Transcribing file: {audio_file_path}")
             
-            segments, info = self.model.transcribe(audio_file_path)
+            segments = self.model.transcribe(audio_file_path)
             
             transcribed_text = ""
             for segment in segments:
