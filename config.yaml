@@ -22,8 +22,7 @@ whisper:
   # Set to specific language code to force language, or null for auto-detection
   language: null
   
-  # Transcription quality settings
-  beam_size: 5  # Higher = more accurate but slower (1-10)
+  # Note: pywhispercpp handles transcription quality automatically
 
 # =============================================================================
 # HOTKEY CONFIGURATION

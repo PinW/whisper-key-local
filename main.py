@@ -102,8 +102,7 @@ def main():
         whisper_engine = WhisperEngine(
             model_size=whisper_config['model_size'],
             n_threads=performance_config['cpu_threads'],
-            language=whisper_config['language'],
-            beam_size=whisper_config['beam_size']
+            language=whisper_config['language']
         )
         
         clipboard_manager = ClipboardManager()
