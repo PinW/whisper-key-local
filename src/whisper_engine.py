@@ -137,6 +137,9 @@ class WhisperEngine:
             end_time = time.time()
             transcription_time = end_time - start_time
             
+            # Show transcription time to user
+            print(f"Transcription completed in {transcription_time:.1f} seconds")
+            
             # Log some info about what we transcribed
             detected_language = info.language
             confidence = info.language_probability
