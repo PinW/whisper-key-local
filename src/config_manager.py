@@ -11,7 +11,7 @@ configuration file and provides all the settings to other parts of the program.
 
 import os
 import logging
-import yaml
+from ruamel.yaml import YAML
 import shutil
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -144,8 +144,9 @@ class ConfigManager:
         # Stage 2: Load user configuration and merge with defaults
         if self.use_user_settings and os.path.exists(self.config_path):
             try:
+                yaml = YAML(typ='safe')
                 with open(self.config_path, 'r', encoding='utf-8') as f:
-                    user_config = yaml.safe_load(f)
+                    user_config = yaml.load(f)
                 
                 if user_config:
                     # Deep merge user config on top of defaults
@@ -156,7 +157,7 @@ class ConfigManager:
                     self.config = default_config
                     self.logger.warning(f"User config file {self.config_path} is empty, using defaults")
                     
-            except yaml.YAMLError as e:
+            except YAMLError as e:
                 self.logger.error(f"Error parsing user YAML config: {e}")
                 self.logger.warning("Using default configuration")
                 self.config = default_config
@@ -182,8 +183,9 @@ class ConfigManager:
         This ensures config.yaml is the single source of truth for all defaults.
         """
         try:
+            yaml = YAML(typ='safe')
             with open(self.default_config_path, 'r', encoding='utf-8') as f:
-                default_config = yaml.safe_load(f)
+                default_config = yaml.load(f)
             
             if default_config:
                 self.logger.info(f"Loaded default configuration from {self.default_config_path}")
@@ -192,7 +194,7 @@ class ConfigManager:
                 self.logger.error(f"Default config file {self.default_config_path} is empty")
                 raise ValueError("Default configuration is empty")
                 
-        except yaml.YAMLError as e:
+        except YAMLError as e:
             self.logger.error(f"Error parsing default YAML config: {e}")
             raise
         except Exception as e:
@@ -323,38 +325,7 @@ class ConfigManager:
             self.logger.warning(f"Setting '{section}.{key}' not found, using default: {default}")
             return default
     
-    def _save_config_to_file(self, file_path: str):
-        """
-        Helper method to save configuration to a specific file
-        """
-        try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                yaml.dump(self.config, f, default_flow_style=False, indent=2)
-            self.logger.info(f"Configuration saved to {file_path}")
-        except Exception as e:
-            self.logger.error(f"Error saving configuration to {file_path}: {e}")
-            raise
     
-    def save_config(self, output_path: Optional[str] = None):
-        """
-        Save current configuration to YAML file
-        
-        This can be useful for creating a config file with current settings.
-        """
-        output_file = output_path or self.config_path
-        self._save_config_to_file(output_file)
-    
-    def save_user_settings(self):
-        """
-        Save current configuration to user settings file
-        
-        Only works if user settings are enabled
-        """
-        if not self.use_user_settings:
-            self.logger.warning("User settings not enabled, cannot save user settings")
-            return
-        
-        self._save_config_to_file(self.user_settings_path)
     
     def _get_setting_display_info(self, section: str, key: str, value: Any) -> dict:
         """
@@ -434,7 +405,7 @@ class ConfigManager:
 
     def update_user_setting(self, section: str, key: str, value: Any):
         """
-        Update a specific user setting and save to file
+        Update a specific user setting and save to file, preserving comments
         
         Parameters:
         - section: Configuration section (e.g., 'whisper', 'hotkey')
@@ -444,19 +415,29 @@ class ConfigManager:
         if not self.use_user_settings:
             self.logger.warning("User settings not enabled, cannot update user setting")
             return
-        
+
         try:
+            # Use ruamel.yaml to preserve comments
+            yaml = YAML()
+            yaml.indent(mapping=2, sequence=4, offset=2)
+            
+            # Read the existing user settings file
+            with open(self.user_settings_path, 'r') as f:
+                user_config_data = yaml.load(f)
+
             # Store old value for comparison
             old_value = None
-            if section in self.config and key in self.config[section]:
-                old_value = self.config[section][key]
+            if section in user_config_data and key in user_config_data[section]:
+                old_value = user_config_data[section][key]
+
+            # Update the setting in the loaded data
+            if section not in user_config_data:
+                user_config_data[section] = {}
+            user_config_data[section][key] = value
             
-            # Update the setting
-            if section not in self.config:
-                self.config[section] = {}
-            
+            # Update the in-memory config as well
             self.config[section][key] = value
-            
+
             # Get display information for this setting
             display_info = self._get_setting_display_info(section, key, value)
             
@@ -468,19 +449,18 @@ class ConfigManager:
             
             # Create user-friendly messages
             if old_value != value:  # Only log if value actually changed
-                # Use ASCII version for logging (avoids Unicode encoding errors on Windows)
                 log_message = f"{ascii_prefix} {name} {description}"
                 self.logger.info(log_message)
                 
-                # Use emoji version for console output (usually works fine)
                 console_message = f"{emoji} {name} {description}"
                 print(console_message)
             
             # Technical log for debugging
             self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
             
-            # Save to user settings file
-            self.save_user_settings()
+            # Save to user settings file, preserving comments
+            with open(self.user_settings_path, 'w') as f:
+                yaml.dump(user_config_data, f)
             
         except Exception as e:
             self.logger.error(f"Error updating user setting {section}.{key}: {e}")
