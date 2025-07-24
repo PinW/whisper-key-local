@@ -113,16 +113,23 @@ class WhisperEngine:
             
             # Transcribe the audio
             # This is where we ask the AI: "What words do you hear in this audio?"
-            segments = self.model.transcribe(
-                audio_data,
-                language=self.language  # Language setting from config (None = auto-detect)
-            )
-            
-            # Collect all the transcribed text segments
-            # Whisper breaks long audio into segments and transcribes each part
-            transcribed_text = ""
-            for segment in segments:
-                transcribed_text += segment.text
+            try:
+                # Handle language parameter - pywhispercpp expects None or string
+                transcribe_kwargs = {}
+                if self.language is not None:
+                    transcribe_kwargs['language'] = self.language
+                
+                segments = self.model.transcribe(audio_data, **transcribe_kwargs)
+                
+                # Collect all the transcribed text segments
+                # Whisper breaks long audio into segments and transcribes each part
+                transcribed_text = ""
+                for segment in segments:
+                    transcribed_text += segment.text
+                    
+            except Exception as transcribe_error:
+                self.logger.error(f"Error during model.transcribe call: {transcribe_error}")
+                raise transcribe_error
             
             # Clean up the text (remove extra spaces, etc.)
             transcribed_text = transcribed_text.strip()
@@ -161,7 +168,12 @@ class WhisperEngine:
         try:
             self.logger.info(f"Transcribing file: {audio_file_path}")
             
-            segments = self.model.transcribe(audio_file_path)
+            # Handle language parameter consistently
+            transcribe_kwargs = {}
+            if self.language is not None:
+                transcribe_kwargs['language'] = self.language
+                
+            segments = self.model.transcribe(audio_file_path, **transcribe_kwargs)
             
             transcribed_text = ""
             for segment in segments:
