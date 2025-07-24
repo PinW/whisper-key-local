@@ -1,5 +1,5 @@
 # Core dependencies for Windows Whisper Speech-to-Text App
-faster-whisper>=0.10.0
+pywhispercpp @ git+https://github.com/absadiki/pywhispercpp
 numpy>=1.24.0
 sounddevice>=0.4.6
 global-hotkeys>=1.0.0

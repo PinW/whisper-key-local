@@ -83,6 +83,7 @@ def main():
         
         # Get configuration for each component
         whisper_config = config_manager.get_whisper_config()
+        performance_config = config_manager.get_performance_config()
         audio_config = config_manager.get_audio_config()
         hotkey_config = config_manager.get_hotkey_config()
         clipboard_config = config_manager.get_clipboard_config()
@@ -100,8 +101,7 @@ def main():
         
         whisper_engine = WhisperEngine(
             model_size=whisper_config['model_size'],
-            device=whisper_config['device'],
-            compute_type=whisper_config['compute_type'],
+            n_threads=performance_config['cpu_threads'],
             language=whisper_config['language'],
             beam_size=whisper_config['beam_size']
         )

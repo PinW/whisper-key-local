@@ -209,17 +209,7 @@ class ConfigManager:
             self.logger.warning(f"Invalid model size '{self.config['whisper']['model_size']}', using 'tiny'")
             self.config['whisper']['model_size'] = 'tiny'
         
-        # Validate device
-        valid_devices = ['cpu', 'cuda']
-        if self.config['whisper']['device'] not in valid_devices:
-            self.logger.warning(f"Invalid device '{self.config['whisper']['device']}', using 'cpu'")
-            self.config['whisper']['device'] = 'cpu'
-        
-        # Validate compute type
-        valid_compute_types = ['int8', 'float16', 'float32']
-        if self.config['whisper']['compute_type'] not in valid_compute_types:
-            self.logger.warning(f"Invalid compute type '{self.config['whisper']['compute_type']}', using 'int8'")
-            self.config['whisper']['compute_type'] = 'int8'
+        # Note: device/compute_type parameters removed - whisper.cpp auto-optimizes for CPU
         
         # Validate audio sample rate
         if self.config['audio']['sample_rate'] <= 0:

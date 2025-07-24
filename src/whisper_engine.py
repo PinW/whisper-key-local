@@ -10,7 +10,7 @@ out what words were spoken, like having a super-smart stenographer.
 
 import logging
 import numpy as np
-from faster_whisper import WhisperModel
+from pywhispercpp.model import Model
 from typing import Optional, Tuple
 import tempfile
 import os
@@ -24,15 +24,14 @@ class WhisperEngine:
     This class loads the Whisper AI model and converts audio data into text.
     """
     
-    def __init__(self, model_size: str = "tiny", device: str = "cpu", compute_type: str = "int8", 
+    def __init__(self, model_size: str = "tiny", n_threads: int = 0, 
                  language: str = None, beam_size: int = 5):
         """
         Initialize the Whisper transcription engine
         
         Parameters:
         - model_size: Size of Whisper model ("tiny", "base", "small") - bigger = more accurate but slower
-        - device: "cpu" or "cuda" (GPU) - we'll use CPU since it works everywhere
-        - compute_type: "int8" for efficiency, "float16" for better quality
+        - n_threads: Number of CPU threads to use (0 = auto-detect, higher = faster on multi-core)
         - language: Language code (e.g., "en") or None for auto-detection
         - beam_size: Search beam size for transcription (higher = more accurate but slower)
         
@@ -40,10 +39,10 @@ class WhisperEngine:
         - "tiny" model is ~39MB and fastest
         - "base" model is ~74MB and more accurate
         - "small" model is ~244MB and very accurate but slower
+        - n_threads replaces device/compute_type - whisper.cpp auto-optimizes for CPU
         """
         self.model_size = model_size
-        self.device = device
-        self.compute_type = compute_type
+        self.n_threads = n_threads
         self.language = language
         self.beam_size = beam_size
         self.model = None
@@ -66,10 +65,9 @@ class WhisperEngine:
             
             # Create the Whisper model
             # This is where the AI "brain" gets loaded into memory
-            self.model = WhisperModel(
-                self.model_size,
-                device=self.device,
-                compute_type=self.compute_type
+            self.model = Model(
+                model=self.model_size,
+                n_threads=self.n_threads if self.n_threads > 0 else None
             )
             
             self.logger.info("Whisper model loaded successfully")
@@ -194,8 +192,7 @@ class WhisperEngine:
         """
         return {
             "model_size": self.model_size,
-            "device": self.device,
-            "compute_type": self.compute_type,
+            "n_threads": self.n_threads,
             "model_loaded": self.model is not None
         }
     

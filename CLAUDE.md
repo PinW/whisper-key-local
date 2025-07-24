@@ -10,13 +10,13 @@ Local faster-whisper speech-to-text with global hotkey. Uses tiny model by defau
 - **Platform**: Windows 10+ (runs on Windows Python, dev in WSL)
 
 ## Roadmap
-See `documentation/roadmap.md`
+See `.documentation/roadmap.md`
 
 ## Architecture
-See `documentation/components.md` for detailed component structure and responsibilities.
+See `.documentation/components.md` for details
 
 ## Configuration
-All settings in `config.yaml`:
+See `config.yaml`
 
 ## Commands
 - `python main.py` - Run app

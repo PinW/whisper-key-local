@@ -14,19 +14,8 @@ whisper:
   # - small: ~244MB, high accuracy, slower
   # - medium: ~769MB, very high accuracy, much slower
   # - large: ~1550MB, best accuracy, very slow (not recommended for real-time)
+  # Note: whisper.cpp automatically optimizes for CPU (no device/precision config needed)
   model_size: "tiny"
-  
-  # Processing device - where the AI runs
-  # Options: "cpu", "cuda" (for NVIDIA GPUs)
-  # Note: "cuda" requires compatible GPU and drivers
-  device: "cpu"
-  
-  # Compute precision - affects speed vs accuracy
-  # Options: "int8", "float16", "float32"
-  # - int8: fastest, good quality (recommended)
-  # - float16: balanced (requires GPU for best performance)
-  # - float32: highest quality, slowest
-  compute_type: "int8"
   
   # Language detection
   # Options: null (auto-detect), "en", "es", "fr", "de", etc.
@@ -130,9 +119,10 @@ logging:
 # PERFORMANCE SETTINGS
 # =============================================================================
 performance:
-  # CPU threads to use for processing
-  # 0 = auto-detect (recommended)
+  # CPU threads for whisper.cpp processing
+  # 0 = auto-detect (recommended) - whisper.cpp will use optimal thread count
   # Higher numbers may speed up transcription on multi-core systems
+  # Note: whisper.cpp is highly optimized for CPU with SIMD instructions
   cpu_threads: 0
   
   # Memory management
