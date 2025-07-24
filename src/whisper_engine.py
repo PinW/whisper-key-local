@@ -155,6 +155,9 @@ class WhisperEngine:
             end_time = time.time()
             transcription_time = end_time - start_time
             
+            # Show transcription time to user
+            print(f"Transcription completed in {transcription_time:.1f}s")
+            
             self.logger.info(f"Transcription complete - Time: {transcription_time:.2f}s")
             self.logger.info(f"Transcribed text: '{transcribed_text}'")
             
