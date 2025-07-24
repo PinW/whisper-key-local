@@ -63,10 +63,15 @@ class WhisperEngine:
             
             # Create the Whisper model
             # This is where the AI "brain" gets loaded into memory
-            self.model = Model(
-                model=self.model_size,
-                n_threads=self.n_threads if self.n_threads > 0 else 0
-            )
+            model_params = {
+                'model': self.model_size
+            }
+            # A value of 0 for n_threads can crash the underlying C++ library.
+            # By not passing the parameter, the library uses its own safe default.
+            if self.n_threads > 0:
+                model_params['n_threads'] = self.n_threads
+
+            self.model = Model(**model_params)
             
             self.logger.info("Whisper model loaded successfully")
             print("Whisper model ready!")
@@ -114,9 +119,9 @@ class WhisperEngine:
             # Transcribe the audio
             # This is where we ask the AI: "What words do you hear in this audio?"
             try:
-                # Handle language parameter - pywhispercpp expects None or string
+                # Handle language parameter - pywhispercpp expects None or a valid language string
                 transcribe_kwargs = {}
-                if self.language is not None:
+                if self.language:  # This handles both None and empty strings
                     transcribe_kwargs['language'] = self.language
                 
                 segments = self.model.transcribe(audio_data, **transcribe_kwargs)
@@ -170,7 +175,7 @@ class WhisperEngine:
             
             # Handle language parameter consistently
             transcribe_kwargs = {}
-            if self.language is not None:
+            if self.language:  # This handles both None and empty strings
                 transcribe_kwargs['language'] = self.language
                 
             segments = self.model.transcribe(audio_file_path, **transcribe_kwargs)
