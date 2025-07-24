@@ -253,7 +253,7 @@ class SystemTray:
                     # Settings
                     pystray.MenuItem("Settings", None, enabled=False),
                     pystray.MenuItem("Auto-paste transcriptions", self._toggle_auto_paste, checked=lambda item: auto_paste_enabled),
-                    pystray.MenuItem("Model Selection", pystray.Menu(*model_menu_items)),
+                    pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_menu_items)),
                     pystray.Menu.SEPARATOR,  # Separator
                     # Dynamic Start/Stop Recording action as primary
                     pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled, default=True),
