@@ -280,7 +280,13 @@ class ConfigManager:
     
     def get_whisper_config(self) -> Dict[str, Any]:
         """Get Whisper AI configuration settings"""
-        return self.config['whisper'].copy()
+        whisper_config = self.config['whisper'].copy()
+        
+        # Convert "auto" language setting to None for underlying whisper system
+        if whisper_config.get('language') == 'auto':
+            whisper_config['language'] = None
+            
+        return whisper_config
     
     def get_hotkey_config(self) -> Dict[str, Any]:
         """Get hotkey configuration settings"""

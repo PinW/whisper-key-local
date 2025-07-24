@@ -15,12 +15,12 @@ whisper:
   # - medium: ~1.5GB, very high accuracy, much slower
   # - large: ~2.9GB, best accuracy, very slow (not recommended for real-time)
   # Note: whisper.cpp automatically optimizes for CPU (no device/precision config needed)
-  model_size: "tiny"
+  model_size: tiny
   
   # Language detection
-  # Options: null (auto-detect), "en", "es", "fr", "de", etc.
-  # Set to specific language code to force language, or null for auto-detection
-  language: null
+  # Options: "auto" (auto-detect), "en", "es", "fr", "de", etc.
+  # Set to specific language code to force language, or "auto" for auto-detection
+  language: auto
   
   # Note: pywhispercpp handles transcription quality automatically
 
@@ -36,7 +36,7 @@ hotkey:
   #   - "ctrl+alt+r"
   #   - "win+shift+v"
   #   - "ctrl+shift+f12"
-  combination: "ctrl+`"
+  combination: ctrl+`
 
 # =============================================================================
 # AUDIO RECORDING SETTINGS
@@ -56,7 +56,7 @@ audio:
   # Recording format
   # Options: "float32", "int16", "int24", "int32"
   # float32 recommended for best quality
-  dtype: "float32"
+  dtype: float32
   
   # Maximum recording duration (seconds)
   # Set to 0 for unlimited recording
@@ -75,14 +75,14 @@ clipboard:
   # Options: "key_simulation", "windows_api"
   # - key_simulation: Simulates Ctrl+V keypress (recommended - works with most apps)
   # - windows_api: Direct Windows API paste (faster but less compatible)
-  paste_method: "key_simulation"
+  paste_method: key_simulation
   
   # Add extra formatting to transcribed text
   # Options: "none", "capitalize", "sentence"
   # - none: exact transcription
   # - capitalize: Capitalize first letter
   # - sentence: Capitalize first letter and add period if missing
-  text_formatting: "none"
+  text_formatting: none
   
   # Preserve existing clipboard content when pasting
   # true = save current clipboard, paste transcription, then restore original clipboard
@@ -99,19 +99,19 @@ logging:
   # - INFO: General information (recommended)
   # - WARNING: Only warnings and errors
   # - ERROR: Only errors
-  level: "INFO"
+  level: INFO
   
   # Log file settings
   file:
     enabled: true
-    filename: "whisper_app.log"
+    filename: whisper_app.log
     max_size_mb: 10  # Rotate log when it gets this big
     backup_count: 3  # Keep this many old log files
   
   # Console output
   console:
     enabled: true
-    level: "WARNING"  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
+    level: WARNING  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
     colored: true  # Use colored output in terminal (if supported)
 
 # =============================================================================
@@ -139,7 +139,7 @@ system_tray:
   enabled: true
   
   # Tooltip text when hovering over tray icon
-  tooltip: "Whisper Key"
+  tooltip: Whisper Key
   
   # Show desktop notifications for important events
   # Note: Requires additional setup on some systems
@@ -161,7 +161,7 @@ advanced:
   # Debugging options
   debug:
     save_audio_files: false  # Save recorded audio for debugging
-    audio_output_dir: "debug_audio"  # Where to save debug audio files
+    audio_output_dir: debug_audio  # Where to save debug audio files
   
   # Warning suppression
   suppress_warnings: false  # Suppress deprecation warnings from dependencies (e.g., pkg_resources)
