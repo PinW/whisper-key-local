@@ -25,7 +25,7 @@ class WhisperEngine:
     """
     
     def __init__(self, model_size: str = "tiny", n_threads: int = 0, 
-                 language: str = None):
+                 language: str = None, verbose_whisper: bool = False):
         """
         Initialize the Whisper transcription engine
         
@@ -33,16 +33,19 @@ class WhisperEngine:
         - model_size: Size of Whisper model ("tiny", "base", "small") - bigger = more accurate but slower
         - n_threads: Number of CPU threads to use (0 = auto-detect, higher = faster on multi-core)
         - language: Language code (e.g., "en") or None for auto-detection
+        - verbose_whisper: Show detailed whisper.cpp C++ library messages during model loading
         
         For beginners: 
         - "tiny" model is ~75MB and fastest
         - "base" model is ~142MB and more accurate
         - "small" model is ~466MB and very accurate but slower
         - n_threads replaces device/compute_type - whisper.cpp auto-optimizes for CPU
+        - verbose_whisper controls technical C++ library output (usually keep False)
         """
         self.model_size = model_size
         self.n_threads = n_threads
         self.language = language
+        self.verbose_whisper = verbose_whisper
         self.model = None
         self.logger = logging.getLogger(__name__)
         
@@ -64,13 +67,17 @@ class WhisperEngine:
             # Create the Whisper model
             # This is where the AI "brain" gets loaded into memory
             model_params = {
-                'model': self.model_size,
-                # Suppress verbose whisper.cpp C++ library output
-                'redirect_whispercpp_logs_to': None,  # Redirect to devnull (suppress)
-                'print_realtime': False,              # Disable real-time printing  
-                'print_progress': False,              # Disable progress printing
-                'print_timestamps': False             # Disable timestamp printing
+                'model': self.model_size
             }
+            
+            # Control verbose whisper.cpp C++ library output based on config
+            if not self.verbose_whisper:
+                model_params.update({
+                    'redirect_whispercpp_logs_to': None,  # Redirect to devnull (suppress)
+                    'print_realtime': False,              # Disable real-time printing  
+                    'print_progress': False,              # Disable progress printing
+                    'print_timestamps': False             # Disable timestamp printing
+                })
             # A value of 0 for n_threads can crash the underlying C++ library.
             # By not passing the parameter, the library uses its own safe default.
             if self.n_threads > 0:
@@ -207,6 +214,7 @@ class WhisperEngine:
         return {
             "model_size": self.model_size,
             "n_threads": self.n_threads,
+            "verbose_whisper": self.verbose_whisper,
             "model_loaded": self.model is not None
         }
     

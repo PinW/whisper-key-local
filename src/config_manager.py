@@ -242,6 +242,14 @@ class ConfigManager:
         else:
             self.config['logging']['console']['level'] = console_level
         
+        # Validate verbose_whisper setting
+        verbose_whisper = self.config['logging'].get('verbose_whisper', False)
+        if not isinstance(verbose_whisper, bool):
+            self.logger.warning(f"Invalid verbose_whisper value '{verbose_whisper}', using False")
+            self.config['logging']['verbose_whisper'] = False
+        else:
+            self.config['logging']['verbose_whisper'] = verbose_whisper
+        
         # Validate text formatting
         valid_formatting = ['none', 'capitalize', 'sentence']
         text_formatting = self.config['clipboard'].get('text_formatting', 'none')

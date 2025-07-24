@@ -87,6 +87,7 @@ def main():
         audio_config = config_manager.get_audio_config()
         hotkey_config = config_manager.get_hotkey_config()
         clipboard_config = config_manager.get_clipboard_config()
+        logging_config = config_manager.get_logging_config()
         tray_config = config_manager.config.get('system_tray', {})
         
         logger.info("Initializing application components...")
@@ -102,7 +103,8 @@ def main():
         whisper_engine = WhisperEngine(
             model_size=whisper_config['model_size'],
             n_threads=performance_config['cpu_threads'],
-            language=whisper_config['language']
+            language=whisper_config['language'],
+            verbose_whisper=logging_config.get('verbose_whisper', False)
         )
         
         clipboard_manager = ClipboardManager()

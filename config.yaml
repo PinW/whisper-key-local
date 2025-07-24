@@ -113,6 +113,11 @@ logging:
     enabled: true
     level: WARNING  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
     colored: true  # Use colored output in terminal (if supported)
+  
+  # Verbose whisper.cpp library output
+  # true = show detailed whisper.cpp C++ library messages during model loading
+  # false = suppress verbose whisper.cpp output (recommended for regular users)
+  verbose_whisper: false
 
 # =============================================================================
 # PERFORMANCE SETTINGS
