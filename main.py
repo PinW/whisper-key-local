@@ -125,7 +125,6 @@ def main():
                 
                 if system_tray.is_available():
                     logger.info("System tray initialized successfully")
-                    print("💻 System tray icon will be available")
                 else:
                     logger.warning("System tray dependencies not available")
                     print("⚠️  System tray not available (pystray/Pillow not installed)")
