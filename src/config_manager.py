@@ -206,7 +206,7 @@ class ConfigManager:
         Validate configuration settings and fix invalid values
         """
         # Validate whisper model size
-        valid_models = ['tiny', 'base', 'small', 'medium', 'large']
+        valid_models = ['tiny', 'base', 'small', 'medium', 'large', 'tiny.en', 'base.en', 'small.en', 'medium.en']
         if self.config['whisper']['model_size'] not in valid_models:
             self.logger.warning(f"Invalid model size '{self.config['whisper']['model_size']}', using 'tiny'")
             self.config['whisper']['model_size'] = 'tiny'
