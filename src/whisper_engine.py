@@ -52,6 +52,22 @@ class WhisperEngine:
         # Load the model when we create this object
         self._load_model()
     
+    def _get_cache_directory(self):
+        """Get the HuggingFace cache directory path"""
+        userprofile = os.getenv('USERPROFILE')
+        if not userprofile:
+            home = os.path.expanduser('~')
+            userprofile = home
+        
+        cache_dir = os.path.join(userprofile, '.cache', 'huggingface', 'hub')
+        return cache_dir
+    
+    def _is_model_cached(self):
+        """Check if the current model is already cached"""
+        cache_dir = self._get_cache_directory()
+        model_folder = f"models--Systran--faster-whisper-{self.model_size}"
+        return os.path.exists(os.path.join(cache_dir, model_folder))
+    
     def _load_model(self):
         """
         Load the Whisper model into memory
@@ -61,8 +77,12 @@ class WhisperEngine:
         """
         try:
             self.logger.info(f"Loading Whisper model: {self.model_size}")
-            print(f"Loading Whisper AI model ({self.model_size})...")
-            print("First time may take a few minutes to download the model...")
+            print(f"Loading Whisper AI model [{self.model_size}]...")
+            
+            # Check if model is already cached
+            was_cached = self._is_model_cached()
+            if not was_cached:
+                print("Downloading model, this may take a few minutes....")
             
             # Create the Whisper model
             # This is where the AI "brain" gets loaded into memory
@@ -72,8 +92,11 @@ class WhisperEngine:
                 compute_type=self.compute_type
             )
             
+            # Only show download message if model wasn't cached
+            if not was_cached:
+                print("\n")
             self.logger.info("Whisper model loaded successfully")
-            print("Whisper model ready!")
+            print(f"Whisper model [{self.model_size}] ready!")
             
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")
