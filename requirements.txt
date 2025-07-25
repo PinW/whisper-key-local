@@ -13,3 +13,6 @@ pyautogui>=0.9.54 # Keyboard simulation for Ctrl+V
 # System tray dependencies
 pystray>=0.19.5
 Pillow>=10.0.0
+
+# Cache management dependencies
+hf-xet>=1.1.5
