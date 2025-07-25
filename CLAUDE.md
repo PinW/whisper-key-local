@@ -19,7 +19,7 @@ See `documentation/components.md` for detailed component structure and responsib
 All settings in `config.yaml`:
 
 ## Commands
-- `python main.py` - Run app
+- `python whisper-key.py` - Run app
 - `python tests/run_component_tests.py` - Test suite
 - `python tools/key_helper.py` - Find key combinations for config
 

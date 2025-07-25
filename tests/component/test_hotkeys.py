@@ -327,4 +327,4 @@ if __name__ == "__main__":
         print("\n⚠️  Basic hotkey test failed. This needs to be resolved before the main app will work.")
         print("Consider running this test as administrator or checking for hotkey conflicts.")
     
-    print("\nHotkey test complete! Next, try running 'python main.py' to test the full app!")
+    print("\nHotkey test complete! Next, try running 'python whisper-key.py' to test the full app!")

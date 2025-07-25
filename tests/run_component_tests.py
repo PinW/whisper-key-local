@@ -130,7 +130,7 @@ def main():
         print("🎉 ALL TESTS PASSED! Your system is ready for the full application!")
         print()
         print("🚀 Next steps:")
-        print("   1. Run 'python main.py' to start the full speech-to-text app")
+        print("   1. Run 'python whisper-key.py' to start the full speech-to-text app")
         print("   2. Press Ctrl+Shift+Space to record speech")
         print("   3. Speak clearly, then press Ctrl+Shift+Space again to stop")
         print("   4. The transcribed text will be copied to your clipboard")

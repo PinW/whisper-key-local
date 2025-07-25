@@ -2,7 +2,7 @@
 
 ## File Structure
 ```
-main.py                    # Entry point
+whisper-key.py             # Entry point
 src/
 ├── audio_recorder.py      # sounddevice recording
 ├── whisper_engine.py      # faster-whisper transcription

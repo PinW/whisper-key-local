@@ -36,7 +36,7 @@ pip install faster-whisper sounddevice global-hotkeys pyperclip pyyaml pywin32 p
 
 1. **Run the Full Application**:
    ```powershell
-   python main.py
+   python whisper-key.py
    ```
 
 2. **Configuration** (Optional):
