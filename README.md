@@ -48,8 +48,6 @@ pip install faster-whisper sounddevice global-hotkeys pyperclip pyyaml pywin32 p
        - `paste_method: "key_simulation"/"windows_api"` - Choose paste method
      - Adjust audio settings
      - Configure logging preferences
-     - Advanced settings:
-       - `suppress_warnings: true/false` - Hide deprecation warnings from dependencies
 
 3. **Use the App**:
    - Press your configured hotkey (default: `Ctrl+Tilde`) to start recording
@@ -76,11 +74,6 @@ This interactive tool will:
 
 ### Common Issues
 
-**pkg_resources deprecation warning on startup:**
-- Warning: "pkg_resources is deprecated as an API" appears when starting the app
-- This is from the ctranslate2 dependency (used internally by faster-whisper)
-- The warning is cosmetic only and doesn't affect app functionality
-- **Workaround**: Set `suppress_warnings: true` in the `advanced` section of `config.yaml`
 
 **Hotkeys not working globally:**
 - Try running PowerShell as Administrator

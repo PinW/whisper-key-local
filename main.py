@@ -65,10 +65,6 @@ def main():
         print("Loading configuration...")
         config_manager = ConfigManager()
         
-        # Handle warning suppression based on config
-        advanced_config = config_manager.config.get('advanced', {})
-        if advanced_config.get('suppress_warnings', False):
-            warnings.filterwarnings('ignore', category=DeprecationWarning)
         
         # Show where settings are loaded from
         if config_manager.use_user_settings:

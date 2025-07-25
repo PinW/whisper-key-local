@@ -180,5 +180,3 @@ advanced:
     save_audio_files: false  # Save recorded audio for debugging
     audio_output_dir: debug_audio  # Where to save debug audio files
   
-  # Warning suppression
-  suppress_warnings: false  # Suppress deprecation warnings from dependencies (e.g., pkg_resources)
