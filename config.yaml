@@ -24,7 +24,17 @@ whisper:
   # Set to specific language code to force language, or "auto" for auto-detection
   language: auto
   
-  # Note: pywhispercpp handles transcription quality automatically
+  # Beam search configuration for improved transcription quality
+  # beam_search: Enable beam search decoding for better accuracy
+  # true = use beam search (slower but more accurate)
+  # false = use greedy decoding (faster but less accurate)
+  beam_search: true
+  
+  # Beam size - only used when beam_search is true
+  # Higher values = more accurate but slower transcription
+  # Typical values: 1-10 (5 is a good balance)
+  # Note: Only effective when beam_search is enabled
+  beam_size: 5
 
 # =============================================================================
 # HOTKEY CONFIGURATION

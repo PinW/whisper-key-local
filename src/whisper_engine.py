@@ -25,7 +25,8 @@ class WhisperEngine:
     """
     
     def __init__(self, model_size: str = "tiny", n_threads: int = 0, 
-                 language: str = None, verbose_whisper: bool = False):
+                 language: str = None, verbose_whisper: bool = False,
+                 beam_search: bool = False, beam_size: int = 5):
         """
         Initialize the Whisper transcription engine
         
@@ -34,6 +35,8 @@ class WhisperEngine:
         - n_threads: Number of CPU threads to use (0 = auto-detect, higher = faster on multi-core)
         - language: Language code (e.g., "en") or None for auto-detection
         - verbose_whisper: Show detailed whisper.cpp C++ library messages during model loading
+        - beam_search: Enable beam search decoding for better accuracy (slower)
+        - beam_size: Beam size for beam search (only used when beam_search is True)
         
         For beginners: 
         - "tiny" model is 75MB and fastest
@@ -41,11 +44,15 @@ class WhisperEngine:
         - "small" model is 466MB and very accurate but slower
         - n_threads replaces device/compute_type - whisper.cpp auto-optimizes for CPU
         - verbose_whisper controls technical C++ library output (usually keep False)
+        - beam_search=True gives better accuracy but takes longer to transcribe
+        - beam_size=5 is a good balance (higher = more accurate but slower)
         """
         self.model_size = model_size
         self.n_threads = n_threads
         self.language = language
         self.verbose_whisper = verbose_whisper
+        self.beam_search = beam_search
+        self.beam_size = beam_size
         self.model = None
         self.logger = logging.getLogger(__name__)
         
@@ -136,7 +143,24 @@ class WhisperEngine:
                 if self.language:  # This handles both None and empty strings
                     transcribe_kwargs['language'] = self.language
                 
-                segments = self.model.transcribe(audio_data, **transcribe_kwargs)
+                # Add beam search parameters if enabled
+                if self.beam_search:
+                    transcribe_kwargs['beam_search'] = {
+                        "beam_size": self.beam_size,
+                        "patience": 1.0  # Default patience value
+                    }
+                
+                # Try transcription with beam search, fallback to greedy if it fails
+                try:
+                    segments = self.model.transcribe(audio_data, **transcribe_kwargs)
+                except Exception as beam_error:
+                    if self.beam_search:
+                        self.logger.warning(f"Beam search failed, falling back to greedy decoding: {beam_error}")
+                        # Remove beam search parameters and retry
+                        transcribe_kwargs_fallback = {k: v for k, v in transcribe_kwargs.items() if k != 'beam_search'}
+                        segments = self.model.transcribe(audio_data, **transcribe_kwargs_fallback)
+                    else:
+                        raise beam_error
                 
                 # Collect all the transcribed text segments
                 # Whisper breaks long audio into segments and transcribes each part
@@ -192,8 +216,25 @@ class WhisperEngine:
             transcribe_kwargs = {}
             if self.language:  # This handles both None and empty strings
                 transcribe_kwargs['language'] = self.language
-                
-            segments = self.model.transcribe(audio_file_path, **transcribe_kwargs)
+            
+            # Add beam search parameters if enabled
+            if self.beam_search:
+                transcribe_kwargs['beam_search'] = {
+                    "beam_size": self.beam_size,
+                    "patience": 1.0  # Default patience value
+                }
+            
+            # Try transcription with beam search, fallback to greedy if it fails
+            try:
+                segments = self.model.transcribe(audio_file_path, **transcribe_kwargs)
+            except Exception as beam_error:
+                if self.beam_search:
+                    self.logger.warning(f"Beam search failed for file transcription, falling back to greedy decoding: {beam_error}")
+                    # Remove beam search parameters and retry
+                    transcribe_kwargs_fallback = {k: v for k, v in transcribe_kwargs.items() if k != 'beam_search'}
+                    segments = self.model.transcribe(audio_file_path, **transcribe_kwargs_fallback)
+                else:
+                    raise beam_error
             
             transcribed_text = ""
             for segment in segments:
@@ -218,6 +259,8 @@ class WhisperEngine:
             "model_size": self.model_size,
             "n_threads": self.n_threads,
             "verbose_whisper": self.verbose_whisper,
+            "beam_search": self.beam_search,
+            "beam_size": self.beam_size,
             "model_loaded": self.model is not None
         }
     

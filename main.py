@@ -104,7 +104,9 @@ def main():
             model_size=whisper_config['model_size'],
             n_threads=performance_config['cpu_threads'],
             language=whisper_config['language'],
-            verbose_whisper=logging_config.get('verbose_whisper', False)
+            verbose_whisper=logging_config.get('verbose_whisper', False),
+            beam_search=whisper_config.get('beam_search', False),
+            beam_size=whisper_config.get('beam_size', 5)
         )
         
         clipboard_manager = ClipboardManager()
