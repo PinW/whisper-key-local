@@ -2,16 +2,15 @@
 
 ## Next
 - Start/stop sound
+- Recording mode (hold key vs start/stop)
 - Better icons
-    - Add them to repo
-- Settings
-    - Hotkey management
-    - Model selection
 - GUI
     - Advanced settings
         - Preserve clipboard option
     - Progress bar for downloading models
-
+- Settings
+    - Hotkey management
+- Packaging and installer for windows
 
 ## Backlog
 - As a user I want auto-stop recording so I don't need to hit the hotkey again when i'm lazy
