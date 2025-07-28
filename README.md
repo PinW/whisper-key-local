@@ -1,6 +1,7 @@
-# Windows Whisper Speech-to-Text App
+# Whisper Key Local
+*Windows Speech-to-Text App*
 
-One global hotkey to start/stop recording and automatically paste the transcription wherever your cursor is. Secure local transcription only via faster-whisper.
+Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is.
 
 ## 🎯 Features
 
