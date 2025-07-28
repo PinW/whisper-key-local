@@ -1,4 +1,4 @@
-# Whisper Key Local - Local Speech-to-Text for Windows
+# Whisper Key - Local Speech-to-Text for Windows
 
 Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is.
 
