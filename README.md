@@ -90,7 +90,7 @@ This interactive tool will:
 
 **Whisper model download slow:**
 - First run downloads the AI model (39MB for tiny model up to 2.9GB for large)
-- Models are cached locally for loading
+- Models are cached locally for fast loading
 - Use `python tools/clear_model_cache.py` to reset model cache
 
 **Auto-paste not working:**
