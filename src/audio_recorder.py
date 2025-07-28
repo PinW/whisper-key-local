@@ -120,6 +120,28 @@ class AudioRecorder:
         
         return audio_array
     
+    def cancel_recording(self):
+        """
+        Cancel the current recording without returning audio data
+        
+        This is used when we need to abort recording (e.g., for model changes)
+        without processing the audio that was recorded so far.
+        """
+        if not self.is_recording:
+            self.logger.warning("Not currently recording, nothing to cancel!")
+            return
+        
+        self.logger.info("Cancelling audio recording...")
+        self.is_recording = False
+        
+        # Wait for recording thread to finish
+        if self.recording_thread:
+            self.recording_thread.join(timeout=2.0)  # Wait max 2 seconds
+        
+        # Clear the audio data without processing it
+        self.audio_data = []
+        self.logger.info("Recording cancelled and audio data cleared")
+    
     def _record_audio(self):
         """
         The actual recording function that runs in a separate thread

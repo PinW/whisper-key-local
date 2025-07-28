@@ -174,25 +174,29 @@ class SystemTray:
             # Determine current state for menu logic
             is_processing = False
             is_recording = False
+            is_model_loading = False
+            model_loading_progress = ""
             try:
                 if self.state_manager:
                     self.logger.debug("Getting application status from state_manager")
                     status = self.state_manager.get_application_status()
                     is_processing = status.get('processing', False)
                     is_recording = status.get('recording', False)
-                    self.logger.debug(f"App status - processing: {is_processing}, recording: {is_recording}")
+                    is_model_loading = status.get('model_loading', False)
+                    model_loading_progress = status.get('model_loading_progress', "")
+                    self.logger.debug(f"App status - processing: {is_processing}, recording: {is_recording}, model_loading: {is_model_loading}, progress: {model_loading_progress}")
                 else:
                     self.logger.debug("No state_manager available, using default states")
             except Exception as e:
                 self.logger.error(f"Error getting application status: {e}")
 
             # Dynamic action label and enabled state
-            if is_processing:
-                action_label = "Processing..."
-                action_enabled = False
-            elif is_recording:
+            if is_recording:
                 action_label = "Stop Recording"
                 action_enabled = True
+            elif is_processing or is_model_loading:
+                action_label = "Start Recording"
+                action_enabled = False
             else:
                 action_label = "Start Recording"
                 action_enabled = True
@@ -235,17 +239,21 @@ class SystemTray:
                 except:
                     return model_name == "tiny"
             
+            # Helper function to check if model selection should be enabled
+            def model_selection_enabled():
+                return not is_model_loading
+            
             model_menu_items = [
-                pystray.MenuItem("Tiny (75MB, fastest)", lambda icon, item: self._select_model("tiny"), radio=True, checked=lambda item: is_current_model("tiny")),
-                pystray.MenuItem("Base (142MB, balanced)", lambda icon, item: self._select_model("base"), radio=True, checked=lambda item: is_current_model("base")),
-                pystray.MenuItem("Small (466MB, accurate)", lambda icon, item: self._select_model("small"), radio=True, checked=lambda item: is_current_model("small")),
-                pystray.MenuItem("Medium (1.5GB, very accurate)", lambda icon, item: self._select_model("medium"), radio=True, checked=lambda item: is_current_model("medium")),
-                pystray.MenuItem("Large (2.9GB, best accuracy)", lambda icon, item: self._select_model("large"), radio=True, checked=lambda item: is_current_model("large")),
+                pystray.MenuItem("Tiny (75MB, fastest)", lambda icon, item: self._select_model("tiny"), radio=True, checked=lambda item: is_current_model("tiny"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Base (142MB, balanced)", lambda icon, item: self._select_model("base"), radio=True, checked=lambda item: is_current_model("base"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Small (466MB, accurate)", lambda icon, item: self._select_model("small"), radio=True, checked=lambda item: is_current_model("small"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Medium (1.5GB, very accurate)", lambda icon, item: self._select_model("medium"), radio=True, checked=lambda item: is_current_model("medium"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Large (2.9GB, best accuracy)", lambda icon, item: self._select_model("large"), radio=True, checked=lambda item: is_current_model("large"), enabled=model_selection_enabled()),
                 pystray.Menu.SEPARATOR,
-                pystray.MenuItem("Tiny EN (English only)", lambda icon, item: self._select_model("tiny.en"), radio=True, checked=lambda item: is_current_model("tiny.en")),
-                pystray.MenuItem("Base EN (English only)", lambda icon, item: self._select_model("base.en"), radio=True, checked=lambda item: is_current_model("base.en")),
-                pystray.MenuItem("Small EN (English only)", lambda icon, item: self._select_model("small.en"), radio=True, checked=lambda item: is_current_model("small.en")),
-                pystray.MenuItem("Medium EN (English only)", lambda icon, item: self._select_model("medium.en"), radio=True, checked=lambda item: is_current_model("medium.en"))
+                pystray.MenuItem("Tiny EN (English only)", lambda icon, item: self._select_model("tiny.en"), radio=True, checked=lambda item: is_current_model("tiny.en"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Base EN (English only)", lambda icon, item: self._select_model("base.en"), radio=True, checked=lambda item: is_current_model("base.en"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Small EN (English only)", lambda icon, item: self._select_model("small.en"), radio=True, checked=lambda item: is_current_model("small.en"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Medium EN (English only)", lambda icon, item: self._select_model("medium.en"), radio=True, checked=lambda item: is_current_model("medium.en"), enabled=model_selection_enabled())
             ]
 
             # Create menu items
@@ -326,14 +334,18 @@ class SystemTray:
         """
         Select a new Whisper AI model size from the system tray menu.
         
-        This method updates the model_size setting and immediately applies the change
-        to the WhisperEngine for real-time effect.
+        This method updates the model_size setting and requests a state-aware model change
+        through the StateManager which handles all the safety logic.
         
         Parameters:
         - model_size: The new model size ("tiny", "base", "small", "medium", "large")
         """
         if not self.config_manager:
             self.logger.warning("Cannot select model: config_manager not available")
+            return
+        
+        if not self.state_manager:
+            self.logger.warning("Cannot select model: state_manager not available")
             return
         
         try:
@@ -344,23 +356,21 @@ class SystemTray:
                 self.logger.debug(f"Model already set to {model_size}, no change needed")
                 return
             
-            self.logger.info(f"Changing Whisper model from {current_model} to {model_size}")
+            self.logger.info(f"Requesting model change from {current_model} to {model_size}")
             
-            # Update the setting (ConfigManager will handle user-friendly logging)
-            self.config_manager.update_user_setting('whisper', 'model_size', model_size)
+            # Request state-aware model change through StateManager
+            # This handles all the safety logic: recording cancellation, queueing during processing, etc.
+            success = self.state_manager.request_model_change(model_size)
             
-            # Apply the change immediately to the WhisperEngine
-            if self.state_manager and hasattr(self.state_manager, 'whisper_engine'):
-                try:
-                    self.logger.debug("Applying model change to WhisperEngine")
-                    self.state_manager.whisper_engine.change_model(model_size)
-                except Exception as engine_error:
-                    self.logger.error(f"Failed to change model in WhisperEngine: {engine_error}")
-                    # Continue anyway - the setting was saved and will apply on next restart
-            
-            # Refresh the menu to show the new radio button selection
-            if self.icon:
-                self.icon.menu = self._create_menu()
+            if success:
+                # Update the setting only if model change was accepted/initiated
+                self.config_manager.update_user_setting('whisper', 'model_size', model_size)
+                
+                # Refresh the menu to show the new radio button selection
+                if self.icon:
+                    self.icon.menu = self._create_menu()
+            else:
+                self.logger.info(f"Model change to {model_size} was not accepted in current state")
                 
         except Exception as e:
             self.logger.error(f"Error selecting model {model_size}: {e}")

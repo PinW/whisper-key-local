@@ -11,11 +11,12 @@ out what words were spoken, like having a super-smart stenographer.
 import logging
 import numpy as np
 from faster_whisper import WhisperModel
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable
 import tempfile
 import os
 import wave
 import time
+import threading
 
 class WhisperEngine:
     """
@@ -48,6 +49,11 @@ class WhisperEngine:
         self.beam_size = beam_size
         self.model = None
         self.logger = logging.getLogger(__name__)
+        
+        # Model loading state tracking
+        self._loading_thread = None
+        self._loading_cancelled = False
+        self._progress_callback = None
         
         # Load the model when we create this object
         self._load_model()
@@ -101,6 +107,102 @@ class WhisperEngine:
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")
             raise RuntimeError(f"Could not load Whisper model: {e}")
+    
+    def _load_model_async(self, new_model_size: str, progress_callback: Optional[Callable[[str], None]] = None):
+        """
+        Load the Whisper model asynchronously in a background thread
+        
+        This prevents the UI from freezing during model downloads.
+        
+        Parameters:
+        - new_model_size: The model size to load
+        - progress_callback: Optional callback function to report progress updates
+        """
+        def _background_loader():
+            try:
+                self._loading_cancelled = False
+                
+                if progress_callback:
+                    progress_callback("Checking model cache...")
+                
+                # Check if model is already cached
+                old_model_size = self.model_size
+                self.model_size = new_model_size  # Temporarily set for cache check
+                was_cached = self._is_model_cached()
+                
+                if progress_callback:
+                    if was_cached:
+                        progress_callback("Loading cached model...")
+                    else:
+                        progress_callback("Downloading model...")
+                
+                # Check for cancellation before starting heavy work
+                if self._loading_cancelled:
+                    self.model_size = old_model_size  # Restore original
+                    return
+                
+                self.logger.info(f"Loading Whisper model: {new_model_size} (async)")
+                
+                # Create the Whisper model
+                new_model = WhisperModel(
+                    new_model_size,
+                    device=self.device,
+                    compute_type=self.compute_type
+                )
+                
+                # Check for cancellation before applying changes
+                if self._loading_cancelled:
+                    self.model_size = old_model_size  # Restore original
+                    return
+                
+                # Successfully loaded - apply changes
+                self.model = new_model
+                self.logger.info(f"Whisper model [{new_model_size}] loaded successfully (async)")
+                
+                if progress_callback:
+                    progress_callback("Model ready!")
+                
+            except Exception as e:
+                # Restore original model size on error
+                self.model_size = old_model_size
+                self.logger.error(f"Failed to load Whisper model async: {e}")
+                if progress_callback:
+                    progress_callback(f"Failed to load model: {e}")
+                raise
+            finally:
+                # Clear loading state
+                self._loading_thread = None
+                self._progress_callback = None
+        
+        # Start background thread
+        if self._loading_thread and self._loading_thread.is_alive():
+            self.logger.warning("Model loading already in progress, cancelling previous load")
+            self.cancel_model_loading()
+        
+        self._progress_callback = progress_callback
+        self._loading_thread = threading.Thread(target=_background_loader, daemon=True)
+        self._loading_thread.start()
+    
+    def cancel_model_loading(self):
+        """
+        Cancel any ongoing model loading operation
+        """
+        if self._loading_thread and self._loading_thread.is_alive():
+            self.logger.info("Cancelling model loading...")
+            self._loading_cancelled = True
+            # Wait for thread to finish with timeout
+            self._loading_thread.join(timeout=2.0)
+            if self._loading_thread.is_alive():
+                self.logger.warning("Model loading thread did not terminate cleanly")
+    
+    def is_loading(self) -> bool:
+        """
+        Check if a model is currently being loaded
+        
+        Returns:
+        - True if model loading is in progress, False otherwise
+        """
+        return self._loading_thread is not None and self._loading_thread.is_alive()
     
     def transcribe_audio(self, audio_data: np.ndarray, sample_rate: int = 16000) -> Optional[str]:
         """
@@ -225,18 +327,24 @@ class WhisperEngine:
             "model_loaded": self.model is not None
         }
     
-    def change_model(self, new_model_size: str):
+    def change_model(self, new_model_size: str, progress_callback: Optional[Callable[[str], None]] = None):
         """
         Switch to a different Whisper model size (for future customization)
         
         This allows users to switch between tiny/base/small models depending 
         on whether they want speed or accuracy.
+        
+        Parameters:
+        - new_model_size: The new model size to switch to
+        - progress_callback: Optional callback function to report progress updates
         """
         if new_model_size == self.model_size:
             self.logger.info(f"Already using model size: {new_model_size}")
+            if progress_callback:
+                progress_callback("Model already loaded")
             return
         
         self.logger.info(f"Switching from {self.model_size} to {new_model_size} model")
         
-        self.model_size = new_model_size
-        self._load_model()  # Reload with new model size
+        # Use async loading to prevent UI blocking
+        self._load_model_async(new_model_size, progress_callback)
