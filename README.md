@@ -1,14 +1,14 @@
 # Windows Whisper Speech-to-Text App
 
-One global hotkey to start/stop recording, transcribe locally, and automatically paste the transcription wherever your cursor is.
+One global hotkey to start/stop recording and automatically paste the transcription wherever your cursor is. Secure local transcription only via faster-whisper.
 
 ## 🎯 Features
 
 - **Global Hotkey**: Press `Ctrl+Tilde` from any application to start/stop recording
-- **Local AI**: Uses Whisper AI running entirely on your computer (no internet required)
 - **Automatic Pasting**: Transcribed text inserted where your cursor is as soon as it is processed
-- **Automatic Clipboard**: Transcribed text is automatically copied for pasting with `Ctrl+V`
-- **Privacy-First**: All processing happens locally - your voice data never leaves your computer
+- **Offline Capable**: Faster-whisper runs locally (no internet needed after setup)
+- **Private Processing**: All processing happens locally, voice data never leaves your computer
+- **Configurable**: Customize hotkeys, model, transcription actions, and audio settings
 
 ## 🚀 Quick Start
 
@@ -20,17 +20,26 @@ One global hotkey to start/stop recording, transcribe locally, and automatically
 ### Installation
 Install the required Python packages:
 ```powershell
-pip install faster-whisper sounddevice global-hotkeys pyperclip pyyaml pywin32 pyautogui
+pip install -r requirements.txt
+```
+
+Or install manually:
+```powershell
+pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yaml pywin32 pyautogui pystray Pillow hf-xet
 ```
 
 **Package descriptions:**
 - `faster-whisper` - Fast AI speech recognition
+- `numpy` - Numerical computing support
 - `sounddevice` - Audio recording
 - `global-hotkeys` - System-wide hotkey detection  
 - `pyperclip` - Clipboard operations
-- `pyyaml` - Configuration file parsing
+- `ruamel.yaml` - Configuration file parsing (YAML)
 - `pywin32` - Windows API access for direct paste method
 - `pyautogui` - Key simulation for Ctrl+V auto-paste (recommended for best compatibility)
+- `pystray` - System tray integration
+- `Pillow` - Image processing for system tray icons
+- `hf-xet` - Cache management for Hugging Face models
 
 ### Running the App
 
@@ -74,10 +83,7 @@ This interactive tool will:
 
 ### Common Issues
 
-
-**Hotkeys not working globally:**
-- Try running PowerShell as Administrator
-- Check for antivirus blocking global hotkey registration
+**Hotkey Configuration:**
 - Use `python tools/key_helper.py` to test key detection
 - Test different hotkey combinations in `test_hotkeys.py`
 
@@ -87,25 +93,18 @@ This interactive tool will:
 - Verify default recording device in Windows sound settings
 
 **Whisper model download slow:**
-- First run downloads the AI model (~39MB for tiny model)
-- Subsequent runs are much faster
-- Check internet connection for initial download
+- First run downloads the AI model (39MB for tiny model up to 2.9GB for large)
+- Models are cached locally for loading
+- Use `python tools/clear_model_cache.py` to reset model cache
 
 **Auto-paste not working:**
-- Install `pyautogui` for key simulation: `pip install pyautogui`
-- Try switching paste methods in `config.yaml`:
+- Auto-paste uses key simulation by default
+- Can try switching paste methods in `config.yaml`:
   - `paste_method: "key_simulation"` (works with most apps)
-  - `paste_method: "windows_api"` (faster but less compatible)
+  - `paste_method: "windows_api"` (faster but not compatible with many apps)
 - If both methods fail, set `auto_paste: false` to use manual clipboard pasting
 
 ### Testing Tools
-1. Run `python tests/run_component_tests.py` to identify which component is failing
-2. Check the log file `app.log` for detailed error messages
-3. Test individual components with their respective test scripts
-
-## 🔒 Privacy & Security
-
-- All speech processing happens locally on your computer
-- No internet connection required after initial model download
-- No voice data is sent to external servers
-- Transcriptions are only stored in clipboard temporarily
+- Run `python tests/run_component_tests.py` to identify which component is failing
+- Check the log file `app.log` for detailed error messages
+- Use `python tools/reset_user_settings.py` and restart app to reset to defaults
