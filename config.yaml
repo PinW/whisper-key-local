@@ -122,7 +122,7 @@ logging:
   # Log file settings
   file:
     enabled: true
-    filename: whisper_app.log
+    filename: app.log
     max_size_mb: 10  # Rotate log when it gets this big
     backup_count: 3  # Keep this many old log files
   

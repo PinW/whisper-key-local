@@ -100,7 +100,7 @@ This interactive tool will:
 
 ### Testing Tools
 1. Run `python tests/run_component_tests.py` to identify which component is failing
-2. Check the log file `whisper_app.log` for detailed error messages
+2. Check the log file `app.log` for detailed error messages
 3. Test individual components with their respective test scripts
 
 ## 🔒 Privacy & Security
