@@ -83,10 +83,6 @@ This interactive tool will:
 
 ### Common Issues
 
-**Hotkey Configuration:**
-- Use `python tools/key_helper.py` to test key detection
-- Test different hotkey combinations in `test_hotkeys.py`
-
 **Microphone not detected:**
 - Check Windows microphone permissions
 - Test with `test_audio.py` to isolate the issue
