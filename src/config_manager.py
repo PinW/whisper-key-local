@@ -406,9 +406,9 @@ class ConfigManager:
                 'auto_paste': {
                     'emoji': '📋',
                     'ascii': '[Clipboard]',
-                    'name': 'Auto-paste',
-                    'true_desc': 'enabled',
-                    'false_desc': 'disabled'
+                    'name': '',
+                    'true_desc': 'Auto-pasting transcriptions...',
+                    'false_desc': 'Copying transcriptions to clipboard...'
                 }
             },
             'whisper': {
@@ -507,11 +507,11 @@ class ConfigManager:
             # Create user-friendly messages
             if old_value != value:  # Only log if value actually changed
                 # Use ASCII version for logging (avoids Unicode encoding errors on Windows)
-                log_message = f"{ascii_prefix} {name} {description}"
+                log_message = " ".join(filter(None, [ascii_prefix, name, description]))
                 self.logger.info(log_message)
                 
                 # Use emoji version for console output (usually works fine)
-                console_message = f"{emoji} {name} {description}"
+                console_message = " ".join(filter(None, [emoji, name, description]))
                 print(console_message)
             
             # Technical log for debugging

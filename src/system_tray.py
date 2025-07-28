@@ -203,7 +203,7 @@ class SystemTray:
             
             self.logger.debug(f"Action label: '{action_label}', enabled: {action_enabled}")
 
-            # Get auto-paste setting for checkmark display
+            # Get auto-paste setting for radio button display
             auto_paste_enabled = False
             try:
                 if self.config_manager:
@@ -263,9 +263,11 @@ class SystemTray:
                     # Title & Hotkey display
                     pystray.MenuItem(f"Whisper Key: {hotkey_text.upper()}", None, enabled=False),
                     pystray.Menu.SEPARATOR,  # Separator
-                    # Settings
-                    pystray.MenuItem("Settings", None, enabled=False),
-                    pystray.MenuItem("Auto-paste transcriptions", self._toggle_auto_paste, checked=lambda item: auto_paste_enabled),
+                    # Transcription Mode
+                    pystray.MenuItem("Transcription Mode", None, enabled=False),
+                    pystray.MenuItem("Auto-paste", lambda icon, item: self._set_transcription_mode(True), radio=True, checked=lambda item: auto_paste_enabled),
+                    pystray.MenuItem("Copy to clipboard", lambda icon, item: self._set_transcription_mode(False), radio=True, checked=lambda item: not auto_paste_enabled),
+                    pystray.Menu.SEPARATOR,  # Separator below transcription mode options
                     pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_menu_items)),
                     pystray.Menu.SEPARATOR,  # Separator
                     # Dynamic Start/Stop Recording action as primary
@@ -301,34 +303,33 @@ class SystemTray:
             except Exception as e:
                 self.logger.error(f"Error toggling recording from tray: {e}")
 
-    def _toggle_auto_paste(self, icon=None, item=None):
+    def _set_transcription_mode(self, auto_paste: bool):
         """
-        Called when the Auto-paste transcriptions menu item is clicked.
+        Called when a transcription mode radio button is clicked.
         
-        This method toggles the auto-paste setting and saves it to user settings.
+        This method sets the auto-paste setting based on the selected mode.
+        
+        Parameters:
+        - auto_paste: True for auto-paste mode, False for copy-to-clipboard mode
         """
         if not self.config_manager:
-            self.logger.warning("Cannot toggle auto-paste: config_manager not available")
+            self.logger.warning("Cannot set transcription mode: config_manager not available")
             return
         
         try:
-            # Get current setting
-            current_value = self.config_manager.get_setting('clipboard', 'auto_paste', False)
-            new_value = not current_value
-            
             # Update the setting (ConfigManager will handle user-friendly logging)
-            self.config_manager.update_user_setting('clipboard', 'auto_paste', new_value)
+            self.config_manager.update_user_setting('clipboard', 'auto_paste', auto_paste)
             
             # Update the state manager's clipboard config so changes take effect immediately
             if self.state_manager:
-                self.state_manager.clipboard_config['auto_paste'] = new_value
+                self.state_manager.clipboard_config['auto_paste'] = auto_paste
             
-            # Refresh the menu to show the new checkmark state
+            # Refresh the menu to show the new radio button state
             if self.icon:
                 self.icon.menu = self._create_menu()
                 
         except Exception as e:
-            self.logger.error(f"Error toggling auto-paste setting: {e}")
+            self.logger.error(f"Error setting transcription mode: {e}")
 
     def _select_model(self, model_size: str):
         """
