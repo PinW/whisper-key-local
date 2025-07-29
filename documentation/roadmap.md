@@ -1,47 +1,50 @@
 # Windows Whisper Speech-to-Text App - Roadmap
 
 ## Next
-- Start/stop sound
-- Recording mode (hold key vs start/stop)
-- Better icons
-- GUI
-    - Advanced settings
-        - Preserve clipboard option
-    - Progress bar for downloading models
-- Settings
-    - Hotkey management
-- Packaging and installer for windows
+- As a *user*, I want **start/stop sound feedback** so that I know when recording begins and ends
+- As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
+
+### Recording Modes & Multiple Hotkeys
+- As a *user*, I want **recording mode option** (hold key vs start/stop) so that I can choose my preferred interaction style
+- As a *user*, I want **auto-send** so I don't need to hit ENTER for chat/LLM use cases
+- As a *user*, I want **multiple hotkeys** so I can utilize different recording modes without changing settings
 
 ## Backlog
-- As a user I want auto-stop recording so I don't need to hit the hotkey again when i'm lazy
-- As a user I want verbal stop recording command si I don't need to hit the hotkey
 
-### Distribution
-- As a user, I want to download and run a Windows executable without installing Python (and dependencies)
-- As a user, I want a simple installer that sets up the app automatically
+### Packaging & Updates
+- As a *user*, I want a **Windows executable installer** so I can install without setting up python and depdencies
+- As a *user*, I want **automatic updates** to get new features
 
-### Enhanced Experience  
-- As a user, I want to customize my hotkey combinations
-- As a user, I want to choose between Windows API and key simulation for pasting (broader app compatibility)
-- As a user, I want to save different configuration profiles for different use cases
+### GUI
+- As a *user*, I want a **GUI interface** so that I can change settings without editing files:
+- Settings
+    - Hotkey management
+    - Model management
+        - progress bar for downloading
+    - Paste mode
+        - Preserve clipboard as sub-option (auto-paste only)
+    - Language
 
-### Advanced Features
-- As a user, I want to switch between model sizes (tiny/base/small) for speed vs accuracy tradeoffs
-- As a user, I want to choose different languages for transcription  
-- As a user, I want to add custom words to improve accuracy
-- As a user, I want automatic punctuation and text formatting
-- As a user, I want to see my transcription history and search through it
-- As a user, I want to export transcriptions to text files
+## Keyword Controls
+- As a *user* I want **auto-stop recording** so I don't need to hit the hotkey again when i'm lazy
+- As a *user* I want **verbal stop recording** command si I don't need to hit the hotkey
 
-### Performance
-- As a user, I want real-time transcription as I speak
-- As a user, I want the app to use minimal system resources
+### Voice Commands
+- As a *user* I want **voice API** so I can do more than just transcribe voice
+- As a *user* I want **voice commands** so I can quickly activate tasks
+
+### Development Infrastructure
+- **[uv Migration]**(implementation-plans/uv-migration-2025-01-29.md): Migrate from pip to uv for faster dependency management
 
 ### Cross-Platform
-- As a user, I want to use this app on Linux and macOS
-- As a user, I want the same experience across all platforms
+- As a Mac *user*, I want to use this app on **macOS**
+- As a phone *user*, I want this app on **mobile**
 
-### Quality
-- As a user, I want automatic updates to get new features
-- As a user, I want the app to be secure and reliable
-- As a user, I want comprehensive documentation and help
+### Transcription Quality
+- As a *user*, I want to choose different **languages for transcription** to improve accuracy
+- As a *user*, I want to add **custom words** to improve accuracy
+- As a *user*, I want **automatic punctuation and text formatting** so the output is human-friendly (not just LLM)
+- As a *user*, I want to see my **transcription history** so I can search through it
+
+### Recording
+- As a user, I want **real-time transcription** so that I can get immediate feedback
