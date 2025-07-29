@@ -206,6 +206,14 @@ def main():
         logger.info("Application shutting down...")
         print("\nShutting down application...")
         
+        # Stop hotkey listener first to prevent new events during shutdown
+        try:
+            if 'hotkey_listener' in locals() and hotkey_listener.is_active():
+                logger.info("Stopping hotkey listener...")
+                hotkey_listener.stop_listening()
+        except Exception as e:
+            logger.error(f"Error stopping hotkey listener: {e}")
+        
         # Clean shutdown of state manager (includes system tray)
         try:
             state_manager.shutdown()
@@ -216,6 +224,14 @@ def main():
         # This catches any unexpected errors
         logger.error(f"Unexpected error: {e}")
         print(f"Error occurred: {e}")
+        
+        # Stop hotkey listener first to prevent new events during shutdown
+        try:
+            if 'hotkey_listener' in locals() and hotkey_listener.is_active():
+                logger.info("Stopping hotkey listener...")
+                hotkey_listener.stop_listening()
+        except Exception as ex:
+            logger.error(f"Error stopping hotkey listener: {ex}")
         
         # Clean shutdown on error
         try:
