@@ -1,6 +1,6 @@
 # Implementation Plans
 
-This directory contains detailed implementation plans for major features and improvements to the Whisper Speech-to-Text app.
+`/documentation/implementation-plans`: plans for features & improvements
 
 ## Purpose
 
@@ -43,19 +43,25 @@ Break down into numbered steps with:
 - List all files that need changes
 - Brief description of what changes each file needs
 
-## Naming Convention
+## Output Format
 
-Use descriptive names with timestamps:
-- `feature-name-implementation-YYYY-MM-DD.md`
+Create .md file with descriptive names and timestamps:
+- `documentation/implementation-plans/feature-name-implementation-YYYY-MM-DD.md`
 - Example: `state-management-update-2025-01-28.md`
 
-## Usage Workflow
+## Progress Tracking
 
-1. **Create** detailed plan with step-by-step tasks
-2. **Execute** one task at a time, updating progress as you go
-3. **Document** completion details and any discoveries
-4. **Archive** completed plans for future reference
+Update the plan as tasks are completed:
+
+**Example:**
+```markdown
+- [x] Add model_loading state to StateManager
+  - ✅ Added `is_model_loading` flag to StateManager class
+  - ✅ Updated `toggle_recording()` to check model_loading state
+  - ✅ Added `set_model_loading()` method for state management
+  - ✅ System tray now shows processing icon during model loading
+```
 
 ## Example Plans
 
-- @state-management-update-2025-01-28.md - Comprehensive state management improvements with async model loading
+- `implementation-plans/state-management-update-2025-01-28.md`

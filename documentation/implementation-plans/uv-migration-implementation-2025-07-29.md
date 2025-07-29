@@ -69,6 +69,12 @@
 
 ## Implementation Details
 
+### Architecture Decisions
+- **Parallel Installation**: Keep both pip and uv during transition
+- **Fallback Strategy**: Maintain requirements.txt for pip compatibility
+- **Environment Location**: Use .venv/ instead of venv_new/ for uv standard
+- **Lock File**: Generate uv.lock for reproducible builds
+
 ### New Project Structure
 ```
 whisper-key-local/
@@ -103,72 +109,11 @@ dependencies = [
     "hf-xet>=1.1.5"
 ]
 
-[project.scripts]
-whisper-key = "whisper-key:main"
-
 [tool.uv]
 dev-dependencies = []
 ```
 
 ### Command Updates
-
-#### Old Commands
-```bash
-# Current workflow
-python -m venv venv_new
-venv_new\Scripts\activate
-pip install -r requirements.txt
-python whisper-key.py
-```
-
-#### New Commands
-```bash
-# New uv workflow
-uv sync                    # Install all dependencies
-uv run whisper-key.py      # Run with uv
-# or
-uv shell                   # Activate environment
-python whisper-key.py      # Run normally
-```
-
-## Files to Modify
-
-- **pyproject.toml** - Create new project configuration file
-- **requirements.txt** - Keep for pip fallback compatibility
-- **tests/run_component_tests.py** - Update to use uv commands if needed
-- **tools/*.py** - Update scripts to work with uv environment
-- **CLAUDE.md** - Update development commands
-- **README.md** - Update installation instructions
-- **.gitignore** - Add .venv/ and uv.lock
-
-## Implementation Details
-
-### pyproject.toml Configuration
-```toml
-[project]
-name = "whisper-key-local"
-version = "1.0.0"
-description = "Local faster-whisper speech-to-text with global hotkey"
-requires-python = ">=3.10"
-dependencies = [
-    "faster-whisper>=1.1.1",
-    "numpy>=1.24.0",
-    "sounddevice>=0.4.6",
-    "global-hotkeys>=0.1.7",
-    "pyperclip>=1.8.2",
-    "ruamel.yaml>=0.18.14",
-    "pywin32>=306; platform_system=='Windows'",
-    "pyautogui>=0.9.54",
-    "pystray>=0.19.5",
-    "Pillow>=10.0.0",
-    "hf-xet>=1.1.5"
-]
-
-[tool.uv]
-dev-dependencies = []
-```
-
-### New Command Structure
 ```bash
 # Old pip workflow
 python -m venv venv_new
@@ -184,8 +129,13 @@ uv shell                   # Activate environment
 python whisper-key.py      # Run normally
 ```
 
-### Architecture Decisions
-- **Parallel Installation**: Keep both pip and uv during transition
-- **Fallback Strategy**: Maintain requirements.txt for pip compatibility
-- **Environment Location**: Use .venv/ instead of venv_new/ for uv standard
-- **Lock File**: Generate uv.lock for reproducible builds
+## Files to Modify
+
+- **pyproject.toml** - Create new project configuration file
+- **requirements.txt** - Keep for pip fallback compatibility
+- **tests/run_component_tests.py** - Update to use uv commands if needed
+- **tools/*.py** - Update scripts to work with uv environment
+- **CLAUDE.md** - Update development commands
+- **README.md** - Update installation instructions
+- **.gitignore** - Add .venv/ and uv.lock
+
