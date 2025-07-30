@@ -77,13 +77,20 @@ Desired state:
       - ✅ Implemented conditional logic with proper modifier key display for both scenarios
 
 ### Phase 4: Code Cleanup and Documentation
-- [ ] Update method documentation and comments
-  - [ ] Clarify that auto-enter is stop-only in all relevant docstrings
-  - [ ] Update configuration comments to reflect new behavior
-  - [ ] Add code comments explaining the stop-only logic
-- [ ] Remove unused start-recording paths for auto-enter
-  - [ ] Ensure no duplicate start logic remains for auto-enter hotkey
-  - [ ] Clean up any conditional logic that's no longer needed
+- [x] Update method documentation and comments
+  - [x] Clarify that auto-enter is stop-only in all relevant docstrings
+    - ✅ Updated `_auto_enter_hotkey_pressed()` docstring with clear "STOP-ONLY HOTKEY" documentation
+    - ✅ Updated `_auto_enter_modifier_hotkey_pressed()` docstring with stop-only behavior explanation
+  - [x] Update configuration comments to reflect new behavior
+    - ✅ Updated config.yaml comments to clarify "STOP-ONLY recording" behavior
+  - [x] Add code comments explaining the stop-only logic
+    - ✅ Added comprehensive documentation explaining auto-enter cannot start recording
+- [x] Remove unused start-recording paths for auto-enter
+  - [x] Ensure no duplicate start logic remains for auto-enter hotkey
+    - ✅ Removed unused `use_auto_enter` parameter from `toggle_recording()` method
+    - ✅ Auto-enter hotkeys now exclusively use `stop_only_recording()` method
+  - [x] Clean up any conditional logic that's no longer needed
+    - ✅ Verified no remaining auto-enter start-recording code paths exist
 
 ## Implementation Details
 

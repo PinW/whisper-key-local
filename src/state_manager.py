@@ -66,7 +66,7 @@ class StateManager:
         if self.system_tray:
             self.system_tray.update_state("idle")
     
-    def toggle_recording(self, use_auto_enter: bool = False):
+    def toggle_recording(self):
         """
         Toggle between recording and stopping (called when hotkey is pressed)
         
@@ -74,21 +74,17 @@ class StateManager:
         - If not recording: start recording
         - If recording: stop recording and process the audio
         
-        Parameters:
-        - use_auto_enter: If True, enhanced stop behavior (force auto-paste + ENTER)
-                         If False, standard stop behavior (respect auto-paste config)
-        
         For beginners: "Toggle" means switch between two states - like a light 
         switch that turns on when off, and off when on.
         """
         current_state = self.get_current_state()
         current_recording = self.audio_recorder.get_recording_status()
-        self.logger.debug(f"toggle_recording called - state={current_state}, recording={current_recording}, use_auto_enter={use_auto_enter}")
+        self.logger.debug(f"toggle_recording called - state={current_state}, recording={current_recording}")
         
         if current_recording:
             # Currently recording, check if we can stop
             if self.can_stop_recording():
-                self._stop_recording_and_process(use_auto_enter=use_auto_enter)
+                self._stop_recording_and_process(use_auto_enter=False)
             else:
                 self.logger.info(f"Cannot stop recording in current state: {current_state}")
                 print(f"⏳ Cannot stop recording while {current_state}...")

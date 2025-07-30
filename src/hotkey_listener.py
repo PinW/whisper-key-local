@@ -178,9 +178,9 @@ class HotkeyListener:
         """
         Called when the auto-enter hotkey is pressed
         
-        This is a STOP-ONLY hotkey - it only functions when recording is active
-        and auto-paste is enabled. When not recording or auto-paste is disabled,
-        the hotkey press is ignored.
+        AUTO-ENTER STOP-ONLY HOTKEY:
+        - When not recording or auto-paste is disabled, the hotkey press is ignored
+        - Provides automatic pasting with ENTER key press when stopping
         """
         self.logger.info(f"Auto-enter hotkey pressed: {self.auto_enter_hotkey}")
         
@@ -246,8 +246,11 @@ class HotkeyListener:
         """
         Called when the auto-enter modifier hotkey is pressed (just the first modifier)
         
-        This is a simplified stop-only handler that doesn't need key-up protection
-        because auto-enter hotkeys can never start recording.
+        AUTO-ENTER MODIFIER STOP-ONLY HOTKEY:
+        - This is a simplified stop-only handler for auto-enter modifier keys
+        - Only functions when recording is active and auto-paste is enabled
+        - Doesn't need key-up protection because auto-enter hotkeys can never start recording
+        - Provides automatic pasting with ENTER key press when stopping
         """
         self.logger.debug(f"Auto-enter modifier hotkey pressed: {self.auto_enter_modifier_hotkey}")
         
