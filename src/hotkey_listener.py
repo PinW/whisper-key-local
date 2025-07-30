@@ -141,7 +141,7 @@ class HotkeyListener:
         
         try:
             # Tell the state manager to toggle recording with auto-enter behavior
-            self.state_manager.toggle_recording(auto_enter=True)
+            self.state_manager.toggle_recording(use_auto_enter=True)
             
         except Exception as e:
             self.logger.error(f"Error handling auto-enter hotkey press: {e}")

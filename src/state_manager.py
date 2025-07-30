@@ -66,7 +66,7 @@ class StateManager:
         if self.system_tray:
             self.system_tray.update_state("idle")
     
-    def toggle_recording(self):
+    def toggle_recording(self, use_auto_enter: bool = False):
         """
         Toggle between recording and stopping (called when hotkey is pressed)
         
@@ -74,17 +74,21 @@ class StateManager:
         - If not recording: start recording
         - If recording: stop recording and process the audio
         
+        Parameters:
+        - use_auto_enter: If True, enhanced stop behavior (force auto-paste + ENTER)
+                         If False, standard stop behavior (respect auto-paste config)
+        
         For beginners: "Toggle" means switch between two states - like a light 
         switch that turns on when off, and off when on.
         """
         current_state = self.get_current_state()
         current_recording = self.audio_recorder.get_recording_status()
-        self.logger.debug(f"toggle_recording called - state={current_state}, recording={current_recording}")
+        self.logger.debug(f"toggle_recording called - state={current_state}, recording={current_recording}, use_auto_enter={use_auto_enter}")
         
         if current_recording:
             # Currently recording, check if we can stop
             if self.can_stop_recording():
-                self._stop_recording_and_process()
+                self._stop_recording_and_process(use_auto_enter=use_auto_enter)
             else:
                 self.logger.info(f"Cannot stop recording in current state: {current_state}")
                 print(f"⏳ Cannot stop recording while {current_state}...")
@@ -129,7 +133,7 @@ class StateManager:
             self.logger.error(f"Error starting recording: {e}")
             print(f"❌ Error starting recording: {e}")
     
-    def _stop_recording_and_process(self):
+    def _stop_recording_and_process(self, use_auto_enter: bool = False):
         """
         Stop recording and process the audio through the entire pipeline
         
@@ -137,6 +141,11 @@ class StateManager:
         1. Stop recording and get audio data
         2. Send audio to Whisper for transcription
         3. Copy transcribed text to clipboard
+        4. If use_auto_enter=True, force auto-paste and send ENTER key
+        
+        Parameters:
+        - use_auto_enter: If True, force auto-paste and send ENTER key regardless of config
+                         If False, respect the auto-paste configuration setting
         
         For beginners: This is like an assembly line - each step processes 
         the output from the previous step.
@@ -178,10 +187,48 @@ class StateManager:
                     self.system_tray.update_state("idle")
                 return
             
-            # Step 3: Handle clipboard/paste based on configuration
+            # Step 3: Handle clipboard/paste based on configuration and auto-enter flag
             auto_paste_enabled = self.clipboard_config.get('auto_paste', False)
             
-            if auto_paste_enabled:
+            if use_auto_enter:
+                # Auto-enter hotkey: force auto-paste and send ENTER key
+                print("🚀 Auto-pasting text and SENDING with ENTER...")
+                paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
+                preserve_clipboard = self.clipboard_config.get('preserve_clipboard', False)
+                # Get auto_enter_delay from config_manager's hotkey section
+                auto_enter_delay = 0.1  # Default value
+                if self.config_manager:
+                    hotkey_config = self.config_manager.get_full_config().get('hotkey', {})
+                    auto_enter_delay = hotkey_config.get('auto_enter_delay', 0.1)
+                
+                # Force auto-paste (ignore auto_paste config setting)
+                if preserve_clipboard:
+                    paste_success = self.clipboard_manager.preserve_and_paste(transcribed_text, paste_method)
+                else:
+                    paste_success = self.clipboard_manager.copy_and_paste(transcribed_text, paste_method)
+                
+                if paste_success:
+                    # Send ENTER key after successful paste
+                    enter_success = self.clipboard_manager.send_enter_key(delay=auto_enter_delay)
+                    
+                    if enter_success:
+                        # Store for future reference
+                        self.last_transcription = transcribed_text
+                        self.logger.info("Complete auto-enter workflow successful (paste + ENTER)")
+                        print("✅ Text pasted and submitted with ENTER!")
+                    else:
+                        # Paste succeeded but ENTER failed
+                        self.last_transcription = transcribed_text
+                        self.logger.warning("Auto-paste succeeded but ENTER key failed")
+                        print("✅ Text pasted successfully, but ENTER key failed. Please press ENTER manually.")
+                else:
+                    # Auto-paste failed, fallback to clipboard only
+                    self.last_transcription = transcribed_text
+                    self.logger.warning("Auto-enter paste failed, falling back to clipboard")
+                    print("❌ Auto-paste failed. Text copied to clipboard - paste with Ctrl+V and press ENTER manually.")
+                    
+            elif auto_paste_enabled:
+                # Standard hotkey with auto-paste enabled: respect config
                 print("🚀 Auto-pasting text...")
                 paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
                 preserve_clipboard = self.clipboard_config.get('preserve_clipboard', False)
@@ -201,6 +248,7 @@ class StateManager:
                     self.logger.warning("Auto-paste failed, falling back to manual paste")
                     print("✅ Text copied to clipboard. Use Ctrl+V to paste manually.")
             else:
+                # Standard hotkey with auto-paste disabled: clipboard only
                 print("📋 Copying to clipboard...")
                 success = self.clipboard_manager.copy_and_notify(transcribed_text)
                 

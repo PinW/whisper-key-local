@@ -153,7 +153,9 @@ def main():
         # Set up hotkey listener (this detects when you press the recording key)
         hotkey_listener = HotkeyListener(
             state_manager=state_manager,
-            hotkey=hotkey_config['combination']
+            hotkey=hotkey_config['combination'],
+            auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
+            auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True)
         )
         
         # Start system tray if available

@@ -457,6 +457,40 @@ class ClipboardManager:
             self.logger.error(f"Windows API paste failed: {e}")
             return False
     
+    def send_enter_key(self, delay: float = 0.1) -> bool:
+        """
+        Send ENTER key to the active application using key simulation
+        
+        Parameters:
+        - delay: Time to wait before sending ENTER key (seconds)
+        
+        Returns:
+        - True if successful, False if failed
+        
+        This method is used by the auto-enter hotkey functionality to automatically
+        submit text after pasting it (useful for chat applications and forms).
+        """
+        if not KEY_SIMULATION_AVAILABLE:
+            self.logger.error("pyautogui not available for ENTER key simulation")
+            return False
+        
+        try:
+            # Add configurable delay before sending ENTER
+            if delay > 0:
+                self.logger.info(f"Waiting {delay} seconds before sending ENTER key")
+                time.sleep(delay)
+            
+            # Send ENTER key press
+            self.logger.info("Sending ENTER key to active application")
+            pyautogui.press('enter')
+            
+            self.logger.info("ENTER key sent successfully")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to send ENTER key: {e}")
+            return False
+
     def get_clipboard_info(self) -> dict:
         """
         Get information about current clipboard state (for debugging)
