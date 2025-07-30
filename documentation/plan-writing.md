@@ -23,6 +23,7 @@ Each implementation plan should follow this structure:
 ```
 
 ### Current State Analysis
+Concise bullet lists:
 - Document existing functionality
 - Identify gaps and issues
 - Note what's already working
@@ -31,7 +32,6 @@ Each implementation plan should follow this structure:
 Break down into numbered steps with:
 - Clear, actionable tasks
 - Checkboxes for tracking progress (`- [ ]` for pending, `- [x]` for complete)
-- After completion, add sub-tasks to each checkbox item with detailed completion notes
 - Priority indicators where relevant
 
 ### Implementation Details
