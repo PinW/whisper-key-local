@@ -208,6 +208,10 @@ class HotkeyListener:
             'ctrl': 'control',
             'shift': 'shift',
             'alt': 'alt',
+            'win': 'window',
+            'windows': 'window',
+            'cmd': 'window',
+            'super': 'window',
             'space': 'space',
             'enter': 'enter',
             'esc': 'escape'

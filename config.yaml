@@ -54,12 +54,12 @@ hotkey:
   #   - "ctrl+alt+r"
   #   - "win+shift+v"
   #   - "ctrl+shift+f12"
-  combination: ctrl+space
+  combination: ctrl+win
   
   # Auto-ENTER hotkey - enhanced stop recording with automatic ENTER key press
   # This hotkey provides the same start functionality as the standard hotkey
   # but includes automatic pasting and ENTER key press when stopping recording
-  auto_enter_combination: ctrl+shift+space
+  auto_enter_combination: ctrl+shift+win
   
   # Enable/disable the auto-ENTER hotkey functionality
   auto_enter_enabled: true
