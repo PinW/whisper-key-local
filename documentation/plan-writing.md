@@ -57,9 +57,9 @@ Example phase inside this section:
 ## Output Format
 
 Create .md file with descriptive name:
-- [TIMESTAMP] = bash `date +%Y-%m-%d`
+- [TIMESTAMP] = bash `date +%Y-%m-%d-%H%M`
 - `documentation/implementation-plans/[TIMESTAMP]-feature-name-implementation.md`
-- Example: `2025-01-28-state-management-update.md`
+- Example: `2025-01-28-1430-state-management-update.md`
 
 ## Example Plans
 

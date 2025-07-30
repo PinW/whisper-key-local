@@ -23,17 +23,27 @@ Desired state:
 ## Implementation Plan
 
 ### Phase 1: Configuration Updates
-- [ ] Update default auto-enter hotkey from `ctrl+shift+win` to `alt+win` in config.yaml
-  - [ ] Update `auto_enter_combination` default value
-  - [ ] Update configuration comments to reflect stop-only behavior
-  - [ ] Update documentation to clarify stop-only functionality
+- [x] Update default auto-enter hotkey from `ctrl+shift+win` to `alt+win` in config.yaml
+  - [x] Update `auto_enter_combination` default value
+    - ✅ Changed from `ctrl+shift+win` to `alt+win` in config.yaml:62
+  - [x] Update configuration comments to reflect stop-only behavior
+    - ✅ Updated comments to clarify "STOP-ONLY recording" behavior in config.yaml:59-61
+  - [x] Update documentation to clarify stop-only functionality
+    - ✅ Verified project documentation doesn't need updates (auto-enter not specifically documented)
 
 ### Phase 2: HotkeyListener Refactor
-- [ ] Modify auto-enter hotkey behavior to be stop-only
-  - [ ] Update `_auto_enter_hotkey_pressed()` to call StateManager directly
-  - [ ] StateManager will handle recording state check and ignore if not recording
-  - [ ] Add logging to indicate when auto-enter hotkey is ignored
-    - [ ] Let user know auto-enter key is for auto-sending with ENTER only during recording
+- [x] Modify auto-enter hotkey behavior to be stop-only
+  - [x] Update `_auto_enter_hotkey_pressed()` to check recording state in HotkeyListener
+    - ✅ Use `self.state_manager.audio_recorder.get_recording_status()` to check if recording
+    - ✅ Return early if not recording (ignore hotkey press)
+  - [x] Call `stop_only_recording(use_auto_enter=True)` instead of toggle behavior
+    - ✅ Changed from `toggle_recording()` to `stop_only_recording()` with auto-enter flag
+  - [x] Add logging to indicate when auto-enter hotkey is ignored
+    - ✅ Added debug logging when hotkey ignored due to not recording
+    - [x] Let user know auto-enter key is for auto-sending with ENTER only during recording
+      - ✅ Updated docstring to clarify "STOP-ONLY hotkey" behavior
+  - [x] Integrate with existing stop-modifier protection logic
+    - ✅ Added stop-modifier protection check before proceeding
 
 ### Phase 3: Stop-Modifier Integration
 - [ ] Integrate auto-enter with stop-modifier protection logic

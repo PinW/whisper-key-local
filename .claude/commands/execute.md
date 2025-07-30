@@ -1,9 +1,9 @@
-PLAN_PATH: $ARGUMENTS
+PLAN: $ARGUMENTS
 
-If PLAN_PATH has a value
+If PLAN has a value
 - Implement $ARGUMENTS
 
-If PLAN_PATH is empty
-- Implement the file in the active file context of connected IDE
+If PLAN is empty
+- Implement plan with the latest timestamp in `documentation/implementation-plans`
 
 @documentation/plan-execution.md
