@@ -43,25 +43,16 @@ Break down into numbered steps with:
 - List all files that need changes
 - Brief description of what changes each file needs
 
+### Success Criteria
+- Define specific, testable outcomes that confirm feature functionality
+
 ## Output Format
 
-Create .md file with descriptive names and timestamps:
-- `documentation/implementation-plans/feature-name-implementation-YYYY-MM-DD.md`
-- Example: `state-management-update-2025-01-28.md`
-
-## Progress Tracking
-
-Update the plan as tasks are completed:
-
-**Example:**
-```markdown
-- [x] Add model_loading state to StateManager
-  - ✅ Added `is_model_loading` flag to StateManager class
-  - ✅ Updated `toggle_recording()` to check model_loading state
-  - ✅ Added `set_model_loading()` method for state management
-  - ✅ System tray now shows processing icon during model loading
-```
+Create .md file with descriptive name:
+- [TIMESTAMP] = bash `date +%Y-%m-%d`
+- `documentation/implementation-plans/[TIMESTAMP]-feature-name-implementation.md`
+- Example: `2025-01-28-state-management-update.md`
 
 ## Example Plans
 
-- `implementation-plans/state-management-update-2025-01-28.md`
+- `implementation-plans/auto-enter-hotkey-implementation-2025-01-29.md`
