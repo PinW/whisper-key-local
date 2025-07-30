@@ -285,7 +285,6 @@ class StateManager:
                     # Store for future reference
                     self.last_transcription = transcribed_text
                     self.logger.info("Complete workflow successful")
-                    print("✅ Ready to paste! Use Ctrl+V in any application.")
                 else:
                     print("❌ Failed to copy to clipboard!")
                     self.logger.error("Failed to copy transcription to clipboard")
