@@ -4,10 +4,10 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 
 ## 🎯 Features
 
-- **Global Hotkey**: Press `Ctrl+Tilde` from any application to start/stop recording
-- **Automatic Pasting**: Transcribed text inserted where your cursor is as soon as it is processed
+- **Global Hotkey**: Press `Ctrl+Tilde` start recording, `Ctrl` to stop
+- **Auto-Paste**: Transcription inserted at your cursor, with optional ENTER keypress
 - **Offline Capable**: Faster-whisper runs locally (no internet needed after setup)
-- **Private Processing**: All processing happens locally, voice data never leaves your computer
+- **Private Processing**: Voice data never leaves your computer
 - **Configurable**: Customize hotkeys, model, transcription actions, and audio settings
 
 ## 🚀 Quick Start
