@@ -413,10 +413,9 @@ class ClipboardManager:
         # Provide user feedback
         if paste_success and show_notification:
             display_text = text if len(text) <= 100 else text[:97] + "..."
-            if restore_success:
-                print(f"✓ Auto-pasted via {method_used}: '{display_text}' (original clipboard restored)")
-            else:
-                print(f"✓ Auto-pasted via {method_used}: '{display_text}' (warning: original clipboard not restored)")
+            print(f"✓ Auto-pasted via {method_used}: '{display_text}'")
+            if not restore_success:
+                self.logger.warning("Original clipboard content was not restored")
         elif not paste_success and show_notification:
             print("❌ Auto-paste failed with all methods")
             if original_content is not None and restore_success:
