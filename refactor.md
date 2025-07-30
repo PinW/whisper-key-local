@@ -25,7 +25,7 @@ if current_recording:
 
 **Refactor suggestion**: Create a `_handle_stop_recording()` helper method.-->
 
-## 2. Auto-Paste Logic Branching (Medium Priority)
+<!-- ## 2. Auto-Paste Logic Branching (Medium Priority)
 
 **Location**: `state_manager.py` - `_stop_recording_and_process()` (renamed recently to `_transcription_pipeline()`) lines 222-290
 
@@ -39,7 +39,7 @@ Each block repeats:
 - `self.last_transcription = transcribed_text`
 - Similar print statements and logging
 
-**Refactor suggestion**: Extract a `_handle_clipboard_operation()` method.
+**Refactor suggestion**: Extract a `_handle_clipboard_operation()` method. -->
 
 ## 3. System Tray State Updates (Low Priority)
 
