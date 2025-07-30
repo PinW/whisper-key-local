@@ -107,7 +107,7 @@ class HotkeyListener:
                     })
                     self.logger.info(f"Auto-enter stop-modifier enabled: {self.auto_enter_modifier_hotkey}")
                 else:
-                    self.logger.info(f"Auto-enter uses same modifier as main hotkey ({self.auto_enter_modifier_hotkey}) - shared stop-modifier behavior")
+                    self.logger.warning(f"⚠️ AUTO-ENTER HOTKEY DISABLED: Both main hotkey and auto-enter use the same modifier key '{self.auto_enter_modifier_hotkey}' with stop-with-modifier enabled. To re-enable auto-enter, use a different modifier key or turn off stop-with-modifier.")
                     self.auto_enter_modifier_hotkey = None  # Will use shared modifier
         
         # Sort by specificity (more modifiers = higher priority)
