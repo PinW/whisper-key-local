@@ -67,6 +67,38 @@ class StateManager:
         if self.system_tray:
             self.system_tray.update_state("idle")
     
+    def _attempt_stop_if_recording(self, method_name: str, use_auto_enter: bool = False) -> bool:
+        """
+        Attempt to stop recording if currently recording and able to stop.
+        
+        This helper method consolidates the common logic between toggle_recording()
+        and stop_recording() for handling the stop portion of their workflows.
+        
+        Args:
+            method_name (str): Name of the calling method (for logging purposes)
+            use_auto_enter (bool): Whether to use auto-enter behavior when stopping
+        
+        Returns:
+            bool: True if recording was stopped or stop was attempted, False if not currently recording
+        
+        For beginners: This is a "helper method" - it does one specific job that multiple
+        other methods need, so we put the logic here to avoid repeating ourselves.
+        """
+        current_state = self.get_current_state()
+        current_recording = self.audio_recorder.get_recording_status()
+        self.logger.debug(f"{method_name} called - state={current_state}, recording={current_recording}, use_auto_enter={use_auto_enter}")
+        
+        if current_recording:
+            # Currently recording, check if we can stop
+            if self.can_stop_recording():
+                self._transcription_pipeline(use_auto_enter=use_auto_enter)
+            else:
+                self.logger.info(f"Cannot stop recording in current state: {current_state}")
+                print(f"⏳ Cannot stop recording while {current_state}...")
+            return True  # Recording was present, stop was attempted
+        else:
+            return False  # Not currently recording
+    
     def toggle_recording(self):
         """
         Toggle between recording and stopping (called when hotkey is pressed)
@@ -78,19 +110,12 @@ class StateManager:
         For beginners: "Toggle" means switch between two states - like a light 
         switch that turns on when off, and off when on.
         """
-        current_state = self.get_current_state()
-        current_recording = self.audio_recorder.get_recording_status()
-        self.logger.debug(f"toggle_recording called - state={current_state}, recording={current_recording}")
+        # Try to stop if recording, get whether we were recording
+        was_recording = self._attempt_stop_if_recording("toggle_recording", use_auto_enter=False)
         
-        if current_recording:
-            # Currently recording, check if we can stop
-            if self.can_stop_recording():
-                self._stop_recording_and_process(use_auto_enter=False)
-            else:
-                self.logger.info(f"Cannot stop recording in current state: {current_state}")
-                print(f"⏳ Cannot stop recording while {current_state}...")
-        else:
+        if not was_recording:
             # Not recording, check if we can start
+            current_state = self.get_current_state()
             if self.can_start_recording():
                 self._start_recording()
             else:
@@ -102,7 +127,7 @@ class StateManager:
                 else:
                     print(f"⏳ Cannot record while {current_state}...")
     
-    def stop_only_recording(self, use_auto_enter: bool = False):
+    def stop_recording(self, use_auto_enter: bool = False):
         """
         Stop recording only (no start functionality) - designed for modifier-only hotkeys
         
@@ -115,20 +140,12 @@ class StateManager:
         
         For beginners: Unlike toggle_recording(), this only stops - it won't start recording.
         """
-        current_state = self.get_current_state()
-        current_recording = self.audio_recorder.get_recording_status()
-        self.logger.debug(f"stop_only_recording called - state={current_state}, recording={current_recording}, use_auto_enter={use_auto_enter}")
+        # Try to stop if recording
+        was_recording = self._attempt_stop_if_recording("stop_recording", use_auto_enter=use_auto_enter)
         
-        if current_recording:
-            # Currently recording, check if we can stop
-            if self.can_stop_recording():
-                self._stop_recording_and_process(use_auto_enter=use_auto_enter)
-            else:
-                self.logger.info(f"Cannot stop recording in current state: {current_state}")
-                print(f"⏳ Cannot stop recording while {current_state}...")
-        else:
+        if not was_recording:
             # Not recording - do nothing (this is the key difference from toggle)
-            self.logger.debug("stop_only_recording called but not currently recording - ignoring")
+            self.logger.debug("stop_recording called but not currently recording - ignoring")
             # No output message since this is expected behavior for modifier-only hotkey
     
     def _generate_stop_instructions(self) -> str:
@@ -213,13 +230,13 @@ class StateManager:
             self.logger.error(f"Error starting recording: {e}")
             print(f"❌ Error starting recording: {e}")
     
-    def _stop_recording_and_process(self, use_auto_enter: bool = False):
+    def _transcription_pipeline(self, use_auto_enter: bool = False):
         """
-        Stop recording and process the audio through the entire pipeline
+        Process the complete transcription pipeline from audio to delivered text
         
         This is where the magic happens:
-        1. Stop recording and get audio data
-        2. Send audio to Whisper for transcription
+        1. Get recorded audio data (recording already stopped)
+        2. Send audio to Whisper AI for transcription
         3. Copy transcribed text to clipboard
         4. If use_auto_enter=True, force auto-paste and send ENTER key
         
@@ -228,7 +245,7 @@ class StateManager:
                          If False, respect the auto-paste configuration setting
         
         For beginners: This is like an assembly line - each step processes 
-        the output from the previous step.
+        the output from the previous step to deliver speech as text.
         """
         try:
             # Atomic state transition to processing
@@ -408,7 +425,7 @@ class StateManager:
             time.sleep(duration_seconds)
             
             # Stop and process
-            self._stop_recording_and_process()
+            self._transcription_pipeline()
             
         except Exception as e:
             self.logger.error(f"Manual test failed: {e}")

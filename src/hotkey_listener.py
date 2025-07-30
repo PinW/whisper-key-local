@@ -204,7 +204,7 @@ class HotkeyListener:
         
         try:
             # Stop recording with auto-enter behavior (stop-only)
-            self.state_manager.stop_only_recording(use_auto_enter=True)
+            self.state_manager.stop_recording(use_auto_enter=True)
             
         except Exception as e:
             self.logger.error(f"Error handling auto-enter hotkey press: {e}")
@@ -226,7 +226,7 @@ class HotkeyListener:
             self.logger.info(f"Stop-modifier hotkey activated: {self.stop_modifier_hotkey}")
             try:
                 # Tell the state manager to stop recording only (no toggle behavior)
-                self.state_manager.stop_only_recording()
+                self.state_manager.stop_recording()
                 
             except Exception as e:
                 self.logger.error(f"Error handling stop-modifier hotkey press: {e}")
@@ -267,7 +267,7 @@ class HotkeyListener:
         self.logger.info(f"Auto-enter modifier hotkey activated: {self.auto_enter_modifier_hotkey}")
         try:
             # Tell the state manager to stop recording with auto-enter behavior
-            self.state_manager.stop_only_recording(use_auto_enter=True)
+            self.state_manager.stop_recording(use_auto_enter=True)
             
         except Exception as e:
             self.logger.error(f"Error handling auto-enter modifier hotkey press: {e}")
