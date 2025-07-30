@@ -261,6 +261,11 @@ class HotkeyListener:
             if not self.state_manager.audio_recorder.get_recording_status():
                 self.logger.debug("Auto-enter modifier hotkey ignored - not currently recording")
                 return
+            
+            # Check if auto-paste is enabled (required for auto-enter functionality)
+            if not self.state_manager.clipboard_config.get('auto_paste', False):
+                self.logger.debug("Auto-enter modifier hotkey ignored - auto-paste is disabled")
+                return
                 
             self.logger.info(f"Auto-enter modifier hotkey activated: {self.auto_enter_modifier_hotkey}")
             try:
