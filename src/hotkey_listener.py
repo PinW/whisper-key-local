@@ -94,7 +94,7 @@ class HotkeyListener:
                     'name': 'stop-modifier'
                 })
         
-        # Add auto-enter modifier hotkey with key-up detection if both features enabled
+        # Add auto-enter modifier hotkey if both features enabled
         if self.stop_with_modifier_enabled and self.auto_enter_enabled and self.auto_enter_hotkey:
             self.auto_enter_modifier_hotkey = self._extract_first_modifier(self.auto_enter_hotkey)
             if self.auto_enter_modifier_hotkey:
@@ -103,7 +103,6 @@ class HotkeyListener:
                     hotkey_configs.append({
                         'combination': self.auto_enter_modifier_hotkey,
                         'callback': self._auto_enter_modifier_hotkey_pressed,
-                        'release_callback': self._auto_enter_modifier_key_released,
                         'name': 'auto-enter-modifier'
                     })
                     self.logger.info(f"Auto-enter stop-modifier enabled: {self.auto_enter_modifier_hotkey}")
@@ -247,44 +246,29 @@ class HotkeyListener:
         """
         Called when the auto-enter modifier hotkey is pressed (just the first modifier)
         
-        This only stops recording with auto-enter behavior if:
-        1. Currently recording 
-        2. The modifier key has been released since the last full hotkey press
-        
-        This prevents immediate stopping when the modifier is part of the start combination.
+        This is a simplified stop-only handler that doesn't need key-up protection
+        because auto-enter hotkeys can never start recording.
         """
-        self.logger.debug(f"Auto-enter modifier hotkey pressed: {self.auto_enter_modifier_hotkey}, modifier_released={self.modifier_key_released}")
+        self.logger.debug(f"Auto-enter modifier hotkey pressed: {self.auto_enter_modifier_hotkey}")
         
-        # Only stop if the modifier key has been released since last full hotkey press
-        if self.modifier_key_released:
-            # Check if currently recording (stop-only behavior)
-            if not self.state_manager.audio_recorder.get_recording_status():
-                self.logger.debug("Auto-enter modifier hotkey ignored - not currently recording")
-                return
+        # Check if currently recording (stop-only behavior)
+        if not self.state_manager.audio_recorder.get_recording_status():
+            self.logger.debug("Auto-enter modifier hotkey ignored - not currently recording")
+            return
+        
+        # Check if auto-paste is enabled (required for auto-enter functionality)
+        if not self.state_manager.clipboard_config.get('auto_paste', False):
+            self.logger.debug("Auto-enter modifier hotkey ignored - auto-paste is disabled")
+            return
             
-            # Check if auto-paste is enabled (required for auto-enter functionality)
-            if not self.state_manager.clipboard_config.get('auto_paste', False):
-                self.logger.debug("Auto-enter modifier hotkey ignored - auto-paste is disabled")
-                return
-                
-            self.logger.info(f"Auto-enter modifier hotkey activated: {self.auto_enter_modifier_hotkey}")
-            try:
-                # Tell the state manager to stop recording with auto-enter behavior
-                self.state_manager.stop_only_recording(use_auto_enter=True)
-                
-            except Exception as e:
-                self.logger.error(f"Error handling auto-enter modifier hotkey press: {e}")
-        else:
-            self.logger.debug("Auto-enter modifier ignored - waiting for key release first")
+        self.logger.info(f"Auto-enter modifier hotkey activated: {self.auto_enter_modifier_hotkey}")
+        try:
+            # Tell the state manager to stop recording with auto-enter behavior
+            self.state_manager.stop_only_recording(use_auto_enter=True)
+            
+        except Exception as e:
+            self.logger.error(f"Error handling auto-enter modifier hotkey press: {e}")
     
-    def _auto_enter_modifier_key_released(self):
-        """
-        Called when the auto-enter modifier key is released
-        
-        This enables the auto-enter stop functionality after the key is released.
-        """
-        self.logger.debug(f"Auto-enter modifier key released: {self.auto_enter_modifier_hotkey}")
-        self.modifier_key_released = True
     
     def _extract_first_modifier(self, hotkey_str: str) -> str:
         """
