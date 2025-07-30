@@ -15,7 +15,7 @@ Execute the attached implementation plan as written, prioritize correctness over
   - ✅ System tray now shows processing icon during model loading
 ```
 
-## When to Stop & Ask
+## Stop Conditions
 Ask 1 question and stop if:
 - Requirements are ambiguous
 - Complexity exceeds assumptions
