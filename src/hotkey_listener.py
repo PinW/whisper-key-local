@@ -23,19 +23,23 @@ class HotkeyListener:
     This class registers hotkeys with the operating system and responds when they're pressed.
     """
     
-    def __init__(self, state_manager: 'StateManager', hotkey: str = "ctrl+shift+space"):
+    def __init__(self, state_manager: 'StateManager', hotkey: str = "ctrl+shift+space", auto_enter_hotkey: str = None, auto_enter_enabled: bool = True):
         """
-        Initialize the hotkey listener
+        Initialize the hotkey listener with support for multiple hotkeys
         
         Parameters:
         - state_manager: The StateManager that coordinates our app
-        - hotkey: The key combination to listen for (default: Ctrl+Shift+Space)
+        - hotkey: The standard key combination for recording (default: Ctrl+Shift+Space)
+        - auto_enter_hotkey: The auto-enter key combination (default: None)
+        - auto_enter_enabled: Whether the auto-enter hotkey is enabled
         
         For beginners: We pass the state_manager so this class can tell the rest 
-        of the app when the hotkey is pressed.
+        of the app when the hotkey is pressed. Now supports both standard and auto-enter hotkeys.
         """
         self.state_manager = state_manager
         self.hotkey = hotkey
+        self.auto_enter_hotkey = auto_enter_hotkey
+        self.auto_enter_enabled = auto_enter_enabled
         self.is_listening = False
         self.logger = logging.getLogger(__name__)
         
@@ -51,32 +55,97 @@ class HotkeyListener:
         
         This creates a list of hotkey configurations in the format expected by
         the global_hotkeys library: ["key_combination", None, callback, False]
+        
+        IMPORTANT: Hotkeys are automatically sorted by specificity (number of modifiers)
+        so that more specific combinations (e.g., CTRL+SHIFT+X) take priority over
+        less specific ones (e.g., CTRL+X) when they share the same base key.
         """
-        # Convert string format "ctrl+shift+space" to global_hotkeys format "control + shift + space"
-        hotkey_formatted = self._convert_hotkey_to_global_format(self.hotkey)
+        # Collect all hotkey configurations
+        hotkey_configs = []
         
-        self.hotkey_bindings = [
-            [hotkey_formatted, None, self._hotkey_pressed, False]
-        ]
+        # Add standard recording hotkey
+        hotkey_configs.append({
+            'combination': self.hotkey,
+            'callback': self._standard_hotkey_pressed,
+            'name': 'standard'
+        })
         
-        self.logger.info(f"Configured hotkey: {self.hotkey} -> {hotkey_formatted}")
+        # Add auto-enter hotkey if enabled and configured
+        if self.auto_enter_enabled and self.auto_enter_hotkey:
+            hotkey_configs.append({
+                'combination': self.auto_enter_hotkey,
+                'callback': self._auto_enter_hotkey_pressed,
+                'name': 'auto-enter'
+            })
+        
+        # Sort by specificity (more modifiers = higher priority)
+        hotkey_configs.sort(key=self._get_hotkey_specificity, reverse=True)
+        
+        # Convert to global_hotkeys format
+        self.hotkey_bindings = []
+        for config in hotkey_configs:
+            formatted = self._convert_hotkey_to_global_format(config['combination'])
+            self.hotkey_bindings.append([formatted, None, config['callback'], False])
+            self.logger.info(f"Configured {config['name']} hotkey: {config['combination']} -> {formatted}")
+        
+        self.logger.info(f"Total hotkeys configured: {len(self.hotkey_bindings)}")
     
-    def _hotkey_pressed(self):
+    def _get_hotkey_specificity(self, hotkey_config: dict) -> int:
         """
-        This function gets called when our hotkey is pressed
+        Calculate the specificity of a hotkey combination based on number of modifiers
         
-        It's like the "button handler" - when someone presses the button (hotkey),
-        this function decides what to do about it.
+        More modifiers = higher specificity = higher priority
+        This ensures CTRL+SHIFT+` takes precedence over CTRL+`
+        
+        Parameters:
+        - hotkey_config: Dictionary with 'combination' key
+        
+        Returns:
+        - Integer representing specificity (higher = more specific)
         """
-        self.logger.info(f"Hotkey pressed: {self.hotkey}")
+        combination = hotkey_config['combination'].lower()
+        
+        # Count modifier keys
+        modifiers = ['ctrl', 'shift', 'alt', 'win', 'cmd', 'super']
+        specificity = sum(1 for modifier in modifiers if modifier in combination)
+        
+        # Add base key count (usually 1, but accounts for complex combinations)
+        keys = combination.split('+')
+        base_keys = [key.strip() for key in keys if key.strip() not in modifiers]
+        specificity += len(base_keys)
+        
+        return specificity
+    
+    def _standard_hotkey_pressed(self):
+        """
+        Called when the standard recording hotkey is pressed
+        
+        This triggers the normal toggle recording behavior.
+        """
+        self.logger.info(f"Standard hotkey pressed: {self.hotkey}")
         
         try:
-            # Tell the state manager to toggle recording
-            # "Toggle" means if it's off, turn it on; if it's on, turn it off
+            # Tell the state manager to toggle recording (standard behavior)
             self.state_manager.toggle_recording()
             
         except Exception as e:
-            self.logger.error(f"Error handling hotkey press: {e}")
+            self.logger.error(f"Error handling standard hotkey press: {e}")
+    
+    def _auto_enter_hotkey_pressed(self):
+        """
+        Called when the auto-enter hotkey is pressed
+        
+        This triggers enhanced recording behavior with auto-paste and ENTER.
+        """
+        self.logger.info(f"Auto-enter hotkey pressed: {self.auto_enter_hotkey}")
+        
+        try:
+            # Tell the state manager to toggle recording with auto-enter behavior
+            self.state_manager.toggle_recording(auto_enter=True)
+            
+        except Exception as e:
+            self.logger.error(f"Error handling auto-enter hotkey press: {e}")
+    
     
     def start_listening(self):
         """
@@ -156,23 +225,42 @@ class HotkeyListener:
         return ' + '.join(converted_keys)
     
     
-    def change_hotkey(self, new_hotkey: str):
+    def change_hotkey(self, new_hotkey: str = None, new_auto_enter_hotkey: str = None, auto_enter_enabled: bool = None):
         """
-        Change the hotkey combination (for future customization)
+        Change the hotkey combinations (for future customization)
         
-        This allows users to customize which keys trigger the recording.
+        This allows users to customize which keys trigger recording and auto-enter.
+        
+        Parameters:
+        - new_hotkey: New standard recording hotkey (optional)
+        - new_auto_enter_hotkey: New auto-enter hotkey (optional)  
+        - auto_enter_enabled: Enable/disable auto-enter hotkey (optional)
         """
-        self.logger.info(f"Changing hotkey from {self.hotkey} to {new_hotkey}")
+        changes = []
         
-        # Stop current listener
-        self.stop_listening()
+        if new_hotkey is not None:
+            changes.append(f"standard: {self.hotkey} -> {new_hotkey}")
+            self.hotkey = new_hotkey
         
-        # Update hotkey
-        self.hotkey = new_hotkey
-        self._setup_hotkeys()
+        if new_auto_enter_hotkey is not None:
+            changes.append(f"auto-enter: {self.auto_enter_hotkey} -> {new_auto_enter_hotkey}")
+            self.auto_enter_hotkey = new_auto_enter_hotkey
+            
+        if auto_enter_enabled is not None:
+            changes.append(f"auto-enter enabled: {self.auto_enter_enabled} -> {auto_enter_enabled}")
+            self.auto_enter_enabled = auto_enter_enabled
         
-        # Restart listener with new hotkey
-        self.start_listening()
+        if changes:
+            self.logger.info(f"Changing hotkeys: {', '.join(changes)}")
+            
+            # Stop current listener
+            self.stop_listening()
+            
+            # Update hotkey configuration
+            self._setup_hotkeys()
+            
+            # Restart listener with new hotkeys
+            self.start_listening()
     
     def get_current_hotkey(self) -> str:
         """

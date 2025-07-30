@@ -17,17 +17,44 @@ Missing functionality:
 
 ## Implementation Plan
 
-### Phase 1: Configuration Setup
-- [ ] Add `auto_enter_hotkey` configuration to config.yaml under hotkey section
-- [ ] Set default combination to `ctrl+shift+grave` (CTRL+SHIFT+~)
-- [ ] Add configuration validation for the secondary hotkey
-- [ ] Update ConfigManager to handle the new hotkey setting
+### Phase 1: Configuration Setup ✅ COMPLETED
+- [x] Add `auto_enter_hotkey` configuration to config.yaml under hotkey section
+  - ✅ Added `auto_enter_combination: ctrl+shift+`` to hotkey section
+  - ✅ Added `auto_enter_enabled: true` boolean flag
+  - ✅ Added `auto_enter_delay: 0.1` for timing control
+  - ✅ Added comprehensive comments explaining functionality
+- [x] Set default combination to `ctrl+shift+grave` (CTRL+SHIFT+~)
+  - ✅ Set default to `ctrl+shift+`` (backtick key with shift modifier)
+  - ✅ Documented in config.yaml with usage explanation
+- [x] Add configuration validation for the secondary hotkey
+  - ✅ Added validation for `auto_enter_enabled` (boolean check)
+  - ✅ Added validation for `auto_enter_delay` (numeric, non-negative)
+  - ✅ Added validation for `auto_enter_combination` (string format)
+  - ✅ Added conflict detection between main and auto-enter hotkeys
+- [x] Update ConfigManager to handle the new hotkey setting
+  - ✅ Enhanced `_validate_config()` method with auto-enter validation
+  - ✅ Added display info mapping for auto-enter settings
+  - ✅ All settings properly validated and defaulted
 
-### Phase 2: Hotkey Detection Enhancement
-- [ ] Extend HotkeyListener to support multiple hotkey combinations
-- [ ] Add registration for the auto-enter hotkey alongside existing recording hotkey
-- [ ] Implement callback handling to distinguish between standard and auto-enter hotkeys
-- [ ] Add hotkey conflict detection between recording and auto-enter keys
+### Phase 2: Hotkey Detection Enhancement ✅ COMPLETED
+- [x] Extend HotkeyListener to support multiple hotkey combinations
+  - ✅ Modified `__init__` to accept `auto_enter_hotkey` and `auto_enter_enabled` parameters
+  - ✅ Updated `_setup_hotkeys()` to handle multiple hotkey configurations
+  - ✅ Implemented generic hotkey collection and processing system
+- [x] Add registration for the auto-enter hotkey alongside existing recording hotkey
+  - ✅ Both hotkeys registered in `hotkey_bindings` array
+  - ✅ Auto-enter hotkey only registered when enabled and configured
+  - ✅ Proper logging for both hotkey registrations
+- [x] Implement callback handling to distinguish between standard and auto-enter hotkeys
+  - ✅ Created `_standard_hotkey_pressed()` for standard recording behavior
+  - ✅ Created `_auto_enter_hotkey_pressed()` for enhanced recording with auto-enter
+  - ✅ Removed old generic `_hotkey_pressed()` method
+  - ✅ Each callback calls `state_manager.toggle_recording()` with appropriate parameters
+- [x] Add hotkey conflict detection between recording and auto-enter keys
+  - ✅ Implemented `_get_hotkey_specificity()` method for automatic priority sorting
+  - ✅ Hotkeys automatically sorted by modifier count (more modifiers = higher priority)
+  - ✅ Generic solution works with any hotkey combinations, not hardcoded
+  - ✅ CTRL+SHIFT+` automatically takes priority over CTRL+` regardless of configuration
 
 ### Phase 3: Auto-ENTER Functionality
 - [ ] Add `send_enter_key()` method to ClipboardManager
@@ -123,5 +150,5 @@ hotkey:
 
 ---
 
-*Implementation Plan Created: 2025-01-29*
+*Implementation Plan Created: 2025-07-29*
 *Target Completion: TBD*

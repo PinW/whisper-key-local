@@ -285,6 +285,36 @@ class ConfigManager:
             self.config['clipboard']['preserve_clipboard'] = True
         else:
             self.config['clipboard']['preserve_clipboard'] = preserve_clipboard
+        
+        # Validate auto-enter hotkey settings
+        auto_enter_enabled = self.config['hotkey'].get('auto_enter_enabled', True)
+        if not isinstance(auto_enter_enabled, bool):
+            self.logger.warning(f"Invalid auto_enter_enabled value '{auto_enter_enabled}', using True")
+            self.config['hotkey']['auto_enter_enabled'] = True
+        else:
+            self.config['hotkey']['auto_enter_enabled'] = auto_enter_enabled
+        
+        # Validate auto_enter_delay setting
+        auto_enter_delay = self.config['hotkey'].get('auto_enter_delay', 0.1)
+        if not isinstance(auto_enter_delay, (int, float)) or auto_enter_delay < 0:
+            self.logger.warning(f"Invalid auto_enter_delay value '{auto_enter_delay}', using 0.1")
+            self.config['hotkey']['auto_enter_delay'] = 0.1
+        else:
+            self.config['hotkey']['auto_enter_delay'] = auto_enter_delay
+        
+        # Validate auto-enter hotkey combination format
+        auto_enter_combination = self.config['hotkey'].get('auto_enter_combination', 'ctrl+shift+`')
+        if not isinstance(auto_enter_combination, str) or not auto_enter_combination.strip():
+            self.logger.warning(f"Invalid auto_enter_combination '{auto_enter_combination}', using 'ctrl+shift+`'")
+            self.config['hotkey']['auto_enter_combination'] = 'ctrl+shift+`'
+        else:
+            self.config['hotkey']['auto_enter_combination'] = auto_enter_combination.strip().lower()
+        
+        # Validate that auto-enter combination is different from main combination
+        main_combination = self.config['hotkey'].get('combination', 'ctrl+`')
+        if self.config['hotkey']['auto_enter_combination'] == main_combination:
+            self.logger.warning("Auto-enter hotkey cannot be the same as main hotkey, using 'ctrl+shift+`'")
+            self.config['hotkey']['auto_enter_combination'] = 'ctrl+shift+`'
     
     # Getter methods for easy access to configuration sections
     
@@ -425,6 +455,19 @@ class ConfigManager:
                     'ascii': '[Hotkey]',
                     'name': 'Hotkey',
                     'format': 'value'
+                },
+                'auto_enter_combination': {
+                    'emoji': '🚀',
+                    'ascii': '[Auto-Enter]',
+                    'name': 'Auto-Enter Hotkey',
+                    'format': 'value'
+                },
+                'auto_enter_enabled': {
+                    'emoji': '🚀',
+                    'ascii': '[Auto-Enter]',
+                    'name': 'Auto-Enter Mode',
+                    'true_desc': 'enabled',
+                    'false_desc': 'disabled'
                 }
             },
             'audio': {
