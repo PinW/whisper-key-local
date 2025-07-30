@@ -23,7 +23,7 @@ class HotkeyListener:
     This class registers hotkeys with the operating system and responds when they're pressed.
     """
     
-    def __init__(self, state_manager: 'StateManager', hotkey: str, auto_enter_hotkey: str = None, auto_enter_enabled: bool = True):
+    def __init__(self, state_manager: 'StateManager', hotkey: str, auto_enter_hotkey: str = None, auto_enter_enabled: bool = True, stop_with_modifier_enabled: bool = False):
         """
         Initialize the hotkey listener with support for multiple hotkeys
         
@@ -32,14 +32,18 @@ class HotkeyListener:
         - hotkey: The standard key combination for recording (required)
         - auto_enter_hotkey: The auto-enter key combination (optional)
         - auto_enter_enabled: Whether the auto-enter hotkey is enabled (default: True)
+        - stop_with_modifier_enabled: Whether to enable stop-only with first modifier key (default: False)
         
         For beginners: We pass the state_manager so this class can tell the rest 
-        of the app when the hotkey is pressed. Now supports both standard and auto-enter hotkeys.
+        of the app when the hotkey is pressed.
         """
         self.state_manager = state_manager
         self.hotkey = hotkey
         self.auto_enter_hotkey = auto_enter_hotkey
         self.auto_enter_enabled = auto_enter_enabled
+        self.stop_with_modifier_enabled = stop_with_modifier_enabled
+        self.stop_modifier_hotkey = None  # Will be calculated from main hotkey
+        self.modifier_key_released = True  # Track if modifier key has been released
         self.is_listening = False
         self.logger = logging.getLogger(__name__)
         
@@ -78,6 +82,17 @@ class HotkeyListener:
                 'name': 'auto-enter'
             })
         
+        # Add stop-with-modifier hotkey if enabled
+        if self.stop_with_modifier_enabled:
+            self.stop_modifier_hotkey = self._extract_first_modifier(self.hotkey)
+            if self.stop_modifier_hotkey:
+                hotkey_configs.append({
+                    'combination': self.stop_modifier_hotkey,
+                    'callback': self._stop_modifier_hotkey_pressed,
+                    'release_callback': self._stop_modifier_key_released,
+                    'name': 'stop-modifier'
+                })
+        
         # Sort by specificity (more modifiers = higher priority)
         hotkey_configs.sort(key=self._get_hotkey_specificity, reverse=True)
         
@@ -85,8 +100,16 @@ class HotkeyListener:
         self.hotkey_bindings = []
         for config in hotkey_configs:
             formatted = self._convert_hotkey_to_global_format(config['combination'])
-            self.hotkey_bindings.append([formatted, None, config['callback'], False])
-            self.logger.info(f"Configured {config['name']} hotkey: {config['combination']} -> {formatted}")
+            
+            # Check if this config has both press and release callbacks
+            if 'release_callback' in config:
+                # Format: [hotkey, press_callback, release_callback, actuate_on_partial_release]
+                self.hotkey_bindings.append([formatted, config['callback'], config['release_callback'], False])
+                self.logger.info(f"Configured {config['name']} hotkey with key-up detection: {config['combination']} -> {formatted}")
+            else:
+                # Standard format: [hotkey, press_callback, None, False] - press callback triggers on key down
+                self.hotkey_bindings.append([formatted, config['callback'], None, False])
+                self.logger.info(f"Configured {config['name']} hotkey: {config['combination']} -> {formatted}")
         
         self.logger.info(f"Total hotkeys configured: {len(self.hotkey_bindings)}")
     
@@ -124,6 +147,9 @@ class HotkeyListener:
         """
         self.logger.info(f"Standard hotkey pressed: {self.hotkey}")
         
+        # Disable stop-modifier until key is released (prevents immediate stopping)
+        self.modifier_key_released = False
+        
         try:
             # Tell the state manager to toggle recording (standard behavior)
             self.state_manager.toggle_recording()
@@ -139,12 +165,77 @@ class HotkeyListener:
         """
         self.logger.info(f"Auto-enter hotkey pressed: {self.auto_enter_hotkey}")
         
+        # Disable stop-modifier until key is released (prevents immediate stopping)
+        self.modifier_key_released = False
+        
         try:
             # Tell the state manager to toggle recording with auto-enter behavior
             self.state_manager.toggle_recording(use_auto_enter=True)
             
         except Exception as e:
             self.logger.error(f"Error handling auto-enter hotkey press: {e}")
+    
+    def _stop_modifier_hotkey_pressed(self):
+        """
+        Called when the stop-modifier hotkey is pressed (just the first modifier)
+        
+        This only stops recording if:
+        1. Currently recording 
+        2. The modifier key has been released since the last full hotkey press
+        
+        This prevents immediate stopping when the modifier is part of the start combination.
+        """
+        self.logger.debug(f"Stop-modifier hotkey pressed: {self.stop_modifier_hotkey}, modifier_released={self.modifier_key_released}")
+        
+        # Only stop if the modifier key has been released since last full hotkey press
+        if self.modifier_key_released:
+            self.logger.info(f"Stop-modifier hotkey activated: {self.stop_modifier_hotkey}")
+            try:
+                # Tell the state manager to stop recording only (no toggle behavior)
+                self.state_manager.stop_only_recording()
+                
+            except Exception as e:
+                self.logger.error(f"Error handling stop-modifier hotkey press: {e}")
+        else:
+            self.logger.debug("Stop-modifier ignored - waiting for key release first")
+    
+    def _stop_modifier_key_released(self):
+        """
+        Called when the stop-modifier key is released
+        
+        This enables the stop functionality after the key is released.
+        """
+        self.logger.debug(f"Stop-modifier key released: {self.stop_modifier_hotkey}")
+        self.modifier_key_released = True
+    
+    def _extract_first_modifier(self, hotkey_str: str) -> str:
+        """
+        Extract the first modifier key from a hotkey combination
+        
+        Examples:
+        - "ctrl+win" -> "ctrl"
+        - "ctrl+shift+t" -> "ctrl"  
+        - "alt+f4" -> "alt"
+        - "win+space" -> "win"
+        
+        Parameters:
+        - hotkey_str: The full hotkey combination string
+        
+        Returns:
+        - String with just the first modifier, or None if no modifiers found
+        """
+        keys = hotkey_str.lower().split('+')
+        modifiers = ['ctrl', 'shift', 'alt', 'win', 'windows', 'cmd', 'super']
+        
+        # Find the first modifier in the combination
+        for key in keys:
+            key = key.strip()
+            if key in modifiers:
+                self.logger.info(f"Extracted first modifier '{key}' from hotkey '{hotkey_str}'")
+                return key
+        
+        self.logger.warning(f"No modifier found in hotkey '{hotkey_str}' - stop-with-modifier disabled")
+        return None
     
     
     def start_listening(self):
@@ -229,7 +320,7 @@ class HotkeyListener:
         return ' + '.join(converted_keys)
     
     
-    def change_hotkey(self, new_hotkey: str = None, new_auto_enter_hotkey: str = None, auto_enter_enabled: bool = None):
+    def change_hotkey(self, new_hotkey: str = None, new_auto_enter_hotkey: str = None, auto_enter_enabled: bool = None, stop_with_modifier_enabled: bool = None):
         """
         Change the hotkey combinations (for future customization)
         
@@ -239,6 +330,7 @@ class HotkeyListener:
         - new_hotkey: New standard recording hotkey (optional)
         - new_auto_enter_hotkey: New auto-enter hotkey (optional)  
         - auto_enter_enabled: Enable/disable auto-enter hotkey (optional)
+        - stop_with_modifier_enabled: Enable/disable stop-with-modifier hotkey (optional)
         """
         changes = []
         
@@ -253,6 +345,10 @@ class HotkeyListener:
         if auto_enter_enabled is not None:
             changes.append(f"auto-enter enabled: {self.auto_enter_enabled} -> {auto_enter_enabled}")
             self.auto_enter_enabled = auto_enter_enabled
+            
+        if stop_with_modifier_enabled is not None:
+            changes.append(f"stop-with-modifier enabled: {self.stop_with_modifier_enabled} -> {stop_with_modifier_enabled}")
+            self.stop_with_modifier_enabled = stop_with_modifier_enabled
         
         if changes:
             self.logger.info(f"Changing hotkeys: {', '.join(changes)}")

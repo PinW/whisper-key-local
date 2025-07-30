@@ -105,7 +105,11 @@ Missing functionality:
 ### Phase 5: User Experience Enhancements
 - [ ] Add system tray menu option to enable/disable auto-enter hotkey
 - [ ] Update tooltips and notifications to mention both hotkeys
-- [ ] Add logging for auto-enter hotkey usage
+- [x] Add logging for auto-enter hotkey usage
+  - ✅ Auto-enter hotkey press logging implemented in HotkeyListener (`Auto-enter hotkey pressed: {hotkey}`)
+  - ✅ StateManager logs auto-enter parameter usage (`use_auto_enter={use_auto_enter}`)
+  - ✅ Complete auto-enter workflow logging with success/failure states
+  - ✅ Comprehensive error logging for auto-enter hotkey handling
 - [ ] Include auto-enter hotkey in key_helper.py tool
 
 ## Implementation Details

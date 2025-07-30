@@ -67,6 +67,13 @@ hotkey:
   # Delay before sending ENTER key (seconds)
   # Small delay ensures paste operation completes before ENTER
   auto_enter_delay: 0.1
+  
+  # Stop recording with just the first modifier key
+  # If enabled, you can stop recording by pressing just the first modifier 
+  # (e.g., if your combination is 'ctrl+win', just pressing 'ctrl' will stop)
+  # (e.g., if your combination is 'ctrl+shift+t', just pressing 'ctrl' will stop)
+  # This provides a simpler way to stop recording without the full key combination
+  stop_with_modifier_enabled: true
 
 # =============================================================================
 # AUDIO RECORDING SETTINGS

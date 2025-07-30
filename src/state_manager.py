@@ -105,6 +105,35 @@ class StateManager:
                 else:
                     print(f"⏳ Cannot record while {current_state}...")
     
+    def stop_only_recording(self, use_auto_enter: bool = False):
+        """
+        Stop recording only (no start functionality) - designed for modifier-only hotkeys
+        
+        This method only stops recording if currently recording, and does nothing if not recording.
+        It's designed for the simpler stop-with-modifier hotkey functionality.
+        
+        Parameters:
+        - use_auto_enter: If True, enhanced stop behavior (force auto-paste + ENTER)
+                         If False, standard stop behavior (respect auto-paste config)
+        
+        For beginners: Unlike toggle_recording(), this only stops - it won't start recording.
+        """
+        current_state = self.get_current_state()
+        current_recording = self.audio_recorder.get_recording_status()
+        self.logger.debug(f"stop_only_recording called - state={current_state}, recording={current_recording}, use_auto_enter={use_auto_enter}")
+        
+        if current_recording:
+            # Currently recording, check if we can stop
+            if self.can_stop_recording():
+                self._stop_recording_and_process(use_auto_enter=use_auto_enter)
+            else:
+                self.logger.info(f"Cannot stop recording in current state: {current_state}")
+                print(f"⏳ Cannot stop recording while {current_state}...")
+        else:
+            # Not recording - do nothing (this is the key difference from toggle)
+            self.logger.debug("stop_only_recording called but not currently recording - ignoring")
+            # No output message since this is expected behavior for modifier-only hotkey
+    
     def _start_recording(self):
         """
         Start the recording process

@@ -155,7 +155,8 @@ def main():
             state_manager=state_manager,
             hotkey=hotkey_config['combination'],
             auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
-            auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True)
+            auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
+            stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False)
         )
         
         # Start system tray if available
