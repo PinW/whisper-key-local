@@ -19,6 +19,7 @@ from src.whisper_engine import WhisperEngine
 from src.clipboard_manager import ClipboardManager
 from src.state_manager import StateManager
 from src.system_tray import SystemTray
+from src.utils import beautify_hotkey
 
 def setup_logging(config_manager: ConfigManager):
     """
@@ -182,7 +183,7 @@ def main():
                 print(f"⚠️  System tray start failed with exception: {e}")
         
         logger.info("All components initialized successfully!")
-        print(f"Application ready! Press {hotkey_config['combination'].upper()} to start recording.")
+        print(f"Application ready! Press {beautify_hotkey(hotkey_config['combination'])} to start recording.")
         
         # Show auto-paste status
         if clipboard_config.get('auto_paste', False):

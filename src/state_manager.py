@@ -17,6 +17,7 @@ from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
 from .config_manager import ConfigManager
+from .utils import beautify_hotkey
 
 class StateManager:
     """
@@ -155,7 +156,7 @@ class StateManager:
             primary_key = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
             primary_key = primary_key.upper()
         else:
-            primary_key = main_hotkey.replace('+', '+').upper()
+            primary_key = beautify_hotkey(main_hotkey)
         
         # Determine auto-enter hotkey display
         if auto_enter_enabled and stop_with_modifier:
@@ -168,7 +169,7 @@ class StateManager:
             else:
                 auto_enter_key = auto_enter_first_modifier.upper()  # Different modifier, show just that modifier
         else:
-            auto_enter_key = auto_enter_hotkey.replace('+', '+').upper() if auto_enter_enabled else None
+            auto_enter_key = beautify_hotkey(auto_enter_hotkey) if auto_enter_enabled else None
         
         # Generate appropriate message based on configuration
         if not auto_paste_enabled:
