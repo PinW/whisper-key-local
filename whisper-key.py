@@ -171,7 +171,7 @@ def main():
                 tray_started = system_tray.start()
                 if tray_started:
                     logger.info("System tray started successfully")
-                    print("🔄 System tray icon is now running")
+                    print("System tray icon is running...")
                 else:
                     logger.warning("Failed to start system tray")
                     print("⚠️  System tray failed to start")

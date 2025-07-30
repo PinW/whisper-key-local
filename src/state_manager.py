@@ -272,12 +272,11 @@ class StateManager:
                     # Store for future reference
                     self.last_transcription = transcribed_text
                     self.logger.info("Complete auto-enter workflow successful (paste + ENTER)")
-                    print("✅ Text pasted and submitted with ENTER!")
+                    print("✓ Text submitted with ENTER!")
                 else:
                     # Paste succeeded but ENTER failed
                     self.last_transcription = transcribed_text
                     self.logger.warning("Auto-paste succeeded but ENTER key failed")
-                    print("✅ Text pasted successfully, but ENTER key failed. Please press ENTER manually.")
             else:
                 # Auto-paste failed, fallback to clipboard only
                 self.last_transcription = transcribed_text
