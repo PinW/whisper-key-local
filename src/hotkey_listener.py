@@ -23,15 +23,15 @@ class HotkeyListener:
     This class registers hotkeys with the operating system and responds when they're pressed.
     """
     
-    def __init__(self, state_manager: 'StateManager', hotkey: str = "ctrl+shift+space", auto_enter_hotkey: str = None, auto_enter_enabled: bool = True):
+    def __init__(self, state_manager: 'StateManager', hotkey: str, auto_enter_hotkey: str = None, auto_enter_enabled: bool = True):
         """
         Initialize the hotkey listener with support for multiple hotkeys
         
         Parameters:
         - state_manager: The StateManager that coordinates our app
-        - hotkey: The standard key combination for recording (default: Ctrl+Shift+Space)
-        - auto_enter_hotkey: The auto-enter key combination (default: None)
-        - auto_enter_enabled: Whether the auto-enter hotkey is enabled
+        - hotkey: The standard key combination for recording (required)
+        - auto_enter_hotkey: The auto-enter key combination (optional)
+        - auto_enter_enabled: Whether the auto-enter hotkey is enabled (default: True)
         
         For beginners: We pass the state_manager so this class can tell the rest 
         of the app when the hotkey is pressed. Now supports both standard and auto-enter hotkeys.
