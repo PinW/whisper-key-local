@@ -34,6 +34,14 @@ Break down into numbered steps with:
 - Checkboxes for tracking progress (`- [ ]` for pending, `- [x]` for complete)
 - Priority indicators where relevant
 
+Example phase inside this section:
+```markdown
+### Phase 2: Name of phase
+- [ ] Task 1
+- [ ] Task 2
+- [ ] Task 3
+```
+
 ### Implementation Details
 - Code patterns and examples
 - Technical specifications
