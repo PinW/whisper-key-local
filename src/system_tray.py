@@ -261,7 +261,7 @@ class SystemTray:
                 self.logger.debug("Creating menu items...")
                 menu_items = [
                     # Title & Hotkey display
-                    pystray.MenuItem(f"Whisper Key: {hotkey_text.upper()}", None, enabled=False),
+                    pystray.MenuItem(f"Whisper Key: [{hotkey_text.replace('+', '+').upper()}]", None, enabled=False),
                     pystray.Menu.SEPARATOR,  # Separator
                     # Transcription Mode
                     pystray.MenuItem("Transcription Mode", None, enabled=False),

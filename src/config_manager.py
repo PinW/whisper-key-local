@@ -315,6 +315,14 @@ class ConfigManager:
         if self.config['hotkey']['auto_enter_combination'] == main_combination:
             self.logger.warning("Auto-enter hotkey cannot be the same as main hotkey, using 'ctrl+shift+`'")
             self.config['hotkey']['auto_enter_combination'] = 'ctrl+shift+`'
+        
+        # Validate stop-with-modifier setting
+        stop_with_modifier_enabled = self.config['hotkey'].get('stop_with_modifier_enabled', False)
+        if not isinstance(stop_with_modifier_enabled, bool):
+            self.logger.warning(f"Invalid stop_with_modifier_enabled value '{stop_with_modifier_enabled}', using False")
+            self.config['hotkey']['stop_with_modifier_enabled'] = False
+        else:
+            self.config['hotkey']['stop_with_modifier_enabled'] = stop_with_modifier_enabled
     
     # Getter methods for easy access to configuration sections
     
@@ -466,6 +474,13 @@ class ConfigManager:
                     'emoji': '🚀',
                     'ascii': '[Auto-Enter]',
                     'name': 'Auto-Enter Mode',
+                    'true_desc': 'enabled',
+                    'false_desc': 'disabled'
+                },
+                'stop_with_modifier_enabled': {
+                    'emoji': '⏹️',
+                    'ascii': '[Stop with Modifier]',
+                    'name': 'Stop with Modifier',
                     'true_desc': 'enabled',
                     'false_desc': 'disabled'
                 }

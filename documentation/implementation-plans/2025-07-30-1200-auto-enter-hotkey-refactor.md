@@ -46,12 +46,35 @@ Desired state:
     - ✅ Added stop-modifier protection check before proceeding
 
 ### Phase 3: Stop-Modifier Integration
-- [ ] Integrate auto-enter with stop-modifier protection logic
-  - [ ] Apply same `modifier_key_released` protection to auto-enter hotkey
-  - [ ] Extract first modifier from auto-enter hotkey for release tracking
-  - [ ] Disable auto-enter hotkey if stop-with-modifier enabled and shares same modifier as main hotkey (send message on bootup sequence)
-  - [ ] Ensure auto-enter respects keyup/down protection when stop-modifier enabled
-  - [ ] Use existing `_extract_first_modifier()` logic for consistency
+- [x] Integrate auto-enter with stop-modifier protection logic
+  - [x] Apply same `modifier_key_released` protection to auto-enter hotkey
+    - ✅ Auto-enter hotkey already had stop-modifier protection in `_auto_enter_hotkey_pressed()`
+  - [x] Extract first modifier from auto-enter hotkey for release tracking
+    - ✅ Added `auto_enter_modifier_hotkey` attribute initialization in `__init__()`
+    - ✅ Added logic in `_setup_hotkeys()` to extract auto-enter modifier with `_extract_first_modifier()`
+    - ✅ Added separate auto-enter modifier hotkey registration when different from main modifier
+  - [x] Disable auto-enter hotkey if stop-with-modifier enabled and shares same modifier as main hotkey (send message on bootup sequence)
+    - ✅ Added conditional logic to detect when modifiers are the same and use shared behavior
+    - ✅ Added logging to inform user of shared stop-modifier behavior
+  - [x] Ensure auto-enter respects keyup/down protection when stop-modifier enabled
+    - ✅ Added `_auto_enter_modifier_hotkey_pressed()` method with same protecthialtion logic as stop-modifier
+    - ✅ Added `_auto_enter_modifier_key_released()` method to reset modifier state
+  - [x] Use existing `_extract_first_modifier()` logic for consistency
+    - ✅ Reused existing `_extract_first_modifier()` method for auto-enter modifier extraction
+
+### Phase 3.5: User Feedback Message Updates
+- [x] Update "Press the hotkey again to stop recording." message to be more informative (`src/state_manager.py` line 146)
+  - [x] Update default message to show actual hotkey: "Press [HOTKEY] again to stop recording"
+    - ✅ Implemented `_generate_stop_instructions()` method in StateManager
+  - [x] If "stop-width-modifier" setting is enabled, the [HOTKEY] shows the modifier key
+    - ✅ Logic extracts first modifier when stop-with-modifier enabled
+  - [x] Dynamic message generation based on current configuration
+    - [x] No auto-enter OR auto-paste: "Press [HOTKEY] to stop recording and copy to clipboard"
+      - ✅ Implemented conditional logic for no auto-paste scenario
+    - [x] Auto-paste on, no auto-enter: "Press [HOTKEY] to stop recording and auto-paste"
+      - ✅ Implemented conditional logic for auto-paste only scenario
+    - [x] Auto-paste on, auto-enter enabled: "Press [HOTKEY] to stop recording and auto-paste, [HOTKEY2] to also send with ENTER key press" (show modifier only for HOTKEY2 if stop-with-modifier is enabled)
+      - ✅ Implemented conditional logic with proper modifier key display for both scenarios
 
 ### Phase 4: Code Cleanup and Documentation
 - [ ] Update method documentation and comments
@@ -138,14 +161,15 @@ def _setup_hotkeys(self):
 
 ## Success Criteria
 
-- [ ] Auto-enter hotkey (`alt+win`) only functions when recording is active
-- [ ] Auto-enter hotkey is ignored when not recording (no error messages)
-- [ ] Auto-enter hotkey uses same keyup/down protection as stop-modifier
-- [ ] Default hotkey changed from `ctrl+shift+win` to `alt+win`
-- [ ] Stop-modifier can trigger auto-enter behavior when appropriate
-- [ ] Existing start recording functionality remains unchanged
-- [ ] Standard hotkey continues to work for both start and stop
-- [ ] All existing stop-modifier protection logic continues to work
+- [x] Auto-enter hotkey (`alt+win`) only functions when recording is active
+- [x] Auto-enter hotkey is ignored when not recording (no error messages)
+- [x] Auto-enter hotkey uses same keyup/down protection as stop-modifier
+- [x] Default hotkey changed from `ctrl+shift+win` to `alt+win`
+- [x] Stop-modifier can trigger auto-enter behavior when appropriate
+  - ✅ **TESTED SUCCESSFULLY** - User confirmed auto-enter stop modifier works with ENTER key
+- [x] Existing start recording functionality remains unchanged
+- [x] Standard hotkey continues to work for both start and stop
+- [x] All existing stop-modifier protection logic continues to work
 
 ## Testing Strategy
 

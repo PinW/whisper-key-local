@@ -134,6 +134,60 @@ class StateManager:
             self.logger.debug("stop_only_recording called but not currently recording - ignoring")
             # No output message since this is expected behavior for modifier-only hotkey
     
+    def _generate_stop_instructions(self) -> str:
+        """
+        Generate dynamic stop instructions based on current configuration
+        
+        Returns a user-friendly message explaining how to stop recording
+        based on the active settings (stop-with-modifier, auto-paste, auto-enter).
+        """
+        if not self.config_manager:
+            return "Press the hotkey again to stop recording."
+        
+        hotkey_config = self.config_manager.get_hotkey_config()
+        clipboard_config = self.config_manager.get_clipboard_config()
+        
+        main_hotkey = hotkey_config.get('combination', 'ctrl+win')
+        auto_enter_enabled = hotkey_config.get('auto_enter_enabled', True)
+        auto_enter_hotkey = hotkey_config.get('auto_enter_combination', 'alt+win')
+        stop_with_modifier = hotkey_config.get('stop_with_modifier_enabled', False)
+        auto_paste_enabled = clipboard_config.get('auto_paste', True)
+        
+        # Determine primary stop hotkey display
+        if stop_with_modifier:
+            # Extract first modifier for display
+            primary_key = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
+            primary_key = primary_key.upper()
+        else:
+            primary_key = main_hotkey.replace('+', '+').upper()
+        
+        # Determine auto-enter hotkey display
+        if auto_enter_enabled and stop_with_modifier:
+            # Show modifier only for auto-enter if it's different from main modifier
+            auto_enter_first_modifier = auto_enter_hotkey.split('+')[0] if '+' in auto_enter_hotkey else auto_enter_hotkey
+            main_first_modifier = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
+            
+            if auto_enter_first_modifier == main_first_modifier:
+                auto_enter_key = auto_enter_first_modifier.upper()  # Same modifier, show just the modifier
+            else:
+                auto_enter_key = auto_enter_first_modifier.upper()  # Different modifier, show just that modifier
+        else:
+            auto_enter_key = auto_enter_hotkey.replace('+', '+').upper() if auto_enter_enabled else None
+        
+        # Generate appropriate message based on configuration
+        if not auto_paste_enabled:
+            # No auto-paste: basic copy to clipboard
+            return f"Press [{primary_key}] to stop recording and copy to clipboard."
+        elif not auto_enter_enabled:
+            # Auto-paste on, no auto-enter
+            return f"Press [{primary_key}] to stop recording and auto-paste."
+        else:
+            # Both auto-paste and auto-enter enabled
+            if auto_enter_key and auto_enter_key != primary_key:
+                return f"Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press."
+            else:
+                return f"Press [{primary_key}] to stop recording and auto-paste, or add (Enter) key press."
+
     def _start_recording(self):
         """
         Start the recording process
@@ -143,7 +197,7 @@ class StateManager:
         try:
             self.logger.info("Starting recording...")
             print("🎤 Recording started! Speak now...")
-            print("Press the hotkey again to stop recording.")
+            print(self._generate_stop_instructions())
             
             success = self.audio_recorder.start_recording()
             

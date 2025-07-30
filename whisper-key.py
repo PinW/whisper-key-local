@@ -182,12 +182,12 @@ def main():
                 print(f"⚠️  System tray start failed with exception: {e}")
         
         logger.info("All components initialized successfully!")
-        print(f"Application ready! Press {hotkey_config['combination'].upper().replace('+', ' + ')} to start recording.")
+        print(f"Application ready! Press {hotkey_config['combination'].upper()} to start recording.")
         
         # Show auto-paste status
         if clipboard_config.get('auto_paste', False):
             paste_method = clipboard_config.get('paste_method', 'key_simulation')
-            method_name = "key simulation (Ctrl+V)" if paste_method == "key_simulation" else "Windows API"
+            method_name = "key simulation (CTRL+V)" if paste_method == "key_simulation" else "Windows API"
             print(f"🚀 Auto-paste is ENABLED using {method_name}")
         else:
             print("📋 Auto-paste is DISABLED - you'll need to paste manually with Ctrl+V")
