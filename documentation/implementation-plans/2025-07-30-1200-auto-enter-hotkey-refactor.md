@@ -1,5 +1,9 @@
 # Auto-Enter Hotkey Refactor Implementation Plan
 
+As a *user* I want **stop with modifier key** so I can just hit one key to stop recording instead of a combination
+
+As a *user* I want **auto-ENTER key** so I can auto-send transcription for cases where I don't need to edit like LLMs
+
 **Note: Execute one line-item at a time and confirm with user before proceeding to next**
 **Note: Update this document as you go, checking off tasks and taking notes needed for later**
 

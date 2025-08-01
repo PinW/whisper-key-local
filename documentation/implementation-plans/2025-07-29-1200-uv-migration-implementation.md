@@ -1,5 +1,7 @@
 # uv Package Management Migration Implementation Plan
 
+As a **developer** I want **package management with uv** so I can have reproducible builds and streamlined virtual environment management
+
 **Note: Execute one line-item at a time and confirm with user before proceeding to next**
 **Note: Update this document as you go, checking off tasks and taking notes needed for later**
 
