@@ -18,6 +18,8 @@ Each implementation plan should follow this structure:
 ```markdown
 # [Feature Name] Implementation Plan
 
+[Feature User Story]
+
 **Note: Execute one line-item at a time and confirm with user before proceeding to next**
 **Note: Update this document as you go, checking off tasks and taking notes needed for later**
 ```
