@@ -42,7 +42,7 @@ jobs:
             - Performance considerations
             - Security concerns
             
-            Use a spartan tone of voice. Give focused feedback for a beginner coder.
+            Give constructive feedback and helpful advice for a beginner coder. Be direct.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           use_sticky_comment: true

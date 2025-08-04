@@ -17,6 +17,7 @@ from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
 from .config_manager import ConfigManager
+from .audio_feedback import AudioFeedback
 from .utils import beautify_hotkey
 
 class StateManager:
@@ -28,7 +29,8 @@ class StateManager:
     
     def __init__(self, audio_recorder: AudioRecorder, whisper_engine: WhisperEngine, 
                  clipboard_manager: ClipboardManager, clipboard_config: dict,
-                 system_tray: Optional[SystemTray] = None, config_manager: Optional[ConfigManager] = None):
+                 system_tray: Optional[SystemTray] = None, config_manager: Optional[ConfigManager] = None,
+                 audio_feedback: Optional[AudioFeedback] = None):
         """
         Initialize the state manager with all our components
         
@@ -39,6 +41,7 @@ class StateManager:
         - clipboard_config: Configuration settings for clipboard behavior
         - system_tray: Optional SystemTray instance for status display
         - config_manager: Optional ConfigManager instance for settings management
+        - audio_feedback: Optional AudioFeedback instance for recording sound notifications
         
         For beginners: We pass in all the other components so this class can 
         control them and make them work together.
@@ -49,6 +52,7 @@ class StateManager:
         self.clipboard_config = clipboard_config
         self.system_tray = system_tray
         self.config_manager = config_manager
+        self.audio_feedback = audio_feedback
         
         # Application state variables
         self.is_processing = False  # Are we currently doing transcription?
@@ -216,6 +220,10 @@ class StateManager:
             success = self.audio_recorder.start_recording()
             
             if success:
+                # Play start sound to notify user recording began
+                if self.audio_feedback:
+                    self.audio_feedback.play_start_sound()
+                
                 # Update system tray to show recording state only if recording actually started
                 if self.system_tray:
                     self.system_tray.update_state("recording")
@@ -340,6 +348,10 @@ class StateManager:
             
             self.logger.info("Stopping recording and processing...")
             print("🛑 Recording stopped! Processing audio...")
+            
+            # Play stop sound to notify user recording ended
+            if self.audio_feedback:
+                self.audio_feedback.play_stop_sound()
             
             # Update system tray to show processing state
             if self.system_tray:
@@ -621,6 +633,10 @@ class StateManager:
             else:
                 # Fallback - stop recording without processing
                 self.audio_recorder.stop_recording()
+            
+            # Play stop sound to notify user recording was cancelled
+            if self.audio_feedback:
+                self.audio_feedback.play_stop_sound()
             
             # Update system tray to idle since we cancelled recording
             if self.system_tray:
