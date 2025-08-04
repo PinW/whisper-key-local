@@ -1,5 +1,8 @@
 Local faster-whisper speech-to-text app with global hotkeys for Windows 10+
 
+- Start here: `state_manage.py` coordinates all components workflow
+- Constraints: Windows-only runtime libraries (pywin32, global-hotkeys)
+
 ## Component Architecture
 
 | Component | File | Primary Responsibility | Key Technologies |
