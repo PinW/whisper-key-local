@@ -165,6 +165,20 @@ performance:
   clear_cache: false
 
 # =============================================================================
+# AUDIO FEEDBACK SETTINGS
+# =============================================================================
+audio_feedback:
+  # Enable/disable audio feedback sounds
+  # true = play sounds when recording starts/stops
+  # false = silent operation
+  enabled: true
+  
+  # Sound file paths (relative to project root or absolute paths)
+  # Use .wav files for best Windows compatibility
+  start_sound: assets/sounds/record_start.wav
+  stop_sound: assets/sounds/record_stop.wav
+
+# =============================================================================
 # SYSTEM TRAY SETTINGS
 # =============================================================================
 system_tray:

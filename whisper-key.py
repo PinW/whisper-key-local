@@ -19,6 +19,7 @@ from src.whisper_engine import WhisperEngine
 from src.clipboard_manager import ClipboardManager
 from src.state_manager import StateManager
 from src.system_tray import SystemTray
+from src.audio_feedback import AudioFeedback
 from src.utils import beautify_hotkey
 
 def setup_logging(config_manager: ConfigManager):
@@ -84,6 +85,7 @@ def main():
         hotkey_config = config_manager.get_hotkey_config()
         clipboard_config = config_manager.get_clipboard_config()
         tray_config = config_manager.config.get('system_tray', {})
+        audio_feedback_config = config_manager.config.get('audio_feedback', {})
         
         logger.info("Initializing application components...")
         
@@ -104,6 +106,30 @@ def main():
         )
         
         clipboard_manager = ClipboardManager()
+        
+        # Initialize audio feedback (optional - may not be available on non-Windows)
+        audio_feedback = None
+        if audio_feedback_config.get('enabled', True):  # Default to enabled
+            try:
+                logger.debug("Initializing audio feedback...")
+                audio_feedback = AudioFeedback(audio_feedback_config)
+                
+                status = audio_feedback.get_status()
+                if status['enabled']:
+                    logger.info("Audio feedback initialized successfully")
+                    print(f"🔊 Audio feedback enabled (start: {status['start_sound_exists']}, stop: {status['stop_sound_exists']})")
+                else:
+                    logger.warning("Audio feedback not available (likely not on Windows)")
+                    print("⚠️  Audio feedback not available (likely not on Windows)")
+                    audio_feedback = None
+                    
+            except Exception as e:
+                logger.error(f"Failed to initialize audio feedback: {e}")
+                print(f"⚠️  Audio feedback initialization failed: {e}")
+                audio_feedback = None
+        else:
+            logger.info("Audio feedback disabled in configuration")
+            print("🔇 Audio feedback disabled in configuration")
         
         # Initialize system tray (optional - may not be available)
         system_tray = None
@@ -148,7 +174,8 @@ def main():
             clipboard_manager=clipboard_manager,
             clipboard_config=clipboard_config,
             system_tray=system_tray,
-            config_manager=config_manager
+            config_manager=config_manager,
+            audio_feedback=audio_feedback
         )
         
         # Set up hotkey listener (this detects when you press the recording key)
