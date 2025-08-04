@@ -1,15 +1,15 @@
 """
 Audio Feedback Module
 
-This module provides audio feedback for recording start/stop events to give users
-clear indication of recording state changes.
+Plays sound files for recording start/stop events to give users clear audio feedback.
 
-For beginners: This is like adding sound effects to your app - when recording starts
-you hear one sound, when it stops you hear another sound, so you always know what's happening.
+For beginners: This is like having sound effects in a video game - when recording starts
+you hear one sound file, when it stops you hear another sound file.
 """
 
 import logging
 import threading
+import os
 from typing import Optional
 
 try:
@@ -21,10 +21,10 @@ except ImportError:
 
 class AudioFeedback:
     """
-    A class that provides audio feedback for recording events
+    Plays audio files for recording start/stop events
     
-    This class plays different sounds when recording starts and stops,
-    helping users understand when the microphone is active.
+    This class loads and plays sound files to give users audio confirmation
+    of recording state changes.
     """
     
     def __init__(self, config: dict):
@@ -34,23 +34,20 @@ class AudioFeedback:
         Parameters:
         - config: Dictionary containing audio feedback configuration
         
-        For beginners: We pass in configuration so users can customize
-        the sounds (or turn them off completely).
+        Expected config structure:
+        {
+            'enabled': True,
+            'start_sound': 'path/to/start.wav',
+            'stop_sound': 'path/to/stop.wav'
+        }
         """
         self.config = config
         self.enabled = config.get('enabled', True)
         self.logger = logging.getLogger(__name__)
         
-        # Sound configuration
-        self.start_sound = config.get('start_sound', {
-            'frequency': 800,  # Higher pitch for start (Hz)
-            'duration': 200    # Short beep (milliseconds)
-        })
-        
-        self.stop_sound = config.get('stop_sound', {
-            'frequency': 600,  # Lower pitch for stop (Hz) 
-            'duration': 300    # Slightly longer beep (milliseconds)
-        })
+        # Sound file paths
+        self.start_sound_path = config.get('start_sound', '')
+        self.stop_sound_path = config.get('stop_sound', '')
         
         # Check if we can play sounds
         if not WINSOUND_AVAILABLE:
@@ -60,25 +57,44 @@ class AudioFeedback:
             self.logger.info("Audio feedback disabled by configuration")
         else:
             self.logger.info("Audio feedback enabled")
-            self.logger.debug(f"Start sound: {self.start_sound}")
-            self.logger.debug(f"Stop sound: {self.stop_sound}")
+            self.logger.debug(f"Start sound: {self.start_sound_path}")
+            self.logger.debug(f"Stop sound: {self.stop_sound_path}")
+            
+            # Validate sound files exist
+            self._validate_sound_files()
     
-    def _play_beep_async(self, frequency: int, duration: int):
+    def _validate_sound_files(self):
         """
-        Play a beep sound asynchronously (non-blocking)
+        Validate that configured sound files exist and are accessible
+        """
+        if self.start_sound_path and not os.path.isfile(self.start_sound_path):
+            self.logger.warning(f"Start sound file not found: {self.start_sound_path}")
+        
+        if self.stop_sound_path and not os.path.isfile(self.stop_sound_path):
+            self.logger.warning(f"Stop sound file not found: {self.stop_sound_path}")
+    
+    def _play_sound_file_async(self, file_path: str):
+        """
+        Play a sound file asynchronously (non-blocking)
         
         Parameters:
-        - frequency: Sound frequency in Hz (higher = more high-pitched)
-        - duration: How long to play the sound in milliseconds
+        - file_path: Path to the sound file to play
         
         For beginners: "Asynchronously" means the sound plays in the background
-        without stopping our main program. Like background music while you work.
+        without stopping our main program.
         """
         def play_sound():
             try:
-                winsound.Beep(frequency, duration)
+                if not os.path.isfile(file_path):
+                    self.logger.warning(f"Sound file not found: {file_path}")
+                    return
+                
+                # Play the sound file
+                # SND_FILENAME = play from file, SND_ASYNC = don't block
+                winsound.PlaySound(file_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                
             except Exception as e:
-                self.logger.warning(f"Failed to play beep: {e}")
+                self.logger.warning(f"Failed to play sound file {file_path}: {e}")
         
         # Start sound in a separate thread so it doesn't block our main program
         sound_thread = threading.Thread(target=play_sound, daemon=True)
@@ -86,40 +102,33 @@ class AudioFeedback:
     
     def play_start_sound(self):
         """
-        Play the recording start sound
+        Play the recording start sound file
         
         This gives users audio confirmation that recording has begun.
         """
-        if not self.enabled:
+        if not self.enabled or not self.start_sound_path:
             return
         
-        self.logger.debug("Playing recording start sound")
-        self._play_beep_async(
-            self.start_sound['frequency'], 
-            self.start_sound['duration']
-        )
+        self.logger.debug(f"Playing recording start sound: {self.start_sound_path}")
+        self._play_sound_file_async(self.start_sound_path)
     
     def play_stop_sound(self):
         """
-        Play the recording stop sound
+        Play the recording stop sound file
         
         This gives users audio confirmation that recording has ended.
         """
-        if not self.enabled:
+        if not self.enabled or not self.stop_sound_path:
             return
         
-        self.logger.debug("Playing recording stop sound")
-        self._play_beep_async(
-            self.stop_sound['frequency'], 
-            self.stop_sound['duration']
-        )
+        self.logger.debug(f"Playing recording stop sound: {self.stop_sound_path}")
+        self._play_sound_file_async(self.stop_sound_path)
     
     def test_sounds(self):
         """
-        Test both start and stop sounds (useful for configuration)
+        Test both start and stop sound files
         
-        This method is helpful for users to preview the sounds and
-        adjust their preferences.
+        This method is helpful for users to preview their configured sounds.
         """
         if not self.enabled:
             print("Audio feedback is disabled")
@@ -130,14 +139,20 @@ class AudioFeedback:
             return
         
         print("Testing start sound...")
-        self.play_start_sound()
+        if self.start_sound_path:
+            self.play_start_sound()
+        else:
+            print("No start sound configured")
         
         # Wait a moment between sounds
         import time
-        time.sleep(0.5)
+        time.sleep(1.0)
         
         print("Testing stop sound...")
-        self.play_stop_sound()
+        if self.stop_sound_path:
+            self.play_stop_sound()
+        else:
+            print("No stop sound configured")
         
         print("Sound test complete!")
     
@@ -147,8 +162,6 @@ class AudioFeedback:
         
         Parameters:
         - enabled: True to enable sounds, False to disable
-        
-        This allows users to turn sounds on/off without restarting the app.
         """
         if not WINSOUND_AVAILABLE and enabled:
             self.logger.warning("Cannot enable audio feedback - winsound not available")
@@ -168,25 +181,20 @@ class AudioFeedback:
         
         Parameters:
         - new_config: New configuration dictionary
-        
-        This allows users to change sound settings without restarting.
         """
         self.config = new_config
         self.enabled = new_config.get('enabled', True) and WINSOUND_AVAILABLE
         
-        self.start_sound = new_config.get('start_sound', {
-            'frequency': 800,
-            'duration': 200
-        })
-        
-        self.stop_sound = new_config.get('stop_sound', {
-            'frequency': 600,
-            'duration': 300
-        })
+        self.start_sound_path = new_config.get('start_sound', '')
+        self.stop_sound_path = new_config.get('stop_sound', '')
         
         self.logger.info("Audio feedback configuration updated")
-        self.logger.debug(f"New start sound: {self.start_sound}")
-        self.logger.debug(f"New stop sound: {self.stop_sound}")
+        self.logger.debug(f"New start sound: {self.start_sound_path}")
+        self.logger.debug(f"New stop sound: {self.stop_sound_path}")
+        
+        # Validate new sound files
+        if self.enabled:
+            self._validate_sound_files()
     
     def get_status(self) -> dict:
         """
@@ -194,12 +202,12 @@ class AudioFeedback:
         
         Returns:
         - Dictionary with status information
-        
-        Useful for debugging and displaying current settings to users.
         """
         return {
             'enabled': self.enabled,
             'winsound_available': WINSOUND_AVAILABLE,
-            'start_sound': self.start_sound.copy(),
-            'stop_sound': self.stop_sound.copy()
+            'start_sound_path': self.start_sound_path,
+            'stop_sound_path': self.stop_sound_path,
+            'start_sound_exists': os.path.isfile(self.start_sound_path) if self.start_sound_path else False,
+            'stop_sound_exists': os.path.isfile(self.stop_sound_path) if self.stop_sound_path else False
         }

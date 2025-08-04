@@ -2,11 +2,11 @@
 """
 Audio Feedback Test Script
 
-This script tests the audio feedback functionality independently.
-It lets you hear what the start/stop sounds are like!
+This script tests the file-based audio feedback functionality.
+It shows how to configure and use sound files for recording events.
 
-For beginners: This is like testing a doorbell before installing it - 
-we want to make sure the sounds work and sound good before using them in the main app.
+For beginners: This tests our audio feedback system that plays sound files
+(like .wav files) when recording starts and stops.
 """
 
 import sys
@@ -17,210 +17,237 @@ from src.audio_feedback import AudioFeedback
 
 def test_basic_functionality():
     """
-    Test basic audio feedback functionality
+    Test basic audio feedback functionality with file paths
     
-    This function demonstrates how our AudioFeedback class works by:
-    1. Creating an AudioFeedback instance with default settings
-    2. Testing both start and stop sounds
-    3. Showing status information
+    This demonstrates how the AudioFeedback class works with sound files.
     """
     print("=== Basic Audio Feedback Test ===")
-    print("This test will play the default start and stop sounds.")
+    print("This test shows how to configure audio feedback with sound files.")
     print()
     
     try:
-        # Create default configuration
-        print("1. Creating AudioFeedback with default settings...")
-        default_config = {
+        # Create configuration with example file paths
+        print("1. Testing configuration setup...")
+        config = {
             'enabled': True,
-            'start_sound': {
-                'frequency': 800,  # Higher pitch for start
-                'duration': 200    # Short beep
-            },
-            'stop_sound': {
-                'frequency': 600,  # Lower pitch for stop  
-                'duration': 300    # Longer beep
-            }
+            'start_sound': 'assets/sounds/record_start.wav',
+            'stop_sound': 'assets/sounds/record_stop.wav'
         }
         
-        feedback = AudioFeedback(default_config)
+        feedback = AudioFeedback(config)
         print("✓ AudioFeedback created successfully!")
         
         # Show status
         status = feedback.get_status()
         print(f"   Enabled: {status['enabled']}")
         print(f"   Windows sound available: {status['winsound_available']}")
-        print(f"   Start sound: {status['start_sound']['frequency']}Hz, {status['start_sound']['duration']}ms")
-        print(f"   Stop sound: {status['stop_sound']['frequency']}Hz, {status['stop_sound']['duration']}ms")
+        print(f"   Start sound path: {status['start_sound_path']}")
+        print(f"   Stop sound path: {status['stop_sound_path']}")
+        print(f"   Start sound exists: {status['start_sound_exists']}")
+        print(f"   Stop sound exists: {status['stop_sound_exists']}")
         print()
         
         if not status['enabled']:
             print("❌ Audio feedback is not enabled (likely not on Windows)")
             return
         
-        # Test the sounds
-        input("Press Enter to test the sounds...")
-        feedback.test_sounds()
+        # Test the sounds (will show warnings if files don't exist)
+        print("2. Testing sound playback...")
+        print("   Note: If sound files don't exist, you'll see warnings in the logs")
         
-        print()
-        print("✓ Basic test complete!")
+        print("   Playing start sound...")
+        feedback.play_start_sound()
+        time.sleep(1.0)
+        
+        print("   Playing stop sound...")
+        feedback.play_stop_sound()
+        time.sleep(1.0)
+        
+        print("   ✓ Sound playback test complete!")
+        print("   (Check logs for any file not found warnings)")
         
     except Exception as e:
         print(f"❌ Error during basic test: {e}")
 
-def test_custom_sounds():
+def test_with_missing_files():
     """
-    Test audio feedback with custom sound configurations
+    Test behavior when sound files are missing
     
-    This shows how different frequencies and durations sound.
+    This shows how the system handles missing files gracefully.
     """
-    print("\n=== Custom Sound Test ===")
-    print("This test will play various custom sound configurations.")
+    print("\n=== Missing Files Test ===")
+    print("This test shows what happens when sound files don't exist.")
     print()
     
-    # Different sound configurations to test
-    sound_configs = [
-        {
-            'name': 'High Pitched (like old computer)',
-            'config': {
-                'enabled': True,
-                'start_sound': {'frequency': 1000, 'duration': 150},
-                'stop_sound': {'frequency': 500, 'duration': 400}
-            }
-        },
-        {
-            'name': 'Low Pitched (like submarine sonar)',
-            'config': {
-                'enabled': True,
-                'start_sound': {'frequency': 400, 'duration': 250},
-                'stop_sound': {'frequency': 300, 'duration': 500}
-            }
-        },
-        {
-            'name': 'Quick Beeps (like microwave)',
-            'config': {
-                'enabled': True,
-                'start_sound': {'frequency': 800, 'duration': 100},
-                'stop_sound': {'frequency': 800, 'duration': 100}
-            }
-        }
-    ]
-    
     try:
-        for i, sound_test in enumerate(sound_configs, 1):
-            print(f"{i}. Testing: {sound_test['name']}")
-            
-            feedback = AudioFeedback(sound_test['config'])
-            status = feedback.get_status()
-            
-            if not status['enabled']:
-                print("   ❌ Audio feedback not available")
-                continue
-            
-            input(f"   Press Enter to hear '{sound_test['name']}' sounds...")
-            
-            print("   Playing start sound...")
-            feedback.play_start_sound()
-            time.sleep(0.8)  # Wait between sounds
-            
-            print("   Playing stop sound...")
-            feedback.play_stop_sound()
-            time.sleep(1.0)  # Wait before next test
-            
-            print("   ✓ Test complete!")
-            print()
+        # Configuration with non-existent files
+        config = {
+            'enabled': True,
+            'start_sound': 'nonexistent/start.wav',
+            'stop_sound': 'nonexistent/stop.wav'
+        }
+        
+        print("1. Testing with non-existent sound files...")
+        feedback = AudioFeedback(config)
+        
+        status = feedback.get_status()
+        print(f"   Start sound exists: {status['start_sound_exists']}")
+        print(f"   Stop sound exists: {status['stop_sound_exists']}")
+        
+        if not status['enabled']:
+            print("❌ Audio feedback not available")
+            return
+        
+        print("\n2. Attempting to play non-existent sounds...")
+        print("   (Should see warnings in logs but not crash)")
+        
+        feedback.play_start_sound()
+        time.sleep(0.5)
+        feedback.play_stop_sound()
+        time.sleep(0.5)
+        
+        print("   ✓ Gracefully handled missing files!")
         
     except Exception as e:
-        print(f"❌ Error during custom sound test: {e}")
+        print(f"❌ Error during missing files test: {e}")
 
-def test_configuration_changes():
+def test_configuration_updates():
     """
-    Test changing configuration at runtime
+    Test updating configuration at runtime
     
-    This shows how settings can be updated without restarting.
+    This shows how to change sound files without restarting.
     """
-    print("=== Configuration Change Test ===")
-    print("This test shows how to change settings on the fly.")
+    print("\n=== Configuration Update Test ===")
+    print("This test shows how to change sound files at runtime.")
     print()
     
     try:
         # Start with one configuration
         initial_config = {
             'enabled': True,
-            'start_sound': {'frequency': 600, 'duration': 200},
-            'stop_sound': {'frequency': 400, 'duration': 300}
+            'start_sound': 'sounds/beep1.wav',
+            'stop_sound': 'sounds/beep2.wav'
         }
         
+        print("1. Initial configuration...")
         feedback = AudioFeedback(initial_config)
         
-        if not feedback.get_status()['enabled']:
+        status = feedback.get_status()
+        print(f"   Start sound: {status['start_sound_path']}")
+        print(f"   Stop sound: {status['stop_sound_path']}")
+        
+        if not status['enabled']:
             print("❌ Audio feedback not available")
             return
-        
-        print("1. Initial configuration:")
-        print("   Start: 600Hz, 200ms | Stop: 400Hz, 300ms")
-        input("   Press Enter to test initial sounds...")
-        feedback.test_sounds()
         
         # Update configuration
         new_config = {
             'enabled': True,
-            'start_sound': {'frequency': 900, 'duration': 150},
-            'stop_sound': {'frequency': 500, 'duration': 400}
+            'start_sound': 'assets/new_start.wav',
+            'stop_sound': 'assets/new_stop.wav'
         }
         
         print("\n2. Updating configuration...")
         feedback.update_config(new_config)
-        print("   New - Start: 900Hz, 150ms | Stop: 500Hz, 400ms")
-        input("   Press Enter to test updated sounds...")
-        feedback.test_sounds()
+        
+        status = feedback.get_status()
+        print(f"   New start sound: {status['start_sound_path']}")
+        print(f"   New stop sound: {status['stop_sound_path']}")
         
         # Test enable/disable
         print("\n3. Testing enable/disable...")
         feedback.set_enabled(False)
         print("   Disabled - no sounds should play")
-        input("   Press Enter to test (should be silent)...")
-        feedback.test_sounds()
+        feedback.play_start_sound()  # Should do nothing
         
         feedback.set_enabled(True)
-        print("   Re-enabled - sounds should play again")
-        input("   Press Enter to test (should make sounds)...")
-        feedback.test_sounds()
+        print("   Re-enabled - sounds would play again")
         
-        print("\n✓ Configuration test complete!")
+        print("   ✓ Configuration update test complete!")
         
     except Exception as e:
         print(f"❌ Error during configuration test: {e}")
 
-def interactive_sound_test():
+def test_empty_configuration():
     """
-    Interactive test where you can manually trigger sounds
+    Test with empty or minimal configuration
     
-    This simulates what it would be like in the actual app.
+    This shows how the system handles missing sound file paths.
     """
-    print("\n=== Interactive Sound Test ===")
-    print("Manually trigger start/stop sounds like in the real app.")
-    print("Commands: 'start' (play start sound), 'stop' (play stop sound), 'quit' (exit)")
+    print("\n=== Empty Configuration Test ===")
+    print("This test shows behavior with missing sound file paths.")
     print()
     
     try:
-        # Use default configuration
-        config = {
-            'enabled': True,
-            'start_sound': {'frequency': 800, 'duration': 200},
-            'stop_sound': {'frequency': 600, 'duration': 300}
+        # Configuration with no sound files specified
+        empty_config = {
+            'enabled': True
+            # No start_sound or stop_sound specified
         }
         
-        feedback = AudioFeedback(config)
+        print("1. Testing with empty sound file configuration...")
+        feedback = AudioFeedback(empty_config)
         
-        if not feedback.get_status()['enabled']:
+        status = feedback.get_status()
+        print(f"   Start sound path: '{status['start_sound_path']}'")
+        print(f"   Stop sound path: '{status['stop_sound_path']}'")
+        
+        if not status['enabled']:
             print("❌ Audio feedback not available")
             return
         
-        print("Audio feedback ready! Try the commands below:")
+        print("\n2. Attempting to play with empty paths...")
+        print("   (Should do nothing silently)")
+        
+        feedback.play_start_sound()  # Should do nothing
+        feedback.play_stop_sound()   # Should do nothing
+        
+        print("   ✓ Gracefully handled empty configuration!")
+        
+    except Exception as e:
+        print(f"❌ Error during empty configuration test: {e}")
+
+def interactive_test():
+    """
+    Interactive test for manual sound file testing
+    
+    This lets you manually trigger sounds if you have sound files available.
+    """
+    print("\n=== Interactive Test ===")
+    print("Manually test audio feedback with your own sound files.")
+    print()
+    
+    try:
+        # Get sound file paths from user
+        print("Enter paths to sound files (or press Enter to skip):")
+        start_sound = input("Start sound file path: ").strip()
+        stop_sound = input("Stop sound file path: ").strip()
+        
+        if not start_sound and not stop_sound:
+            print("No sound files provided, skipping interactive test.")
+            return
+        
+        config = {
+            'enabled': True,
+            'start_sound': start_sound,
+            'stop_sound': stop_sound
+        }
+        
+        feedback = AudioFeedback(config)
+        status = feedback.get_status()
+        
+        print(f"\nConfiguration:")
+        print(f"  Start sound: {status['start_sound_path']} (exists: {status['start_sound_exists']})")
+        print(f"  Stop sound: {status['stop_sound_path']} (exists: {status['stop_sound_exists']})")
+        
+        if not status['enabled']:
+            print("❌ Audio feedback not available")
+            return
+        
+        print("\nCommands: 'start' (play start sound), 'stop' (play stop sound), 'quit' (exit)")
         
         while True:
-            command = input("\nEnter command (start/stop/quit): ").lower().strip()
+            command = input("\nEnter command: ").lower().strip()
             
             if command == 'quit':
                 print("Goodbye!")
@@ -241,33 +268,36 @@ if __name__ == "__main__":
     """
     This runs when you execute the script directly
     
-    For beginners: This script helps you understand what the audio feedback 
-    sounds like before integrating it into the main application.
+    For beginners: This script helps you understand how the file-based 
+    audio feedback system works before integrating it into the main app.
     """
-    print("Windows Whisper App - Audio Feedback Test")
-    print("=" * 50)
-    print("This script tests the sounds that play when recording starts/stops.")
-    print("Make sure your speakers/headphones are on!\n")
+    print("Windows Whisper App - File-Based Audio Feedback Test")
+    print("=" * 60)
+    print("This script tests playing sound files for recording start/stop events.")
+    print("Note: Sound files won't exist yet - you'll see warnings, which is normal.\n")
     
     # Run basic test first
     test_basic_functionality()
     
-    # Ask about additional tests
-    print("\nWould you like to try different sound styles?")
-    response = input("This tests various frequencies and durations (y/n): ").lower()
-    if response in ['y', 'yes']:
-        test_custom_sounds()
+    # Test missing files behavior
+    test_with_missing_files()
     
-    print("\nWould you like to test configuration changes?")
-    response = input("This shows how to update settings at runtime (y/n): ").lower()
-    if response in ['y', 'yes']:
-        test_configuration_changes()
+    # Test configuration updates
+    test_configuration_updates()
     
+    # Test empty configuration
+    test_empty_configuration()
+    
+    # Ask about interactive test
     print("\nWould you like to try the interactive test?")
-    response = input("This lets you manually trigger start/stop sounds (y/n): ").lower()
+    print("This lets you test with actual sound files if you have them.")
+    response = input("Try interactive test (y/n): ").lower()
     if response in ['y', 'yes']:
-        interactive_sound_test()
+        interactive_test()
     
-    print("\n" + "=" * 50)
-    print("Test complete! You now know what the audio feedback sounds like.")
-    print("Next step: integrate this into the main app's state_manager.py")
+    print("\n" + "=" * 60)
+    print("Test complete! The audio feedback system is ready for sound files.")
+    print("Next steps:")
+    print("1. Create sound files (start.wav, stop.wav)")
+    print("2. Update config.yaml with sound file paths") 
+    print("3. Integrate into state_manager.py")
