@@ -97,7 +97,7 @@ class ClipboardManager:
             return False
         
         try:
-            self.logger.info(f"Copying text to clipboard: '{text[:50]}...' ({len(text)} chars)")
+            self.logger.info(f"Copying text to clipboard ({len(text)} chars)")
             pyperclip.copy(text)
             self.logger.info("Text successfully copied to clipboard")
             return True
@@ -151,10 +151,10 @@ class ClipboardManager:
         if success and show_notification:
             # Show user-friendly message
             display_text = text if len(text) <= 100 else text[:97] + "..."
-            print(f"✓ Copied to clipboard: '{display_text}'")
+            print(f"   ✓ Copied to clipboard: '{display_text}'")
             print("You can now paste with Ctrl+V in any application!")
         elif not success and show_notification:
-            print("✗ Failed to copy text to clipboard")
+            print("   ✗ Failed to copy text to clipboard")
         
         return success
     
@@ -331,7 +331,7 @@ class ClipboardManager:
         # Provide user feedback
         if success and show_notification:
             display_text = text if len(text) <= 100 else text[:97] + "..."
-            print(f"✓ Auto-pasted via {method_used}: '{display_text}'")
+            print(f"   ✓ Auto-pasted via {method_used}")
         elif not success and show_notification:
             print("❌ Auto-paste failed with all methods, text remains in clipboard for manual paste")
             # Text should still be in clipboard from the copy attempts
@@ -417,13 +417,13 @@ class ClipboardManager:
         # Provide user feedback
         if paste_success and show_notification:
             display_text = text if len(text) <= 100 else text[:97] + "..."
-            print(f"✓ Auto-pasted via {method_used}: '{display_text}'")
+            print(f"   ✓ Auto-pasted via {method_used}")
             if not restore_success:
                 self.logger.warning("Original clipboard content was not restored")
         elif not paste_success and show_notification:
             print("❌ Auto-paste failed with all methods")
             if original_content is not None and restore_success:
-                print("✓ Original clipboard content restored")
+                print("   ✓ Original clipboard content restored")
         
         return paste_success
     

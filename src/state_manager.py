@@ -207,16 +207,16 @@ class StateManager:
         # Generate appropriate message based on configuration
         if not auto_paste_enabled:
             # No auto-paste: basic copy to clipboard
-            return f"Press [{primary_key}] to stop recording and copy to clipboard."
+            return f"   Press [{primary_key}] to stop recording and copy to clipboard."
         elif not auto_enter_enabled:
             # Auto-paste on, no auto-enter
-            return f"Press [{primary_key}] to stop recording and auto-paste."
+            return f"   Press [{primary_key}] to stop recording and auto-paste."
         else:
             # Both auto-paste and auto-enter enabled
             if auto_enter_key and auto_enter_key != primary_key:
-                return f"Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press."
+                return f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press."
             else:
-                return f"Press [{primary_key}] to stop recording and auto-paste, or add (Enter) key press."
+                return f"   Press [{primary_key}] to stop recording and auto-paste, or add (Enter) key press."
 
     def _start_recording(self):
         """
@@ -284,7 +284,7 @@ class StateManager:
                     # Store for future reference
                     self.last_transcription = transcribed_text
                     self.logger.info("Complete auto-enter workflow successful (paste + ENTER)")
-                    print("✓ Text submitted with ENTER!")
+                    print("   ✓ Text submitted with ENTER!")
                 else:
                     # Paste succeeded but ENTER failed
                     self.last_transcription = transcribed_text
@@ -351,7 +351,6 @@ class StateManager:
                 self.logger.info(f"State transition: processing={self.is_processing} (starting transcription workflow)")
             
             self.logger.info("Stopping recording and processing...")
-            print("🛑 Recording stopped! Processing audio...")
             
             # Play stop sound to notify user recording ended
             if self.audio_feedback:
@@ -371,12 +370,12 @@ class StateManager:
                 return
             
             # Step 2: Transcribe the audio using Whisper AI
-            print("🧠 Transcribing speech...")
+            print("🎤 Recording stopped! Transcribing...")
             transcribed_text = self.whisper_engine.transcribe_audio(audio_data)
             
             if not transcribed_text:
-                print("❌ No speech detected or transcription failed!")
-                self.logger.warning("Transcription returned empty result")
+                print("   ✗ No speech detected, skipping transcription")
+                self.logger.info("Transcription returned empty result")
                 self.is_processing = False
                 # Reset tray to idle state on failure
                 self._update_tray_state("idle")

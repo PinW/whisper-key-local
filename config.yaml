@@ -41,6 +41,10 @@ whisper:
   
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
+  
+  # Voice Activity Detection (VAD) pre-check for short recordings
+  # Skips transcription of silent recordings ≤2.5 seconds to prevent hallucinations
+  vad_precheck_enabled: true
 
 # =============================================================================
 # HOTKEY CONFIGURATION
@@ -78,11 +82,7 @@ hotkey:
 # AUDIO RECORDING SETTINGS
 # =============================================================================
 audio:
-  # Sample rate for recording (Hz)
-  # Higher = better quality but larger files
-  # Common values: 16000, 22050, 44100, 48000
-  # Note: Whisper works best with 16000 Hz
-  sample_rate: 16000
+  # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
   
   # Audio channels
   # 1 = mono (recommended for speech)
@@ -198,11 +198,17 @@ system_tray:
 # ADVANCED SETTINGS
 # =============================================================================
 advanced:
-  # Voice Activity Detection (VAD)
-  # Automatically detect when speech starts/stops
-  vad:
-    enabled: false  # Not implemented yet
-    threshold: 0.5  # Sensitivity (0.0-1.0)
+  # Voice Activity Detection (VAD) Pre-check
+  # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
+  # NOTE: This is separate from faster-whisper's built-in VAD
+  vad_precheck_enabled: true
+  
+  # TEN VAD Hysteresis Thresholds (prevent flickering on borderline audio)
+  vad_onset_threshold: 0.7    # Probability to START detecting speech (0.0-1.0)
+  vad_offset_threshold: 0.55  # Probability to STOP detecting speech (0.0-1.0)
+  
+  # Minimum Duration Filtering
+  vad_min_speech_duration: 0.1  # Minimum speech segment length in seconds (filters brief noise)
   
   # Model download settings
   model_cache_dir: null  # null = use default cache directory

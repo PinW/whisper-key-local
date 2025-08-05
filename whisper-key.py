@@ -64,16 +64,16 @@ def main():
     
     try:
         # Load configuration first (will use user settings from AppData)
-        print("Loading configuration...")
+        print("📁 Loading configuration...")
         config_manager = ConfigManager()
         
         
         # Show where settings are loaded from
         if config_manager.use_user_settings:
             settings_path = config_manager.get_user_settings_path()
-            print(f"📁 Using user settings from: {settings_path}")
+            print(f"   ✓ Using user settings from: {settings_path}")
         else:
-            print(f"📁 Using default settings from: {config_manager.config_path}")
+            print(f"   ✗ Using default settings from: {config_manager.config_path}")
         
         # Set up logging based on configuration
         setup_logging(config_manager)
@@ -91,7 +91,6 @@ def main():
         
         # Create our main components with configuration
         audio_recorder = AudioRecorder(
-            sample_rate=audio_config['sample_rate'],
             channels=audio_config['channels'],
             dtype=audio_config['dtype'],
             max_duration=audio_config['max_duration']
@@ -102,7 +101,8 @@ def main():
             device=whisper_config['device'],
             compute_type=whisper_config['compute_type'],
             language=whisper_config['language'],
-            beam_size=whisper_config['beam_size']
+            beam_size=whisper_config['beam_size'],
+            vad_enabled=whisper_config['vad_precheck_enabled']
         )
         
         clipboard_manager = ClipboardManager(config_manager)
@@ -117,7 +117,7 @@ def main():
                 status = audio_feedback.get_status()
                 if status['enabled']:
                     logger.info("Audio feedback initialized successfully")
-                    print(f"🔊 Audio feedback enabled (start: {status['start_sound_exists']}, stop: {status['stop_sound_exists']})")
+                    print(f"   ✓ Audio feedback enabled...")
                 else:
                     logger.warning("Audio feedback not available (likely not on Windows)")
                     print("⚠️  Audio feedback not available (likely not on Windows)")
@@ -129,8 +129,16 @@ def main():
                 audio_feedback = None
         else:
             logger.info("Audio feedback disabled in configuration")
-            print("🔇 Audio feedback disabled in configuration")
+            print("   ✗ Audio feedback disabled in configuration")
         
+        # Show auto-paste status
+        if clipboard_config.get('auto_paste', False):
+            paste_method = clipboard_config.get('paste_method', 'key_simulation')
+            method_name = "key simulation (CTRL+V)" if paste_method == "key_simulation" else "Windows API"
+            print(f"   ✓ Auto-paste is ENABLED using {method_name}")
+        else:
+            print("   ✗ Auto-paste is DISABLED - paste manually with Ctrl+V")
+
         # Initialize system tray (optional - may not be available)
         system_tray = None
         if tray_config.get('enabled', True):  # Default to enabled
@@ -198,7 +206,7 @@ def main():
                 tray_started = system_tray.start()
                 if tray_started:
                     logger.info("System tray started successfully")
-                    print("System tray icon is running...")
+                    print("🎤 System tray icon is running...")
                 else:
                     logger.warning("Failed to start system tray")
                     print("⚠️  System tray failed to start")
@@ -209,16 +217,10 @@ def main():
                 logger.error(f"SystemTray start traceback: {traceback.format_exc()}")
                 print(f"⚠️  System tray start failed with exception: {e}")
         
+
         logger.info("All components initialized successfully!")
-        print(f"Application ready! Press {beautify_hotkey(hotkey_config['combination'])} to start recording.")
+        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['combination'])} to start recording.")
         
-        # Show auto-paste status
-        if clipboard_config.get('auto_paste', False):
-            paste_method = clipboard_config.get('paste_method', 'key_simulation')
-            method_name = "key simulation (CTRL+V)" if paste_method == "key_simulation" else "Windows API"
-            print(f"🚀 Auto-paste is ENABLED using {method_name}")
-        else:
-            print("📋 Auto-paste is DISABLED - you'll need to paste manually with Ctrl+V")
         
         print("Press Ctrl+C to quit.")
         
