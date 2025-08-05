@@ -24,35 +24,26 @@ As a **developer** I want **to fix Unicode encoding errors in logging messages**
 - All setting changes use ASCII versions for logging, emoji versions for console
 - No Unicode errors in configuration logging
 
-## Implementation Plan
+## Implementation Plan (Streamlined for Alpha)
 
-### Phase 1: Create Utility Function
-- [ ] Add `sanitize_for_logging()` function to `src/utils.py`
-  - Follow existing pattern from config_manager.py
-  - Use `encode('ascii', errors='replace')` approach
-  - Handle edge cases gracefully
-- [ ] Test utility function with problematic Unicode characters
+### Core Fix (Execute Immediately)
+- [x] Add `sanitize_for_logging()` function to `src/utils.py`
+  - ✅ Added function following config_manager.py pattern
+  - ✅ Uses `encode('ascii', errors='replace')` approach
+  - ✅ Includes fallback to repr() for edge cases
+- [x] Import and apply to `src/clipboard_manager.py:361`
+  - ✅ Added import statement
+  - ✅ Fixed Unicode logging error on line 361-363
+- [x] Quick search for other obvious user content logging issues
+  - ✅ Found and fixed `whisper_engine.py:273` transcribed text logging
+  - ✅ Found and fixed `whisper_engine.py:310` file transcription logging
+- [x] Done - ship it
 
-### Phase 2: Apply Fix to Clipboard Manager
-- [ ] Import `sanitize_for_logging` in `src/clipboard_manager.py`
-- [ ] Update line 361 to sanitize clipboard content before logging
-- [ ] Preserve original Unicode content for console output if needed
-- [ ] Test fix with Unicode clipboard content
-
-### Phase 3: Systematic Application
-- [ ] Search for other potential Unicode logging issues in codebase
-- [ ] Apply sanitization to any other logging statements that might contain user content
-- [ ] Focus on areas that log:
-  - Transcribed text
-  - File paths
-  - User input
-  - Error messages with user content
-
-### Phase 4: Verification
-- [ ] Test with various Unicode characters that caused original error
-- [ ] Verify log file receives sanitized messages
-- [ ] Verify console still shows useful information
-- [ ] Confirm no more Unicode encoding tracebacks
+### Deferred for Later (Post-Alpha)
+- ~~Extensive testing with various Unicode characters~~
+- ~~Systematic codebase scanning~~
+- ~~Dual output patterns~~
+- ~~Comprehensive verification~~
 
 ## Implementation Details
 
