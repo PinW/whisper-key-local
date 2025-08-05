@@ -5,6 +5,8 @@ This module contains common utility functions that are used across multiple
 components of the application to maintain consistency and reduce code duplication.
 """
 
+from contextlib import contextmanager
+
 
 def beautify_hotkey(hotkey_string: str) -> str:
     """
@@ -32,3 +34,29 @@ def beautify_hotkey(hotkey_string: str) -> str:
         return ""
     
     return hotkey_string.replace('+', '+').upper()
+
+
+@contextmanager
+def error_logging(context: str, logger):
+    """
+    Context manager for consistent error handling and logging across the application.
+    
+    This provides a clean way to wrap risky operations with standardized error logging
+    without cluttering the main code logic. Use this for operations that might fail
+    and need consistent error reporting.
+    
+    Args:
+        context (str): Description of what operation is being attempted (for error messages)
+        logger: Logger instance to use for error reporting
+        
+    Usage:
+        with error_logging("standard hotkey", self.logger):
+            self.state_manager.toggle_recording()  # The risky operation
+            
+    For beginners: This is a "context manager" - it runs code before and after your
+    operation, automatically catching any errors and logging them in a consistent format.
+    """
+    try:
+        yield
+    except Exception as e:
+        logger.error(f"Error in {context}: {e}")

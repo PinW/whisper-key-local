@@ -11,6 +11,7 @@ program you're using, pressing the special key combination will trigger our app.
 import logging
 from global_hotkeys import register_hotkeys, start_checking_hotkeys, stop_checking_hotkeys
 from typing import TYPE_CHECKING
+from .utils import error_logging
 
 # This import trick prevents circular imports (advanced concept)
 if TYPE_CHECKING:
@@ -167,12 +168,8 @@ class HotkeyListener:
         # Disable stop-modifier until key is released (prevents immediate stopping)
         self.modifier_key_released = False
         
-        try:
-            # Tell the state manager to toggle recording (standard behavior)
+        with error_logging("standard hotkey", self.logger):
             self.state_manager.toggle_recording()
-            
-        except Exception as e:
-            self.logger.error(f"Error handling standard hotkey press: {e}")
     
     def _auto_enter_hotkey_pressed(self):
         """
@@ -202,12 +199,8 @@ class HotkeyListener:
         # Disable stop-modifier until key is released
         self.modifier_key_released = False
         
-        try:
-            # Stop recording with auto-enter behavior (stop-only)
+        with error_logging("auto-enter hotkey", self.logger):
             self.state_manager.stop_recording(use_auto_enter=True)
-            
-        except Exception as e:
-            self.logger.error(f"Error handling auto-enter hotkey press: {e}")
     
     def _stop_modifier_hotkey_pressed(self):
         """
@@ -224,12 +217,8 @@ class HotkeyListener:
         # Only stop if the modifier key has been released since last full hotkey press
         if self.modifier_key_released:
             self.logger.info(f"Stop-modifier hotkey activated: {self.stop_modifier_hotkey}")
-            try:
-                # Tell the state manager to stop recording only (no toggle behavior)
+            with error_logging("stop-modifier hotkey", self.logger):
                 self.state_manager.stop_recording()
-                
-            except Exception as e:
-                self.logger.error(f"Error handling stop-modifier hotkey press: {e}")
         else:
             self.logger.debug("Stop-modifier ignored - waiting for key release first")
     
@@ -265,12 +254,8 @@ class HotkeyListener:
             return
             
         self.logger.info(f"Auto-enter modifier hotkey activated: {self.auto_enter_modifier_hotkey}")
-        try:
-            # Tell the state manager to stop recording with auto-enter behavior
+        with error_logging("auto-enter modifier hotkey", self.logger):
             self.state_manager.stop_recording(use_auto_enter=True)
-            
-        except Exception as e:
-            self.logger.error(f"Error handling auto-enter modifier hotkey press: {e}")
     
     
     def _extract_first_modifier(self, hotkey_str: str) -> str:

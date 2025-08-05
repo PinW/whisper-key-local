@@ -41,7 +41,7 @@ Each block repeats:
 
 **Refactor suggestion**: Extract a `_handle_clipboard_operation()` method. -->
 
-## 3. System Tray State Updates (Low Priority)
+<!-- ## 3. System Tray State Updates (Low Priority)
 
 **Location**: Throughout `state_manager.py`
 
@@ -51,7 +51,7 @@ if self.system_tray:
     self.system_tray.update_state("some_state")
 ```
 
-**Refactor suggestion**: Create a `_update_tray_state()` helper method.
+**Refactor suggestion**: Create a `_update_tray_state()` helper method. -->
 
 ## 4. Error Handling in Hotkey Callbacks (Low Priority)
 
