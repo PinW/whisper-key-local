@@ -323,6 +323,10 @@ class ConfigManager:
             self.config['hotkey']['stop_with_modifier_enabled'] = False
         else:
             self.config['hotkey']['stop_with_modifier_enabled'] = stop_with_modifier_enabled
+        
+        # Save validation fixes to user file
+        if self.use_user_settings:
+            self.save_user_settings()
     
     # Getter methods for easy access to configuration sections
     
