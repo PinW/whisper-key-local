@@ -322,9 +322,34 @@ class ConfigManager:
         else:
             self.config['hotkey']['stop_with_modifier_enabled'] = stop_with_modifier_enabled
         
+        # Validate VAD configuration ranges
+        self._validate_vad_config()
+        
         # Save validation fixes to user file
         if self.use_user_settings:
             self.save_user_settings()
+    
+    def _validate_vad_config(self):
+        """Validate VAD configuration values are within acceptable ranges"""
+        if 'advanced' not in self.config:
+            return
+            
+        advanced_config = self.config['advanced']
+        vad_fields = {
+            'vad_onset_threshold': (0.0, 1.0, 'VAD onset threshold'),
+            'vad_offset_threshold': (0.0, 1.0, 'VAD offset threshold'),
+            'vad_min_speech_duration': (0.001, 5.0, 'VAD minimum speech duration')  # 1ms minimum, 5s maximum
+        }
+        
+        for field, (min_val, max_val, description) in vad_fields.items():
+            if field in advanced_config:
+                value = advanced_config[field]
+                if not isinstance(value, (int, float)):
+                    self.logger.warning(f"Invalid {description}: '{value}' (must be numeric), removing from config")
+                    del advanced_config[field]
+                elif not (min_val <= value <= max_val):
+                    self.logger.warning(f"Invalid {description}: {value} (must be {min_val}-{max_val}), removing from config")
+                    del advanced_config[field]
     
     # Getter methods for easy access to configuration sections
     
