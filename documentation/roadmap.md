@@ -1,8 +1,8 @@
 # Windows Whisper Speech-to-Text App - Roadmap
 
 ## Next
-- As a *user*, I want **start/stop sound feedback** so that I know when recording begins and ends
 - As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
+- As a *user*, I want **VAD trimming** so silences aren't transformed into 20 word hallucination
 
 ### Recording Modes & Multiple Hotkeys
 - As a *user*, I want **recording mode option** (hold key vs start/stop) so that I can choose my preferred interaction style
@@ -35,6 +35,9 @@
 
 ### Development Infrastructure
 - **[uv Migration]**(implementation-plans/uv-migration-2025-01-29.md): Migrate from pip to uv for faster dependency management
+
+### Learning & Code Exploration
+- Try something out with **Python decorators** - explore using decorators for timing, caching, or retry logic in the codebase
 
 ### Cross-Platform
 - As a Mac *user*, I want to use this app on **macOS**
