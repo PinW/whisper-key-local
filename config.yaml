@@ -41,6 +41,10 @@ whisper:
   
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
+  
+  # Voice Activity Detection (VAD) pre-check for short recordings
+  # Skips transcription of silent recordings ≤2.5 seconds to prevent hallucinations
+  vad_precheck_enabled: true
 
 # =============================================================================
 # HOTKEY CONFIGURATION
@@ -78,11 +82,7 @@ hotkey:
 # AUDIO RECORDING SETTINGS
 # =============================================================================
 audio:
-  # Sample rate for recording (Hz)
-  # Higher = better quality but larger files
-  # Common values: 16000, 22050, 44100, 48000
-  # Note: Whisper works best with 16000 Hz
-  sample_rate: 16000
+  # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
   
   # Audio channels
   # 1 = mono (recommended for speech)

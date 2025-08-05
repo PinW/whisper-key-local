@@ -14,11 +14,24 @@ As a *user* I want **VAD pre-check on recordings ≤2.5 seconds** so silence doe
 ## Implementation Plan
 
 ### Phase 1: Add TEN VAD Infrastructure
-- [ ] Install TEN VAD dependency: `pip install -U --force-reinstall -v git+https://github.com/TEN-framework/ten-vad.git`
-- [ ] Add TEN VAD import and initialization in whisper_engine.py
-- [ ] Add VAD pre-check enable/disable config option in config.yaml
-- [ ] Remove sample_rate configurability - hardcode 16kHz throughout app
-- [ ] Create method to run TEN VAD check on audio data
+- [x] Install TEN VAD dependency: `pip install -U --force-reinstall -v git+https://github.com/TEN-framework/ten-vad.git`
+  - ✅ Added TEN VAD to requirements.txt with git URL format
+- [x] Add TEN VAD import and initialization in whisper_engine.py
+  - ✅ Added safe import with availability check
+  - ✅ Added VAD initialization in WhisperEngine.__init__() with error handling
+  - ✅ Added vad_enabled parameter to WhisperEngine constructor
+- [x] Add VAD pre-check enable/disable config option in config.yaml
+  - ✅ Added vad_precheck_enabled: true under whisper section
+- [x] Remove sample_rate configurability - hardcode 16kHz throughout app
+  - ✅ Updated audio_recorder.py to hardcode 16000 Hz sample rate
+  - ✅ Removed sample_rate parameter from AudioRecorder constructor
+  - ✅ Updated config.yaml to remove configurable sample_rate
+  - ✅ Updated config_manager.py to remove sample_rate validation
+  - ✅ Updated whisper-key.py to remove sample_rate parameter passing
+- [x] Create method to run TEN VAD check on audio data
+  - ✅ Added _check_short_audio_for_speech() method with 2.5s duration check
+  - ✅ Integrated VAD pre-check into transcribe_audio() method
+  - ✅ Added proper error handling and fallback behavior
 
 ### Phase 2: Implement Pre-check Logic
 - [ ] Add duration check in transcribe_audio() method

@@ -19,6 +19,13 @@ import wave
 import time
 import threading
 
+# TEN VAD for speech detection in short recordings
+try:
+    from ten_vad import TenVad
+    TEN_VAD_AVAILABLE = True
+except ImportError:
+    TEN_VAD_AVAILABLE = False
+
 class WhisperEngine:
     """
     A class that handles speech-to-text transcription using Whisper AI
@@ -27,7 +34,7 @@ class WhisperEngine:
     """
     
     def __init__(self, model_size: str = "tiny", device: str = "cpu", compute_type: str = "int8", 
-                 language: str = None, beam_size: int = 5):
+                 language: str = None, beam_size: int = 5, vad_enabled: bool = True):
         """
         Initialize the Whisper transcription engine
         
@@ -37,6 +44,7 @@ class WhisperEngine:
         - compute_type: "int8" for efficiency, "float16" for better quality
         - language: Language code (e.g., "en") or None for auto-detection
         - beam_size: Search beam size for transcription (higher = more accurate but slower)
+        - vad_enabled: Enable TEN VAD pre-check for short recordings
         
         For beginners: 
         - "tiny" model is ~39MB and fastest
@@ -48,6 +56,7 @@ class WhisperEngine:
         self.compute_type = compute_type
         self.language = language
         self.beam_size = beam_size
+        self.vad_enabled = vad_enabled
         self.model = None
         self.logger = logging.getLogger(__name__)
         
@@ -55,6 +64,18 @@ class WhisperEngine:
         self._loading_thread = None
         self._loading_cancelled = False
         self._progress_callback = None
+        
+        # Initialize TEN VAD if available and enabled
+        self.ten_vad = None
+        if self.vad_enabled and TEN_VAD_AVAILABLE:
+            try:
+                self.ten_vad = TenVad()
+                self.logger.info("TEN VAD initialized successfully")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize TEN VAD: {e}")
+                self.ten_vad = None
+        elif self.vad_enabled and not TEN_VAD_AVAILABLE:
+            self.logger.warning("TEN VAD requested but not available, VAD pre-check disabled")
         
         # Load the model when we create this object
         self._load_model()
@@ -205,6 +226,32 @@ class WhisperEngine:
         """
         return self._loading_thread is not None and self._loading_thread.is_alive()
     
+    def _check_short_audio_for_speech(self, audio_data: np.ndarray) -> bool:
+        """
+        Check if short audio contains speech using TEN VAD
+        Returns True if speech detected, False otherwise
+        Note: Audio is always 16kHz (app standard), perfect for TEN VAD
+        """
+        duration = len(audio_data) / 16000  # Fixed 16kHz sample rate
+        
+        # Only check recordings 2.5 seconds or shorter
+        if duration > 2.5:
+            return True  # Assume longer recordings have speech
+        
+        # Skip VAD if not available or disabled
+        if not self.ten_vad:
+            return True  # Default to transcribing if VAD unavailable
+        
+        try:
+            # Run TEN VAD check (audio already 16kHz - no conversion needed)
+            result = self.ten_vad.predict(audio_data)
+            speech_detected = any(segment['is_speech'] for segment in result)
+            
+            return speech_detected
+        except Exception as e:
+            self.logger.warning(f"TEN VAD check failed: {e}")
+            return True  # Default to transcribing on VAD error
+    
     def transcribe_audio(self, audio_data: np.ndarray, sample_rate: int = 16000) -> Optional[str]:
         """
         Convert audio data to text using Whisper AI
@@ -228,6 +275,12 @@ class WhisperEngine:
             return None
         
         try:
+            # TEN VAD pre-check for short recordings
+            if not self._check_short_audio_for_speech(audio_data):
+                self.logger.info("TEN VAD pre-check: No speech detected in short recording")
+                print("No speech detected (recording too short/silent)")
+                return None
+            
             self.logger.info("Starting transcription...")
             print("Transcribing audio...")
             

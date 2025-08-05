@@ -91,7 +91,6 @@ def main():
         
         # Create our main components with configuration
         audio_recorder = AudioRecorder(
-            sample_rate=audio_config['sample_rate'],
             channels=audio_config['channels'],
             dtype=audio_config['dtype'],
             max_duration=audio_config['max_duration']
@@ -102,7 +101,8 @@ def main():
             device=whisper_config['device'],
             compute_type=whisper_config['compute_type'],
             language=whisper_config['language'],
-            beam_size=whisper_config['beam_size']
+            beam_size=whisper_config['beam_size'],
+            vad_enabled=whisper_config['vad_precheck_enabled']
         )
         
         clipboard_manager = ClipboardManager(config_manager)

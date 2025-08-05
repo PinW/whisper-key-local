@@ -223,10 +223,8 @@ class ConfigManager:
             self.logger.warning(f"Invalid compute type '{self.config['whisper']['compute_type']}', using 'int8'")
             self.config['whisper']['compute_type'] = 'int8'
         
-        # Validate audio sample rate
-        if self.config['audio']['sample_rate'] <= 0:
-            self.logger.warning(f"Invalid sample rate {self.config['audio']['sample_rate']}, using 16000")
-            self.config['audio']['sample_rate'] = 16000
+        # Sample rate is fixed at 16000 Hz for Whisper and TEN VAD compatibility
+        # No validation needed as it's hardcoded in the audio recorder
         
         # Validate channels
         if self.config['audio']['channels'] not in [1, 2]:
