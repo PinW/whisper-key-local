@@ -107,7 +107,7 @@ class WhisperEngine:
         """
         try:
             self.logger.info(f"Loading Whisper model: {self.model_size}")
-            print(f"Loading Whisper AI model [{self.model_size}]...")
+            print(f"🧠 Loading Whisper AI model [{self.model_size}]...")
             
             # Check if model is already cached
             was_cached = self._is_model_cached()
@@ -126,7 +126,7 @@ class WhisperEngine:
             if not was_cached:
                 print("\n")
             self.logger.info("Whisper model loaded successfully")
-            print(f"Whisper model [{self.model_size}] ready!")
+            print(f"   ✓ Whisper model [{self.model_size}] ready!")
             
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")
@@ -269,16 +269,10 @@ class WhisperEngine:
                 consecutive_count += 1
                 max_consecutive = max(max_consecutive, consecutive_count)
                 if consecutive_count >= min_frames:
-                    # Log debug info for successful detection
-                    self.logger.info(f"TEN VAD hysteresis: Found {consecutive_count} consecutive speech frames "
-                                   f"(min required: {min_frames}, total speech frames: {speech_frame_count})")
                     return True  # Found valid speech segment!
             else:
                 consecutive_count = 0  # Reset counter on silence
         
-        # Log debug info for failed detection
-        self.logger.info(f"TEN VAD hysteresis: Max consecutive frames: {max_consecutive} "
-                       f"(min required: {min_frames}, total speech frames: {speech_frame_count}) - NO SPEECH")
         return False  # No valid consecutive speech segments found
 
     def _check_audio_for_speech(self, audio_data: np.ndarray) -> bool:
@@ -332,25 +326,11 @@ class WhisperEngine:
             # Apply hysteresis + consecutive frame detection
             speech_detected = self._detect_speech_with_hysteresis(probabilities)
             
-            # Enhanced logging with probability distribution
-            if probabilities:
-                min_prob = min(probabilities)
-                max_prob = max(probabilities)
-                avg_prob = sum(probabilities) / len(probabilities)
-                
-                print(f"TEN VAD analysis: {len(probabilities)} frames, "
-                      f"prob range [{min_prob:.3f}-{max_prob:.3f}], avg {avg_prob:.3f}")
-                
-                self.logger.info(f"TEN VAD analysis: {len(probabilities)} frames, "
-                               f"prob range [{min_prob:.3f}-{max_prob:.3f}], "
-                               f"avg {avg_prob:.3f}, processing: {vad_time:.1f}ms")
-                
-                if speech_detected:
-                    self.logger.info(f"TEN VAD check: SPEECH detected (duration: {duration:.2f}s)")
-                    print(f"TEN VAD: Speech detected ({vad_time:.1f}ms)")
-                else:
-                    self.logger.info(f"TEN VAD check: SILENCE (duration: {duration:.2f}s)")
-                    print(f"TEN VAD: Speech not detected ({vad_time:.1f}ms)")
+            # Log VAD result
+            if speech_detected:
+                self.logger.info(f"TEN VAD check: SPEECH detected (duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
+            else:
+                self.logger.info(f"TEN VAD check: SILENCE (duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
             
             return speech_detected
             
@@ -424,7 +404,7 @@ class WhisperEngine:
             transcription_time = end_time - start_time
             
             # Show transcription time to user
-            print(f"Transcription completed in {transcription_time:.1f} seconds")
+            print(f"   ✓ Transcription completed in {transcription_time:.1f} seconds")
             
             # Log some info about what we transcribed
             detected_language = info.language
@@ -434,7 +414,7 @@ class WhisperEngine:
             self.logger.info(f"Transcribed text: '{sanitize_for_logging(transcribed_text)}'")
             
             if transcribed_text:
-                print(f"Transcribed: '{transcribed_text}'")
+                print(f"   ✓ Transcribed: '{transcribed_text}'")
                 return transcribed_text
             else:
                 self.logger.info("Transcription was empty")
