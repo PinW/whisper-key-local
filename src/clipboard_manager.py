@@ -12,6 +12,7 @@ import logging
 import pyperclip
 import time
 from typing import Optional
+from src.utils import sanitize_for_logging
 
 try:
     import win32gui
@@ -358,7 +359,8 @@ class ClipboardManager:
         original_content = None
         try:
             original_content = pyperclip.paste()
-            self.logger.info(f"Saved original clipboard content: '{(original_content[:50] + '...') if original_content and len(original_content) > 50 else original_content}'")
+            safe_content = sanitize_for_logging((original_content[:50] + '...') if original_content and len(original_content) > 50 else original_content)
+            self.logger.info(f"Saved original clipboard content: '{safe_content}'")
         except Exception as e:
             self.logger.warning(f"Failed to save original clipboard content: {e}")
             # Continue anyway - we'll just warn the user

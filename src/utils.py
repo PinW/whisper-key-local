@@ -72,3 +72,32 @@ def error_logging(context: str, logger, print_to_user: bool = True):
         # Optionally print user-facing error in red (same message as log)
         if print_to_user:
             print(f"\033[91m{error_message}\033[0m")
+
+
+def sanitize_for_logging(text: str) -> str:
+    """
+    Sanitize text for logging to avoid Unicode encoding errors on Windows.
+    
+    Following the pattern from config_manager.py for ASCII-safe logging.
+    Windows console uses cp1252 encoding which can't handle Unicode characters,
+    causing UnicodeEncodeError when logging messages with Unicode content.
+    
+    Args:
+        text (str): Text that may contain Unicode characters
+        
+    Returns:
+        str: ASCII-safe version of the text suitable for logging
+        
+    Examples:
+        >>> sanitize_for_logging("Hello → World")
+        'Hello ? World'
+        >>> sanitize_for_logging("Regular text")
+        'Regular text'
+    """
+    if not text:
+        return text
+    
+    try:
+        return text.encode('ascii', errors='replace').decode('ascii')
+    except Exception:
+        return repr(text)[1:-1]  # Remove quotes from repr()

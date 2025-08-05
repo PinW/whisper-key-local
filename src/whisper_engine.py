@@ -13,6 +13,7 @@ import numpy as np
 from faster_whisper import WhisperModel
 from typing import Optional, Tuple, Callable
 import tempfile
+from src.utils import sanitize_for_logging
 import os
 import wave
 import time
@@ -270,7 +271,7 @@ class WhisperEngine:
             confidence = info.language_probability
             
             self.logger.info(f"Transcription complete. Language: {detected_language} (confidence: {confidence:.2f}) - Time: {transcription_time:.2f}s")
-            self.logger.info(f"Transcribed text: '{transcribed_text}'")
+            self.logger.info(f"Transcribed text: '{sanitize_for_logging(transcribed_text)}'")
             
             if transcribed_text:
                 print(f"Transcribed: '{transcribed_text}'")
@@ -307,7 +308,7 @@ class WhisperEngine:
             
             transcribed_text = transcribed_text.strip()
             
-            self.logger.info(f"File transcription complete: '{transcribed_text}'")
+            self.logger.info(f"File transcription complete: '{sanitize_for_logging(transcribed_text)}'")
             return transcribed_text if transcribed_text else None
             
         except Exception as e:
