@@ -98,20 +98,9 @@ class ClipboardManager:
         
         try:
             self.logger.info(f"Copying text to clipboard: '{text[:50]}...' ({len(text)} chars)")
-            
-            # Use pyperclip to put text on clipboard
             pyperclip.copy(text)
-            
-            # Verify it worked by reading it back
-            time.sleep(0.05)  # Small delay to ensure clipboard is updated
-            clipboard_content = pyperclip.paste()
-            
-            if clipboard_content == text:
-                self.logger.info("Text successfully copied to clipboard")
-                return True
-            else:
-                self.logger.error("Clipboard verification failed - text doesn't match")
-                return False
+            self.logger.info("Text successfully copied to clipboard")
+            return True
                 
         except Exception as e:
             self.logger.error(f"Failed to copy text to clipboard: {e}")
