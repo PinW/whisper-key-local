@@ -70,8 +70,8 @@ class WhisperEngine:
         if self.vad_enabled and TEN_VAD_AVAILABLE:
             try:
                 self.ten_vad = TenVad()
-                # Use default threshold for broader testing
-                self.ten_vad.threshold = 0.5  # Default threshold for testing
+                # Set threshold to 0.6 for better speech detection
+                self.ten_vad.threshold = 0.6
                 self.logger.info(f"TEN VAD initialized successfully (threshold: {self.ten_vad.threshold})")
             except Exception as e:
                 self.logger.warning(f"Failed to initialize TEN VAD: {e}")
@@ -228,6 +228,59 @@ class WhisperEngine:
         """
         return self._loading_thread is not None and self._loading_thread.is_alive()
     
+    def _detect_speech_with_hysteresis(self, probabilities: list, onset: float = 0.7, offset: float = 0.55, min_duration: float = 0.1) -> bool:
+        """
+        Apply hysteresis + consecutive frame logic for robust speech detection
+        
+        Parameters:
+        - probabilities: List of per-frame speech probabilities
+        - onset: Threshold to START detecting speech (0.6)
+        - offset: Threshold to STOP detecting speech (0.4) 
+        - min_duration: Minimum speech duration in seconds (0.1s = 100ms)
+        
+        Returns:
+        - True if any valid speech segment found, False otherwise
+        """
+        if not probabilities:
+            return False
+            
+        hop_sec = 0.016  # 256 samples at 16kHz = 16ms per frame
+        min_frames = int(min_duration / hop_sec)  # ~6 frames for 100ms
+        
+        # Step 1: Apply hysteresis to get stable speech state flags
+        speech_state = False
+        hysteresis_flags = []
+        
+        for prob in probabilities:
+            if not speech_state and prob >= onset:
+                speech_state = True  # Turn ON when crossing onset threshold
+            elif speech_state and prob <= offset:
+                speech_state = False  # Turn OFF when crossing offset threshold
+            # Otherwise maintain current state (prevents flickering)
+            hysteresis_flags.append(speech_state)
+        
+        # Step 2: Apply consecutive frame minimum duration filtering
+        consecutive_count = 0
+        max_consecutive = 0
+        speech_frame_count = sum(hysteresis_flags)
+        
+        for flag in hysteresis_flags:
+            if flag:
+                consecutive_count += 1
+                max_consecutive = max(max_consecutive, consecutive_count)
+                if consecutive_count >= min_frames:
+                    # Log debug info for successful detection
+                    self.logger.info(f"TEN VAD hysteresis: Found {consecutive_count} consecutive speech frames "
+                                   f"(min required: {min_frames}, total speech frames: {speech_frame_count})")
+                    return True  # Found valid speech segment!
+            else:
+                consecutive_count = 0  # Reset counter on silence
+        
+        # Log debug info for failed detection
+        self.logger.info(f"TEN VAD hysteresis: Max consecutive frames: {max_consecutive} "
+                       f"(min required: {min_frames}, total speech frames: {speech_frame_count}) - NO SPEECH")
+        return False  # No valid consecutive speech segments found
+
     def _check_audio_for_speech(self, audio_data: np.ndarray) -> bool:
         """
         Check if audio contains speech using TEN VAD
@@ -259,9 +312,9 @@ class WhisperEngine:
             
             # TEN VAD processes audio in 256-sample chunks (16ms at 16kHz)
             chunk_size = 256
-            speech_probabilities = []
             
-            # Process audio in 256-sample chunks
+            # Collect ALL probabilities first (no early exit)
+            probabilities = []
             for i in range(0, len(audio_int16), chunk_size):
                 chunk = audio_int16[i:i + chunk_size]
                 
@@ -269,26 +322,35 @@ class WhisperEngine:
                 if len(chunk) < chunk_size:
                     chunk = np.pad(chunk, (0, chunk_size - len(chunk)), mode='constant', constant_values=0)
                 
-                # Process this chunk
-                prob = self.ten_vad.process(chunk)
-                speech_probabilities.append(prob)
+                # Process this chunk - TEN VAD returns (probability, flag) per example
+                out_probability, _ = self.ten_vad.process(chunk)  # Use probability for post-processing
+                probabilities.append(out_probability)
             
-            # Use TEN VAD's built-in binary decision (official method)
-            binary_flags = self.ten_vad.out_flags
-            speech_detected = bool(binary_flags)
-            
-            # Calculate VAD processing time
+            # Calculate timing after processing all chunks
             vad_time = (time.time() - vad_start_time) * 1000
             
-            # Log VAD decision with timing (using official TEN VAD binary result)
-            self.logger.info(f"TEN VAD check: {'SPEECH' if speech_detected else 'SILENCE'} "
-                           f"(duration: {duration:.2f}s, processing: {vad_time:.1f}ms, flags: {binary_flags})")
+            # Apply hysteresis + consecutive frame detection
+            speech_detected = self._detect_speech_with_hysteresis(probabilities)
             
-            # Console feedback with timing (standardized format)
-            if speech_detected:
-                print(f"TEN VAD: Speech detected ({vad_time:.1f}ms)")
-            else:
-                print(f"TEN VAD: Speech not detected ({vad_time:.1f}ms)")
+            # Enhanced logging with probability distribution
+            if probabilities:
+                min_prob = min(probabilities)
+                max_prob = max(probabilities)
+                avg_prob = sum(probabilities) / len(probabilities)
+                
+                print(f"TEN VAD analysis: {len(probabilities)} frames, "
+                      f"prob range [{min_prob:.3f}-{max_prob:.3f}], avg {avg_prob:.3f}")
+                
+                self.logger.info(f"TEN VAD analysis: {len(probabilities)} frames, "
+                               f"prob range [{min_prob:.3f}-{max_prob:.3f}], "
+                               f"avg {avg_prob:.3f}, processing: {vad_time:.1f}ms")
+                
+                if speech_detected:
+                    self.logger.info(f"TEN VAD check: SPEECH detected (duration: {duration:.2f}s)")
+                    print(f"TEN VAD: Speech detected ({vad_time:.1f}ms)")
+                else:
+                    self.logger.info(f"TEN VAD check: SILENCE (duration: {duration:.2f}s)")
+                    print(f"TEN VAD: Speech not detected ({vad_time:.1f}ms)")
             
             return speech_detected
             
