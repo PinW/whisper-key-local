@@ -70,9 +70,8 @@ class WhisperEngine:
         if self.vad_enabled and TEN_VAD_AVAILABLE:
             try:
                 self.ten_vad = TenVad()
-                # Adjust threshold for better silence detection (default 0.5 is too sensitive)
-                # Higher threshold = more strict speech detection = better silence filtering
-                self.ten_vad.threshold = 0.62  # Increased from 0.5 to reduce false positives
+                # Use default threshold for broader testing
+                self.ten_vad.threshold = 0.5  # Default threshold for testing
                 self.logger.info(f"TEN VAD initialized successfully (threshold: {self.ten_vad.threshold})")
             except Exception as e:
                 self.logger.warning(f"Failed to initialize TEN VAD: {e}")
@@ -229,17 +228,13 @@ class WhisperEngine:
         """
         return self._loading_thread is not None and self._loading_thread.is_alive()
     
-    def _check_short_audio_for_speech(self, audio_data: np.ndarray) -> bool:
+    def _check_audio_for_speech(self, audio_data: np.ndarray) -> bool:
         """
-        Check if short audio contains speech using TEN VAD
+        Check if audio contains speech using TEN VAD
         Returns True if speech detected, False otherwise
         Note: Audio is always 16kHz (app standard), perfect for TEN VAD
         """
         duration = len(audio_data) / 16000  # Fixed 16kHz sample rate
-        
-        # Only check recordings 2.5 seconds or shorter
-        if duration > 2.5:
-            return True  # Assume longer recordings have speech
         
         # Skip VAD if not available or disabled
         if not self.ten_vad:
@@ -278,48 +273,22 @@ class WhisperEngine:
                 prob = self.ten_vad.process(chunk)
                 speech_probabilities.append(prob)
             
+            # Use TEN VAD's built-in binary decision (official method)
+            binary_flags = self.ten_vad.out_flags
+            speech_detected = bool(binary_flags)
+            
             # Calculate VAD processing time
-            vad_time = (time.time() - vad_start_time) * 1000  # Convert to milliseconds
+            vad_time = (time.time() - vad_start_time) * 1000
             
-            # Process TEN VAD results and calculate average probability
-            # Handle different TEN VAD result formats
-            max_prob = 0.0
-            prob_values = []
-            
-            for prob in speech_probabilities:
-                if isinstance(prob, tuple):
-                    # If result is a tuple, use the first element (probability score)
-                    prob_value = prob[0] if len(prob) > 0 else 0.0
-                elif isinstance(prob, (list, np.ndarray)):
-                    # If result is array/list, use max probability
-                    prob_value = max(prob) if len(prob) > 0 else 0.0
-                else:
-                    # Single probability value
-                    prob_value = float(prob)
-                
-                prob_values.append(prob_value)
-                max_prob = max(max_prob, prob_value)
-            
-            # Use average probability for speech detection (more robust than any/max)
-            # This naturally filters out noise spikes and represents overall audio content
-            avg_prob = sum(prob_values) / len(prob_values) if prob_values else 0.0
-            speech_detected = avg_prob > self.ten_vad.threshold
-            
-            # Log detailed VAD analysis
-            min_prob = min(prob_values) if prob_values else 0.0
-            speech_chunks = sum(1 for p in prob_values if p > self.ten_vad.threshold)
-            self.logger.info(f"TEN VAD analysis: min_prob={min_prob:.3f}, max_prob={max_prob:.3f}, avg_prob={avg_prob:.3f}, "
-                           f"threshold={self.ten_vad.threshold:.3f}, chunks={len(prob_values)}, speech_chunks={speech_chunks}")
-            
-            # Log VAD decision with timing
+            # Log VAD decision with timing (using official TEN VAD binary result)
             self.logger.info(f"TEN VAD check: {'SPEECH' if speech_detected else 'SILENCE'} "
-                           f"(duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
+                           f"(duration: {duration:.2f}s, processing: {vad_time:.1f}ms, flags: {binary_flags})")
             
-            # Console feedback with timing
+            # Console feedback with timing (standardized format)
             if speech_detected:
                 print(f"TEN VAD: Speech detected ({vad_time:.1f}ms)")
             else:
-                print(f"No speech detected (recording too short/silent, VAD: {vad_time:.1f}ms)")
+                print(f"TEN VAD: Speech not detected ({vad_time:.1f}ms)")
             
             return speech_detected
             
@@ -351,12 +320,14 @@ class WhisperEngine:
             return None
         
         try:
-            # TEN VAD pre-check for short recordings
-            if not self._check_short_audio_for_speech(audio_data):
+            # TEN VAD check on all recordings
+            speech_detected = self._check_audio_for_speech(audio_data)
+            
+            # Skip transcription if no speech detected
+            if not speech_detected:
                 return None
             
             self.logger.info("Starting transcription...")
-            print("Transcribing audio...")
             
             # Start timing the transcription process
             start_time = time.time()

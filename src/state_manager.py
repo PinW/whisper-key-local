@@ -375,8 +375,8 @@ class StateManager:
             transcribed_text = self.whisper_engine.transcribe_audio(audio_data)
             
             if not transcribed_text:
-                print("❌ No speech detected or transcription failed!")
-                self.logger.warning("Transcription returned empty result")
+                print("No speech detected")
+                self.logger.info("Transcription returned empty result")
                 self.is_processing = False
                 # Reset tray to idle state on failure
                 self._update_tray_state("idle")
