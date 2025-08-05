@@ -18,4 +18,4 @@ Pillow>=10.0.0
 hf-xet>=1.1.5
 
 # Voice Activity Detection (VAD)
-git+https://github.com/TEN-framework/ten-vad.git
+git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
