@@ -68,8 +68,20 @@ class StateManager:
         self.logger.info(f"Initial state: recording={self.audio_recorder.get_recording_status()}, processing={self.is_processing}, model_loading={self.is_model_loading}")
         
         # Initialize system tray to idle state
+        self._update_tray_state("idle")
+    
+    def _update_tray_state(self, state: str):
+        """
+        Update system tray state if tray is available.
+        
+        Args:
+            state (str): The state to set ("idle", "recording", "processing")
+            
+        For beginners: This helper method ensures we always check if the system
+        tray exists before trying to update it, avoiding crashes if tray is disabled.
+        """
         if self.system_tray:
-            self.system_tray.update_state("idle")
+            self.system_tray.update_state(state)
     
     def _attempt_stop_if_recording(self, method_name: str, use_auto_enter: bool = False) -> bool:
         """
@@ -225,14 +237,12 @@ class StateManager:
                     self.audio_feedback.play_start_sound()
                 
                 # Update system tray to show recording state only if recording actually started
-                if self.system_tray:
-                    self.system_tray.update_state("recording")
+                self._update_tray_state("recording")
             else:
                 print("❌ Failed to start recording!")
                 self.logger.error("Failed to start audio recording")
                 # Reset tray to idle state on failure
-                if self.system_tray:
-                    self.system_tray.update_state("idle")
+                self._update_tray_state("idle")
             
         except Exception as e:
             self.logger.error(f"Error starting recording: {e}")
@@ -354,8 +364,7 @@ class StateManager:
                 self.audio_feedback.play_stop_sound()
             
             # Update system tray to show processing state
-            if self.system_tray:
-                self.system_tray.update_state("processing")
+            self._update_tray_state("processing")
             
             # Step 1: Get the recorded audio
             audio_data = self.audio_recorder.stop_recording()
@@ -364,8 +373,7 @@ class StateManager:
                 print("❌ No audio data recorded!")
                 self.is_processing = False
                 # Reset tray to idle state on failure
-                if self.system_tray:
-                    self.system_tray.update_state("idle")
+                self._update_tray_state("idle")
                 return
             
             # Step 2: Transcribe the audio using Whisper AI
@@ -377,8 +385,7 @@ class StateManager:
                 self.logger.warning("Transcription returned empty result")
                 self.is_processing = False
                 # Reset tray to idle state on failure
-                if self.system_tray:
-                    self.system_tray.update_state("idle")
+                self._update_tray_state("idle")
                 return
             
             # Step 3: Handle clipboard/paste based on configuration and auto-enter flag
@@ -417,8 +424,7 @@ class StateManager:
                 self._execute_model_change(pending_model)
             else:
                 # Reset tray to idle state when done (only if no model change pending)
-                if self.system_tray:
-                    self.system_tray.update_state("idle")
+                self._update_tray_state("idle")
     
     def get_application_status(self) -> dict:
         """
@@ -508,13 +514,12 @@ class StateManager:
                     self.logger.info(f"Model loading progress: {progress_message}")
                 
                 # Update system tray state
-                if self.system_tray:
-                    if loading:
-                        # Use processing icon during model loading
-                        self.system_tray.update_state("processing")
-                    else:
-                        # Return to idle when model loading complete
-                        self.system_tray.update_state("idle")
+                if loading:
+                    # Use processing icon during model loading
+                    self._update_tray_state("processing")
+                else:
+                    # Return to idle when model loading complete
+                    self._update_tray_state("idle")
             elif loading and progress_message:
                 # Update progress message without changing state
                 self.logger.debug(f"Model loading progress: {progress_message}")
@@ -639,8 +644,7 @@ class StateManager:
                 self.audio_feedback.play_stop_sound()
             
             # Update system tray to idle since we cancelled recording
-            if self.system_tray:
-                self.system_tray.update_state("idle")
+            self._update_tray_state("idle")
             
             # Now change the model
             self._execute_model_change(new_model_size)
