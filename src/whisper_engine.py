@@ -228,24 +228,32 @@ class WhisperEngine:
         """
         return self._loading_thread is not None and self._loading_thread.is_alive()
     
-    def _detect_speech_with_hysteresis(self, probabilities: list, onset: float = 0.7, offset: float = 0.55, min_duration: float = 0.1) -> bool:
+    def _detect_speech_with_hysteresis(self, probabilities: list, onset: float = None, offset: float = None, min_duration: float = None) -> bool:
         """
         Apply hysteresis + consecutive frame logic for robust speech detection
         
         Parameters:
         - probabilities: List of per-frame speech probabilities
-        - onset: Threshold to START detecting speech (0.6)
-        - offset: Threshold to STOP detecting speech (0.4) 
-        - min_duration: Minimum speech duration in seconds (0.1s = 100ms)
+        - onset: Threshold to START detecting speech
+        - offset: Threshold to STOP detecting speech
+        - min_duration: Minimum speech duration in seconds
         
         Returns:
         - True if any valid speech segment found, False otherwise
         """
         if not probabilities:
             return False
+        
+        # Use instance variables as defaults if parameters not provided
+        if onset is None:
+            onset = getattr(self, 'vad_onset_threshold', 0.7)
+        if offset is None:
+            offset = getattr(self, 'vad_offset_threshold', 0.55)
+        if min_duration is None:
+            min_duration = getattr(self, 'vad_min_speech_duration', 0.1)
             
         hop_sec = 0.016  # 256 samples at 16kHz = 16ms per frame
-        min_frames = int(min_duration / hop_sec)  # ~6 frames for 100ms
+        min_frames = int(min_duration / hop_sec)
         
         # Step 1: Apply hysteresis to get stable speech state flags
         speech_state = False

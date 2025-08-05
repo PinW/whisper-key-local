@@ -198,11 +198,17 @@ system_tray:
 # ADVANCED SETTINGS
 # =============================================================================
 advanced:
-  # Voice Activity Detection (VAD)
-  # Automatically detect when speech starts/stops
-  vad:
-    enabled: false  # Not implemented yet
-    threshold: 0.5  # Sensitivity (0.0-1.0)
+  # Voice Activity Detection (VAD) Pre-check
+  # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
+  # NOTE: This is separate from faster-whisper's built-in VAD
+  vad_precheck_enabled: true
+  
+  # TEN VAD Hysteresis Thresholds (prevent flickering on borderline audio)
+  vad_onset_threshold: 0.7    # Probability to START detecting speech (0.0-1.0)
+  vad_offset_threshold: 0.55  # Probability to STOP detecting speech (0.0-1.0)
+  
+  # Minimum Duration Filtering
+  vad_min_speech_duration: 0.1  # Minimum speech segment length in seconds (filters brief noise)
   
   # Model download settings
   model_cache_dir: null  # null = use default cache directory

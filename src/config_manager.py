@@ -157,7 +157,7 @@ class ConfigManager:
                     self.config = default_config
                     self.logger.warning(f"User config file {self.config_path} is empty, using defaults")
                     
-            except Exception as e:
+            except yaml.YAMLError as e:
                 self.logger.error(f"Error parsing user YAML config: {e}")
                 self.logger.warning("Using default configuration")
                 self.config = default_config
