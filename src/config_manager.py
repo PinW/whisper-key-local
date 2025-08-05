@@ -399,12 +399,9 @@ class ConfigManager:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     original_data = yaml.load(f)
             
-            # Update the original data with our current config
-            if original_data is not None:
-                self._update_yaml_data(original_data, self.config)
-                data_to_save = original_data
-            else:
-                data_to_save = self.config
+            # Always use clean config structure to avoid preserving formatting issues
+            # This ensures proper section organization and prevents structural corruption
+            data_to_save = self.config
             
             # Write back with preserved formatting
             with open(file_path, 'w', encoding='utf-8') as f:
