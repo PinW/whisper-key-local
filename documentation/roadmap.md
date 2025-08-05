@@ -3,6 +3,7 @@
 ## Next
 - As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 - As a *user*, I want **VAD trimming** so silences aren't transformed into 20 word hallucination
+- As a *user*, I want **better default model** so I won't get low quality STT as 1st xp
 
 ### Recording Modes & Multiple Hotkeys
 - As a *user*, I want **recording mode option** (hold key vs start/stop) so that I can choose my preferred interaction style

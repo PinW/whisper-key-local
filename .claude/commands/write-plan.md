@@ -1,5 +1,5 @@
 Create implementation plan for: $ARGUMENTS
 
-Think hard
+Think harder
 
 @documentation/plan-writing.md

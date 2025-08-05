@@ -22,21 +22,19 @@ class AudioRecorder:
     This class knows how to record audio, start/stop recording, and store the audio data.
     """
     
-    def __init__(self, sample_rate: int = 16000, channels: int = 1, dtype: str = "float32", 
+    def __init__(self, channels: int = 1, dtype: str = "float32", 
                  max_duration: int = 30):
         """
         Initialize the audio recorder
         
         Parameters:
-        - sample_rate: How many audio samples per second (16000 is good for speech)
         - channels: 1 for mono (single channel), 2 for stereo
         - dtype: Audio data type ("float32", "int16", etc.)
         - max_duration: Maximum recording length in seconds (0 = unlimited)
         
-        For beginners: Think of sample_rate like photo resolution - higher means 
-        better quality but bigger file size. 16000 is perfect for speech recognition.
+        For beginners: Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance.
         """
-        self.sample_rate = sample_rate
+        self.sample_rate = 16000  # Fixed for Whisper and TEN VAD compatibility
         self.channels = channels
         self.dtype = dtype
         self.max_duration = max_duration

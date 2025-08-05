@@ -19,6 +19,13 @@ import wave
 import time
 import threading
 
+# TEN VAD for speech detection in short recordings
+try:
+    from ten_vad import TenVad
+    TEN_VAD_AVAILABLE = True
+except ImportError:
+    TEN_VAD_AVAILABLE = False
+
 class WhisperEngine:
     """
     A class that handles speech-to-text transcription using Whisper AI
@@ -27,7 +34,7 @@ class WhisperEngine:
     """
     
     def __init__(self, model_size: str = "tiny", device: str = "cpu", compute_type: str = "int8", 
-                 language: str = None, beam_size: int = 5):
+                 language: str = None, beam_size: int = 5, vad_enabled: bool = True):
         """
         Initialize the Whisper transcription engine
         
@@ -37,6 +44,7 @@ class WhisperEngine:
         - compute_type: "int8" for efficiency, "float16" for better quality
         - language: Language code (e.g., "en") or None for auto-detection
         - beam_size: Search beam size for transcription (higher = more accurate but slower)
+        - vad_enabled: Enable TEN VAD pre-check for short recordings
         
         For beginners: 
         - "tiny" model is ~39MB and fastest
@@ -48,6 +56,7 @@ class WhisperEngine:
         self.compute_type = compute_type
         self.language = language
         self.beam_size = beam_size
+        self.vad_enabled = vad_enabled
         self.model = None
         self.logger = logging.getLogger(__name__)
         
@@ -55,6 +64,20 @@ class WhisperEngine:
         self._loading_thread = None
         self._loading_cancelled = False
         self._progress_callback = None
+        
+        # Initialize TEN VAD if available and enabled
+        self.ten_vad = None
+        if self.vad_enabled and TEN_VAD_AVAILABLE:
+            try:
+                self.ten_vad = TenVad()
+                # Set threshold to 0.6 for better speech detection
+                self.ten_vad.threshold = 0.6
+                self.logger.info(f"TEN VAD initialized successfully (threshold: {self.ten_vad.threshold})")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize TEN VAD: {e}")
+                self.ten_vad = None
+        elif self.vad_enabled and not TEN_VAD_AVAILABLE:
+            self.logger.warning("TEN VAD requested but not available, VAD pre-check disabled")
         
         # Load the model when we create this object
         self._load_model()
@@ -84,7 +107,7 @@ class WhisperEngine:
         """
         try:
             self.logger.info(f"Loading Whisper model: {self.model_size}")
-            print(f"Loading Whisper AI model [{self.model_size}]...")
+            print(f"🧠 Loading Whisper AI model [{self.model_size}]...")
             
             # Check if model is already cached
             was_cached = self._is_model_cached()
@@ -103,7 +126,7 @@ class WhisperEngine:
             if not was_cached:
                 print("\n")
             self.logger.info("Whisper model loaded successfully")
-            print(f"Whisper model [{self.model_size}] ready!")
+            print(f"   ✓ Whisper model [{self.model_size}] ready!")
             
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")
@@ -205,6 +228,125 @@ class WhisperEngine:
         """
         return self._loading_thread is not None and self._loading_thread.is_alive()
     
+    def _detect_speech_with_hysteresis(self, probabilities: list, onset: float = None, offset: float = None, min_duration: float = None) -> bool:
+        """
+        Apply hysteresis + consecutive frame logic for robust speech detection
+        
+        Parameters:
+        - probabilities: List of per-frame speech probabilities
+        - onset: Threshold to START detecting speech
+        - offset: Threshold to STOP detecting speech
+        - min_duration: Minimum speech duration in seconds
+        
+        Returns:
+        - True if any valid speech segment found, False otherwise
+        """
+        if not probabilities:
+            return False
+        
+        # Use instance variables as defaults if parameters not provided
+        if onset is None:
+            onset = getattr(self, 'vad_onset_threshold', 0.7)
+        if offset is None:
+            offset = getattr(self, 'vad_offset_threshold', 0.55)
+        if min_duration is None:
+            min_duration = getattr(self, 'vad_min_speech_duration', 0.1)
+            
+        hop_sec = 0.016  # 256 samples at 16kHz = 16ms per frame
+        min_frames = int(min_duration / hop_sec)
+        
+        # Step 1: Apply hysteresis to get stable speech state flags
+        speech_state = False
+        hysteresis_flags = []
+        
+        for prob in probabilities:
+            if not speech_state and prob >= onset:
+                speech_state = True  # Turn ON when crossing onset threshold
+            elif speech_state and prob <= offset:
+                speech_state = False  # Turn OFF when crossing offset threshold
+            # Otherwise maintain current state (prevents flickering)
+            hysteresis_flags.append(speech_state)
+        
+        # Step 2: Apply consecutive frame minimum duration filtering
+        consecutive_count = 0
+        max_consecutive = 0
+        speech_frame_count = sum(hysteresis_flags)
+        
+        for flag in hysteresis_flags:
+            if flag:
+                consecutive_count += 1
+                max_consecutive = max(max_consecutive, consecutive_count)
+                if consecutive_count >= min_frames:
+                    return True  # Found valid speech segment!
+            else:
+                consecutive_count = 0  # Reset counter on silence
+        
+        return False  # No valid consecutive speech segments found
+
+    def _check_audio_for_speech(self, audio_data: np.ndarray) -> bool:
+        """
+        Check if audio contains speech using TEN VAD
+        Returns True if speech detected, False otherwise
+        Note: Audio is always 16kHz (app standard), perfect for TEN VAD
+        """
+        duration = len(audio_data) / 16000  # Fixed 16kHz sample rate
+        
+        # Skip VAD if not available or disabled
+        if not self.ten_vad:
+            return True  # Default to transcribing if VAD unavailable
+        
+        vad_start_time = time.time()
+        
+        try:
+            # Flatten audio if needed (TEN VAD expects 1D array)
+            if len(audio_data.shape) > 1:
+                audio_flat = audio_data.flatten()
+            else:
+                audio_flat = audio_data
+            
+            # Convert float32 to int16 for TEN VAD (range -32768 to 32767)
+            if audio_flat.dtype == np.float32:
+                # Clamp to [-1, 1] range then scale to int16
+                audio_flat = np.clip(audio_flat, -1.0, 1.0)
+                audio_int16 = (audio_flat * 32767).astype(np.int16)
+            else:
+                audio_int16 = audio_flat.astype(np.int16)
+            
+            # TEN VAD processes audio in 256-sample chunks (16ms at 16kHz)
+            chunk_size = 256
+            
+            # Collect ALL probabilities first (no early exit)
+            probabilities = []
+            for i in range(0, len(audio_int16), chunk_size):
+                chunk = audio_int16[i:i + chunk_size]
+                
+                # Pad the last chunk if it's smaller than 256 samples
+                if len(chunk) < chunk_size:
+                    chunk = np.pad(chunk, (0, chunk_size - len(chunk)), mode='constant', constant_values=0)
+                
+                # Process this chunk - TEN VAD returns (probability, flag) per example
+                out_probability, _ = self.ten_vad.process(chunk)  # Use probability for post-processing
+                probabilities.append(out_probability)
+            
+            # Calculate timing after processing all chunks
+            vad_time = (time.time() - vad_start_time) * 1000
+            
+            # Apply hysteresis + consecutive frame detection
+            speech_detected = self._detect_speech_with_hysteresis(probabilities)
+            
+            # Log VAD result
+            if speech_detected:
+                self.logger.info(f"TEN VAD check: SPEECH detected (duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
+            else:
+                self.logger.info(f"TEN VAD check: SILENCE (duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
+            
+            return speech_detected
+            
+        except Exception as e:
+            vad_time = (time.time() - vad_start_time) * 1000
+            self.logger.warning(f"TEN VAD check failed after {vad_time:.1f}ms: {e}")
+            return True  # Default to transcribing on VAD error
+    
     def transcribe_audio(self, audio_data: np.ndarray, sample_rate: int = 16000) -> Optional[str]:
         """
         Convert audio data to text using Whisper AI
@@ -228,8 +370,14 @@ class WhisperEngine:
             return None
         
         try:
+            # TEN VAD check on all recordings
+            speech_detected = self._check_audio_for_speech(audio_data)
+            
+            # Skip transcription if no speech detected
+            if not speech_detected:
+                return None
+            
             self.logger.info("Starting transcription...")
-            print("Transcribing audio...")
             
             # Start timing the transcription process
             start_time = time.time()
@@ -264,7 +412,7 @@ class WhisperEngine:
             transcription_time = end_time - start_time
             
             # Show transcription time to user
-            print(f"Transcription completed in {transcription_time:.1f} seconds")
+            print(f"   ✓ Transcription completed in {transcription_time:.1f} seconds")
             
             # Log some info about what we transcribed
             detected_language = info.language
@@ -274,11 +422,10 @@ class WhisperEngine:
             self.logger.info(f"Transcribed text: '{sanitize_for_logging(transcribed_text)}'")
             
             if transcribed_text:
-                print(f"Transcribed: '{transcribed_text}'")
+                print(f"   ✓ Transcribed: '{transcribed_text}'")
                 return transcribed_text
             else:
-                self.logger.warning("Transcription was empty")
-                print("No speech detected in audio")
+                self.logger.info("Transcription was empty")
                 return None
                 
         except Exception as e:
