@@ -270,12 +270,6 @@ class StateManager:
             # Auto-enter hotkey: force auto-paste and send ENTER key
             print("🚀 Auto-pasting text and SENDING with ENTER...")
             
-            # Get auto_enter_delay from config_manager's hotkey section
-            auto_enter_delay = 0.1  # Default value
-            if self.config_manager:
-                hotkey_config = self.config_manager.get_full_config().get('hotkey', {})
-                auto_enter_delay = hotkey_config.get('auto_enter_delay', 0.1)
-            
             # Force auto-paste (ignore auto_paste config setting)
             if preserve_clipboard:
                 paste_success = self.clipboard_manager.preserve_and_paste(transcribed_text, paste_method)
@@ -283,8 +277,8 @@ class StateManager:
                 paste_success = self.clipboard_manager.copy_and_paste(transcribed_text, paste_method)
             
             if paste_success:
-                # Send ENTER key after successful paste
-                enter_success = self.clipboard_manager.send_enter_key(delay=auto_enter_delay)
+                # Send ENTER key after successful paste (timing handled by PyAutoGUI.PAUSE)
+                enter_success = self.clipboard_manager.send_enter_key()
                 
                 if enter_success:
                     # Store for future reference

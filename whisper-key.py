@@ -105,7 +105,7 @@ def main():
             beam_size=whisper_config['beam_size']
         )
         
-        clipboard_manager = ClipboardManager()
+        clipboard_manager = ClipboardManager(config_manager)
         
         # Initialize audio feedback (optional - may not be available on non-Windows)
         audio_feedback = None

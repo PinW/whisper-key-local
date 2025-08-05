@@ -27,7 +27,7 @@ try:
     KEY_SIMULATION_AVAILABLE = True
     # Configure pyautogui for better performance and safety
     pyautogui.FAILSAFE = True  # Move mouse to corner to abort
-    pyautogui.PAUSE = 0.1  # Small delay between actions
+    pyautogui.PAUSE = 0.05  # Default delay between actions (will be configured from settings)
 except ImportError:
     KEY_SIMULATION_AVAILABLE = False
 
@@ -38,14 +38,30 @@ class ClipboardManager:
     This class can put text onto the clipboard and retrieve text from it.
     """
     
-    def __init__(self):
+    def __init__(self, config_manager=None):
         """
         Initialize the clipboard manager
         
         We'll test clipboard access when we create this object to make sure it works.
         """
         self.logger = logging.getLogger(__name__)
+        self.config_manager = config_manager
+        self._configure_pyautogui_timing()
         self._test_clipboard_access()
+    
+    def _configure_pyautogui_timing(self):
+        """Configure PyAutoGUI timing based on user settings"""
+        if not KEY_SIMULATION_AVAILABLE:
+            return
+            
+        if self.config_manager:
+            try:
+                hotkey_config = self.config_manager.get_hotkey_config()
+                key_simulation_delay = hotkey_config.get('key_simulation_delay', 0.05)
+                pyautogui.PAUSE = key_simulation_delay
+                self.logger.info(f"Set PyAutoGUI PAUSE to {key_simulation_delay}s from user config")
+            except Exception as e:
+                self.logger.warning(f"Could not get config, using default PyAutoGUI timing: {e}")
     
     def _test_clipboard_access(self):
         """
@@ -87,7 +103,7 @@ class ClipboardManager:
             pyperclip.copy(text)
             
             # Verify it worked by reading it back
-            time.sleep(0.1)  # Small delay to ensure clipboard is updated
+            time.sleep(0.05)  # Small delay to ensure clipboard is updated
             clipboard_content = pyperclip.paste()
             
             if clipboard_content == text:
@@ -264,10 +280,7 @@ class ClipboardManager:
             if not self.copy_text(text):
                 self.logger.error("Failed to copy text to clipboard for key simulation")
                 return False
-            
-            # Small delay to ensure clipboard is ready
-            time.sleep(0.05)
-            
+                      
             # Simulate Ctrl+V keypress
             self.logger.info("Simulating Ctrl+V keypress")
             pyautogui.hotkey('ctrl', 'v')
@@ -406,7 +419,7 @@ class ClipboardManager:
         if original_content is not None:
             try:
                 pyperclip.copy(original_content)
-                time.sleep(0.1)  # Small delay to ensure clipboard is updated
+                time.sleep(0.05)  # Small delay to ensure clipboard is updated
                 self.logger.info("Restored original clipboard content")
             except Exception as e:
                 self.logger.error(f"Failed to restore original clipboard content: {e}")
@@ -431,7 +444,7 @@ class ClipboardManager:
             return False
             
         try:
-            time.sleep(0.2)  # Brief delay before pasting
+            # PyAutoGUI PAUSE provides timing automatically
             pyautogui.hotkey('ctrl', 'v')
             self.logger.info("Executed Ctrl+V key combination")
             return True
@@ -458,29 +471,22 @@ class ClipboardManager:
             self.logger.error(f"Windows API paste failed: {e}")
             return False
     
-    def send_enter_key(self, delay: float = 0.1) -> bool:
+    def send_enter_key(self) -> bool:
         """
         Send ENTER key to the active application using key simulation
-        
-        Parameters:
-        - delay: Time to wait before sending ENTER key (seconds)
         
         Returns:
         - True if successful, False if failed
         
         This method is used by the auto-enter hotkey functionality to automatically
         submit text after pasting it (useful for chat applications and forms).
+        PyAutoGUI.PAUSE provides automatic timing.
         """
         if not KEY_SIMULATION_AVAILABLE:
             self.logger.error("pyautogui not available for ENTER key simulation")
             return False
         
         try:
-            # Add configurable delay before sending ENTER
-            if delay > 0:
-                self.logger.info(f"Waiting {delay} seconds before sending ENTER key")
-                time.sleep(delay)
-            
             # Send ENTER key press
             self.logger.info("Sending ENTER key to active application")
             pyautogui.press('enter')

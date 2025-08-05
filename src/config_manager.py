@@ -294,13 +294,13 @@ class ConfigManager:
         else:
             self.config['hotkey']['auto_enter_enabled'] = auto_enter_enabled
         
-        # Validate auto_enter_delay setting
-        auto_enter_delay = self.config['hotkey'].get('auto_enter_delay', 0.1)
-        if not isinstance(auto_enter_delay, (int, float)) or auto_enter_delay < 0:
-            self.logger.warning(f"Invalid auto_enter_delay value '{auto_enter_delay}', using 0.1")
-            self.config['hotkey']['auto_enter_delay'] = 0.1
+        # Validate key_simulation_delay setting
+        key_simulation_delay = self.config['hotkey'].get('key_simulation_delay', 0.05)
+        if not isinstance(key_simulation_delay, (int, float)) or key_simulation_delay < 0:
+            self.logger.warning(f"Invalid key_simulation_delay value '{key_simulation_delay}', using 0.05")
+            self.config['hotkey']['key_simulation_delay'] = 0.05
         else:
-            self.config['hotkey']['auto_enter_delay'] = auto_enter_delay
+            self.config['hotkey']['key_simulation_delay'] = key_simulation_delay
         
         # Validate auto-enter hotkey combination format
         auto_enter_combination = self.config['hotkey'].get('auto_enter_combination', 'ctrl+shift+`')
