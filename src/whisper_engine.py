@@ -70,7 +70,10 @@ class WhisperEngine:
         if self.vad_enabled and TEN_VAD_AVAILABLE:
             try:
                 self.ten_vad = TenVad()
-                self.logger.info("TEN VAD initialized successfully")
+                # Adjust threshold for better silence detection (default 0.5 is too sensitive)
+                # Higher threshold = more strict speech detection = better silence filtering
+                self.ten_vad.threshold = 0.62  # Increased from 0.5 to reduce false positives
+                self.logger.info(f"TEN VAD initialized successfully (threshold: {self.ten_vad.threshold})")
             except Exception as e:
                 self.logger.warning(f"Failed to initialize TEN VAD: {e}")
                 self.ten_vad = None
@@ -242,14 +245,87 @@ class WhisperEngine:
         if not self.ten_vad:
             return True  # Default to transcribing if VAD unavailable
         
+        vad_start_time = time.time()
+        
         try:
-            # Run TEN VAD check (audio already 16kHz - no conversion needed)
-            result = self.ten_vad.predict(audio_data)
-            speech_detected = any(segment['is_speech'] for segment in result)
+            # Flatten audio if needed (TEN VAD expects 1D array)
+            if len(audio_data.shape) > 1:
+                audio_flat = audio_data.flatten()
+            else:
+                audio_flat = audio_data
+            
+            # Convert float32 to int16 for TEN VAD (range -32768 to 32767)
+            if audio_flat.dtype == np.float32:
+                # Clamp to [-1, 1] range then scale to int16
+                audio_flat = np.clip(audio_flat, -1.0, 1.0)
+                audio_int16 = (audio_flat * 32767).astype(np.int16)
+            else:
+                audio_int16 = audio_flat.astype(np.int16)
+            
+            # TEN VAD processes audio in 256-sample chunks (16ms at 16kHz)
+            chunk_size = 256
+            speech_probabilities = []
+            
+            # Process audio in 256-sample chunks
+            for i in range(0, len(audio_int16), chunk_size):
+                chunk = audio_int16[i:i + chunk_size]
+                
+                # Pad the last chunk if it's smaller than 256 samples
+                if len(chunk) < chunk_size:
+                    chunk = np.pad(chunk, (0, chunk_size - len(chunk)), mode='constant', constant_values=0)
+                
+                # Process this chunk
+                prob = self.ten_vad.process(chunk)
+                speech_probabilities.append(prob)
+            
+            # Calculate VAD processing time
+            vad_time = (time.time() - vad_start_time) * 1000  # Convert to milliseconds
+            
+            # Process TEN VAD results and calculate average probability
+            # Handle different TEN VAD result formats
+            max_prob = 0.0
+            prob_values = []
+            
+            for prob in speech_probabilities:
+                if isinstance(prob, tuple):
+                    # If result is a tuple, use the first element (probability score)
+                    prob_value = prob[0] if len(prob) > 0 else 0.0
+                elif isinstance(prob, (list, np.ndarray)):
+                    # If result is array/list, use max probability
+                    prob_value = max(prob) if len(prob) > 0 else 0.0
+                else:
+                    # Single probability value
+                    prob_value = float(prob)
+                
+                prob_values.append(prob_value)
+                max_prob = max(max_prob, prob_value)
+            
+            # Use average probability for speech detection (more robust than any/max)
+            # This naturally filters out noise spikes and represents overall audio content
+            avg_prob = sum(prob_values) / len(prob_values) if prob_values else 0.0
+            speech_detected = avg_prob > self.ten_vad.threshold
+            
+            # Log detailed VAD analysis
+            min_prob = min(prob_values) if prob_values else 0.0
+            speech_chunks = sum(1 for p in prob_values if p > self.ten_vad.threshold)
+            self.logger.info(f"TEN VAD analysis: min_prob={min_prob:.3f}, max_prob={max_prob:.3f}, avg_prob={avg_prob:.3f}, "
+                           f"threshold={self.ten_vad.threshold:.3f}, chunks={len(prob_values)}, speech_chunks={speech_chunks}")
+            
+            # Log VAD decision with timing
+            self.logger.info(f"TEN VAD check: {'SPEECH' if speech_detected else 'SILENCE'} "
+                           f"(duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
+            
+            # Console feedback with timing
+            if speech_detected:
+                print(f"TEN VAD: Speech detected ({vad_time:.1f}ms)")
+            else:
+                print(f"No speech detected (recording too short/silent, VAD: {vad_time:.1f}ms)")
             
             return speech_detected
+            
         except Exception as e:
-            self.logger.warning(f"TEN VAD check failed: {e}")
+            vad_time = (time.time() - vad_start_time) * 1000
+            self.logger.warning(f"TEN VAD check failed after {vad_time:.1f}ms: {e}")
             return True  # Default to transcribing on VAD error
     
     def transcribe_audio(self, audio_data: np.ndarray, sample_rate: int = 16000) -> Optional[str]:
@@ -277,8 +353,6 @@ class WhisperEngine:
         try:
             # TEN VAD pre-check for short recordings
             if not self._check_short_audio_for_speech(audio_data):
-                self.logger.info("TEN VAD pre-check: No speech detected in short recording")
-                print("No speech detected (recording too short/silent)")
                 return None
             
             self.logger.info("Starting transcription...")
@@ -330,8 +404,7 @@ class WhisperEngine:
                 print(f"Transcribed: '{transcribed_text}'")
                 return transcribed_text
             else:
-                self.logger.warning("Transcription was empty")
-                print("No speech detected in audio")
+                self.logger.info("Transcription was empty")
                 return None
                 
         except Exception as e:
