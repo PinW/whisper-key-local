@@ -37,21 +37,26 @@ def beautify_hotkey(hotkey_string: str) -> str:
 
 
 @contextmanager
-def error_logging(context: str, logger):
+def error_logging(context: str, logger, print_to_user: bool = True):
     """
     Context manager for consistent error handling and logging across the application.
     
     This provides a clean way to wrap risky operations with standardized error logging
-    without cluttering the main code logic. Use this for operations that might fail
+    and optional user-facing error messages. Use this for operations that might fail
     and need consistent error reporting.
     
     Args:
         context (str): Description of what operation is being attempted (for error messages)
         logger: Logger instance to use for error reporting
+        print_to_user (bool): Whether to print red error message to user (default: True)
         
     Usage:
         with error_logging("standard hotkey", self.logger):
             self.state_manager.toggle_recording()  # The risky operation
+            
+        # For internal operations that shouldn't show to user:
+        with error_logging("internal cleanup", self.logger, print_to_user=False):
+            self._cleanup_resources()
             
     For beginners: This is a "context manager" - it runs code before and after your
     operation, automatically catching any errors and logging them in a consistent format.
@@ -59,4 +64,11 @@ def error_logging(context: str, logger):
     try:
         yield
     except Exception as e:
-        logger.error(f"Error in {context}: {e}")
+        error_message = f"Error in {context}: {e}"
+        
+        # Always log the technical details
+        logger.error(error_message)
+        
+        # Optionally print user-facing error in red (same message as log)
+        if print_to_user:
+            print(f"\033[91m{error_message}\033[0m")
