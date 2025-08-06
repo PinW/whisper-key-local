@@ -299,5 +299,5 @@ if __name__ == "__main__":
     print("Test complete! The audio feedback system is ready for sound files.")
     print("Next steps:")
     print("1. Create sound files (start.wav, stop.wav)")
-    print("2. Update config.yaml with sound file paths") 
+    print("2. Update config.defaults.yaml with sound file paths") 
     print("3. Integrate into state_manager.py")

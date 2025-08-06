@@ -2,7 +2,7 @@
 """
 Key Helper Utility
 
-This utility helps you discover what key combinations to use in your config.yaml file.
+This utility helps you discover what key combinations to use in your config.defaults.yaml file.
 It listens for any key combination you press and shows you the exact format to use.
 
 For beginners: This is like a "key detector" - press any combination of keys and 
@@ -26,7 +26,7 @@ class KeyHelper:
     Interactive key combination detector for configuration setup
     
     This class listens for all possible key combinations and displays them
-    in the format needed for the config.yaml file.
+    in the format needed for the config.defaults.yaml file.
     """
     
     def __init__(self):
@@ -178,7 +178,7 @@ class KeyHelper:
         print(f"\n🔑 Key combination detected!")
         print(f"   Raw keys: {' + '.join(keys)}")
         print(f"   Config format: {config_string}")
-        print(f"   Add this to config.yaml: combination: \"{config_string}\"")
+        print(f"   Add this to config.defaults.yaml: combination: \"{config_string}\"")
         print("\nPress another key combination or Ctrl+C to exit...")
     
     def start(self):
@@ -189,12 +189,12 @@ class KeyHelper:
         print("🔑 KEY HELPER UTILITY")
         print("=" * 60)
         print()
-        print("This tool helps you find the right key combination for config.yaml")
+        print("This tool helps you find the right key combination for config.defaults.yaml")
         print()
         print("HOW TO USE:")
         print("1. Press any key combination you want to use as your hotkey")
-        print("2. The tool will show you the exact format for config.yaml")
-        print("3. Copy the 'Config format' line to your config.yaml file")
+        print("2. The tool will show you the exact format for config.defaults.yaml")
+        print("3. Copy the 'Config format' line to your config.defaults.yaml file")
         print("4. Press Ctrl+C when you're done")
         print()
         print("EXAMPLES:")

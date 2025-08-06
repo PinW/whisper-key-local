@@ -49,7 +49,7 @@ pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yam
    ```
 
 2. **Configuration** (Optional):
-   - Edit `config.yaml` to customize settings:
+   - Edit `config.defaults.yaml` to customize settings:
      - Change Whisper model size (tiny/base/small)
      - Modify hotkey combination (use `python tools/key_helper.py` to find key combinations)
      - Configure auto-paste behavior:
@@ -76,7 +76,7 @@ python tools/key_helper.py
 
 This interactive tool will:
 - Detect any key combination you press
-- Show you the exact format to use in `config.yaml`
+- Show you the exact format to use in `config.defaults.yaml`
 - Help you avoid conflicts with other applications
 
 ## 🔧 Troubleshooting
@@ -95,7 +95,7 @@ This interactive tool will:
 
 **Auto-paste not working:**
 - Auto-paste uses key simulation by default
-- Can try switching paste methods in `config.yaml`:
+- Can try switching paste methods in `config.defaults.yaml`:
   - `paste_method: "key_simulation"` (works with most apps)
   - `paste_method: "windows_api"` (faster but not compatible with many apps)
 - If both methods fail, set `auto_paste: false` to use manual clipboard pasting

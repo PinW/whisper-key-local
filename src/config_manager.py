@@ -50,7 +50,7 @@ class ConfigManager:
     with proper validation and fallback defaults.
     """
     
-    def __init__(self, config_path: str = "config.yaml", use_user_settings: bool = True):
+    def __init__(self, config_path: str = "config.defaults.yaml", use_user_settings: bool = True):
         """
         Initialize the configuration manager
         
