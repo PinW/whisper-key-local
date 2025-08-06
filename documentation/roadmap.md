@@ -4,6 +4,7 @@
 - As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 - As a *user*, I want **VAD trimming** so silences aren't transformed into 20 word hallucination
 - As a *user*, I want **better default model** so I won't get low quality STT as 1st xp
+- As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
 
 ### Recording Modes & Multiple Hotkeys
 - As a *user*, I want **recording mode option** (hold key vs start/stop) so that I can choose my preferred interaction style
