@@ -19,11 +19,8 @@ As a **developer** I want **robust Windows executable packaging with PyInstaller
 ## Implementation Plan
 
 ### Phase 1: Build System Architecture
-- [ ] Install PyInstaller in project environment
 - [ ] Create py-build/config.py with centralized configuration
-- [ ] Implement py-build/builder.py with PyInstaller execution logic
-- [ ] Create py-build/build.ps1 for PowerShell orchestration from WSL
-- [ ] Add py-build/build.sh wrapper script for bash execution
+- [ ] Implement py-build/builder.py with PyInstaller execution logic and venv management
 
 ### Phase 2: Basic PyInstaller Setup and First Build
 - [ ] Create basic PyInstaller spec file for whisper-key.py
@@ -142,6 +139,7 @@ ROOT_DIR = pathlib.Path(__file__).parent.parent
 
 # Build Output
 DIST_DIR = ROOT_DIR / f"dist/{APP_NAME}-v{APP_VERSION}"
+VENV_PATH = ROOT_DIR / f"venv-{APP_NAME}"
 
 # PyInstaller Configuration
 SPEC_FILE = pathlib.Path(__file__).parent / f"{APP_NAME}.spec"
@@ -161,20 +159,55 @@ import subprocess
 import shutil
 import sys
 from pathlib import Path
-from config import APP_NAME, DIST_DIR, SPEC_FILE, BUILD_ARGS
+from config import APP_NAME, DIST_DIR, SPEC_FILE, BUILD_ARGS, VENV_PATH
+
+def setup_venv():
+    """Create and setup virtual environment with clean dependencies."""
+    print(f"🔧 Setting up clean virtual environment...")
+    
+    # Create venv if it doesn't exist
+    if not VENV_PATH.exists():
+        print(f"Creating virtual environment: {VENV_PATH}")
+        subprocess.run([sys.executable, "-m", "venv", str(VENV_PATH)], check=True)
+    
+    # Get venv python and pip paths
+    if sys.platform == "win32":
+        venv_python = VENV_PATH / "Scripts" / "python.exe"
+        venv_pip = VENV_PATH / "Scripts" / "pip.exe"
+    else:
+        venv_python = VENV_PATH / "bin" / "python"
+        venv_pip = VENV_PATH / "bin" / "pip"
+    
+    # Install project dependencies in venv
+    requirements_file = VENV_PATH.parent / "requirements.txt"
+    print(f"Installing project dependencies from {requirements_file}")
+    subprocess.run([str(venv_pip), "install", "-r", str(requirements_file)], check=True)
+    
+    # Install PyInstaller in venv
+    print("Installing PyInstaller in virtual environment")
+    subprocess.run([str(venv_pip), "install", "pyinstaller"], check=True)
+    
+    return venv_python
 
 def build():
     """Execute PyInstaller build process."""
     print(f"🚀 Starting {APP_NAME} build with PyInstaller...")
+    
+    # Setup clean virtual environment
+    venv_python = setup_venv()
     
     # Clean previous build
     if DIST_DIR.exists():
         print(f"🧹 Cleaning previous build: {DIST_DIR}")
         shutil.rmtree(DIST_DIR)
     
-    # Execute PyInstaller
+    # Execute PyInstaller from venv
     try:
-        cmd = ["pyinstaller"] + BUILD_ARGS + [str(SPEC_FILE)]
+        venv_pyinstaller = venv_python.parent / "pyinstaller"
+        if sys.platform == "win32":
+            venv_pyinstaller = venv_pyinstaller.with_suffix(".exe")
+            
+        cmd = [str(venv_pyinstaller)] + BUILD_ARGS + [str(SPEC_FILE)]
         print(f"📦 Running: {' '.join(cmd)}")
         
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -202,13 +235,10 @@ if __name__ == "__main__":
 ### New Files to Create
 - `py-build/whisper-key.spec` - PyInstaller specification file with dependency configuration
 - `py-build/config.py` - Centralized build configuration and constants
-- `py-build/builder.py` - PyInstaller build execution script with error handling
-- `py-build/build.ps1` - PowerShell orchestration script for WSL compatibility
-- `py-build/build.sh` - Simple bash wrapper for easy execution
+- `py-build/builder.py` - PyInstaller build execution script with venv management
 
 ### Existing Files
-- `requirements.txt` - Add PyInstaller dependency
-- No modifications to existing application code required
+- No modifications to existing application code or requirements.txt required
 
 ### Directory Structure After Implementation
 ```
@@ -216,9 +246,8 @@ whisper-key-local/
 ├── py-build/                    # Build system (new)
 │   ├── config.py               # Build configuration
 │   ├── builder.py              # Build execution logic
-│   ├── build.ps1               # PowerShell orchestration
-│   ├── build.sh                # Bash wrapper
 │   └── whisper-key.spec        # PyInstaller specification
+├── venv-whisper-key/           # Isolated virtual environment (generated)
 ├── dist/                       # Build output (generated)
 │   └── whisper-key-v0.1.0/    # Versioned distribution folder
 │       ├── whisper-key.exe     # Main executable
@@ -231,8 +260,7 @@ whisper-key-local/
 ## Success Criteria
 
 ### Build Process
-- [ ] `./py-build/build.sh` executes successfully from WSL bash
-- [ ] Build completes in under 2 minutes
+- [ ] `python py-build/builder.py` executes successfully from WSL
 - [ ] No manual dependency configuration required
 - [ ] Clean, repeatable build process with clear success/failure feedback
 
