@@ -49,14 +49,11 @@ pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yam
    ```
 
 2. **Configuration** (Optional):
-   - Edit `config.defaults.yaml` to customize settings:
-     - Change Whisper model size (tiny/base/small)
+   - The app automatically creates a user settings file in `%APPDATA%\Roaming\whisperkey\user_settings.yaml` 
+     - Change Whisper model size (tiny/base/small/medium/large)
      - Modify hotkey combination (use `python tools/key_helper.py` to find key combinations)
-     - Configure auto-paste behavior:
-       - `auto_paste: true/false` - Enable/disable automatic pasting
-       - `paste_method: "key_simulation"/"windows_api"` - Choose paste method
-     - Adjust audio settings
-     - Configure logging preferences
+     - Configure auto-paste behavior and paste method
+     - And much more
 
 3. **Use the App**:
    - Press your configured hotkey (default: `Ctrl+Tilde`) to start recording
@@ -64,20 +61,6 @@ pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yam
    - Press the hotkey again to stop recording
    - The transcribed text is automatically pasted into the active application
    - If auto-paste is disabled, text is copied to clipboard for manual pasting with `Ctrl+V`
-
-## 🛠️ Configuration Tools
-
-### Key Helper Utility
-Use the key helper to find the right key combination for your hotkey:
-
-```powershell
-python tools/key_helper.py
-```
-
-This interactive tool will:
-- Detect any key combination you press
-- Show you the exact format to use in `config.defaults.yaml`
-- Help you avoid conflicts with other applications
 
 ## 🔧 Troubleshooting
 
@@ -95,7 +78,7 @@ This interactive tool will:
 
 **Auto-paste not working:**
 - Auto-paste uses key simulation by default
-- Can try switching paste methods in `config.defaults.yaml`:
+- Can try switching paste methods in your user settings file:
   - `paste_method: "key_simulation"` (works with most apps)
   - `paste_method: "windows_api"` (faster but not compatible with many apps)
 - If both methods fail, set `auto_paste: false` to use manual clipboard pasting
