@@ -75,8 +75,8 @@ PY2EXE_OPTIONS = {
 
 # --- Asset Bundling (using glob for automation) ---
 DATA_FILES = [
-    # config.yaml at the root
-    ("", [str(ROOT_DIR / "config.yaml")]),
+    # config.defaults.yaml at the root
+    ("", [str(ROOT_DIR / "config.defaults.yaml")]),
     # All .png assets
     ("assets", glob.glob(str(ROOT_DIR / "assets/*.png"))),
     # All .wav sound files
@@ -175,7 +175,7 @@ project-root/
 └── dist/               # Output directory (cleaned on each build)
     └── WhisperKey-v1.0.0/
         ├── whisper-key.exe
-        ├── config.yaml
+        ├── config.defaults.yaml
         ├── assets/
         ├── tools/
         └── [dependencies]
