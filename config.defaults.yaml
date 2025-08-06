@@ -5,7 +5,7 @@
 # This is the default configuration template for Whisper Key
 # 
 # Personal settings are stored at:
-# %APPDATA%\whisperkey\user_settings.yaml
+# %APPDATA%\Roaming\whisperkey\user_settings.yaml
 
 # =============================================================================
 # WHISPER AI MODEL SETTINGS
