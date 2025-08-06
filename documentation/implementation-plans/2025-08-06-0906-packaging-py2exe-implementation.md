@@ -55,7 +55,7 @@ import glob
 
 # --- General Project Info ---
 APP_NAME = "WhisperKey"
-APP_VERSION = "1.0.0"
+APP_VERSION = "0.1.0"
 ENTRY_POINT = "whisper-key.py"
 ROOT_DIR = pathlib.Path(__file__).parent.parent
 
@@ -81,8 +81,6 @@ DATA_FILES = [
     ("assets", glob.glob(str(ROOT_DIR / "assets/*.png"))),
     # All .wav sound files
     ("assets/sounds", glob.glob(str(ROOT_DIR / "assets/sounds/*.wav"))),
-    # All tool scripts
-    ("tools", glob.glob(str(ROOT_DIR / "tools/*.py"))),
 ]
 ```
 
@@ -105,7 +103,7 @@ def build():
     try:
         print("Running py2exe freeze...")
         py2exe.freeze(
-            windows=[{"script": ENTRY_POINT}],  # Icon optional for now
+            console=[{"script": ENTRY_POINT}],  # Icon optional for now
             options={"py2exe": {**PY2EXE_OPTIONS, "dist_dir": str(DIST_DIR)}},
             data_files=DATA_FILES,
         )
@@ -173,11 +171,10 @@ project-root/
 │   ├── builder.py
 │   └── build.ps1
 └── dist/               # Output directory (cleaned on each build)
-    └── WhisperKey-v1.0.0/
+    └── WhisperKey-v0.1.0/
         ├── whisper-key.exe
         ├── config.defaults.yaml
         ├── assets/
-        ├── tools/
         └── [dependencies]
 ```
 
