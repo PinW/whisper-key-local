@@ -428,7 +428,28 @@ class ConfigManager:
             
             # Write back with preserved formatting
             with open(file_path, 'w', encoding='utf-8') as f:
-                yaml.dump(data_to_save, f)
+                # If this is the user settings file, write custom header and clean data
+                if file_path == getattr(self, 'user_settings_path', None):
+                    # Write personal header
+                    f.write("# =============================================================================\n")
+                    f.write("# WHISPER KEY - PERSONAL CONFIGURATION\n") 
+                    f.write("# =============================================================================\n")
+                    f.write("# Overrides default configs at:\n")
+                    f.write("# config.defaults.yaml (in application folder)\n")
+                    f.write("#")
+                    
+                    # Hack: dump to string first, then skip the first 8 lines (old header)
+                    from io import StringIO
+                    temp_output = StringIO()
+                    yaml.dump(data_to_save, temp_output)
+                    lines = temp_output.getvalue().split('\n')
+                    
+                    # Skip first 8 lines (old header) and write the rest
+                    for line in lines[8:]:
+                        f.write(line + '\n')
+                else:
+                    # For other files, use normal dump with comment preservation
+                    yaml.dump(data_to_save, f)
             
             self.logger.info(f"Configuration saved to {file_path}")
         except Exception as e:
