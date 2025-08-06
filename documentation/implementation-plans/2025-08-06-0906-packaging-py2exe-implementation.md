@@ -35,6 +35,7 @@ As a **developer** I want **simple packaging system for Windows executables** so
 - [ ] Document any remaining issues or limitations
 
 ### Final Polish
+- [ ] Create simple bash wrapper script for WSL: `build.sh` calls PowerShell script
 - [ ] Create simple build documentation
 
 ## Implementation Details
