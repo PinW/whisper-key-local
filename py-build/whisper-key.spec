@@ -3,10 +3,19 @@
 
 import sys
 import pathlib
+import site
 
 # Project paths
 project_root = pathlib.Path.cwd()
 src_path = project_root / "src"
+
+# Dynamic ten_vad library path detection
+ten_vad_data = []
+for site_dir in site.getsitepackages():
+    ten_vad_candidate = pathlib.Path(site_dir) / 'ten_vad_library'
+    if ten_vad_candidate.exists():
+        ten_vad_data.append((str(ten_vad_candidate), 'ten_vad_library'))
+        break
 
 a = Analysis(
     [str(project_root / 'whisper-key.py')],
@@ -15,9 +24,7 @@ a = Analysis(
     datas=[
         (str(project_root / 'config.defaults.yaml'), '.'),
         (str(project_root / 'assets'), 'assets'),
-        # Include ten_vad DLL directory - find via pip show or site-packages
-        ('C:/Users/pinwa/Desktop/whisper-build/venv-whisper-key/Lib/site-packages/ten_vad_library', 'ten_vad_library'),
-    ],
+    ] + ten_vad_data,
     hiddenimports=[
         'win32gui', 'win32con', 'win32clipboard', 'win32api',
         'global_hotkeys',
