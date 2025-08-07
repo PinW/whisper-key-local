@@ -15,6 +15,8 @@ a = Analysis(
     datas=[
         (str(project_root / 'config.defaults.yaml'), '.'),
         (str(project_root / 'assets'), 'assets'),
+        # Include ten_vad DLL directory - find via pip show or site-packages
+        ('C:/Users/pinwa/Desktop/whisper-build/venv-whisper-key/Lib/site-packages/ten_vad_library', 'ten_vad_library'),
     ],
     hiddenimports=[
         'win32gui', 'win32con', 'win32clipboard', 'win32api',
@@ -22,6 +24,7 @@ a = Analysis(
         'pystray._win32', 'PIL._tkinter_finder',
         'sounddevice', 'numpy.core._methods',
         'faster_whisper', 'ctranslate2',
+        'ten_vad',
     ],
     hookspath=[],
     hooksconfig={},
