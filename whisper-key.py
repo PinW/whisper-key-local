@@ -43,7 +43,7 @@ def setup_logging(config_manager: ConfigManager):
     
     # Add file handler if enabled
     if log_config['file']['enabled']:
-        file_handler = logging.FileHandler(log_config['file']['filename'])
+        file_handler = logging.FileHandler(log_config['file']['filename'], encoding='utf-8')
         file_handler.setLevel(getattr(logging, log_config['level']))
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)

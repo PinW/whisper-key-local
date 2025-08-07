@@ -5,7 +5,9 @@ This module contains common utility functions that are used across multiple
 components of the application to maintain consistency and reduce code duplication.
 """
 
+import os
 from contextlib import contextmanager
+from pathlib import Path
 
 
 def beautify_hotkey(hotkey_string: str) -> str:
@@ -74,30 +76,36 @@ def error_logging(context: str, logger, print_to_user: bool = True):
             print(f"\033[91m{error_message}\033[0m")
 
 
-def sanitize_for_logging(text: str) -> str:
+
+def resolve_asset_path(asset_path: str) -> str:
     """
-    Sanitize text for logging to avoid Unicode encoding errors on Windows.
+    Resolve asset file path relative to project root for PyInstaller compatibility.
     
-    Following the pattern from config_manager.py for ASCII-safe logging.
-    Windows console uses cp1252 encoding which can't handle Unicode characters,
-    causing UnicodeEncodeError when logging messages with Unicode content.
+    This function ensures assets work in both development and bundled environments.
+    (for example with PyInstaller)
     
     Args:
-        text (str): Text that may contain Unicode characters
+        asset_path (str): Path from config (may be relative or absolute)
         
     Returns:
-        str: ASCII-safe version of the text suitable for logging
+        str: Absolute path to asset file
         
     Examples:
-        >>> sanitize_for_logging("Hello → World")
-        'Hello ? World'
-        >>> sanitize_for_logging("Regular text")
-        'Regular text'
+        >>> resolve_asset_path("assets/sounds/beep.wav")
+        '/path/to/project/assets/sounds/beep.wav'  # (development)
+        # or: '/tmp/_MEI123/assets/sounds/beep.wav'  # (PyInstaller bundle)
+        
+        >>> resolve_asset_path("/absolute/path/file.wav")
+        '/absolute/path/file.wav'  # (unchanged)
     """
-    if not text:
-        return text
+    if not asset_path:
+        return asset_path
     
-    try:
-        return text.encode('ascii', errors='replace').decode('ascii')
-    except Exception:
-        return repr(text)[1:-1]  # Remove quotes from repr()
+    # If already absolute, return as-is
+    if os.path.isabs(asset_path):
+        return asset_path
+    
+    # Resolve relative path using __file__ (works with PyInstaller)
+    project_root = Path(__file__).parent.parent
+    resolved_path = project_root / asset_path
+    return str(resolved_path)

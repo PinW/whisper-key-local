@@ -101,7 +101,7 @@ def reset_user_settings(create_backup=True):
         
         print()
         print("🚀 Reset complete!")
-        print("The app will create fresh user settings from config.yaml on next run.")
+        print("The app will create fresh user settings from config.defaults.yaml on next run.")
         
         if backup_path:
             print(f"💾 Your old settings are backed up at: {backup_path}")

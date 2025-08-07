@@ -23,7 +23,7 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+
 ```
 whisper-key-local/
 ├── whisper-key.py              # Main application entry point
-├── config.yaml                 # User configuration settings
+├── config.defaults.yaml        # Default configuration template
 ├── requirements.txt            # Python dependencies
 ├── CLAUDE.md                   # Claude AI project instructions
 ├── README.md                   # Project documentation

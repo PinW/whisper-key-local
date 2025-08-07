@@ -1,0 +1,5 @@
+{
+  "venv_path": ".\\venv-whisper-key",
+  "dist_path": "dist\\whisper-key-v0.1.0",
+  "description": "Example config for building in project root. Copy to build-config.json and modify paths as needed."
+}

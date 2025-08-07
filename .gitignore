@@ -28,6 +28,8 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
+# Exception: Keep our custom build spec files
+!py-build/*.spec
 
 # Installer logs
 pip-log.txt
@@ -115,3 +117,9 @@ models/
 
 # Application logs
 *.log
+
+# User testing files
+user-testing/
+
+# Build configuration (user-specific paths)
+py-build/build-config.json
