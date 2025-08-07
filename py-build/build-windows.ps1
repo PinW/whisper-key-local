@@ -5,6 +5,12 @@ param(
     [string]$AppVersion = "0.1.0"
 )
 
+# Helper function to resolve paths (absolute or relative to base directory)
+function Get-ResolvedPath {
+    param($Path, $BaseDir)
+    if ([System.IO.Path]::IsPathRooted($Path)) { $Path } else { Join-Path $BaseDir $Path }
+}
+
 # Configuration - Check for build config file
 $ConfigFile = Join-Path $PSScriptRoot "build-config.json"
 if (Test-Path $ConfigFile) {
@@ -12,8 +18,12 @@ if (Test-Path $ConfigFile) {
     try {
         $Config = Get-Content $ConfigFile | ConvertFrom-Json
         # Expand environment variables in paths
-        $VenvPath = [Environment]::ExpandEnvironmentVariables($Config.venv_path)
-        $DistDir = Join-Path $ProjectRoot ([Environment]::ExpandEnvironmentVariables($Config.dist_path))
+        $ExpandedVenvPath = [Environment]::ExpandEnvironmentVariables($Config.venv_path)
+        $ExpandedDistPath = [Environment]::ExpandEnvironmentVariables($Config.dist_path)
+        
+        # Resolve paths (absolute or relative to project root)
+        $VenvPath = Get-ResolvedPath $ExpandedVenvPath $ProjectRoot
+        $DistDir = Get-ResolvedPath $ExpandedDistPath $ProjectRoot
     } catch {
         Write-Host "Error reading config file, using defaults: $_" -ForegroundColor Yellow
         $VenvPath = Join-Path $ProjectRoot "venv-$AppName"
