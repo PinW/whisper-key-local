@@ -14,7 +14,7 @@ def build():
         # Execute PowerShell script (it handles all path configuration)
         cmd = [
             "powershell.exe", 
-            "-ExecutionPolicy", "Bypass",
+            "-ExecutionPolicy", "RemoteSigned",
             "-File", str(ps_script)
         ]
         
