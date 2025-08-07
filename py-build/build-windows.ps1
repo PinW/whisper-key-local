@@ -103,6 +103,22 @@ Write-Host "Executable location: $DistDir" -ForegroundColor Green
 $Size = (Get-ChildItem -Recurse $DistDir | Measure-Object -Property Length -Sum).Sum / 1MB
 Write-Host "Distribution size: $Size MB" -ForegroundColor Green
 
+# Create compressed distribution
+Write-Host "Creating compressed distribution..." -ForegroundColor Yellow
+$ZipFileName = "$AppName-v$AppVersion.zip"
+$ZipPath = Join-Path $DistDir $ZipFileName
+$AppDir = Join-Path $DistDir $AppName
+
+try {
+    Compress-Archive -Path $AppDir -DestinationPath $ZipPath -CompressionLevel Optimal
+    $ZipSize = (Get-Item $ZipPath).Length / 1MB
+    $CompressionRatio = [math]::Round((1 - ($ZipSize / $Size)) * 100, 1)
+    Write-Host "Compressed distribution created: $ZipFileName" -ForegroundColor Green
+    Write-Host "Compressed size: $([math]::Round($ZipSize, 2)) MB ($CompressionRatio% reduction)" -ForegroundColor Green
+} catch {
+    Write-Host "Failed to create compressed distribution: $_" -ForegroundColor Red
+}
+
 # Play victory sound
 try {
     $TadaSound = "$env:WINDIR\Media\tada.wav"
