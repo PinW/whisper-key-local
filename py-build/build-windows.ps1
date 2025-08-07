@@ -90,7 +90,7 @@ if (Test-Path $BuildDir) {
 $VenvPyInstaller = Join-Path $VenvPath "Scripts\pyinstaller.exe"
 Write-Host "Running PyInstaller with spec file: $SpecFile" -ForegroundColor Yellow
 
-& $VenvPyInstaller $SpecFile
+& $VenvPyInstaller $SpecFile --distpath $DistDir
 if ($LASTEXITCODE -ne 0) { 
     Write-Host "PyInstaller build failed!" -ForegroundColor Red
     exit 1 
