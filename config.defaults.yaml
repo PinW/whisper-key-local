@@ -24,7 +24,7 @@ whisper:
   # - base.en: 74MB, 
   # - small.en: 244MB, 
   # - medium.en: 769MB
-  model_size: tiny
+  model_size: base
   
   # Processing device - where the AI runs
   # Options: "cpu", "cuda" (for NVIDIA GPUs)
