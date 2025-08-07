@@ -5,7 +5,9 @@ This module contains common utility functions that are used across multiple
 components of the application to maintain consistency and reduce code duplication.
 """
 
+import os
 from contextlib import contextmanager
+from pathlib import Path
 
 
 def beautify_hotkey(hotkey_string: str) -> str:
@@ -101,3 +103,37 @@ def sanitize_for_logging(text: str) -> str:
         return text.encode('ascii', errors='replace').decode('ascii')
     except Exception:
         return repr(text)[1:-1]  # Remove quotes from repr()
+
+
+def resolve_asset_path(asset_path: str) -> str:
+    """
+    Resolve asset file path relative to project root for PyInstaller compatibility.
+    
+    This function ensures assets work in both development and bundled environments.
+    (for example with PyInstaller)
+    
+    Args:
+        asset_path (str): Path from config (may be relative or absolute)
+        
+    Returns:
+        str: Absolute path to asset file
+        
+    Examples:
+        >>> resolve_asset_path("assets/sounds/beep.wav")
+        '/path/to/project/assets/sounds/beep.wav'  # (development)
+        # or: '/tmp/_MEI123/assets/sounds/beep.wav'  # (PyInstaller bundle)
+        
+        >>> resolve_asset_path("/absolute/path/file.wav")
+        '/absolute/path/file.wav'  # (unchanged)
+    """
+    if not asset_path:
+        return asset_path
+    
+    # If already absolute, return as-is
+    if os.path.isabs(asset_path):
+        return asset_path
+    
+    # Resolve relative path using __file__ (works with PyInstaller)
+    project_root = Path(__file__).parent.parent
+    resolved_path = project_root / asset_path
+    return str(resolved_path)

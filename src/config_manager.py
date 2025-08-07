@@ -50,14 +50,20 @@ class ConfigManager:
     with proper validation and fallback defaults.
     """
     
-    def __init__(self, config_path: str = "config.defaults.yaml", use_user_settings: bool = True):
+    def __init__(self, config_path: str = None, use_user_settings: bool = True):
         """
         Initialize the configuration manager
         
         Parameters:
-        - config_path: Path to the default YAML configuration file
+        - config_path: Path to the default YAML configuration file (None for auto-detection)
         - use_user_settings: Whether to use user-specific settings from AppData
         """
+        # Auto-detect config path relative to the main script
+        if config_path is None:
+            # Go up from src/ to project root, then to config.defaults.yaml
+            project_root = os.path.dirname(os.path.dirname(__file__))
+            config_path = os.path.join(project_root, "config.defaults.yaml")
+        
         self.default_config_path = config_path
         self.use_user_settings = use_user_settings
         self.config = {}
@@ -662,3 +668,4 @@ class ConfigManager:
             else:
                 # Update with new value
                 original_data[key] = value
+

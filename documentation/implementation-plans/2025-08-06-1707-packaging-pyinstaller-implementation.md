@@ -14,13 +14,22 @@ As a **developer** I want **robust Windows executable packaging with PyInstaller
 - Executable packaging system that works with Python 3.12+
 - Clean single-folder distribution for easy sharing
 - Windows API functionality maintained in packaged version
-- Simple, reliable build process executable from WSL
+- PowerShell-based build process that runs on Windows (called from WSL)
 
 ## Implementation Plan
 
 ### Phase 1: Build System Architecture
-- [ ] Create py-build/config.py with centralized configuration
-- [ ] Implement py-build/builder.py with PyInstaller execution logic and venv management
+- [x] Create py-build/config.py with centralized configuration
+  - ✅ Added centralized build configuration with project paths and PyInstaller settings
+  - ✅ Configured app metadata, version info, and build output directories
+- [x] Create py-build/build-windows.ps1 PowerShell script for Windows execution  
+  - ✅ Added Windows PowerShell script with virtual environment management
+  - ✅ Implemented dependency installation and PyInstaller execution logic
+  - ✅ Added build cleanup and success/failure reporting with colored output
+- [x] Create py-build/builder.py as WSL wrapper that calls Windows PowerShell
+  - ✅ Added WSL-to-Windows path conversion functionality
+  - ✅ Implemented PowerShell script execution via WSL interop
+  - ✅ Added comprehensive error handling and user feedback
 
 ### Phase 2: Basic PyInstaller Setup and First Build
 - [ ] Create basic PyInstaller spec file for whisper-key.py
@@ -50,8 +59,8 @@ As a **developer** I want **robust Windows executable packaging with PyInstaller
 - [ ] Add version information and executable metadata
 
 ### Phase 6: Testing and Validation
-- [ ] Test build process from WSL environment
-- [ ] Verify executable runs on clean Windows machine without Python
+- [ ] Test build process from WSL calling Windows PowerShell
+- [ ] Verify executable runs on Windows machine
 - [ ] Test all core functionality (recording, transcription, clipboard, hotkeys)
 - [ ] Validate that ML model downloads work correctly on first run
 
@@ -152,79 +161,124 @@ BUILD_ARGS = [
 ]
 ```
 
-### Build Execution Logic
+### PowerShell Build Script
+```powershell
+# py-build/build-windows.ps1
+param(
+    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
+    [string]$AppName = "whisper-key",
+    [string]$AppVersion = "0.1.0"
+)
+
+# Configuration
+$VenvPath = Join-Path $ProjectRoot "venv-$AppName"
+$DistDir = Join-Path $ProjectRoot "dist\$AppName-v$AppVersion"
+$SpecFile = Join-Path $PSScriptRoot "$AppName.spec"
+
+Write-Host "🚀 Starting $AppName build with PyInstaller..." -ForegroundColor Green
+
+# Create and setup virtual environment
+Write-Host "🔧 Setting up clean virtual environment..." -ForegroundColor Yellow
+if (Test-Path $VenvPath) {
+    Remove-Item -Recurse -Force $VenvPath
+}
+
+python -m venv $VenvPath
+if ($LASTEXITCODE -ne 0) { 
+    Write-Host "❌ Failed to create virtual environment" -ForegroundColor Red
+    exit 1 
+}
+
+# Activate venv and install dependencies
+$VenvPython = Join-Path $VenvPath "Scripts\python.exe"
+$VenvPip = Join-Path $VenvPath "Scripts\pip.exe"
+
+Write-Host "📦 Installing project dependencies..." -ForegroundColor Yellow
+$RequirementsFile = Join-Path $ProjectRoot "requirements.txt"
+& $VenvPip install -r $RequirementsFile
+if ($LASTEXITCODE -ne 0) { 
+    Write-Host "❌ Failed to install dependencies" -ForegroundColor Red
+    exit 1 
+}
+
+Write-Host "📦 Installing PyInstaller..." -ForegroundColor Yellow
+& $VenvPip install pyinstaller
+if ($LASTEXITCODE -ne 0) { 
+    Write-Host "❌ Failed to install PyInstaller" -ForegroundColor Red
+    exit 1 
+}
+
+# Clean previous build
+if (Test-Path $DistDir) {
+    Write-Host "🧹 Cleaning previous build: $DistDir" -ForegroundColor Yellow
+    Remove-Item -Recurse -Force (Split-Path $DistDir)
+}
+
+$BuildDir = Join-Path $ProjectRoot "build"
+if (Test-Path $BuildDir) {
+    Remove-Item -Recurse -Force $BuildDir
+}
+
+# Execute PyInstaller
+$VenvPyInstaller = Join-Path $VenvPath "Scripts\pyinstaller.exe"
+Write-Host "📦 Running PyInstaller with spec file: $SpecFile" -ForegroundColor Yellow
+
+& $VenvPyInstaller $SpecFile
+if ($LASTEXITCODE -ne 0) { 
+    Write-Host "❌ PyInstaller build failed!" -ForegroundColor Red
+    exit 1 
+}
+
+Write-Host "✅ Build successful!" -ForegroundColor Green
+Write-Host "📂 Executable location: $DistDir" -ForegroundColor Green
+
+# Calculate distribution size
+$Size = (Get-ChildItem -Recurse $DistDir | Measure-Object -Property Length -Sum).Sum / 1MB
+Write-Host "💾 Distribution size: $($Size.ToString('F1')) MB" -ForegroundColor Green
+```
+
+### WSL Builder Wrapper
 ```python
 # py-build/builder.py
 import subprocess
-import shutil
 import sys
 from pathlib import Path
-from config import APP_NAME, DIST_DIR, SPEC_FILE, BUILD_ARGS, VENV_PATH
-
-def setup_venv():
-    """Create and setup virtual environment with clean dependencies."""
-    print(f"🔧 Setting up clean virtual environment...")
-    
-    # Create venv if it doesn't exist
-    if not VENV_PATH.exists():
-        print(f"Creating virtual environment: {VENV_PATH}")
-        subprocess.run([sys.executable, "-m", "venv", str(VENV_PATH)], check=True)
-    
-    # Get venv python and pip paths
-    if sys.platform == "win32":
-        venv_python = VENV_PATH / "Scripts" / "python.exe"
-        venv_pip = VENV_PATH / "Scripts" / "pip.exe"
-    else:
-        venv_python = VENV_PATH / "bin" / "python"
-        venv_pip = VENV_PATH / "bin" / "pip"
-    
-    # Install project dependencies in venv
-    requirements_file = VENV_PATH.parent / "requirements.txt"
-    print(f"Installing project dependencies from {requirements_file}")
-    subprocess.run([str(venv_pip), "install", "-r", str(requirements_file)], check=True)
-    
-    # Install PyInstaller in venv
-    print("Installing PyInstaller in virtual environment")
-    subprocess.run([str(venv_pip), "install", "pyinstaller"], check=True)
-    
-    return venv_python
+from config import APP_NAME
 
 def build():
-    """Execute PyInstaller build process."""
-    print(f"🚀 Starting {APP_NAME} build with PyInstaller...")
+    """Execute PowerShell build script on Windows from WSL."""
+    print(f"🚀 Starting {APP_NAME} build via Windows PowerShell...")
     
-    # Setup clean virtual environment
-    venv_python = setup_venv()
+    # Get paths for Windows execution
+    project_root = Path(__file__).parent.parent
+    ps_script = project_root / "py-build" / "build-windows.ps1"
     
-    # Clean previous build
-    if DIST_DIR.exists():
-        print(f"🧹 Cleaning previous build: {DIST_DIR}")
-        shutil.rmtree(DIST_DIR)
+    # Convert WSL paths to Windows paths
+    windows_project_root = str(project_root).replace("/home/pin/", "C:\\Users\\pin\\")
+    windows_script = str(ps_script).replace("/home/pin/", "C:\\Users\\pin\\").replace("/", "\\")
     
-    # Execute PyInstaller from venv
     try:
-        venv_pyinstaller = venv_python.parent / "pyinstaller"
-        if sys.platform == "win32":
-            venv_pyinstaller = venv_pyinstaller.with_suffix(".exe")
-            
-        cmd = [str(venv_pyinstaller)] + BUILD_ARGS + [str(SPEC_FILE)]
-        print(f"📦 Running: {' '.join(cmd)}")
+        # Execute PowerShell script via Windows
+        cmd = [
+            "powershell.exe", 
+            "-ExecutionPolicy", "Bypass",
+            "-File", windows_script,
+            "-ProjectRoot", windows_project_root
+        ]
         
+        print(f"📦 Running: {' '.join(cmd)}")
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
         
-        print(f"✅ Build successful!")
-        print(f"📂 Executable location: {DIST_DIR}")
-        print(f"💾 Distribution size: {get_folder_size(DIST_DIR):.1f} MB")
+        print("✅ Windows build completed successfully!")
+        print(result.stdout)
         
     except subprocess.CalledProcessError as e:
-        print(f"❌ PyInstaller build failed!")
-        print(f"Error output: {e.stderr}")
+        print("❌ Windows build failed!")
+        print(f"Error: {e.stderr}")
         sys.exit(1)
-
-def get_folder_size(folder_path):
-    """Calculate folder size in MB."""
-    total_size = sum(f.stat().st_size for f in Path(folder_path).rglob('*') if f.is_file())
-    return total_size / (1024 * 1024)
+    except FileNotFoundError:
+        print("❌ PowerShell not found! Make sure you're running from WSL with Windows PowerShell available.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     build()
@@ -234,8 +288,9 @@ if __name__ == "__main__":
 
 ### New Files to Create
 - `py-build/whisper-key.spec` - PyInstaller specification file with dependency configuration
-- `py-build/config.py` - Centralized build configuration and constants
-- `py-build/builder.py` - PyInstaller build execution script with venv management
+- `py-build/config.py` - Centralized build configuration and constants  
+- `py-build/build-windows.ps1` - PowerShell script for Windows build execution
+- `py-build/builder.py` - WSL wrapper that calls Windows PowerShell script
 
 ### Existing Files
 - No modifications to existing application code or requirements.txt required
@@ -259,8 +314,9 @@ whisper-key-local/
 
 ## Success Criteria
 
-### Build Process
+### Build Process  
 - [ ] `python py-build/builder.py` executes successfully from WSL
+- [ ] PowerShell script runs on Windows via WSL interop
 - [ ] No manual dependency configuration required
 - [ ] Clean, repeatable build process with clear success/failure feedback
 
@@ -278,10 +334,11 @@ whisper-key-local/
 - [ ] Error handling and logging work in packaged version
 
 ### Developer Experience
-- [ ] Build process works reliably from WSL development environment
+- [ ] Build process works reliably from WSL calling Windows PowerShell
 - [ ] Clear error messages when build fails
-- [ ] Easy to modify build configuration for future changes
+- [ ] Easy to modify build configuration for future changes  
 - [ ] Build artifacts organized in versioned output folders
+- [ ] WSL-to-Windows path conversion works correctly
 
 ## Risk Mitigation
 

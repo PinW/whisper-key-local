@@ -11,6 +11,7 @@ import logging
 import threading
 import os
 from typing import Optional
+from .utils import resolve_asset_path
 
 try:
     import winsound
@@ -45,9 +46,9 @@ class AudioFeedback:
         self.enabled = config.get('enabled', True)
         self.logger = logging.getLogger(__name__)
         
-        # Sound file paths
-        self.start_sound_path = config.get('start_sound', '')
-        self.stop_sound_path = config.get('stop_sound', '')
+        # Sound file paths - resolve relative paths for PyInstaller compatibility
+        self.start_sound_path = resolve_asset_path(config.get('start_sound', ''))
+        self.stop_sound_path = resolve_asset_path(config.get('stop_sound', ''))
         
         # Check if we can play sounds
         if not WINSOUND_AVAILABLE:
@@ -185,8 +186,8 @@ class AudioFeedback:
         self.config = new_config
         self.enabled = new_config.get('enabled', True) and WINSOUND_AVAILABLE
         
-        self.start_sound_path = new_config.get('start_sound', '')
-        self.stop_sound_path = new_config.get('stop_sound', '')
+        self.start_sound_path = resolve_asset_path(new_config.get('start_sound', ''))
+        self.stop_sound_path = resolve_asset_path(new_config.get('stop_sound', ''))
         
         self.logger.info("Audio feedback configuration updated")
         self.logger.debug(f"New start sound: {self.start_sound_path}")
