@@ -5,12 +5,35 @@ param(
     [string]$AppVersion = "0.1.0"
 )
 
-# Configuration - Put venv on Windows filesystem (not WSL)
-$VenvPath = Join-Path $env:USERPROFILE "Desktop\venv-$AppName"
-$DistDir = Join-Path $ProjectRoot "dist\$AppName-v$AppVersion"
+# Configuration - Check for build config file
+$ConfigFile = Join-Path $PSScriptRoot "build-config.json"
+if (Test-Path $ConfigFile) {
+    Write-Host "Loading build configuration from: $ConfigFile" -ForegroundColor Cyan
+    try {
+        $Config = Get-Content $ConfigFile | ConvertFrom-Json
+        # Expand environment variables in paths
+        $VenvPath = [Environment]::ExpandEnvironmentVariables($Config.venv_path)
+        $DistDir = Join-Path $ProjectRoot ([Environment]::ExpandEnvironmentVariables($Config.dist_path))
+    } catch {
+        Write-Host "Error reading config file, using defaults: $_" -ForegroundColor Yellow
+        $VenvPath = Join-Path $ProjectRoot "venv-$AppName"
+        $DistDir = Join-Path $ProjectRoot "dist\$AppName-v$AppVersion"
+    }
+} else {
+    Write-Host "No build config found, using default paths" -ForegroundColor Yellow
+    # Default configuration - Build in project root
+    $VenvPath = Join-Path $ProjectRoot "venv-$AppName"
+    $DistDir = Join-Path $ProjectRoot "dist\$AppName-v$AppVersion"
+}
+
 $SpecFile = Join-Path $PSScriptRoot "$AppName.spec"
 
 Write-Host "Starting $AppName build with PyInstaller..." -ForegroundColor Green
+Write-Host "Virtual Environment: $VenvPath" -ForegroundColor Gray
+Write-Host "Distribution Directory: $DistDir" -ForegroundColor Gray
+
+# Uncomment the next line to test path detection without running build
+# exit 0
 
 # Setup virtual environment (reuse if exists)
 $VenvPython = Join-Path $VenvPath "Scripts\python.exe"
