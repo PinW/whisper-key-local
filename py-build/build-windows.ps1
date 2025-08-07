@@ -78,7 +78,7 @@ if (-not (Test-Path $VenvPath)) {
 # Clean previous build
 if (Test-Path $DistDir) {
     Write-Host "Cleaning previous build: $DistDir" -ForegroundColor Yellow
-    Remove-Item -Recurse -Force (Split-Path $DistDir)
+    Remove-Item -Recurse -Force $DistDir
 }
 
 $BuildDir = Join-Path $ProjectRoot "build"
