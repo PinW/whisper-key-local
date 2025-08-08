@@ -2,7 +2,8 @@
 param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$AppName = "whisper-key",
-    [string]$AppVersion = "0.1.0"
+    [string]$AppVersion = "0.1.1",
+    [switch]$Clean
 )
 
 # Helper function to resolve paths (absolute or relative to base directory)
@@ -90,7 +91,7 @@ if (Test-Path $BuildDir) {
 $VenvPyInstaller = Join-Path $VenvPath "Scripts\pyinstaller.exe"
 Write-Host "Running PyInstaller with spec file: $SpecFile" -ForegroundColor Yellow
 
-& $VenvPyInstaller $SpecFile --distpath $DistDir
+& $VenvPyInstaller $SpecFile --distpath $DistDir --clean
 if ($LASTEXITCODE -ne 0) { 
     Write-Host "PyInstaller build failed!" -ForegroundColor Red
     exit 1 
