@@ -15,10 +15,17 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 
 ### Prerequisites
 - Windows 10/11
-- Python 3.8+ installed on Windows
-- Microphone access
+- Microphone
 
-### Installation
+### Option 1: Download Portable App
+1. [Download the latest release zip](https://github.com/pin/whisper-key-local/releases/latest)
+2. Extract the zip file
+3. Run `whisper-key.exe`
+
+### Option 2: Manual Installation
+**Prerequisites for manual installation:**
+- Python 3.8+ installed on Windows
+
 Install the required Python packages:
 ```powershell
 pip install -r requirements.txt
