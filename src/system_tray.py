@@ -43,28 +43,32 @@ class SystemTray:
     - Running in a separate thread to avoid blocking the main app
     """
     
-    def __init__(self, state_manager: Optional['StateManager'] = None, config: dict = None, 
+    def __init__(self, state_manager: Optional['StateManager'] = None, 
+                 tray_config: dict = None, hotkey_config: dict = None,
                  config_manager: Optional['ConfigManager'] = None):
         """
         Initialize the system tray manager
         
         Parameters:
         - state_manager: Reference to the main StateManager for status updates
-        - config: Configuration dictionary for tray settings
+        - tray_config: System tray configuration dictionary
+        - hotkey_config: Hotkey configuration dictionary (for menu display)
         - config_manager: Reference to ConfigManager for reading/writing settings
         
         the app is currently doing and show the right icon. We also pass the
         config_manager so we can read and change user settings from the menu.
         """
         self.state_manager = state_manager
-        self.config = config or {}
+        self.tray_config = tray_config or {}
+        self.hotkey_config = hotkey_config or {}
         self.config_manager = config_manager
         self.logger = logging.getLogger(__name__)
         
         # Log initialization parameters for debugging
         self.logger.debug(f"SystemTray.__init__ called with:")
         self.logger.debug(f"  state_manager: {type(state_manager).__name__ if state_manager else 'None'}")
-        self.logger.debug(f"  config keys: {list(self.config.keys()) if self.config else 'None'}")
+        self.logger.debug(f"  tray_config keys: {list(self.tray_config.keys()) if self.tray_config else 'None'}")
+        self.logger.debug(f"  hotkey_config keys: {list(self.hotkey_config.keys()) if self.hotkey_config else 'None'}")
         self.logger.debug(f"  config_manager: {type(config_manager).__name__ if config_manager else 'None'}")
         
         # Tray state
@@ -161,10 +165,10 @@ class SystemTray:
             try:
                 if self.state_manager:
                     self.logger.debug("Getting hotkey from state_manager config")
-                    hotkey_text = self.config.get('hotkey', {}).get('combination', 'ctrl+`')
+                    hotkey_text = self.hotkey_config.get('combination', 'ctrl+`')
                 else:
                     self.logger.debug("No state_manager available, using default hotkey")
-                    hotkey_text = self.config.get('hotkey', {}).get('combination', 'ctrl+`')
+                    hotkey_text = self.hotkey_config.get('combination', 'ctrl+`')
                 
                 self.logger.debug(f"Hotkey text: {hotkey_text}")
             except Exception as e:

@@ -329,6 +329,30 @@ class ConfigManager:
         # Validate VAD configuration ranges
         self._validate_vad_config()
         
+        # Validate audio_feedback enabled setting
+        audio_feedback_enabled = self.config.get('audio_feedback', {}).get('enabled', True)
+        if not isinstance(audio_feedback_enabled, bool):
+            self.logger.warning(f"Invalid audio_feedback enabled value '{audio_feedback_enabled}', using True")
+            if 'audio_feedback' not in self.config:
+                self.config['audio_feedback'] = {}
+            self.config['audio_feedback']['enabled'] = True
+        else:
+            if 'audio_feedback' not in self.config:
+                self.config['audio_feedback'] = {}
+            self.config['audio_feedback']['enabled'] = audio_feedback_enabled
+        
+        # Validate system_tray enabled setting
+        system_tray_enabled = self.config.get('system_tray', {}).get('enabled', True)
+        if not isinstance(system_tray_enabled, bool):
+            self.logger.warning(f"Invalid system_tray enabled value '{system_tray_enabled}', using True")
+            if 'system_tray' not in self.config:
+                self.config['system_tray'] = {}
+            self.config['system_tray']['enabled'] = True
+        else:
+            if 'system_tray' not in self.config:
+                self.config['system_tray'] = {}
+            self.config['system_tray']['enabled'] = system_tray_enabled
+        
         # Save validation fixes to user file
         if self.use_user_settings:
             self.save_user_settings()
@@ -390,6 +414,14 @@ class ConfigManager:
     def get_advanced_config(self) -> Dict[str, Any]:
         """Get advanced configuration settings"""
         return self.config['advanced'].copy()
+    
+    def get_system_tray_config(self) -> Dict[str, Any]:
+        """Get system tray configuration settings"""
+        return self.config['system_tray'].copy()
+    
+    def get_audio_feedback_config(self) -> Dict[str, Any]:
+        """Get audio feedback configuration settings"""
+        return self.config['audio_feedback'].copy()
     
     def get_full_config(self) -> Dict[str, Any]:
         """Get the complete configuration"""

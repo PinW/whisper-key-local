@@ -37,6 +37,18 @@ def setup_logging(config_manager: ConfigManager):
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
 
+def setup_config_manager():
+    print("📁 Loading configuration...")
+    config_manager = ConfigManager()
+    
+    if config_manager.use_user_settings:
+        settings_path = config_manager.get_user_settings_path()
+        print(f"   ✓ Using user settings from: {settings_path}")
+    else:
+        print(f"   ✗ Using default settings from: {config_manager.config_path}")
+    
+    return config_manager
+
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
     # Stop hotkey listener first to prevent new events during shutdown
     try:
@@ -56,18 +68,12 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
     
+    guard_against_multiple_instances()
+    
     print("Starting Whisper Key... Windows Whisper Speech-to-Text App...")
     
     try:
-        print("📁 Loading configuration...")
-        config_manager = ConfigManager()
-        
-        if config_manager.use_user_settings:
-            settings_path = config_manager.get_user_settings_path()
-            print(f"   ✓ Using user settings from: {settings_path}")
-        else:
-            print(f"   ✗ Using default settings from: {config_manager.config_path}")
-        
+        config_manager = setup_config_manager()
         setup_logging(config_manager)
         logger = logging.getLogger(__name__)
         
@@ -75,8 +81,8 @@ def main():
         audio_config = config_manager.get_audio_config()
         hotkey_config = config_manager.get_hotkey_config()
         clipboard_config = config_manager.get_clipboard_config()
-        tray_config = config_manager.config.get('system_tray', {})
-        audio_feedback_config = config_manager.config.get('audio_feedback', {})
+        tray_config = config_manager.get_system_tray_config()
+        audio_feedback_config = config_manager.get_audio_feedback_config()
         
         logger.info("Initializing application components...")
         
@@ -105,7 +111,7 @@ def main():
             print("   ✗ Auto-paste is DISABLED - paste manually with Ctrl+V")
 
         audio_feedback = None
-        if audio_feedback_config.get('enabled', True):
+        if audio_feedback_config['enabled']:
             try:
                 logger.debug("Initializing audio feedback...")
                 audio_feedback = AudioFeedback(audio_feedback_config)
@@ -129,20 +135,21 @@ def main():
 
         # Create system tray object but don't start-- needs state manager
         system_tray = None 
-        if tray_config.get('enabled', True):
+        if tray_config['enabled']:
             try:
                 logger.debug("Initializing system tray...")
                 logger.debug(f"Tray config: {tray_config}")
                 logger.debug(f"Hotkey config: {hotkey_config}")
                 logger.debug(f"Config manager type: {type(config_manager)}")
                 
-                tray_full_config = {
-                    'hotkey': hotkey_config,
-                    'system_tray': tray_config
-                }
-                logger.debug(f"Creating SystemTray with config: {tray_full_config}")
+                logger.debug(f"Creating SystemTray with tray_config: {tray_config} and hotkey_config: {hotkey_config}")
                 
-                system_tray = SystemTray(state_manager=None, config=tray_full_config, config_manager=config_manager)
+                system_tray = SystemTray(
+                    state_manager=None, 
+                    tray_config=tray_config,
+                    hotkey_config=hotkey_config,
+                    config_manager=config_manager
+                )
                 logger.debug("SystemTray object created")
                 
                 if system_tray.is_available():
@@ -227,6 +234,4 @@ def main():
         shutdown_app(hotkey_listener, state_manager, logger)
 
 if __name__ == "__main__":
-    guard_against_multiple_instances()
-    
     main()
