@@ -3,7 +3,6 @@ Audio Feedback Module
 
 Plays sound files for recording start/stop events to give users clear audio feedback.
 
-For beginners: This is like having sound effects in a video game - when recording starts
 you hear one sound file, when it stops you hear another sound file.
 """
 
@@ -81,7 +80,6 @@ class AudioFeedback:
         Parameters:
         - file_path: Path to the sound file to play
         
-        For beginners: "Asynchronously" means the sound plays in the background
         without stopping our main program.
         """
         def play_sound():

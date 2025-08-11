@@ -6,7 +6,6 @@ This tool helps clean up downloaded Whisper model files by deleting the
 HuggingFace cache directory. This can free up significant disk space
 (models range from 39MB to 1.5GB each).
 
-For beginners: Think of this as cleaning up temporary downloads. Whisper
 downloads AI models to your computer, and this tool removes them so they'll
 be re-downloaded fresh next time you use the app.
 """

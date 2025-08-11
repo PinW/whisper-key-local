@@ -4,7 +4,6 @@ Whisper Speech Recognition Engine
 This module handles speech-to-text transcription using OpenAI's Whisper AI model.
 It converts recorded audio into written text that can be pasted anywhere.
 
-For beginners: This is the "brain" of our app - it listens to audio and figures 
 out what words were spoken, like having a super-smart stenographer.
 """
 
@@ -45,7 +44,6 @@ class WhisperEngine:
         - beam_size: Search beam size for transcription (higher = more accurate but slower)
         - vad_enabled: Enable TEN VAD pre-check for short recordings
         
-        For beginners: 
         - "tiny" model is ~39MB and fastest
         - "base" model is ~74MB and more accurate
         - "small" model is ~244MB and very accurate but slower
@@ -357,7 +355,6 @@ class WhisperEngine:
         Returns:
         - The transcribed text, or None if transcription failed
         
-        For beginners: This is where the magic happens - the AI listens to your 
         audio and converts it to text, like a super-smart voice-to-text converter.
         """
         if self.model is None:
@@ -437,7 +434,7 @@ class WhisperEngine:
         Transcribe audio from a file (for future use/testing)
         
         This method can transcribe audio files directly, which is useful for 
-        testing with recorded audio files.
+        testing.
         """
         if self.model is None:
             self.logger.error("Whisper model not loaded!")
@@ -479,7 +476,7 @@ class WhisperEngine:
         Switch to a different Whisper model size (for future customization)
         
         This allows users to switch between tiny/base/small models depending 
-        on whether they want speed or accuracy.
+        on their preference for speed or accuracy.
         
         Parameters:
         - new_model_size: The new model size to switch to

@@ -5,7 +5,6 @@ Test Runner for Windows Whisper App
 This script makes it easy to run all the component tests in the right order.
 Perfect for beginners to understand how each part works!
 
-For beginners: This is like a "test suite" - it runs all our individual tests
 in a logical order to make sure everything works before using the full app.
 """
 

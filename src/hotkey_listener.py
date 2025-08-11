@@ -3,9 +3,6 @@ Global Hotkey Listener Module
 
 This module detects when you press specific key combinations (like Ctrl+Shift+Space)
 from anywhere on your computer, even when our app isn't the active window.
-
-For beginners: This is like having a universal remote control - no matter what 
-program you're using, pressing the special key combination will trigger our app.
 """
 
 import logging
@@ -34,9 +31,6 @@ class HotkeyListener:
         - auto_enter_hotkey: The auto-enter key combination (optional)
         - auto_enter_enabled: Whether the auto-enter hotkey is enabled (default: True)
         - stop_with_modifier_enabled: Whether to enable stop-only with first modifier key (default: False)
-        
-        For beginners: We pass the state_manager so this class can tell the rest 
-        of the app when the hotkey is pressed.
         """
         self.state_manager = state_manager
         self.hotkey = hotkey

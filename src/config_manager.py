@@ -5,7 +5,6 @@ This module handles loading and validating configuration settings from config.ya
 It provides a central place to manage all application settings and ensures they
 have sensible defaults if the config file is missing or incomplete.
 
-For beginners: This is like the "settings menu" of our app - it reads the 
 configuration file and provides all the settings to other parts of the program.
 """
 
@@ -27,7 +26,6 @@ def deep_merge_config(default_config: Dict[str, Any], user_config: Dict[str, Any
     Returns:
     - Merged configuration with user values overlaid on defaults
     
-    For beginners: This is like combining two dictionaries where the user's
     settings override the defaults, but missing user settings keep the defaults.
     """
     result = default_config.copy()

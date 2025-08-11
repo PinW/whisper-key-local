@@ -4,9 +4,6 @@ Audio Feedback Test Script
 
 This script tests the file-based audio feedback functionality.
 It shows how to configure and use sound files for recording events.
-
-For beginners: This tests our audio feedback system that plays sound files
-(like .wav files) when recording starts and stops.
 """
 
 import sys
@@ -267,9 +264,6 @@ def interactive_test():
 if __name__ == "__main__":
     """
     This runs when you execute the script directly
-    
-    For beginners: This script helps you understand how the file-based 
-    audio feedback system works before integrating it into the main app.
     """
     print("Windows Whisper App - File-Based Audio Feedback Test")
     print("=" * 60)

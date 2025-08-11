@@ -60,7 +60,6 @@ def error_logging(context: str, logger, print_to_user: bool = True):
         with error_logging("internal cleanup", self.logger, print_to_user=False):
             self._cleanup_resources()
             
-    For beginners: This is a "context manager" - it runs code before and after your
     operation, automatically catching any errors and logging them in a consistent format.
     """
     try:

@@ -5,7 +5,6 @@ Clear Log Tool
 This tool clears the application log file to free up disk space and start
 with a clean log for troubleshooting.
 
-For beginners: This is like emptying your trash can. The app creates a log
 file that records what happens, and this tool clears it when it gets too big
 or you want to start fresh for debugging.
 """

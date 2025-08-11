@@ -5,7 +5,6 @@ Whisper AI Transcription Test Script
 This script tests the Whisper speech-to-text functionality independently.
 Great for learning how AI transcription works!
 
-For beginners: This is like testing a translator before an important meeting - 
 we want to make sure the AI can understand speech and convert it to text correctly.
 """
 
@@ -126,7 +125,6 @@ def test_different_model_sizes():
     """
     Test different Whisper model sizes to compare speed vs accuracy
     
-    For beginners: This shows the tradeoff between speed and accuracy.
     Bigger models are more accurate but slower.
     """
     print("\n=== Model Size Comparison Test ===")

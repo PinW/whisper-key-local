@@ -4,9 +4,6 @@ Main application entry point for Windows Whisper Speech-to-Text App
 
 This is the main file that starts our application. It coordinates all the 
 different components (audio recording, hotkeys, transcription, etc.) working together.
-
-For beginners: This file is like the "conductor" of an orchestra - it doesn't 
-play music itself, but tells all the musicians (our modules) when to start and stop.
 """
 
 import logging

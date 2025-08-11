@@ -4,7 +4,6 @@ Clipboard Management Module
 This module handles copying text to the system clipboard and pasting it into 
 the currently active application.
 
-For beginners: This is like the "Ctrl+C" and "Ctrl+V" functionality - it takes 
 the transcribed text and automatically pastes it wherever your cursor is.
 """
 
@@ -88,7 +87,6 @@ class ClipboardManager:
         Returns:
         - True if successful, False if failed
         
-        For beginners: This is like pressing Ctrl+C - it puts the text into 
         the system's memory so it can be pasted elsewhere.
         """
         if not text:
@@ -112,7 +110,6 @@ class ClipboardManager:
         Returns:
         - The text from clipboard, or None if clipboard is empty/inaccessible
         
-        For beginners: This is like pressing Ctrl+V - it gets whatever text 
         is currently stored in the system's clipboard memory.
         """
         try:

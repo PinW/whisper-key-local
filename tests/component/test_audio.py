@@ -5,7 +5,6 @@ Audio Recording Test Script
 This script tests the audio recording functionality independently.
 It's great for learning how the AudioRecorder class works!
 
-For beginners: This is like testing a microphone before a concert - we want 
 to make sure it can record sound properly before using it in the main app.
 """
 
@@ -141,7 +140,6 @@ if __name__ == "__main__":
     """
     This runs when you execute the script directly
     
-    For beginners: __name__ == "__main__" is a Python idiom that means 
     "only run this code if this file is executed directly, not imported"
     """
     print("Windows Whisper App - Audio Recording Test")

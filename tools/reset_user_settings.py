@@ -6,7 +6,6 @@ This tool helps with testing by deleting the user_settings.yaml file from the
 Windows AppData directory. This forces the app to recreate user settings from
 the default config.yaml on the next run.
 
-For beginners: Think of this as a "factory reset" for your app's settings.
 It removes your personal settings so the app will start fresh next time.
 """
 

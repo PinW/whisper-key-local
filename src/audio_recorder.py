@@ -2,10 +2,6 @@
 Audio Recording Module
 
 This module handles recording audio from your microphone using the sounddevice library.
-Think of it like a digital tape recorder that can start and stop on command.
-
-For beginners: This is where we capture the sound from your microphone and convert 
-it into data that our computer can process.
 """
 
 import logging
@@ -31,8 +27,6 @@ class AudioRecorder:
         - channels: 1 for mono (single channel), 2 for stereo
         - dtype: Audio data type ("float32", "int16", etc.)
         - max_duration: Maximum recording length in seconds (0 = unlimited)
-        
-        For beginners: Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance.
         """
         self.sample_rate = 16000  # Fixed for Whisper and TEN VAD compatibility
         self.channels = channels
@@ -93,9 +87,6 @@ class AudioRecorder:
         
         Returns:
         - numpy array of audio data, or None if no recording was made
-        
-        For beginners: numpy arrays are like super-powered lists that are great 
-        for handling large amounts of numerical data (like audio samples).
         """
         if not self.is_recording:
             self.logger.warning("Not currently recording!")

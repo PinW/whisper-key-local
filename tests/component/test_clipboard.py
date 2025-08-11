@@ -3,10 +3,6 @@
 Clipboard Management Test Script
 
 This script tests the clipboard functionality independently.
-Perfect for learning how our ClipboardManager class works!
-
-For beginners: This is like testing a copy-paste function before using it 
-in a real application - we want to make sure it can handle text properly.
 """
 
 import sys

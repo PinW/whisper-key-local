@@ -3,10 +3,6 @@
 Global Hotkey Test Script
 
 This script tests the global hotkey functionality independently.
-Perfect for learning how global hotkeys work across your system!
-
-For beginners: This is like testing a universal remote control - it should 
-work no matter what application you're currently using on your computer.
 """
 
 import sys
@@ -19,10 +15,6 @@ from src.hotkey_listener import HotkeyListener
 class MockStateManager:
     """
     A fake StateManager for testing hotkeys
-    
-    For beginners: Since our hotkey listener needs a StateManager to work with,
-    but we're testing hotkeys in isolation, we create a "mock" (fake) version
-    that just prints messages instead of actually recording/transcribing.
     """
     
     def __init__(self):

@@ -3,9 +3,6 @@ Application State Manager
 
 This module coordinates all the other components and manages the overall state 
 of our application. It's like the "conductor" that tells each part when to work.
-
-For beginners: Think of this as the "boss" of our app - it decides when to 
-start recording, when to transcribe, and when to paste the results.
 """
 
 import logging
@@ -42,9 +39,6 @@ class StateManager:
         - system_tray: Optional SystemTray instance for status display
         - config_manager: Optional ConfigManager instance for settings management
         - audio_feedback: Optional AudioFeedback instance for recording sound notifications
-        
-        For beginners: We pass in all the other components so this class can 
-        control them and make them work together.
         """
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
@@ -76,9 +70,6 @@ class StateManager:
         
         Args:
             state (str): The state to set ("idle", "recording", "processing")
-            
-        For beginners: This helper method ensures we always check if the system
-        tray exists before trying to update it, avoiding crashes if tray is disabled.
         """
         if self.system_tray:
             self.system_tray.update_state(state)
@@ -96,9 +87,6 @@ class StateManager:
         
         Returns:
             bool: True if recording was stopped or stop was attempted, False if not currently recording
-        
-        For beginners: This is a "helper method" - it does one specific job that multiple
-        other methods need, so we put the logic here to avoid repeating ourselves.
         """
         current_state = self.get_current_state()
         current_recording = self.audio_recorder.get_recording_status()
@@ -122,9 +110,6 @@ class StateManager:
         This is the main workflow controller:
         - If not recording: start recording
         - If recording: stop recording and process the audio
-        
-        For beginners: "Toggle" means switch between two states - like a light 
-        switch that turns on when off, and off when on.
         """
         # Try to stop if recording, get whether we were recording
         was_recording = self._attempt_stop_if_recording("toggle_recording", use_auto_enter=False)
@@ -154,7 +139,6 @@ class StateManager:
         - use_auto_enter: If True, enhanced stop behavior (force auto-paste + ENTER)
                          If False, standard stop behavior (respect auto-paste config)
         
-        For beginners: Unlike toggle_recording(), this only stops - it won't start recording.
         """
         # Try to stop if recording
         was_recording = self._attempt_stop_if_recording("stop_recording", use_auto_enter=use_auto_enter)
@@ -259,9 +243,6 @@ class StateManager:
         - transcribed_text: The text to deliver to the user
         - delivery_mode: How to deliver the text ("auto_enter", "auto_paste", "clipboard_only")
         - use_auto_enter: Whether this is from an auto-enter hotkey (for logging/config)
-        
-        For beginners: This is like choosing how to deliver a package - 
-        auto-paste is like delivery to your door, clipboard-only is like pickup.
         """
         paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
         preserve_clipboard = self.clipboard_config.get('preserve_clipboard', False)
@@ -340,9 +321,6 @@ class StateManager:
         Parameters:
         - use_auto_enter: If True, force auto-paste and send ENTER key regardless of config
                          If False, respect the auto-paste configuration setting
-        
-        For beginners: This is like an assembly line - each step processes 
-        the output from the previous step to deliver speech as text.
         """
         try:
             # Atomic state transition to processing

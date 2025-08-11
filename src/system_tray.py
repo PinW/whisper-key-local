@@ -5,7 +5,6 @@ This module handles the system tray icon functionality for our speech-to-text ap
 It shows the current status (idle, recording, processing) and provides a context menu
 for quick access to app controls.
 
-For beginners: A system tray icon is that small icon you see in the bottom-right 
 corner of Windows (next to the clock). It lets you know the app is running and 
 gives you quick access to controls without opening a main window.
 """
@@ -54,7 +53,6 @@ class SystemTray:
         - config: Configuration dictionary for tray settings
         - config_manager: Reference to ConfigManager for reading/writing settings
         
-        For beginners: We pass in the state_manager so this tray can know what 
         the app is currently doing and show the right icon. We also pass the
         config_manager so we can read and change user settings from the menu.
         """
