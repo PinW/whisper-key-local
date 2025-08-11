@@ -2,7 +2,7 @@
 
 @documentation/project-index.md
 
-- Run `py-build/builder.py` to build
+- Build: `powershell.exe -ExecutionPolicy Bypass -File /home/pin/whisper-key-local/py-build/build-windows.ps1`
 - DO NOT TEST: we develop in WSL, but the app is run from windows
 - Ask the user to test for you if needed
 - Don't commit before i test
