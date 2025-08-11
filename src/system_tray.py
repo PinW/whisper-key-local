@@ -77,21 +77,23 @@ class SystemTray:
         self.current_state = "idle"
         self.thread = None
         
-        # Check if system tray is available
+        # Check if system tray is available and print status
+        if not self.tray_config.get('enabled', True):
+            self.logger.info("System tray disabled in configuration")
+            print("   ✗ System tray disabled in configuration")
+            return
+            
         if not TRAY_AVAILABLE:
             self.logger.warning("System tray not available - pystray or Pillow not installed")
-            self.logger.debug(f"TRAY_AVAILABLE = {TRAY_AVAILABLE}, pystray = {pystray}, Image = {Image}")
+            print("   ⚠️ System tray not available")
             return
-        
-        self.logger.debug("System tray dependencies are available")
         
         # Load tray icons
         try:
-            self.logger.debug("Loading tray icons...")
             self._load_icons()
-            self.logger.debug(f"Loaded {len(self.icons)} icons: {list(self.icons.keys())}")
         except Exception as e:
             self.logger.error(f"Failed to load tray icons: {e}")
+            print(f"   ⚠️ System tray initialization failed: {e}")
             raise
         
         self.logger.info("SystemTray initialized successfully")
@@ -490,12 +492,12 @@ class SystemTray:
             
             self.is_running = True
             self.logger.info("System tray started successfully")
+            print("   ✓ System tray icon is running...")
             return True
             
         except Exception as e:
             self.logger.error(f"Failed to start system tray: {e}")
-            import traceback
-            self.logger.error(f"Traceback: {traceback.format_exc()}")
+            print("   ⚠️ System tray failed to start")
             return False
     
     def _run_tray(self):

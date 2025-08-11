@@ -49,6 +49,37 @@ def setup_config_manager():
     
     return config_manager
 
+def setup_audio_recorder(audio_config):
+    return AudioRecorder(
+        channels=audio_config['channels'],
+        dtype=audio_config['dtype'],
+        max_duration=audio_config['max_duration']
+    )
+
+def setup_whisper_engine(whisper_config):
+    return WhisperEngine(
+        model_size=whisper_config['model_size'],
+        device=whisper_config['device'],
+        compute_type=whisper_config['compute_type'],
+        language=whisper_config['language'],
+        beam_size=whisper_config['beam_size'],
+        vad_enabled=whisper_config['vad_precheck_enabled']
+    )
+
+def setup_clipboard_manager(clipboard_config):
+    return ClipboardManager(
+        key_simulation_delay=clipboard_config['key_simulation_delay'],
+        auto_paste=clipboard_config['auto_paste'],
+        paste_method=clipboard_config['paste_method']
+    )
+
+def setup_audio_feedback(audio_feedback_config):
+    return AudioFeedback(
+        enabled=audio_feedback_config['enabled'],
+        start_sound=audio_feedback_config['start_sound'],
+        stop_sound=audio_feedback_config['stop_sound']
+    )
+
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
     # Stop hotkey listener first to prevent new events during shutdown
     try:
@@ -83,55 +114,11 @@ def main():
         clipboard_config = config_manager.get_clipboard_config()
         tray_config = config_manager.get_system_tray_config()
         audio_feedback_config = config_manager.get_audio_feedback_config()
-        
-        logger.info("Initializing application components...")
-        
-        audio_recorder = AudioRecorder(
-            channels=audio_config['channels'],
-            dtype=audio_config['dtype'],
-            max_duration=audio_config['max_duration']
-        )
-        
-        whisper_engine = WhisperEngine(
-            model_size=whisper_config['model_size'],
-            device=whisper_config['device'],
-            compute_type=whisper_config['compute_type'],
-            language=whisper_config['language'],
-            beam_size=whisper_config['beam_size'],
-            vad_enabled=whisper_config['vad_precheck_enabled']
-        )
-        
-        clipboard_manager = ClipboardManager(config_manager)
-              
-        if clipboard_config.get('auto_paste', False):
-            paste_method = clipboard_config.get('paste_method', 'key_simulation')
-            method_name = "key simulation (CTRL+V)" if paste_method == "key_simulation" else "Windows API"
-            print(f"   ✓ Auto-paste is ENABLED using {method_name}")
-        else:
-            print("   ✗ Auto-paste is DISABLED - paste manually with Ctrl+V")
-
-        audio_feedback = None
-        if audio_feedback_config['enabled']:
-            try:
-                logger.debug("Initializing audio feedback...")
-                audio_feedback = AudioFeedback(audio_feedback_config)
-                
-                status = audio_feedback.get_status()
-                if status['enabled']:
-                    logger.info("Audio feedback initialized successfully")
-                    print(f"   ✓ Audio feedback enabled...")
-                else:
-                    logger.warning("Audio feedback not available (likely not on Windows)")
-                    print("   ⚠️ Audio feedback not available (likely not on Windows)")
-                    audio_feedback = None
-                    
-            except Exception as e:
-                logger.error(f"Failed to initialize audio feedback: {e}")
-                print(f"   ⚠️ Audio feedback initialization failed: {e}")
-                audio_feedback = None
-        else:
-            logger.info("Audio feedback disabled in configuration")
-            print("   ✗ Audio feedback disabled in configuration")
+               
+        audio_recorder = setup_audio_recorder(audio_config)      
+        whisper_engine = setup_whisper_engine(whisper_config)
+        clipboard_manager = setup_clipboard_manager(clipboard_config)
+        audio_feedback = setup_audio_feedback(audio_feedback_config)
 
         # Create system tray object but don't start-- needs state manager
         system_tray = None 

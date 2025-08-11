@@ -36,30 +36,30 @@ class ClipboardManager:
     This class can put text onto the clipboard and retrieve text from it.
     """
     
-    def __init__(self, config_manager=None):
+    def __init__(self, key_simulation_delay=0.05, auto_paste=False, paste_method='key_simulation'):
         """
         Initialize the clipboard manager
         
         We'll test clipboard access when we create this object to make sure it works.
         """
         self.logger = logging.getLogger(__name__)
-        self.config_manager = config_manager
+        self.key_simulation_delay = key_simulation_delay
+        self.auto_paste = auto_paste
+        self.paste_method = paste_method
         self._configure_pyautogui_timing()
         self._test_clipboard_access()
+        self._print_status()
     
     def _configure_pyautogui_timing(self):
         """Configure PyAutoGUI timing based on user settings"""
         if not KEY_SIMULATION_AVAILABLE:
             return
             
-        if self.config_manager:
-            try:
-                hotkey_config = self.config_manager.get_hotkey_config()
-                key_simulation_delay = hotkey_config.get('key_simulation_delay', 0.05)
-                pyautogui.PAUSE = key_simulation_delay
-                self.logger.info(f"Set PyAutoGUI PAUSE to {key_simulation_delay}s from user config")
-            except Exception as e:
-                self.logger.warning(f"Could not get config, using default PyAutoGUI timing: {e}")
+        try:
+            pyautogui.PAUSE = self.key_simulation_delay
+            self.logger.info(f"Set PyAutoGUI PAUSE to {self.key_simulation_delay}s from user config")
+        except Exception as e:
+            self.logger.warning(f"Could not configure PyAutoGUI timing: {e}")
     
     def _test_clipboard_access(self):
         """
@@ -76,6 +76,14 @@ class ClipboardManager:
         except Exception as e:
             self.logger.error(f"Clipboard access test failed: {e}")
             raise RuntimeError("Could not access system clipboard. Please check permissions.")
+    
+    def _print_status(self):
+        """Print the clipboard manager's configuration status"""
+        if self.auto_paste:
+            method_name = "key simulation (CTRL+V)" if self.paste_method == "key_simulation" else "Windows API"
+            print(f"   ✓ Auto-paste is ENABLED using {method_name}")
+        else:
+            print("   ✗ Auto-paste is DISABLED - paste manually with Ctrl+V")
     
     def copy_text(self, text: str) -> bool:
         """

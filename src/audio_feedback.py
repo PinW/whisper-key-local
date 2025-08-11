@@ -27,34 +27,31 @@ class AudioFeedback:
     of recording state changes.
     """
     
-    def __init__(self, config: dict):
+    def __init__(self, enabled=True, start_sound='', stop_sound=''):
         """
         Initialize the audio feedback system
         
         Parameters:
-        - config: Dictionary containing audio feedback configuration
-        
-        Expected config structure:
-        {
-            'enabled': True,
-            'start_sound': 'path/to/start.wav',
-            'stop_sound': 'path/to/stop.wav'
-        }
+        - enabled: Whether audio feedback is enabled
+        - start_sound: Path to the start sound file
+        - stop_sound: Path to the stop sound file
         """
-        self.config = config
-        self.enabled = config.get('enabled', True)
+        self.config = {'enabled': enabled, 'start_sound': start_sound, 'stop_sound': stop_sound}
+        self.enabled = enabled
         self.logger = logging.getLogger(__name__)
         
         # Sound file paths - resolve relative paths for PyInstaller compatibility
-        self.start_sound_path = resolve_asset_path(config.get('start_sound', ''))
-        self.stop_sound_path = resolve_asset_path(config.get('stop_sound', ''))
+        self.start_sound_path = resolve_asset_path(start_sound)
+        self.stop_sound_path = resolve_asset_path(stop_sound)
         
-        # Check if we can play sounds
+        # Check if we can play sounds and print status
         if not WINSOUND_AVAILABLE:
             self.logger.warning("winsound module not available - audio feedback disabled")
             self.enabled = False
+            print("   ⚠️ Audio feedback not available (likely not on Windows)")
         elif not self.enabled:
             self.logger.info("Audio feedback disabled by configuration")
+            print("   ✗ Audio feedback disabled")
         else:
             self.logger.info("Audio feedback enabled")
             self.logger.debug(f"Start sound: {self.start_sound_path}")
@@ -62,6 +59,7 @@ class AudioFeedback:
             
             # Validate sound files exist
             self._validate_sound_files()
+            print("   ✓ Audio feedback enabled...")
     
     def _validate_sound_files(self):
         """

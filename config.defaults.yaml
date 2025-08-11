@@ -71,9 +71,6 @@ hotkey:
   # Enable/disable the auto-ENTER hotkey functionality
   auto_enter_enabled: true
   
-  # Delay for key simulation operations (seconds)
-  # Small delay ensures operations complete reliably
-  key_simulation_delay: 0.05
   
   # Stop recording with just the first modifier key
   # If enabled, you can stop recording by pressing just the first modifier 
@@ -128,6 +125,10 @@ clipboard:
   # true = save current clipboard, paste transcription, then restore original clipboard
   # false = replace clipboard with transcription (default behavior)
   preserve_clipboard: true
+  
+  # Delay for key simulation operations (seconds)
+  # Small delay ensures operations complete reliably
+  key_simulation_delay: 0.05
 
 # =============================================================================
 # LOGGING CONFIGURATION
