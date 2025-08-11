@@ -62,9 +62,12 @@ whisper-key-local/
 │
 ├── documentation/              # Project documentation
 │   ├── project-index.md        # This comprehensive index (YOU ARE HERE)
-│   ├── roadmap.md              # Feature roadmap & user stories
 │   ├── plan-execution.md       # Plan execution instructions
 │   ├── plan-writing.md         # Planning documentation
+│   ├── roadmap/                # Feature roadmap & user stories
+│   │   ├── roadmap.md          # Active feature roadmap
+│   │   └── completed.md        # Completed user stories
+│   ├── research/               # Research documentation
 │   └── implementation-plans/   # Technical implementation plan .md files
 │
 └── .github/                    # GitHub Actions workflows
