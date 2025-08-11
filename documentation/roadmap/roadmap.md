@@ -6,7 +6,6 @@
 ## Next
 - As a *developer*, I want **version management** so that I can release the app
 - As a *deveoper*, I want **github release** so that users can download a zip package
-- As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 - As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
 - As a *user*, I want **1 instance running limit** so I won't double transcribe
 - As a *user*, I want **audio recording length** so I can get a feel for transcription times
@@ -21,6 +20,7 @@
 - As a *user*, I want **automatic updates** to get new features
 
 ### GUI
+- As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 - As a *user*, I want a **GUI interface** so that I can change settings without editing files:
 - Settings
     - Hotkey management
