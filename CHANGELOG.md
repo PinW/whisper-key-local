@@ -2,6 +2,18 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.1.3] - 2025-08-11
+
+### Added
+- Comprehensive CHANGELOG.md for project releases
+- Version bump command for Claude AI assistant
+
+### Changed
+- Updated build instructions and removed redundant builder.py
+
+### Fixed
+- Single instance detector exit error in built executable
+
 ## [0.1.2] - 2025-08-11
 
 ### Added
