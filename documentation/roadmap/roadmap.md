@@ -1,8 +1,14 @@
 # Windows Whisper Speech-to-Text App - Roadmap
 
+## Bugs
+- Executable exits when starting from start menu, but not when opening from folder
+
 ## Next
 - As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 - As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
+- As a *user*, I want **1 instance running limit** so I won't double transcribe
+- As a *user*, I want **audio recording length** so I can get a feel for transcription times
+- As a *tester*, I want **PyPi** so I can easily install the app
 
 ### Recording Modes
 - As a *user*, I want **recording mode option** (hold key vs start/stop) so that I can choose my preferred interaction style
