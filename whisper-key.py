@@ -37,18 +37,6 @@ def setup_logging(config_manager: ConfigManager):
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
 
-def setup_config_manager():
-    print("📁 Loading configuration...")
-    config_manager = ConfigManager()
-    
-    if config_manager.use_user_settings:
-        settings_path = config_manager.get_user_settings_path()
-        print(f"   ✓ Using user settings from: {settings_path}")
-    else:
-        print(f"   ✗ Using default settings from: {config_manager.config_path}")
-    
-    return config_manager
-
 def setup_audio_recorder(audio_config):
     return AudioRecorder(
         channels=audio_config['channels'],
@@ -127,7 +115,7 @@ def main():
     print("Starting Whisper Key... Windows Whisper Speech-to-Text App...")
     
     try:
-        config_manager = setup_config_manager()
+        config_manager = ConfigManager()
         setup_logging(config_manager)
         logger = logging.getLogger(__name__)
         

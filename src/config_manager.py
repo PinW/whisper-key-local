@@ -82,6 +82,9 @@ class ConfigManager:
         # Validate configuration
         self._validate_config()
         
+        # Print status for user
+        self._print_config_status()
+        
         self.logger.info("Configuration loaded successfully")
     
     def _get_user_settings_path(self) -> str:
@@ -378,6 +381,16 @@ class ConfigManager:
                 elif not (min_val <= value <= max_val):
                     self.logger.warning(f"Invalid {description}: {value} (must be {min_val}-{max_val}), removing from config")
                     del advanced_config[field]
+    
+    def _print_config_status(self):
+        """Print configuration loading status for user feedback"""
+        print("📁 Loading configuration...")
+        
+        if self.use_user_settings:
+            settings_path = self.get_user_settings_path()
+            print(f"   ✓ Using user settings from: {settings_path}")
+        else:
+            print(f"   ✗ Using default settings from: {self.config_path}")
     
     # Getter methods for easy access to configuration sections
     

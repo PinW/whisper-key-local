@@ -34,3 +34,9 @@ This branch is dedicated to reading and understanding my own codebase - every co
 ## Completed
 - [x] Removed all "For beginners:" comments throughout codebase
 - [x] Cleaned up orphaned text fragments left after comment removal
+- [x] Refactored main function with consistent setup patterns
+- [x] Moved status printing to component constructors for better encapsulation
+- [x] Fixed SystemTray availability handling to prevent incomplete objects
+- [x] Resolved circular dependency between SystemTray and StateManager
+- [x] Made StateManager initialization explicit to show architectural importance
+- [x] Moved key_simulation_delay from hotkey config to clipboard config
