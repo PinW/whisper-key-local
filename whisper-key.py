@@ -12,7 +12,6 @@ play music itself, but tells all the musicians (our modules) when to start and s
 import logging
 import os
 import time
-import warnings
 from src.config_manager import ConfigManager
 from src.audio_recorder import AudioRecorder
 from src.hotkey_listener import HotkeyListener
@@ -21,6 +20,7 @@ from src.clipboard_manager import ClipboardManager
 from src.state_manager import StateManager
 from src.system_tray import SystemTray
 from src.audio_feedback import AudioFeedback
+from src.single_instance import ensure_single_instance
 from src.utils import beautify_hotkey
 
 def setup_logging(config_manager: ConfigManager):
@@ -281,4 +281,8 @@ def main():
 if __name__ == "__main__":
     # This line means "only run main() if this file is executed directly"
     # It's a Python convention you'll see everywhere
+    
+    # Check for single instance before doing anything else
+    mutex_handle = ensure_single_instance()
+    
     main()
