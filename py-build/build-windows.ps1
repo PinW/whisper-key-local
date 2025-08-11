@@ -106,7 +106,7 @@ Write-Host "Distribution size: $Size MB" -ForegroundColor Green
 
 # Create compressed distribution
 Write-Host "Creating compressed distribution..." -ForegroundColor Yellow
-$ZipFileName = "$AppName-v$AppVersion.zip"
+$ZipFileName = "$AppName-v$AppVersion-windows.zip"
 $ZipPath = Join-Path $DistDir $ZipFileName
 $AppDir = Join-Path $DistDir $AppName
 
