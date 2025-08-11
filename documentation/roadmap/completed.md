@@ -1,5 +1,9 @@
 # Windows Whisper Speech-to-Text App - Completed Stories
 
+- As a *deveoper*, I want **github release** so that users can download a zip package
+- As a *developer*, I want **CHANGELOG.md** so I can track progress across releases
+- As a *developer*, I want **version management** so that I can release the app
+- As a *user*, I want **1 instance running limit** so I won't double transcribe
 - As a *user*, I want **VAD pass** so silences aren't transformed into 20 word hallucination
 - As a *user*, I want **better default model** so I won't get low quality STT as 1st xp
 - As a *user*, I want **auto-send** so I don't need to hit ENTER for chat/LLM use cases

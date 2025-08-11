@@ -4,11 +4,8 @@
 ## Bugs
 
 ## Next
-- As a *developer*, I want **version management** so that I can release the app
-- As a *deveoper*, I want **github release** so that users can download a zip package
-- As a *developer*, I want **CHANGELOG.md** so I can track progress across releases
+- As a *developer*, I want **beginner comments removed** so that the code is forced to be readable and can be read easily
 - As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
-- As a *user*, I want **1 instance running limit** so I won't double transcribe
 - As a *user*, I want **audio recording length** so I can get a feel for transcription times
 - As a *tester*, I want **PyPi** so I can easily install the app
 
