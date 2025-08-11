@@ -10,6 +10,7 @@ play music itself, but tells all the musicians (our modules) when to start and s
 """
 
 import logging
+import os
 import time
 import warnings
 from src.config_manager import ConfigManager
@@ -60,6 +61,11 @@ def main():
     """
     Main application function that ties everything together
     """
+    # Fix working directory for Start Menu compatibility
+    # Change to the directory containing this script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(script_dir)
+    
     print("Starting Whisper Key... Windows Whisper Speech-to-Text App...")
     
     try:
