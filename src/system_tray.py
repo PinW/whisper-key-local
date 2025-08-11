@@ -76,27 +76,26 @@ class SystemTray:
         self.is_running = False
         self.current_state = "idle"
         self.thread = None
+        self.available = True
         
         # Check if system tray is available and print status
         if not self.tray_config.get('enabled', True):
             self.logger.info("System tray disabled in configuration")
             print("   ✗ System tray disabled in configuration")
-            return
-            
-        if not TRAY_AVAILABLE:
+            self.available = False
+        elif not TRAY_AVAILABLE:
             self.logger.warning("System tray not available - pystray or Pillow not installed")
             print("   ⚠️ System tray not available")
-            return
-        
-        # Load tray icons
-        try:
-            self._load_icons()
-        except Exception as e:
-            self.logger.error(f"Failed to load tray icons: {e}")
-            print(f"   ⚠️ System tray initialization failed: {e}")
-            raise
-        
-        self.logger.info("SystemTray initialized successfully")
+            self.available = False
+        else:
+            # Load tray icons
+            try:
+                self._load_icons()
+                self.logger.info("SystemTray initialized successfully")
+            except Exception as e:
+                self.logger.error(f"Failed to load tray icons: {e}")
+                print(f"   ⚠️ System tray initialization failed: {e}")
+                self.available = False
     
     def _load_icons(self):
         """
@@ -434,9 +433,8 @@ class SystemTray:
         """
         self.logger.debug("SystemTray.start() called")
         
-        if not TRAY_AVAILABLE:
-            self.logger.warning("Cannot start system tray - dependencies not available")
-            self.logger.debug(f"TRAY_AVAILABLE = {TRAY_AVAILABLE}")
+        if not self.available:
+            self.logger.debug("SystemTray not available - skipping start")
             return False
         
         if self.is_running:
@@ -544,7 +542,7 @@ class SystemTray:
         
         Returns True if pystray and Pillow are installed and working.
         """
-        return TRAY_AVAILABLE
+        return self.available
     
     def get_status_info(self) -> dict:
         """

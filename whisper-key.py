@@ -80,6 +80,29 @@ def setup_audio_feedback(audio_feedback_config):
         stop_sound=audio_feedback_config['stop_sound']
     )
 
+def setup_system_tray(tray_config, hotkey_config, config_manager, state_manager=None):
+    return SystemTray(
+        state_manager=state_manager,
+        tray_config=tray_config,
+        hotkey_config=hotkey_config,
+        config_manager=config_manager
+    )
+
+def startup_system_tray(system_tray, state_manager):
+    system_tray.state_manager = state_manager
+    if system_tray.is_available():
+        system_tray.start()
+    return system_tray
+
+def setup_hotkey_listener(hotkey_config, state_manager):
+    return HotkeyListener(
+        state_manager=state_manager,
+        hotkey=hotkey_config['combination'],
+        auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
+        auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
+        stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False)
+    )
+
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
     # Stop hotkey listener first to prevent new events during shutdown
     try:
@@ -120,41 +143,8 @@ def main():
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
-        # Create system tray object but don't start-- needs state manager
-        system_tray = None 
-        if tray_config['enabled']:
-            try:
-                logger.debug("Initializing system tray...")
-                logger.debug(f"Tray config: {tray_config}")
-                logger.debug(f"Hotkey config: {hotkey_config}")
-                logger.debug(f"Config manager type: {type(config_manager)}")
-                
-                logger.debug(f"Creating SystemTray with tray_config: {tray_config} and hotkey_config: {hotkey_config}")
-                
-                system_tray = SystemTray(
-                    state_manager=None, 
-                    tray_config=tray_config,
-                    hotkey_config=hotkey_config,
-                    config_manager=config_manager
-                )
-                logger.debug("SystemTray object created")
-                
-                if system_tray.is_available():
-                    logger.info("System tray initialized successfully")
-                else:
-                    logger.warning("System tray dependencies not available")
-                    print("   ⚠️ System tray not available")
-                    system_tray = None
-                    
-            except Exception as e:
-                logger.error(f"Failed to initialize system tray: {e}")
-                import traceback
-                logger.error(f"SystemTray initialization traceback: {traceback.format_exc()}")
-                print(f"   ⚠️ System tray initialization failed: {e}")
-                system_tray = None
-        else:
-            logger.info("System tray disabled in configuration")
-            print("   ✗ System tray disabled in configuration")
+        # Create system tray object but don't start: it needs state manager.
+        system_tray = setup_system_tray(tray_config, hotkey_config, config_manager)
         
         state_manager = StateManager(
             audio_recorder=audio_recorder,
@@ -166,37 +156,10 @@ def main():
             audio_feedback=audio_feedback
         )
         
-        hotkey_listener = HotkeyListener(
-            state_manager=state_manager,
-            hotkey=hotkey_config['combination'],
-            auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
-            auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
-            stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False)
-        )
+        hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
         
-        # Start system tray now that state manager is up
-        if system_tray:
-            try:
-                logger.debug("Setting state_manager reference on system_tray")
-                system_tray.state_manager = state_manager
-                logger.debug("Starting system tray...")
-                
-                tray_started = system_tray.start()
-                if tray_started:
-                    logger.info("System tray started successfully")
-                    print("   ✓ System tray icon is running...")
-                else:
-                    logger.warning("Failed to start system tray")
-                    print("   ⚠️ System tray failed to start")
-                    
-            except Exception as e:
-                logger.error(f"Exception during system tray start: {e}")
-                import traceback
-                logger.error(f"SystemTray start traceback: {traceback.format_exc()}")
-                print(f"   ⚠️ System tray start failed with exception: {e}")
+        startup_system_tray(system_tray, state_manager) # Resolves circular dependency
         
-        logger.info("All components initialized successfully!")
-
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['combination'])} to start recording.")        
         print("Press Ctrl+C to quit.")
         
