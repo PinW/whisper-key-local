@@ -11,7 +11,7 @@ from src.clipboard_manager import ClipboardManager
 from src.state_manager import StateManager
 from src.system_tray import SystemTray
 from src.audio_feedback import AudioFeedback
-from src.single_instance import ensure_single_instance
+from src.instance_manager import guard_against_multiple_instances
 from src.utils import beautify_hotkey
 
 def setup_logging(config_manager: ConfigManager):
@@ -236,7 +236,6 @@ def main():
             pass  # StateManager may not be initialized if error occurred early
 
 if __name__ == "__main__":
-    # Check for single instance before doing anything else
-    mutex_handle = ensure_single_instance()
+    guard_against_multiple_instances()
     
     main()

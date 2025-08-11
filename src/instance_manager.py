@@ -13,7 +13,7 @@ import win32gui
 
 logger = logging.getLogger(__name__)
 
-def ensure_single_instance(app_name: str = "WhisperKeyLocal"):
+def guard_against_multiple_instances(app_name: str = "WhisperKeyLocal"):
     """
     Ensure only one instance is running. If duplicate detected, focus existing and exit.
     
