@@ -1,9 +1,11 @@
 # Windows Whisper Speech-to-Text App - Roadmap
+@completed.md
 
 ## Bugs
-- Executable exits when starting from start menu, but not when opening from folder
 
 ## Next
+- As a *developer*, I want **version management** so that I can release the app
+- As a *deveoper*, I want **github release** so that users can download a zip package
 - As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 - As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
 - As a *user*, I want **1 instance running limit** so I won't double transcribe
@@ -36,8 +38,8 @@
 - As a *user* I want **voice API** so I can do more than just transcribe voice
 - As a *user* I want **voice commands** so I can quickly activate tasks
 
-### Development Infrastructure
-- **[uv Migration]**(implementation-plans/uv-migration-2025-01-29.md): Migrate from pip to uv for faster dependency management
+### Technical
+- As a *developer* I want a **simplified config manager** so that DHH won't cry
 
 ### Learning & Code Exploration
 - Try something out with **Python decorators** - explore using decorators for timing, caching, or retry logic in the codebase
