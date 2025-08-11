@@ -5,6 +5,7 @@ Simple, clean single-instance detection using Windows mutex.
 """
 
 import logging
+import sys
 import time
 import win32api
 import win32event
@@ -82,4 +83,4 @@ def _show_duplicate_message_and_exit():
         time.sleep(1)
     
     print("\nGoodbye!")
-    exit(0)
+    sys.exit(0)
