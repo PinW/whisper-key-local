@@ -37,6 +37,20 @@ def setup_logging(config_manager: ConfigManager):
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
 
+def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
+    # Stop hotkey listener first to prevent new events during shutdown
+    try:
+        if 'hotkey_listener' in locals() and hotkey_listener.is_active():
+            logger.info("Stopping hotkey listener...")
+            hotkey_listener.stop_listening()
+    except Exception as ex:
+        logger.error(f"Error stopping hotkey listener: {ex}")
+    
+    try:
+        state_manager.shutdown()
+    except:
+        pass  # StateManager may not be initialized if error occurred early
+
 def main():
     # Fix working directory for Start Menu compatibility
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -205,35 +219,12 @@ def main():
         logger.info("Application shutting down...")
         print("\nShutting down application...")
         
-        # Stop hotkey listener first to prevent new events during shutdown
-        try:
-            if 'hotkey_listener' in locals() and hotkey_listener.is_active():
-                logger.info("Stopping hotkey listener...")
-                hotkey_listener.stop_listening()
-        except Exception as e:
-            logger.error(f"Error stopping hotkey listener: {e}")
-        
-        try:
-            state_manager.shutdown()
-        except:
-            pass  # StateManager may not be initialized if error occurred early
-        
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         print(f"Error occurred: {e}")
         
-        # Stop hotkey listener first to prevent new events during shutdown
-        try:
-            if 'hotkey_listener' in locals() and hotkey_listener.is_active():
-                logger.info("Stopping hotkey listener...")
-                hotkey_listener.stop_listening()
-        except Exception as ex:
-            logger.error(f"Error stopping hotkey listener: {ex}")
-        
-        try:
-            state_manager.shutdown()
-        except:
-            pass  # StateManager may not be initialized if error occurred early
+    finally:
+        shutdown_app(hotkey_listener, state_manager, logger)
 
 if __name__ == "__main__":
     guard_against_multiple_instances()
