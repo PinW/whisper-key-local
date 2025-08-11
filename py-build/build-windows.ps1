@@ -2,7 +2,7 @@
 param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$AppName = "whisper-key",
-    [string]$AppVersion = "0.1.1",
+    [string]$AppVersion = "0.1.2",
     [switch]$Clean
 )
 
