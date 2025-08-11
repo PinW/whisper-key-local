@@ -4,10 +4,11 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 
 ## 🎯 Features
 
-- **Global Hotkey**: Press `Ctrl+Tilde` start recording, `Ctrl` to stop
-- **Auto-Paste**: Transcription inserted at your cursor, with optional ENTER keypress
-- **Offline Capable**: Faster-whisper runs locally (no internet needed after setup)
-- **Private Processing**: Voice data never leaves your computer
+- **Global Hotkey**: Press `Ctrl+Win` to start recording, `Ctrl` to stop
+- **Auto-Paste**: Transcription inserted at your cursor via auto-paste
+- **Auto-Send**: Press `Alt` to stop, auto-paste, and auto-send with ENTER keypress
+- **Offline Capable**: No internet required after models downloaded
+- **Local Processing**: Voice data never leaves your computer
 - **Configurable**: Customize hotkeys, model, transcription actions, and audio settings
 
 ## 🚀 Quick Start
@@ -26,6 +27,7 @@ pip install -r requirements.txt
 Or install manually:
 ```powershell
 pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yaml pywin32 pyautogui pystray Pillow hf-xet
+pip install git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
 ```
 
 **Package descriptions:**
@@ -40,6 +42,7 @@ pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yam
 - `pystray` - System tray integration
 - `Pillow` - Image processing for system tray icons
 - `hf-xet` - Cache management for Hugging Face models
+- `ten-vad` - Voice Activity Detection to prevent transcription of silent recordings
 
 ### Running the App
 
@@ -56,7 +59,7 @@ pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yam
      - And much more
 
 3. **Use the App**:
-   - Press your configured hotkey (default: `Ctrl+Tilde`) to start recording
+   - Press your configured hotkey (default: `Ctrl+Win`) to start recording
    - Speak clearly into your microphone  
    - Press the hotkey again to stop recording
    - The transcribed text is automatically pasted into the active application
@@ -72,7 +75,7 @@ pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yam
 - Verify default recording device in Windows sound settings
 
 **Whisper model download slow:**
-- First run downloads the AI model (39MB for tiny model up to 2.9GB for large)
+- First run downloads the AI model (74MB for base model up to 2.9GB for large)
 - Models are cached locally for fast loading
 - Use `python tools/clear_model_cache.py` to reset model cache
 
