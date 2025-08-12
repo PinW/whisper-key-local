@@ -50,7 +50,8 @@ class StateManager:
         currently_recording = self.audio_recorder.get_recording_status()
         
         if currently_recording:
-            self._transcription_pipeline(use_auto_enter)
+            audio_data = self.audio_recorder.stop_recording()
+            self._transcription_pipeline(audio_data, use_auto_enter)
             return True
         else:
             return False
@@ -82,63 +83,41 @@ class StateManager:
             
             self._update_tray_state("recording")
     
-    def _transcription_pipeline(self, use_auto_enter: bool = False):
+    def _transcription_pipeline(self, audio_data, use_auto_enter: bool = False):
         """
         Process the complete transcription pipeline from audio to delivered text
         """
         try:
-            # Atomic state transition to processing
+            # Prevent multiple threads from starting simultaneous transcription
             with self._state_lock:
                 self.is_processing = True
-                self.logger.info(f"State transition: processing={self.is_processing} (starting transcription workflow)")
-            
-            self.logger.info("Stopping recording and processing...")
-            
-            # Play stop sound to notify user recording ended
+
             if self.audio_feedback:
                 self.audio_feedback.play_stop_sound()
-            
-            # Update system tray to show processing state
-            self._update_tray_state("processing")
-            
-            # Step 1: Get the recorded audio
-            audio_data = self.audio_recorder.stop_recording()
-            
+                      
+            print("🎤 Recording stopped! Transcribing...")
+
             if audio_data is None:
-                print("❌ No audio data recorded!")
+                print("   ✗ No audio data recorded!")
                 self.is_processing = False
-                # Reset tray to idle state on failure
-                self._update_tray_state("idle")
                 return
             
-            # Step 2: Transcribe the audio using Whisper AI
-            print("🎤 Recording stopped! Transcribing...")
             transcribed_text = self.whisper_engine.transcribe_audio(audio_data)
             
             if not transcribed_text:
                 print("   ✗ No speech detected, skipping transcription")
                 self.logger.info("Transcription returned empty result")
                 self.is_processing = False
-                # Reset tray to idle state on failure
-                self._update_tray_state("idle")
                 return
             
-            # Step 3: Handle clipboard/paste based on configuration and auto-enter flag
-            auto_paste_enabled = self.clipboard_config.get('auto_paste', False)
-            paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
-            preserve_clipboard = self.clipboard_config.get('preserve_clipboard', False)
+            self._update_tray_state("processing")
+
+            result = self.clipboard_manager.deliver_transcription(
+                transcribed_text, 
+                self.clipboard_config,
+                use_auto_enter=use_auto_enter
+            )
             
-            if use_auto_enter:
-                # Auto-enter hotkey: force auto-paste and send ENTER key
-                result = self.clipboard_manager.deliver_transcription(transcribed_text, "auto_enter", preserve_clipboard, paste_method)
-            elif auto_paste_enabled:
-                # Standard hotkey with auto-paste enabled: respect config
-                result = self.clipboard_manager.deliver_transcription(transcribed_text, "auto_paste", preserve_clipboard, paste_method)
-            else:
-                # Standard hotkey with auto-paste disabled: clipboard only
-                result = self.clipboard_manager.deliver_transcription(transcribed_text, "clipboard_only", preserve_clipboard, paste_method)
-            
-            # Store for future reference if delivery was successful
             if result:
                 self.last_transcription = result
             
@@ -147,13 +126,9 @@ class StateManager:
             print(f"❌ Error processing recording: {e}")
         
         finally:
-            # Atomic state transition and pending model change handling
             with self._state_lock:
-                # Always reset processing flag so we can handle the next recording
                 self.is_processing = False
-                self.logger.info(f"State transition: processing={self.is_processing} (transcription workflow complete)")
                 
-                # Check for pending model change
                 pending_model = self._pending_model_change
                 if pending_model:
                     self._pending_model_change = None
@@ -164,7 +139,6 @@ class StateManager:
                 print(f"🔄 Processing complete, now switching to {pending_model} model...")
                 self._execute_model_change(pending_model)
             else:
-                # Reset tray to idle state when done (only if no model change pending)
                 self._update_tray_state("idle")
     
     def get_application_status(self) -> dict:
@@ -209,18 +183,14 @@ class StateManager:
             time.sleep(duration_seconds)
             
             # Stop and process
-            self._transcription_pipeline()
+            audio_data = self.audio_recorder.stop_recording()
+            self._transcription_pipeline(audio_data)
             
         except Exception as e:
             self.logger.error(f"Manual test failed: {e}")
             print(f"❌ Test failed: {e}")
     
     def shutdown(self):
-        """
-        Clean shutdown of all components
-        
-        This ensures everything is properly closed when the app exits.
-        """
         self.logger.info("Shutting down StateManager...")
         
         # Stop recording if active

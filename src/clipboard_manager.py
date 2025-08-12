@@ -491,19 +491,29 @@ class ClipboardManager:
             self.logger.error(f"Failed to send ENTER key: {e}")
             return False
 
-    def deliver_transcription(self, transcribed_text: str, delivery_mode: str, preserve_clipboard: bool = False, paste_method: str = "key_simulation") -> str:
+    def deliver_transcription(self, transcribed_text: str, clipboard_config: dict, use_auto_enter: bool = False) -> str:
         """
-        Handle transcription delivery based on the specified mode
+        Handle transcription delivery based on configuration
         
         Parameters:
         - transcribed_text: The text to deliver
-        - delivery_mode: "auto_enter", "auto_paste", or "clipboard_only"
-        - preserve_clipboard: Whether to preserve existing clipboard content
-        - paste_method: "key_simulation" or "windows_api"
+        - clipboard_config: Clipboard configuration dictionary
+        - use_auto_enter: Whether to force auto-paste and send ENTER key
         
         Returns:
         - The transcribed text if successful, empty string if failed
         """
+        auto_paste_enabled = clipboard_config.get('auto_paste', False)
+        preserve_clipboard = clipboard_config.get('preserve_clipboard', False)
+        paste_method = clipboard_config.get('paste_method', 'key_simulation')
+        
+        # Determine delivery mode based on configuration
+        if use_auto_enter:
+            delivery_mode = "auto_enter"
+        elif auto_paste_enabled:
+            delivery_mode = "auto_paste"
+        else:
+            delivery_mode = "clipboard_only"
         if delivery_mode == "auto_enter":
             print("🚀 Auto-pasting text and SENDING with ENTER...")
             
