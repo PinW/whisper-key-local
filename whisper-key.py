@@ -12,7 +12,7 @@ from src.state_manager import StateManager
 from src.system_tray import SystemTray
 from src.audio_feedback import AudioFeedback
 from src.instance_manager import guard_against_multiple_instances
-from src.utils import beautify_hotkey
+from src.utils import beautify_hotkey, OptionalComponent
 
 def setup_logging(config_manager: ConfigManager):
     log_config = config_manager.get_logging_config()
@@ -76,11 +76,6 @@ def setup_system_tray(tray_config, hotkey_config, config_manager, state_manager=
         config_manager=config_manager
     )
 
-def startup_system_tray(system_tray, state_manager):
-    system_tray.state_manager = state_manager
-    if system_tray.is_available():
-        system_tray.start()
-    return system_tray
 
 def setup_hotkey_listener(hotkey_config, state_manager):
     return HotkeyListener(
@@ -131,22 +126,22 @@ def main():
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
-        # Create system tray object but don't start: it needs state manager.
-        system_tray = setup_system_tray(tray_config, hotkey_config, config_manager)
-        
         state_manager = StateManager(
             audio_recorder=audio_recorder,
             whisper_engine=whisper_engine,
             clipboard_manager=clipboard_manager,
             clipboard_config=clipboard_config,
-            system_tray=system_tray,
+            system_tray=None,  # OptionalComponent will handle this safely
             config_manager=config_manager,
             audio_feedback=audio_feedback
         )
+        system_tray = setup_system_tray(tray_config, hotkey_config, config_manager, state_manager)
+        state_manager.system_tray = OptionalComponent(system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
         
-        startup_system_tray(system_tray, state_manager) # Resolves circular dependency
+        if system_tray.is_available():
+            system_tray.start()
         
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['combination'])} to start recording.")        
         print("Press Ctrl+C to quit.")
