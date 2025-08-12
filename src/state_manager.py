@@ -33,7 +33,6 @@ class StateManager:
         self.last_transcription = None
         self._pending_model_change = None  # Store pending model change request
         self._state_lock = threading.Lock()  # Thread safety for state operations
-        self._model_loading_progress = ""
 
         self.logger = logging.getLogger(__name__)
         self.logger.info("StateManager initialized with all components")
@@ -142,36 +141,21 @@ class StateManager:
                 self._update_tray_state("idle")
     
     def get_application_status(self) -> dict:
-        """
-        Get current status of all components (for debugging/monitoring)
-        
-        Returns a dictionary with status information about all parts of our app.
-        """
         status = {
             "recording": self.audio_recorder.get_recording_status(),
             "processing": self.is_processing,
             "model_loading": self.is_model_loading,
-            "model_loading_progress": self._model_loading_progress,
             "last_transcription": self.last_transcription,
             "whisper_model_info": self.whisper_engine.get_model_info(),
             "clipboard_info": self.clipboard_manager.get_clipboard_info()
         }
         
-        # Add system tray info if available
         if self.system_tray:
             status["system_tray"] = self.system_tray.get_status_info()
         
         return status
     
     def manual_transcribe_test(self, duration_seconds: int = 5):
-        """
-        Manual test function to record and transcribe (for testing/debugging)
-        
-        This is useful for testing our components without using hotkeys.
-        
-        Parameters:
-        - duration_seconds: How long to record (default 5 seconds)
-        """
         try:
             print(f"🎤 Recording for {duration_seconds} seconds...")
             print("Speak now!")
@@ -190,65 +174,25 @@ class StateManager:
             self.logger.error(f"Manual test failed: {e}")
             print(f"❌ Test failed: {e}")
     
-    def shutdown(self):
-        self.logger.info("Shutting down StateManager...")
-        
-        # Stop recording if active
+    def shutdown(self):        
         if self.audio_recorder.get_recording_status():
             self.audio_recorder.stop_recording()
         
-        # Stop system tray if running
         if self.system_tray:
             self.system_tray.stop()
-        
-        # Note: Other components don't need special shutdown procedures
-        # but we could add them here if needed
-        
-        self.logger.info("StateManager shutdown complete")
     
-    def set_model_loading(self, loading: bool, progress_message: str = ""):
-        """
-        Set the model loading state and update system tray
-        
-        Parameters:
-        - loading: True when starting model load, False when complete
-        - progress_message: Optional progress message to display
-        """
+    def set_model_loading(self, loading: bool):
         with self._state_lock:
             old_state = self.is_model_loading
             self.is_model_loading = loading
-            self._model_loading_progress = progress_message if loading else ""
             
             if old_state != loading:
-                self.logger.info(f"Model loading state changed: {old_state} -> {loading}")
-                if progress_message:
-                    self.logger.info(f"Model loading progress: {progress_message}")
-                
-                # Update system tray state
                 if loading:
-                    # Use processing icon during model loading
                     self._update_tray_state("processing")
                 else:
-                    # Return to idle when model loading complete
                     self._update_tray_state("idle")
-            elif loading and progress_message:
-                # Update progress message without changing state
-                self.logger.debug(f"Model loading progress: {progress_message}")
-    
-    def get_model_loading_progress(self) -> str:
-        """
-        Get the current model loading progress message
-        
-        Returns:
-        - Progress message string, empty if not loading
-        """
-        with self._state_lock:
-            return self._model_loading_progress
     
     def cancel_model_loading(self):
-        """
-        Cancel any ongoing model loading operation
-        """
         if self.is_model_loading:
             self.logger.info("Cancelling ongoing model loading...")
             print("🛑 Cancelling model loading...")
@@ -388,10 +332,10 @@ class StateManager:
             else:
                 # Progress update
                 print(f"🔄 {message}")
-                self.set_model_loading(True, message)
+                self.set_model_loading(True)
         
         try:
-            self.set_model_loading(True, "Preparing model change...")
+            self.set_model_loading(True)
             print(f"🔄 Switching to {new_model_size} model...")
             
             # Use async model loading with progress callbacks
