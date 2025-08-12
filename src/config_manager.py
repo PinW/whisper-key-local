@@ -13,6 +13,7 @@ import logging
 from ruamel.yaml import YAML
 import shutil
 from typing import Dict, Any, Optional
+from .utils import resolve_asset_path
 from pathlib import Path
 
 def deep_merge_config(default_config: Dict[str, Any], user_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -58,9 +59,7 @@ class ConfigManager:
         """
         # Auto-detect config path relative to the main script
         if config_path is None:
-            # Go up from src/ to project root, then to config.defaults.yaml
-            project_root = os.path.dirname(os.path.dirname(__file__))
-            config_path = os.path.join(project_root, "config.defaults.yaml")
+            config_path = resolve_asset_path("config.defaults.yaml")
         
         self.default_config_path = config_path
         self.use_user_settings = use_user_settings

@@ -6,6 +6,7 @@ components of the application to maintain consistency and reduce code duplicatio
 """
 
 import os
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -120,11 +121,9 @@ def resolve_asset_path(asset_path: str) -> str:
     if not asset_path:
         return asset_path
     
-    # If already absolute, return as-is
     if os.path.isabs(asset_path):
         return asset_path
     
-    # Resolve relative path using __file__ (works with PyInstaller)
-    project_root = Path(__file__).parent.parent
+    project_root = Path(os.path.dirname(os.path.abspath(__file__))).parent
     resolved_path = project_root / asset_path
     return str(resolved_path)

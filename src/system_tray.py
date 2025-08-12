@@ -16,7 +16,7 @@ import os
 from typing import Optional, Callable, TYPE_CHECKING
 from pathlib import Path
 
-from .utils import beautify_hotkey
+from .utils import beautify_hotkey, resolve_asset_path
 
 # System tray imports
 try:
@@ -105,20 +105,14 @@ class SystemTray:
         """
         self.icons = {}
         
-        # Define the path to our assets directory
-        project_root = Path(__file__).parent.parent
-        assets_dir = project_root / "assets"
-        
-        # Icon files for different states
         icon_files = {
-            "idle": "tray_idle.png",
-            "recording": "tray_recording.png", 
-            "processing": "tray_processing.png"
+            "idle": "assets/tray_idle.png",
+            "recording": "assets/tray_recording.png", 
+            "processing": "assets/tray_processing.png"
         }
         
-        # Load each icon file
-        for state, filename in icon_files.items():
-            icon_path = assets_dir / filename
+        for state, asset_path in icon_files.items():
+            icon_path = Path(resolve_asset_path(asset_path))
             
             try:
                 if icon_path.exists():
