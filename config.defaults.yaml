@@ -64,20 +64,19 @@ hotkey:
   #   - "ctrl+shift+f12"
   combination: ctrl+win
   
-  # Auto-ENTER hotkey - Stop recording and send automatic ENTER key press after
-  # (This hotkey cannot start recording)
-  auto_enter_combination: alt+win
-  
-  # Enable/disable the auto-ENTER hotkey functionality
-  auto_enter_enabled: true
-  
-  
   # Stop recording with just the first modifier key
-  # If enabled, you can stop recording by pressing just the first modifier 
-  # (e.g., if your combination is 'ctrl+win', just pressing 'ctrl' will stop)
-  # (e.g., if your combination is 'ctrl+shift+t', just pressing 'ctrl' will stop)
-  # This provides a simpler way to stop recording without the full key combination
+  # If enabled, stops recording with first modifier of the main hotkey
+  # (e.g., if combination is 'ctrl+win', pressing 'ctrl' will stop)
+  # (e.g., if combination is 'ctrl+shift+t', pressing 'ctrl' will stop)
   stop_with_modifier_enabled: true
+
+  # Auto-ENTER functionality
+  # If enabled, allows alternative stop key that sends ENTER key press
+  # Only works when auto-paste is also enabled
+  auto_enter_enabled: true
+
+  # Key combination for auto-ENTER function
+  auto_enter_combination: alt
 
 # =============================================================================
 # AUDIO RECORDING SETTINGS

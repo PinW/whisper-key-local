@@ -38,7 +38,6 @@ class HotkeyListener:
         self.auto_enter_enabled = auto_enter_enabled
         self.stop_with_modifier_enabled = stop_with_modifier_enabled
         self.stop_modifier_hotkey = None  # Will be calculated from main hotkey
-        self.auto_enter_modifier_hotkey = None  # Will be calculated from auto-enter hotkey
         self.modifier_key_released = True  # Track if modifier key has been released
         self.is_listening = False
         self.logger = logging.getLogger(__name__)
@@ -89,21 +88,6 @@ class HotkeyListener:
                     'name': 'stop-modifier'
                 })
         
-        # Add auto-enter modifier hotkey if both features enabled
-        if self.stop_with_modifier_enabled and self.auto_enter_enabled and self.auto_enter_hotkey:
-            self.auto_enter_modifier_hotkey = self._extract_first_modifier(self.auto_enter_hotkey)
-            if self.auto_enter_modifier_hotkey:
-                # Check if auto-enter modifier is different from main stop modifier
-                if self.auto_enter_modifier_hotkey != self.stop_modifier_hotkey:
-                    hotkey_configs.append({
-                        'combination': self.auto_enter_modifier_hotkey,
-                        'callback': self._auto_enter_modifier_hotkey_pressed,
-                        'name': 'auto-enter-modifier'
-                    })
-                    self.logger.info(f"Auto-enter stop-modifier enabled: {self.auto_enter_modifier_hotkey}")
-                else:
-                    self.logger.warning(f"⚠️ AUTO-ENTER HOTKEY DISABLED: Both main hotkey and auto-enter use the same modifier key '{self.auto_enter_modifier_hotkey}' with stop-with-modifier enabled. To re-enable auto-enter, use a different modifier key or turn off stop-with-modifier.")
-                    self.auto_enter_modifier_hotkey = None  # Will use shared modifier
         
         # Sort by specificity (more modifiers = higher priority)
         hotkey_configs.sort(key=self._get_hotkey_specificity, reverse=True)
@@ -225,31 +209,6 @@ class HotkeyListener:
         self.logger.debug(f"Stop-modifier key released: {self.stop_modifier_hotkey}")
         self.modifier_key_released = True
     
-    def _auto_enter_modifier_hotkey_pressed(self):
-        """
-        Called when the auto-enter modifier hotkey is pressed (just the first modifier)
-        
-        AUTO-ENTER MODIFIER STOP-ONLY HOTKEY:
-        - This is a simplified stop-only handler for auto-enter modifier keys
-        - Only functions when recording is active and auto-paste is enabled
-        - Doesn't need key-up protection because auto-enter hotkeys can never start recording
-        - Provides automatic pasting with ENTER key press when stopping
-        """
-        self.logger.debug(f"Auto-enter modifier hotkey pressed: {self.auto_enter_modifier_hotkey}")
-        
-        # Check if currently recording (stop-only behavior)
-        if not self.state_manager.audio_recorder.get_recording_status():
-            self.logger.debug("Auto-enter modifier hotkey ignored - not currently recording")
-            return
-        
-        # Check if auto-paste is enabled (required for auto-enter functionality)
-        if not self.state_manager.clipboard_config.get('auto_paste', False):
-            self.logger.debug("Auto-enter modifier hotkey ignored - auto-paste is disabled")
-            return
-            
-        self.logger.info(f"Auto-enter modifier hotkey activated: {self.auto_enter_modifier_hotkey}")
-        with error_logging("auto-enter modifier hotkey", self.logger):
-            self.state_manager.stop_recording(use_auto_enter=True)
     
     
     def _extract_first_modifier(self, hotkey_str: str) -> str:

@@ -209,9 +209,6 @@ class ConfigManager:
             raise
     
     def _validate_config(self):
-        """
-        Validate configuration settings and fix invalid values
-        """
         # Validate whisper model size
         valid_models = ['tiny', 'base', 'small', 'medium', 'large', 'tiny.en', 'base.en', 'small.en', 'medium.en']
         if self.config['whisper']['model_size'] not in valid_models:
@@ -290,15 +287,7 @@ class ConfigManager:
             self.config['clipboard']['preserve_clipboard'] = True
         else:
             self.config['clipboard']['preserve_clipboard'] = preserve_clipboard
-        
-        # Validate auto-enter hotkey settings
-        auto_enter_enabled = self.config['hotkey'].get('auto_enter_enabled', True)
-        if not isinstance(auto_enter_enabled, bool):
-            self.logger.warning(f"Invalid auto_enter_enabled value '{auto_enter_enabled}', using True")
-            self.config['hotkey']['auto_enter_enabled'] = True
-        else:
-            self.config['hotkey']['auto_enter_enabled'] = auto_enter_enabled
-        
+               
         # Validate key_simulation_delay setting
         key_simulation_delay = self.config['hotkey'].get('key_simulation_delay', 0.05)
         if not isinstance(key_simulation_delay, (int, float)) or key_simulation_delay < 0:
@@ -307,19 +296,8 @@ class ConfigManager:
         else:
             self.config['hotkey']['key_simulation_delay'] = key_simulation_delay
         
-        # Validate auto-enter hotkey combination format
-        auto_enter_combination = self.config['hotkey'].get('auto_enter_combination', 'ctrl+shift+`')
-        if not isinstance(auto_enter_combination, str) or not auto_enter_combination.strip():
-            self.logger.warning(f"Invalid auto_enter_combination '{auto_enter_combination}', using 'ctrl+shift+`'")
-            self.config['hotkey']['auto_enter_combination'] = 'ctrl+shift+`'
-        else:
-            self.config['hotkey']['auto_enter_combination'] = auto_enter_combination.strip().lower()
-        
-        # Validate that auto-enter combination is different from main combination
-        main_combination = self.config['hotkey'].get('combination', 'ctrl+`')
-        if self.config['hotkey']['auto_enter_combination'] == main_combination:
-            self.logger.warning("Auto-enter hotkey cannot be the same as main hotkey, using 'ctrl+shift+`'")
-            self.config['hotkey']['auto_enter_combination'] = 'ctrl+shift+`'
+        # Get main hotkey combo
+        main_combination = self.config['hotkey'].get('combination', 'ctrl+win')
         
         # Validate stop-with-modifier setting
         stop_with_modifier_enabled = self.config['hotkey'].get('stop_with_modifier_enabled', False)
@@ -328,6 +306,27 @@ class ConfigManager:
             self.config['hotkey']['stop_with_modifier_enabled'] = False
         else:
             self.config['hotkey']['stop_with_modifier_enabled'] = stop_with_modifier_enabled
+
+        # Validate auto-enter hotkey settings
+        auto_enter_enabled = self.config['hotkey'].get('auto_enter_enabled', True)
+        if not isinstance(auto_enter_enabled, bool):
+            self.logger.warning(f"Invalid auto_enter_enabled value '{auto_enter_enabled}', using True")
+            self.config['hotkey']['auto_enter_enabled'] = True
+        else:
+            self.config['hotkey']['auto_enter_enabled'] = auto_enter_enabled
+
+        # Validate auto-enter hotkey combination format
+        auto_enter_combination = self.config['hotkey'].get('auto_enter_combination', 'alt')
+        if not isinstance(auto_enter_combination, str) or not auto_enter_combination.strip():
+            self.logger.warning(f"Invalid auto_enter_combination '{auto_enter_combination}'")
+            self.config['hotkey']['auto_enter_combination'] = 'alt'
+        else:
+            self.config['hotkey']['auto_enter_combination'] = auto_enter_combination.strip().lower()
+        
+        # Validate that auto-enter combination conflicts with main hotkey combo
+        if self.config['hotkey']['auto_enter_combination'] == main_combination:
+            self.logger.warning("Auto-enter hotkey cannot be the same as main hotkey")
+            self.config['hotkey']['auto_enter_combination'] = 'alt'
         
         # Validate VAD configuration ranges
         self._validate_vad_config()
