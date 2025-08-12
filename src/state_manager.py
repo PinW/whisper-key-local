@@ -46,7 +46,7 @@ class StateManager:
         if self.system_tray:
             self.system_tray.update_state(state)
     
-    def stop_if_recording(self, use_auto_enter: bool = False) -> bool:
+    def stop_recording(self, use_auto_enter: bool = False) -> bool:
         currently_recording = self.audio_recorder.get_recording_status()
         
         if currently_recording:
@@ -56,7 +56,7 @@ class StateManager:
             return False
     
     def toggle_recording(self):
-        was_recording = self.stop_if_recording(use_auto_enter=False)
+        was_recording = self.stop_recording(use_auto_enter=False)
         
         if not was_recording:
             current_state = self.get_current_state()
