@@ -1,53 +1,25 @@
-"""
-Whisper Speech Recognition Engine
-
-This module handles speech-to-text transcription using OpenAI's Whisper AI model.
-It converts recorded audio into written text that can be pasted anywhere.
-
-out what words were spoken, like having a super-smart stenographer.
-"""
-
 import logging
 import numpy as np
 from faster_whisper import WhisperModel
 from typing import Optional, Tuple, Callable
-import tempfile
 import os
-import wave
 import time
 import threading
+from ten_vad import TenVad
+from src.utils import OptionalComponent
 
-# TEN VAD for speech detection in short recordings
-try:
-    from ten_vad import TenVad
-    TEN_VAD_AVAILABLE = True
-except ImportError:
-    TEN_VAD_AVAILABLE = False
+class WhisperEngine:    
+    SPEECH_DETECTION_THRESHOLD = 0.6
+    MODEL_CACHE_PREFIX = "models--Systran--faster-whisper-"
 
-class WhisperEngine:
-    """
-    A class that handles speech-to-text transcription using Whisper AI
-    
-    This class loads the Whisper AI model and converts audio data into text.
-    """
-    
-    def __init__(self, model_size: str = "tiny", device: str = "cpu", compute_type: str = "int8", 
-                 language: str = None, beam_size: int = 5, vad_enabled: bool = True):
-        """
-        Initialize the Whisper transcription engine
+    def __init__(self, 
+                 model_size: str = "tiny", 
+                 device: str = "cpu", 
+                 compute_type: str = "int8", 
+                 language: str = None, 
+                 beam_size: int = 5, 
+                 vad_enabled: bool = True):
         
-        Parameters:
-        - model_size: Size of Whisper model ("tiny", "base", "small") - bigger = more accurate but slower
-        - device: "cpu" or "cuda" (GPU) - we'll use CPU since it works everywhere
-        - compute_type: "int8" for efficiency, "float16" for better quality
-        - language: Language code (e.g., "en") or None for auto-detection
-        - beam_size: Search beam size for transcription (higher = more accurate but slower)
-        - vad_enabled: Enable TEN VAD pre-check for short recordings
-        
-        - "tiny" model is ~39MB and fastest
-        - "base" model is ~74MB and more accurate
-        - "small" model is ~244MB and very accurate but slower
-        """
         self.model_size = model_size
         self.device = device
         self.compute_type = compute_type
@@ -57,30 +29,19 @@ class WhisperEngine:
         self.model = None
         self.logger = logging.getLogger(__name__)
         
-        # Model loading state tracking
         self._loading_thread = None
         self._loading_cancelled = False
         self._progress_callback = None
         
-        # Initialize TEN VAD if available and enabled
-        self.ten_vad = None
-        if self.vad_enabled and TEN_VAD_AVAILABLE:
-            try:
-                self.ten_vad = TenVad()
-                # Set threshold to 0.6 for better speech detection
-                self.ten_vad.threshold = 0.6
-                self.logger.info(f"TEN VAD initialized successfully (threshold: {self.ten_vad.threshold})")
-            except Exception as e:
-                self.logger.warning(f"Failed to initialize TEN VAD: {e}")
-                self.ten_vad = None
-        elif self.vad_enabled and not TEN_VAD_AVAILABLE:
-            self.logger.warning("TEN VAD requested but not available, VAD pre-check disabled")
+        # Load TEN VAD for pre-transcription speech check
+        vad_instance = TenVad() if self.vad_enabled else None
+        self.ten_vad = OptionalComponent(vad_instance)
+        if self.vad_enabled and vad_instance:
+            self.ten_vad.threshold = self.SPEECH_DETECTION_THRESHOLD
         
-        # Load the model when we create this object
         self._load_model()
     
     def _get_cache_directory(self):
-        """Get the HuggingFace cache directory path"""
         userprofile = os.getenv('USERPROFILE')
         if not userprofile:
             home = os.path.expanduser('~')
@@ -90,39 +51,27 @@ class WhisperEngine:
         return cache_dir
     
     def _is_model_cached(self):
-        """Check if the current model is already cached"""
         cache_dir = self._get_cache_directory()
-        model_folder = f"models--Systran--faster-whisper-{self.model_size}"
+        model_folder = f"{self.MODEL_CACHE_PREFIX}{self.model_size}"
         return os.path.exists(os.path.join(cache_dir, model_folder))
     
     def _load_model(self):
-        """
-        Load the Whisper model into memory
-        
-        This downloads the model if it's not already on your computer, then loads 
-        it into RAM so it's ready to transcribe audio quickly.
-        """
         try:
-            self.logger.info(f"Loading Whisper model: {self.model_size}")
             print(f"🧠 Loading Whisper AI model [{self.model_size}]...")
             
-            # Check if model is already cached
             was_cached = self._is_model_cached()
             if not was_cached:
                 print("Downloading model, this may take a few minutes....")
             
-            # Create the Whisper model
-            # This is where the AI "brain" gets loaded into memory
             self.model = WhisperModel(
                 self.model_size,
                 device=self.device,
                 compute_type=self.compute_type
             )
             
-            # Only show download message if model wasn't cached
             if not was_cached:
-                print("\n")
-            self.logger.info("Whisper model loaded successfully")
+                print("\n") # Workaround for download status bar misplacement
+
             print(f"   ✓ Whisper model [{self.model_size}] ready!")
             
         except Exception as e:
