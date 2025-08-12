@@ -209,6 +209,7 @@ class WhisperEngine:
         Cancel any ongoing model loading operation
         """
         if self._loading_thread and self._loading_thread.is_alive():
+            print("🛑 Cancelling model loading...")
             self.logger.info("Cancelling model loading...")
             self._loading_cancelled = True
             # Wait for thread to finish with timeout

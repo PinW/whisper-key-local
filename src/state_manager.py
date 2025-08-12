@@ -192,45 +192,11 @@ class StateManager:
                 else:
                     self._update_tray_state("idle")
     
-    def cancel_model_loading(self):
-        if self.is_model_loading:
-            self.logger.info("Cancelling ongoing model loading...")
-            print("🛑 Cancelling model loading...")
-            
-            # Cancel the loading in WhisperEngine
-            self.whisper_engine.cancel_model_loading()
-            
-            # Reset state
-            self.set_model_loading(False)
-            print("✅ Model loading cancelled")
-    
     def can_start_recording(self) -> bool:
-        """
-        Check if recording can be started based on current state
-        
-        Returns:
-        - True if recording can start, False otherwise
-        """
         with self._state_lock:
             return not (self.is_processing or self.is_model_loading or self.audio_recorder.get_recording_status())
     
-    def can_change_model(self) -> bool:
-        """
-        Check if model can be changed based on current state
-        
-        Returns:
-        - True if model can be changed, False otherwise
-        """
-        with self._state_lock:
-            return not self.is_model_loading
-    
     def get_current_state(self) -> str:
-        """
-        Get a human-readable description of the current application state
-        
-        Returns:
-        - String describing current state ("idle", "recording", "processing", "model_loading")
-        """
         with self._state_lock:
             if self.is_model_loading:
                 return "model_loading"
@@ -242,95 +208,49 @@ class StateManager:
                 return "idle"
     
     def request_model_change(self, new_model_size: str) -> bool:
-        """
-        Request a model change with proper state management and safety checks
-        
-        Handles different scenarios based on current state:
-        - idle: Change model immediately
-        - recording: Cancel recording and change model
-        - processing: Queue model change for after completion
-        - model_loading: Ignore request (return False)
-        
-        Parameters:
-        - new_model_size: The new model size to switch to
-        
-        Returns:
-        - True if model change was initiated or queued, False if ignored
-        """
         current_state = self.get_current_state()
-        self.logger.info(f"Model change requested: {self.whisper_engine.model_size} -> {new_model_size}, current_state={current_state}")
         
         if new_model_size == self.whisper_engine.model_size:
-            self.logger.info(f"Already using model size: {new_model_size}")
             return True
         
         if current_state == "model_loading":
-            self.logger.info("Cancelling current model loading to switch to new model")
-            print(f"🔄 Cancelling current loading to switch to {new_model_size} model...")
-            
-            # Cancel current loading and start new one
-            self.cancel_model_loading()
-            self._execute_model_change(new_model_size)
-            return True
+            print("⏳ Model already loading, please wait...")
+            return False
         
         if current_state == "recording":
-            self.logger.info("Cancelling active recording to change model")
             print(f"🛑 Cancelling recording to switch to {new_model_size} model...")
+
+            self.audio_recorder.cancel_recording()
             
-            # Cancel the recording
-            if hasattr(self.audio_recorder, 'cancel_recording'):
-                self.audio_recorder.cancel_recording()
-            else:
-                # Fallback - stop recording without processing
-                self.audio_recorder.stop_recording()
-            
-            # Play stop sound to notify user recording was cancelled
             if self.audio_feedback:
                 self.audio_feedback.play_stop_sound()
             
-            # Update system tray to idle since we cancelled recording
             self._update_tray_state("idle")
             
-            # Now change the model
             self._execute_model_change(new_model_size)
             return True
         
         if current_state == "processing":
-            self.logger.info("Queueing model change until processing completes")
             print(f"⏳ Queueing model change to {new_model_size} until transcription completes...")
             self._pending_model_change = new_model_size
             return True
         
         if current_state == "idle":
-            self.logger.info("Changing model immediately")
             self._execute_model_change(new_model_size)
             return True
         
-        # Fallback - should not reach here
         self.logger.warning(f"Unexpected state for model change: {current_state}")
         return False
     
     def _execute_model_change(self, new_model_size: str):
-        """
-        Execute the actual model change with proper state management
-        
-        Parameters:
-        - new_model_size: The new model size to switch to
-        """
         def progress_callback(message: str):
-            """
-            Handle progress updates from async model loading
-            """
             if "ready" in message.lower() or "already loaded" in message.lower():
-                # Model loading complete
                 print(f"✅ Successfully switched to {new_model_size} model")
                 self.set_model_loading(False)
             elif "failed" in message.lower():
-                # Model loading failed
                 print(f"❌ Failed to change model: {message}")
                 self.set_model_loading(False)
             else:
-                # Progress update
                 print(f"🔄 {message}")
                 self.set_model_loading(True)
         
@@ -338,7 +258,6 @@ class StateManager:
             self.set_model_loading(True)
             print(f"🔄 Switching to {new_model_size} model...")
             
-            # Use async model loading with progress callbacks
             self.whisper_engine.change_model(new_model_size, progress_callback)
             
         except Exception as e:
