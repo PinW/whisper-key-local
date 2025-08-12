@@ -1,9 +1,3 @@
-"""
-Audio Recording Module
-
-This module handles recording audio from your microphone using the sounddevice library.
-"""
-
 import logging
 import numpy as np
 import sounddevice as sd
@@ -11,47 +5,32 @@ import threading
 from typing import Optional
 
 class AudioRecorder:
-    """
-    A class that handles audio recording functionality
-    
-    Classes in Python are like blueprints - they define what something can do.
-    This class knows how to record audio, start/stop recording, and store the audio data.
-    """
-    
-    def __init__(self, channels: int = 1, dtype: str = "float32", 
+    WHISPER_SAMPLE_RATE = 16000
+    THREAD_JOIN_TIMEOUT = 2.0
+    RECORDING_SLEEP_INTERVAL = 100
+    STREAM_DTYPE = np.float32
+       
+    def __init__(self, 
+                 channels: int = 1,
+                 dtype: str = "float32", 
                  max_duration: int = 30):
-        """
-        Initialize the audio recorder
         
-        Parameters:
-        - channels: 1 for mono (single channel), 2 for stereo
-        - dtype: Audio data type ("float32", "int16", etc.)
-        - max_duration: Maximum recording length in seconds (0 = unlimited)
-        """
-        self.sample_rate = 16000  # Fixed for Whisper and TEN VAD compatibility
+        self.sample_rate = self.WHISPER_SAMPLE_RATE
         self.channels = channels
         self.dtype = dtype
         self.max_duration = max_duration
         self.is_recording = False
-        self.audio_data = []  # This will store our recorded audio
+        self.audio_data = []
         self.recording_thread = None
         self.logger = logging.getLogger(__name__)
         
-        # Test if we can access the microphone
         self._test_microphone()
     
     def _test_microphone(self):
-        """
-        Test if we can access the microphone
-        
-        Private method (starts with _) - this is just for internal use
-        """
         try:
-            # Try to get list of audio devices
             devices = sd.query_devices()
             self.logger.info(f"Found {len(devices)} audio devices")
             
-            # Find default input device (microphone)
             default_input = sd.query_devices(kind='input')
             self.logger.info(f"Default microphone: {default_input['name']}")
             
@@ -60,12 +39,6 @@ class AudioRecorder:
             raise RuntimeError("Could not access microphone. Please check your audio settings.")
     
     def start_recording(self):
-        """
-        Start recording audio from the microphone
-        
-        This creates a separate thread for recording so it doesn't block the main program.
-        Threading is like having multiple workers doing different jobs at the same time.
-        """
         if self.is_recording:
             self.logger.warning("Already recording!")
             return False
@@ -105,7 +78,7 @@ class AudioRecorder:
         
         # Wait for recording thread to finish
         if self.recording_thread:
-            self.recording_thread.join(timeout=2.0)  # Wait max 2 seconds
+            self.recording_thread.join(timeout=self.THREAD_JOIN_TIMEOUT)
         
         if len(self.audio_data) == 0:
             self.logger.warning("No audio data recorded!")
@@ -133,7 +106,7 @@ class AudioRecorder:
         
         # Wait for recording thread to finish
         if self.recording_thread:
-            self.recording_thread.join(timeout=2.0)  # Wait max 2 seconds
+            self.recording_thread.join(timeout=self.THREAD_JOIN_TIMEOUT)
         
         # Clear the audio data without processing it
         self.audio_data = []
@@ -167,13 +140,13 @@ class AudioRecorder:
                 samplerate=self.sample_rate,
                 channels=self.channels,
                 callback=audio_callback,
-                dtype=np.float32  # Type of numbers to use for audio data
+                dtype=self.STREAM_DTYPE
             ):
                 self.logger.info("Audio stream started")
                 
                 # Keep recording while is_recording is True
                 while self.is_recording:
-                    sd.sleep(100)  # Sleep for 100ms, then check again
+                    sd.sleep(self.RECORDING_SLEEP_INTERVAL)
                 
                 self.logger.info("Audio stream stopped")
                 
