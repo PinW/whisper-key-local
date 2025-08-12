@@ -95,10 +95,7 @@ class StateManager:
         else:
             primary_key = beautify_hotkey(main_hotkey)
         
-        if auto_enter_enabled and stop_with_modifier:
-            auto_enter_first_modifier = auto_enter_hotkey.split('+')[0] if '+' in auto_enter_hotkey else auto_enter_hotkey         
-            auto_enter_key = auto_enter_first_modifier.upper()
-        else:
+        if auto_enter_enabled:
             auto_enter_key = beautify_hotkey(auto_enter_hotkey) if auto_enter_enabled else None
         
         if not auto_paste_enabled:
@@ -250,13 +247,13 @@ class StateManager:
             
             if use_auto_enter:
                 # Auto-enter hotkey: force auto-paste and send ENTER key
-                self._deliver_transcription(transcribed_text, "auto_enter", use_auto_enter=True)
+                self._deliver_transcription(transcribed_text, "auto_enter")
             elif auto_paste_enabled:
                 # Standard hotkey with auto-paste enabled: respect config
-                self._deliver_transcription(transcribed_text, "auto_paste", use_auto_enter=False)
+                self._deliver_transcription(transcribed_text, "auto_paste")
             else:
                 # Standard hotkey with auto-paste disabled: clipboard only
-                self._deliver_transcription(transcribed_text, "clipboard_only", use_auto_enter=False)
+                self._deliver_transcription(transcribed_text, "clipboard_only")
             
         except Exception as e:
             self.logger.error(f"Error in recording/processing workflow: {e}")
