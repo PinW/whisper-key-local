@@ -2,7 +2,7 @@
 
 @documentation/project-index.md
 
-- Build: `powershell.exe -ExecutionPolicy Bypass -File /home/pin/whisper-key-local/py-build/build-windows.ps1`
+- Build: `powershell.exe -ExecutionPolicy Bypass -File /home/pin/whisper-key-local/py-build/build-windows.ps1` optional:`-NoZip`
 - DO NOT TEST: we develop in WSL, but the app is run from windows
 - Ask user to test before committing
 - Prefer elegant code that is modular and consistent

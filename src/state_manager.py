@@ -195,13 +195,9 @@ class StateManager:
         
         if current_state == "recording":
             print(f"🛑 Cancelling recording to switch to {new_model_size} model...")
-
             self.audio_recorder.cancel_recording()
-            
             self.audio_feedback.play_stop_sound()
-            
-            self.system_tray.update_state("idle")
-            
+            self.system_tray.update_state("idle")          
             self._execute_model_change(new_model_size)
             return True
         
