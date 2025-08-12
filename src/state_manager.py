@@ -16,8 +16,8 @@ class StateManager:
                  whisper_engine: WhisperEngine,
                  clipboard_manager: ClipboardManager,
                  clipboard_config: dict,
+                 config_manager: ConfigManager,
                  system_tray: Optional[SystemTray] = None,
-                 config_manager: Optional[ConfigManager] = None,
                  audio_feedback: Optional[AudioFeedback] = None):
 
         self.audio_recorder = audio_recorder
@@ -75,30 +75,16 @@ class StateManager:
         success = self.audio_recorder.start_recording()
         
         if success:
-            if self.config_manager:
-                print(self.config_manager.generate_stop_instructions_for_user())
-            else:
-                print("   Press the hotkey again to stop recording.")
+            print(self.config_manager.generate_stop_instructions_for_user())
 
             if self.audio_feedback:
                 self.audio_feedback.play_start_sound()
             
             self._update_tray_state("recording")
     
-    
     def _transcription_pipeline(self, use_auto_enter: bool = False):
         """
         Process the complete transcription pipeline from audio to delivered text
-        
-        This is where the magic happens:
-        1. Get recorded audio data (recording already stopped)
-        2. Send audio to Whisper AI for transcription
-        3. Copy transcribed text to clipboard
-        4. If use_auto_enter=True, force auto-paste and send ENTER key
-        
-        Parameters:
-        - use_auto_enter: If True, force auto-paste and send ENTER key regardless of config
-                         If False, respect the auto-paste configuration setting
         """
         try:
             # Atomic state transition to processing
@@ -157,7 +143,7 @@ class StateManager:
                 self.last_transcription = result
             
         except Exception as e:
-            self.logger.error(f"Error in recording/processing workflow: {e}")
+            self.logger.error(f"Error in processing workflow: {e}")
             print(f"❌ Error processing recording: {e}")
         
         finally:
