@@ -372,6 +372,7 @@ class WhisperEngine:
             
             # Skip transcription if no speech detected
             if not speech_detected:
+                print("   ✗ No speech detected, skipping transcription")
                 return None
             
             self.logger.info("Starting transcription...")
