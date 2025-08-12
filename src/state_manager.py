@@ -1,10 +1,3 @@
-"""
-Application State Manager
-
-This module coordinates all the other components and manages the overall state 
-of our application. It's like the "conductor" that tells each part when to work.
-"""
-
 import logging
 import time
 import threading
@@ -18,28 +11,15 @@ from .audio_feedback import AudioFeedback
 from .utils import beautify_hotkey
 
 class StateManager:
-    """
-    A class that manages the overall state and workflow of our application
-    
-    This class coordinates the recording → transcription → clipboard workflow.
-    """
-    
-    def __init__(self, audio_recorder: AudioRecorder, whisper_engine: WhisperEngine, 
-                 clipboard_manager: ClipboardManager, clipboard_config: dict,
-                 system_tray: Optional[SystemTray] = None, config_manager: Optional[ConfigManager] = None,
+    def __init__(self, 
+                 audio_recorder: AudioRecorder,
+                 whisper_engine: WhisperEngine,
+                 clipboard_manager: ClipboardManager,
+                 clipboard_config: dict,
+                 system_tray: Optional[SystemTray] = None,
+                 config_manager: Optional[ConfigManager] = None,
                  audio_feedback: Optional[AudioFeedback] = None):
-        """
-        Initialize the state manager with all our components
-        
-        Parameters:
-        - audio_recorder: The AudioRecorder instance for capturing audio
-        - whisper_engine: The WhisperEngine instance for transcription
-        - clipboard_manager: The ClipboardManager instance for clipboard operations
-        - clipboard_config: Configuration settings for clipboard behavior
-        - system_tray: Optional SystemTray instance for status display
-        - config_manager: Optional ConfigManager instance for settings management
-        - audio_feedback: Optional AudioFeedback instance for recording sound notifications
-        """
+
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
         self.clipboard_manager = clipboard_manager
@@ -48,74 +28,37 @@ class StateManager:
         self.config_manager = config_manager
         self.audio_feedback = audio_feedback
         
-        # Application state variables
-        self.is_processing = False  # Are we currently doing transcription?
-        self.is_model_loading = False  # Are we currently loading/changing Whisper model?
-        self.last_transcription = None  # Store the last transcribed text
-        self._pending_model_change = None  # Store pending model change request during processing
+        self.is_processing = False
+        self.is_model_loading = False
+        self.last_transcription = None
+        self._pending_model_change = None  # Store pending model change request
         self._state_lock = threading.Lock()  # Thread safety for state operations
-        self._model_loading_progress = ""  # Track model loading progress message
+        self._model_loading_progress = ""
+
         self.logger = logging.getLogger(__name__)
-        
         self.logger.info("StateManager initialized with all components")
         self.logger.info(f"Auto-paste enabled: {self.clipboard_config.get('auto_paste', False)}")
         self.logger.info(f"Initial state: recording={self.audio_recorder.get_recording_status()}, processing={self.is_processing}, model_loading={self.is_model_loading}")
         
-        # Initialize system tray to idle state
         self._update_tray_state("idle")
     
     def _update_tray_state(self, state: str):
-        """
-        Update system tray state if tray is available.
-        
-        Args:
-            state (str): The state to set ("idle", "recording", "processing")
-        """
         if self.system_tray:
             self.system_tray.update_state(state)
     
-    def _attempt_stop_if_recording(self, method_name: str, use_auto_enter: bool = False) -> bool:
-        """
-        Attempt to stop recording if currently recording and able to stop.
+    def stop_if_recording(self, use_auto_enter: bool = False) -> bool:
+        currently_recording = self.audio_recorder.get_recording_status()
         
-        This helper method consolidates the common logic between toggle_recording()
-        and stop_recording() for handling the stop portion of their workflows.
-        
-        Args:
-            method_name (str): Name of the calling method (for logging purposes)
-            use_auto_enter (bool): Whether to use auto-enter behavior when stopping
-        
-        Returns:
-            bool: True if recording was stopped or stop was attempted, False if not currently recording
-        """
-        current_state = self.get_current_state()
-        current_recording = self.audio_recorder.get_recording_status()
-        self.logger.debug(f"{method_name} called - state={current_state}, recording={current_recording}, use_auto_enter={use_auto_enter}")
-        
-        if current_recording:
-            # Currently recording, check if we can stop
-            if self.can_stop_recording():
-                self._transcription_pipeline(use_auto_enter=use_auto_enter)
-            else:
-                self.logger.info(f"Cannot stop recording in current state: {current_state}")
-                print(f"⏳ Cannot stop recording while {current_state}...")
-            return True  # Recording was present, stop was attempted
+        if currently_recording:
+            self._transcription_pipeline(use_auto_enter)
+            return True
         else:
-            return False  # Not currently recording
+            return False
     
     def toggle_recording(self):
-        """
-        Toggle between recording and stopping (called when hotkey is pressed)
-        
-        This is the main workflow controller:
-        - If not recording: start recording
-        - If recording: stop recording and process the audio
-        """
-        # Try to stop if recording, get whether we were recording
-        was_recording = self._attempt_stop_if_recording("toggle_recording", use_auto_enter=False)
+        was_recording = self.stop_if_recording(use_auto_enter=False)
         
         if not was_recording:
-            # Not recording, check if we can start
             current_state = self.get_current_state()
             if self.can_start_recording():
                 self._start_recording()
@@ -128,32 +71,9 @@ class StateManager:
                 else:
                     print(f"⏳ Cannot record while {current_state}...")
     
-    def stop_recording(self, use_auto_enter: bool = False):
-        """
-        Stop recording only (no start functionality) - designed for modifier-only hotkeys
-        
-        This method only stops recording if currently recording, and does nothing if not recording.
-        It's designed for the simpler stop-with-modifier hotkey functionality.
-        
-        Parameters:
-        - use_auto_enter: If True, enhanced stop behavior (force auto-paste + ENTER)
-                         If False, standard stop behavior (respect auto-paste config)
-        
-        """
-        # Try to stop if recording
-        was_recording = self._attempt_stop_if_recording("stop_recording", use_auto_enter=use_auto_enter)
-        
-        if not was_recording:
-            # Not recording - do nothing (this is the key difference from toggle)
-            self.logger.debug("stop_recording called but not currently recording - ignoring")
-            # No output message since this is expected behavior for modifier-only hotkey
-    
     def _generate_stop_instructions(self) -> str:
         """
         Generate dynamic stop instructions based on current configuration
-        
-        Returns a user-friendly message explaining how to stop recording
-        based on the active settings (stop-with-modifier, auto-paste, auto-enter).
         """
         if not self.config_manager:
             return "Press the hotkey again to stop recording."
@@ -161,97 +81,63 @@ class StateManager:
         hotkey_config = self.config_manager.get_hotkey_config()
         clipboard_config = self.config_manager.get_clipboard_config()
         
-        main_hotkey = hotkey_config.get('combination', 'ctrl+win')
-        auto_enter_enabled = hotkey_config.get('auto_enter_enabled', True)
-        auto_enter_hotkey = hotkey_config.get('auto_enter_combination', 'alt+win')
-        stop_with_modifier = hotkey_config.get('stop_with_modifier_enabled', False)
-        auto_paste_enabled = clipboard_config.get('auto_paste', True)
+        main_hotkey = hotkey_config['combination']
+        auto_enter_enabled = hotkey_config['auto_enter_enabled']
+        auto_enter_hotkey = hotkey_config['auto_enter_combination']
+        stop_with_modifier = hotkey_config['stop_with_modifier_enabled']
+        auto_paste_enabled = clipboard_config['auto_paste']
         
-        # Determine primary stop hotkey display
         if stop_with_modifier:
             # Extract first modifier for display
             primary_key = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
+            main_first_key = primary_key.upper()
             primary_key = primary_key.upper()
         else:
             primary_key = beautify_hotkey(main_hotkey)
         
-        # Determine auto-enter hotkey display
         if auto_enter_enabled and stop_with_modifier:
-            # Show modifier only for auto-enter if it's different from main modifier
-            auto_enter_first_modifier = auto_enter_hotkey.split('+')[0] if '+' in auto_enter_hotkey else auto_enter_hotkey
-            main_first_modifier = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
-            
-            if auto_enter_first_modifier == main_first_modifier:
-                auto_enter_key = auto_enter_first_modifier.upper()  # Same modifier, show just the modifier
-            else:
-                auto_enter_key = auto_enter_first_modifier.upper()  # Different modifier, show just that modifier
+            auto_enter_first_modifier = auto_enter_hotkey.split('+')[0] if '+' in auto_enter_hotkey else auto_enter_hotkey         
+            auto_enter_key = auto_enter_first_modifier.upper()
         else:
             auto_enter_key = beautify_hotkey(auto_enter_hotkey) if auto_enter_enabled else None
         
-        # Generate appropriate message based on configuration
         if not auto_paste_enabled:
-            # No auto-paste: basic copy to clipboard
             return f"   Press [{primary_key}] to stop recording and copy to clipboard."
         elif not auto_enter_enabled:
-            # Auto-paste on, no auto-enter
             return f"   Press [{primary_key}] to stop recording and auto-paste."
         else:
-            # Both auto-paste and auto-enter enabled
-            if auto_enter_key and auto_enter_key != primary_key:
-                return f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press."
-            else:
-                return f"   Press [{primary_key}] to stop recording and auto-paste, or add (Enter) key press."
+            return f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press."
 
     def _start_recording(self):
-        """
-        Start the recording process
-        
-        Private method (starts with _) for internal use only.
-        """
         try:
             self.logger.info("Starting recording...")
-            print("🎤 Recording started! Speak now...")
-            print(self._generate_stop_instructions())
-            
+
             success = self.audio_recorder.start_recording()
             
             if success:
-                # Play start sound to notify user recording began
+                print("🎤 Recording started! Speak now...")
+                print(self._generate_stop_instructions())
+
                 if self.audio_feedback:
                     self.audio_feedback.play_start_sound()
                 
-                # Update system tray to show recording state only if recording actually started
                 self._update_tray_state("recording")
             else:
                 print("❌ Failed to start recording!")
                 self.logger.error("Failed to start audio recording")
-                # Reset tray to idle state on failure
-                self._update_tray_state("idle")
             
         except Exception as e:
             self.logger.error(f"Error starting recording: {e}")
             print(f"❌ Error starting recording: {e}")
     
-    def _deliver_transcription(self, transcribed_text: str, delivery_mode: str, use_auto_enter: bool = False):
-        """
-        Deliver transcribed text to the user via clipboard/auto-paste operations
-        
-        This method handles the final step of getting transcribed text to the user,
-        with different delivery modes based on configuration and hotkey type.
-        
-        Parameters:
-        - transcribed_text: The text to deliver to the user
-        - delivery_mode: How to deliver the text ("auto_enter", "auto_paste", "clipboard_only")
-        - use_auto_enter: Whether this is from an auto-enter hotkey (for logging/config)
-        """
+    def _deliver_transcription(self, transcribed_text: str, delivery_mode: str):
         paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
         preserve_clipboard = self.clipboard_config.get('preserve_clipboard', False)
         
         if delivery_mode == "auto_enter":
-            # Auto-enter hotkey: force auto-paste and send ENTER key
             print("🚀 Auto-pasting text and SENDING with ENTER...")
             
-            # Force auto-paste (ignore auto_paste config setting)
+            # Force auto-paste when using auto-enter hotkey
             if preserve_clipboard:
                 paste_success = self.clipboard_manager.preserve_and_paste(transcribed_text, paste_method)
             else:
@@ -539,16 +425,6 @@ class StateManager:
         """
         with self._state_lock:
             return not self.is_model_loading
-    
-    def can_stop_recording(self) -> bool:
-        """
-        Check if recording can be stopped based on current state
-        
-        Returns:
-        - True if recording can be stopped, False otherwise
-        """
-        with self._state_lock:
-            return self.audio_recorder.get_recording_status() and not self.is_processing and not self.is_model_loading
     
     def get_current_state(self) -> str:
         """
