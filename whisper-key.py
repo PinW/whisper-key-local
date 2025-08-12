@@ -12,7 +12,7 @@ from src.state_manager import StateManager
 from src.system_tray import SystemTray
 from src.audio_feedback import AudioFeedback
 from src.instance_manager import guard_against_multiple_instances
-from src.utils import beautify_hotkey, OptionalComponent
+from src.utils import beautify_hotkey, OptionalComponent, resolve_asset_path
 
 def setup_logging(config_manager: ConfigManager):
     log_config = config_manager.get_logging_config()
@@ -25,7 +25,8 @@ def setup_logging(config_manager: ConfigManager):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
     if log_config['file']['enabled']:
-        file_handler = logging.FileHandler(log_config['file']['filename'], encoding='utf-8')
+        log_file_path = resolve_asset_path(log_config['file']['filename'])
+        file_handler = logging.FileHandler(log_file_path, encoding='utf-8')
         file_handler.setLevel(getattr(logging, log_config['level']))
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
@@ -100,14 +101,10 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
     except:
         pass  # StateManager may not be initialized if error occurred early
 
-def main():
-    # Fix working directory for Start Menu compatibility
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(script_dir)
-    
+def main():   
     guard_against_multiple_instances()
     
-    print("Starting Whisper Key... Windows Whisper Speech-to-Text App...")
+    print("Starting Whisper Key... Local Speech-to-Text App...")
     
     try:
         config_manager = ConfigManager()
