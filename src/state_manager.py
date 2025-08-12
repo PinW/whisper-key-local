@@ -8,7 +8,7 @@ from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
 from .config_manager import ConfigManager
 from .audio_feedback import AudioFeedback
-from .utils import beautify_hotkey
+from .utils import beautify_hotkey, OptionalComponent
 
 class StateManager:
     def __init__(self, 
@@ -24,9 +24,9 @@ class StateManager:
         self.whisper_engine = whisper_engine
         self.clipboard_manager = clipboard_manager
         self.clipboard_config = clipboard_config
-        self.system_tray = system_tray
+        self.system_tray = OptionalComponent(system_tray)
         self.config_manager = config_manager
-        self.audio_feedback = audio_feedback
+        self.audio_feedback = OptionalComponent(audio_feedback)
         
         self.is_processing = False
         self.is_model_loading = False
@@ -35,15 +35,6 @@ class StateManager:
         self._state_lock = threading.Lock()  # Thread safety for state operations
 
         self.logger = logging.getLogger(__name__)
-        self.logger.info("StateManager initialized with all components")
-        self.logger.info(f"Auto-paste enabled: {self.clipboard_config.get('auto_paste', False)}")
-        self.logger.info(f"Initial state: recording={self.audio_recorder.get_recording_status()}, processing={self.is_processing}, model_loading={self.is_model_loading}")
-        
-        self._update_tray_state("idle")
-    
-    def _update_tray_state(self, state: str):
-        if self.system_tray:
-            self.system_tray.update_state(state)
     
     def stop_recording(self, use_auto_enter: bool = False) -> bool:
         currently_recording = self.audio_recorder.get_recording_status()
@@ -63,7 +54,6 @@ class StateManager:
             if self.can_start_recording():
                 self._start_recording()
             else:
-                self.logger.info(f"Cannot start recording in current state: {current_state}")
                 if self.is_processing:
                     print("⏳ Still processing previous recording...")
                 elif self.is_model_loading:
@@ -75,25 +65,17 @@ class StateManager:
         success = self.audio_recorder.start_recording()
         
         if success:
-            print(self.config_manager.generate_stop_instructions_for_user())
-
-            if self.audio_feedback:
-                self.audio_feedback.play_start_sound()
-            
-            self._update_tray_state("recording")
+            self.config_manager.print_stop_instructions()
+            self.audio_feedback.play_start_sound()
+            self.system_tray.update_state("recording")
     
     def _transcription_pipeline(self, audio_data, use_auto_enter: bool = False):
-        """
-        Process the complete transcription pipeline from audio to delivered text
-        """
         try:
             # Prevent multiple threads from starting simultaneous transcription
             with self._state_lock:
                 self.is_processing = True
 
-            if self.audio_feedback:
-                self.audio_feedback.play_stop_sound()
-                      
+            self.audio_feedback.play_stop_sound()
             print("🎤 Recording stopped! Transcribing...")
 
             if audio_data is None:
@@ -105,11 +87,10 @@ class StateManager:
             
             if not transcribed_text:
                 print("   ✗ No speech detected, skipping transcription")
-                self.logger.info("Transcription returned empty result")
                 self.is_processing = False
                 return
             
-            self._update_tray_state("processing")
+            self.system_tray.update_state("processing")
 
             result = self.clipboard_manager.deliver_transcription(
                 transcribed_text, 
@@ -138,7 +119,7 @@ class StateManager:
                 print(f"🔄 Processing complete, now switching to {pending_model} model...")
                 self._execute_model_change(pending_model)
             else:
-                self._update_tray_state("idle")
+                self.system_tray.update_state("idle")
     
     def get_application_status(self) -> dict:
         status = {
@@ -150,8 +131,7 @@ class StateManager:
             "clipboard_info": self.clipboard_manager.get_clipboard_info()
         }
         
-        if self.system_tray:
-            status["system_tray"] = self.system_tray.get_status_info()
+        status["system_tray"] = self.system_tray.get_status_info()
         
         return status
     
@@ -160,13 +140,10 @@ class StateManager:
             print(f"🎤 Recording for {duration_seconds} seconds...")
             print("Speak now!")
             
-            # Start recording
             self.audio_recorder.start_recording()
             
-            # Wait for specified duration
             time.sleep(duration_seconds)
             
-            # Stop and process
             audio_data = self.audio_recorder.stop_recording()
             self._transcription_pipeline(audio_data)
             
@@ -178,8 +155,7 @@ class StateManager:
         if self.audio_recorder.get_recording_status():
             self.audio_recorder.stop_recording()
         
-        if self.system_tray:
-            self.system_tray.stop()
+        self.system_tray.stop()
     
     def set_model_loading(self, loading: bool):
         with self._state_lock:
@@ -188,9 +164,9 @@ class StateManager:
             
             if old_state != loading:
                 if loading:
-                    self._update_tray_state("processing")
+                    self.system_tray.update_state("processing")
                 else:
-                    self._update_tray_state("idle")
+                    self.system_tray.update_state("idle")
     
     def can_start_recording(self) -> bool:
         with self._state_lock:
@@ -222,10 +198,9 @@ class StateManager:
 
             self.audio_recorder.cancel_recording()
             
-            if self.audio_feedback:
-                self.audio_feedback.play_stop_sound()
+            self.audio_feedback.play_stop_sound()
             
-            self._update_tray_state("idle")
+            self.system_tray.update_state("idle")
             
             self._execute_model_change(new_model_size)
             return True

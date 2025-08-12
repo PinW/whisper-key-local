@@ -422,7 +422,7 @@ class ConfigManager:
         else:
             print(f"   ✗ Using default settings from: {self.config_path}")
     
-    def generate_stop_instructions_for_user(self) -> str:
+    def print_stop_instructions(self):
         from .utils import beautify_hotkey
         
         hotkey_config = self.get_hotkey_config()
@@ -447,11 +447,11 @@ class ConfigManager:
             auto_enter_key = None
         
         if not auto_paste_enabled:
-            return f"   Press [{primary_key}] to stop recording and copy to clipboard."
+            print(f"   Press [{primary_key}] to stop recording and copy to clipboard.")
         elif not auto_enter_enabled:
-            return f"   Press [{primary_key}] to stop recording and auto-paste."
+            print(f"   Press [{primary_key}] to stop recording and auto-paste.")
         else:
-            return f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press."
+            print(f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press.")
 
     # Getter methods for easy access to configuration sections
     

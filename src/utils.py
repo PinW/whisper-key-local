@@ -10,6 +10,26 @@ from contextlib import contextmanager
 from pathlib import Path
 
 
+class OptionalComponent:
+    """
+    A wrapper for optional components that may be None.
+    
+    This allows calling methods on optional components without checking 
+    if they exist first. If the component is None, all method calls 
+    become no-ops that return None.
+    """
+    def __init__(self, component):
+        self._component = component
+    
+    def __getattr__(self, name):
+        if self._component and hasattr(self._component, name):
+            attr = getattr(self._component, name)
+            return attr
+        else:
+            # Return a no-op function for missing methods/attributes
+            return lambda *args, **kwargs: None
+
+
 def beautify_hotkey(hotkey_string: str) -> str:
     """
     Format a hotkey string for display to users.
