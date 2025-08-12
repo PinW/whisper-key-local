@@ -2,7 +2,8 @@
 
 import logging
 import os
-import time
+import signal
+import threading
 from src.config_manager import ConfigManager
 from src.audio_recorder import AudioRecorder
 from src.hotkey_listener import HotkeyListener
@@ -77,6 +78,13 @@ def setup_system_tray(tray_config, hotkey_config, config_manager, state_manager=
         config_manager=config_manager
     )
 
+def setup_signal_handlers(shutdown_event):
+    def signal_handler(signum, frame):
+        shutdown_event.set()
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
 
 def setup_hotkey_listener(hotkey_config, state_manager):
     return HotkeyListener(
@@ -105,6 +113,9 @@ def main():
     guard_against_multiple_instances()
     
     print("Starting Whisper Key... Local Speech-to-Text App...")
+    
+    shutdown_event = threading.Event()
+    setup_signal_handlers(shutdown_event)
     
     try:
         config_manager = ConfigManager()
@@ -143,16 +154,10 @@ def main():
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['combination'])} to start recording.")        
         print("Press Ctrl+C to quit.")
         
-        while True:
-            time.sleep(0.1)  # Small pause to prevent using too much CPU
-            
-            # Keep reference to hotkey_listener so it doesn't get garbage collected
-            if not hotkey_listener.is_active():
-                logger.error("Hotkey listener stopped unexpectedly!")
-                break
+        while not shutdown_event.wait(timeout=0.1):
+            pass
             
     except KeyboardInterrupt:
-        # This happens when user presses Ctrl+C
         logger.info("Application shutting down...")
         print("\nShutting down application...")
         
