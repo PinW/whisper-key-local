@@ -70,16 +70,24 @@ class AudioRecorder:
             self.logger.warning("Already recording!")
             return False
         
-        self.logger.info("Starting audio recording...")
-        self.is_recording = True
-        self.audio_data = []  # Clear any previous recording
-        
-        # Start recording in a separate thread
-        self.recording_thread = threading.Thread(target=self._record_audio)
-        self.recording_thread.daemon = True  # Thread will close when main program closes
-        self.recording_thread.start()
-        
-        return True
+        try:
+            self.logger.info("Starting audio recording...")
+            self.is_recording = True
+            self.audio_data = []  # Clear any previous recording
+            
+            # Start recording in a separate thread
+            self.recording_thread = threading.Thread(target=self._record_audio)
+            self.recording_thread.daemon = True  # Thread will close when main program closes
+            self.recording_thread.start()
+            
+            print("🎤 Recording started! Speak now...")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to start audio recording: {e}")
+            print("❌ Failed to start recording!")
+            self.is_recording = False
+            return False
     
     def stop_recording(self) -> Optional[np.ndarray]:
         """

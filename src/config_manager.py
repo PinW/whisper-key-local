@@ -422,6 +422,37 @@ class ConfigManager:
         else:
             print(f"   ✗ Using default settings from: {self.config_path}")
     
+    def generate_stop_instructions_for_user(self) -> str:
+        from .utils import beautify_hotkey
+        
+        hotkey_config = self.get_hotkey_config()
+        clipboard_config = self.get_clipboard_config()
+        
+        main_hotkey = hotkey_config['combination']
+        auto_enter_enabled = hotkey_config['auto_enter_enabled']
+        auto_enter_hotkey = hotkey_config['auto_enter_combination']
+        stop_with_modifier = hotkey_config['stop_with_modifier_enabled']
+        auto_paste_enabled = clipboard_config['auto_paste']
+        
+        if stop_with_modifier:
+            # Extract first modifier for display
+            primary_key = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
+            primary_key = primary_key.upper()
+        else:
+            primary_key = beautify_hotkey(main_hotkey)
+        
+        if auto_enter_enabled:
+            auto_enter_key = beautify_hotkey(auto_enter_hotkey)
+        else:
+            auto_enter_key = None
+        
+        if not auto_paste_enabled:
+            return f"   Press [{primary_key}] to stop recording and copy to clipboard."
+        elif not auto_enter_enabled:
+            return f"   Press [{primary_key}] to stop recording and auto-paste."
+        else:
+            return f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press."
+
     # Getter methods for easy access to configuration sections
     
     def get_whisper_config(self) -> Dict[str, Any]:

@@ -70,62 +70,22 @@ class StateManager:
                     print("⏳ Still loading model...")
                 else:
                     print(f"⏳ Cannot record while {current_state}...")
-    
-    def _generate_stop_instructions(self) -> str:
-        """
-        Generate dynamic stop instructions based on current configuration
-        """
-        if not self.config_manager:
-            return "Press the hotkey again to stop recording."
-        
-        hotkey_config = self.config_manager.get_hotkey_config()
-        clipboard_config = self.config_manager.get_clipboard_config()
-        
-        main_hotkey = hotkey_config['combination']
-        auto_enter_enabled = hotkey_config['auto_enter_enabled']
-        auto_enter_hotkey = hotkey_config['auto_enter_combination']
-        stop_with_modifier = hotkey_config['stop_with_modifier_enabled']
-        auto_paste_enabled = clipboard_config['auto_paste']
-        
-        if stop_with_modifier:
-            # Extract first modifier for display
-            primary_key = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
-            main_first_key = primary_key.upper()
-            primary_key = primary_key.upper()
-        else:
-            primary_key = beautify_hotkey(main_hotkey)
-        
-        if auto_enter_enabled:
-            auto_enter_key = beautify_hotkey(auto_enter_hotkey) if auto_enter_enabled else None
-        
-        if not auto_paste_enabled:
-            return f"   Press [{primary_key}] to stop recording and copy to clipboard."
-        elif not auto_enter_enabled:
-            return f"   Press [{primary_key}] to stop recording and auto-paste."
-        else:
-            return f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press."
 
     def _start_recording(self):
-        try:
-            self.logger.info("Starting recording...")
+        self.logger.info("Starting recording...")
 
-            success = self.audio_recorder.start_recording()
-            
-            if success:
-                print("🎤 Recording started! Speak now...")
-                print(self._generate_stop_instructions())
-
-                if self.audio_feedback:
-                    self.audio_feedback.play_start_sound()
-                
-                self._update_tray_state("recording")
+        success = self.audio_recorder.start_recording()
+        
+        if success:
+            if self.config_manager:
+                print(self.config_manager.generate_stop_instructions_for_user())
             else:
-                print("❌ Failed to start recording!")
-                self.logger.error("Failed to start audio recording")
+                print("   Press the hotkey again to stop recording.")
+
+            if self.audio_feedback:
+                self.audio_feedback.play_start_sound()
             
-        except Exception as e:
-            self.logger.error(f"Error starting recording: {e}")
-            print(f"❌ Error starting recording: {e}")
+            self._update_tray_state("recording")
     
     def _deliver_transcription(self, transcribed_text: str, delivery_mode: str):
         paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
