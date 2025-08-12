@@ -526,8 +526,8 @@ class SystemTray:
             if self.icon:
                 self.icon.stop()
                 
-            # Wait for thread to finish (with timeout)
-            if self.thread and self.thread.is_alive():
+            # Wait for thread to finish (with timeout) - but don't join current thread
+            if self.thread and self.thread.is_alive() and self.thread != threading.current_thread():
                 self.thread.join(timeout=2.0)
                 
             self.is_running = False
