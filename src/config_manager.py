@@ -76,14 +76,14 @@ class ConfigManager:
         else:
             self.config_path = config_path
         
+        # Print status for user
+        self._print_config_status()
+
         # Load the configuration
         self._load_config()
         
         # Validate configuration
         self._validate_config()
-        
-        # Print status for user
-        self._print_config_status()
         
         self.logger.info("Configuration loaded successfully")
     
@@ -145,8 +145,6 @@ class ConfigManager:
         Stage 1: Load default config.yaml as baseline
         Stage 2: Load user config and merge on top of defaults
         """
-
-        print("📁 Loading configuration...")
 
         # Stage 1: Load default configuration from config.yaml
         default_config = self._load_default_config()
@@ -299,8 +297,18 @@ class ConfigManager:
         else:
             self.config['hotkey']['key_simulation_delay'] = key_simulation_delay
         
-        # Get main hotkey combo
+        # Validate main hotkey combination format
         main_combination = self.config['hotkey'].get('combination', 'ctrl+win')
+        if not isinstance(main_combination, str) or not main_combination.strip():
+            self.logger.warning(f"Invalid main hotkey combination '{main_combination}', using 'ctrl+win'")
+            self.config['hotkey']['combination'] = 'ctrl+win'
+            main_combination = 'ctrl+win'
+        else:
+            # Clean up the combination (strip whitespace, convert to lowercase)
+            cleaned_combination = main_combination.strip().lower()
+            if cleaned_combination != main_combination:
+                self.config['hotkey']['combination'] = cleaned_combination
+                main_combination = cleaned_combination
         
         # Validate stop-with-modifier setting
         stop_with_modifier_enabled = self.config['hotkey'].get('stop_with_modifier_enabled', False)
@@ -406,6 +414,8 @@ class ConfigManager:
                     del advanced_config[field]
     
     def _print_config_status(self):
+        print("📁 Loading configuration...")
+
         if self.use_user_settings:
             settings_path = self.get_user_settings_path()
             print(f"   ✓ Using user settings from: {settings_path}")
