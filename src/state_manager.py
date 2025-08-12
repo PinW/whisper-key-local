@@ -72,8 +72,6 @@ class StateManager:
                     print(f"⏳ Cannot record while {current_state}...")
 
     def _start_recording(self):
-        self.logger.info("Starting recording...")
-
         success = self.audio_recorder.start_recording()
         
         if success:
@@ -87,69 +85,6 @@ class StateManager:
             
             self._update_tray_state("recording")
     
-    def _deliver_transcription(self, transcribed_text: str, delivery_mode: str):
-        paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
-        preserve_clipboard = self.clipboard_config.get('preserve_clipboard', False)
-        
-        if delivery_mode == "auto_enter":
-            print("🚀 Auto-pasting text and SENDING with ENTER...")
-            
-            # Force auto-paste when using auto-enter hotkey
-            if preserve_clipboard:
-                paste_success = self.clipboard_manager.preserve_and_paste(transcribed_text, paste_method)
-            else:
-                paste_success = self.clipboard_manager.copy_and_paste(transcribed_text, paste_method)
-            
-            if paste_success:
-                # Send ENTER key after successful paste (timing handled by PyAutoGUI.PAUSE)
-                enter_success = self.clipboard_manager.send_enter_key()
-                
-                if enter_success:
-                    # Store for future reference
-                    self.last_transcription = transcribed_text
-                    self.logger.info("Complete auto-enter workflow successful (paste + ENTER)")
-                    print("   ✓ Text submitted with ENTER!")
-                else:
-                    # Paste succeeded but ENTER failed
-                    self.last_transcription = transcribed_text
-                    self.logger.warning("Auto-paste succeeded but ENTER key failed")
-            else:
-                # Auto-paste failed, fallback to clipboard only
-                self.last_transcription = transcribed_text
-                self.logger.warning("Auto-enter paste failed, falling back to clipboard")
-                print("❌ Auto-paste failed. Text copied to clipboard - paste with Ctrl+V and press ENTER manually.")
-                
-        elif delivery_mode == "auto_paste":
-            # Standard hotkey with auto-paste enabled: respect config
-            print("🚀 Auto-pasting text...")
-            
-            if preserve_clipboard:
-                success = self.clipboard_manager.preserve_and_paste(transcribed_text, paste_method)
-            else:
-                success = self.clipboard_manager.copy_and_paste(transcribed_text, paste_method)
-            
-            if success:
-                # Store for future reference
-                self.last_transcription = transcribed_text
-                self.logger.info("Complete workflow with auto-paste successful")
-            else:
-                # Auto-paste failed, but text is still in clipboard
-                self.last_transcription = transcribed_text
-                self.logger.warning("Auto-paste failed, falling back to manual paste")
-                print("✅ Text copied to clipboard. Use Ctrl+V to paste manually.")
-                
-        elif delivery_mode == "clipboard_only":
-            # Standard hotkey with auto-paste disabled: clipboard only
-            print("📋 Copying to clipboard...")
-            success = self.clipboard_manager.copy_and_notify(transcribed_text)
-            
-            if success:
-                # Store for future reference
-                self.last_transcription = transcribed_text
-                self.logger.info("Complete workflow successful")
-            else:
-                print("❌ Failed to copy to clipboard!")
-                self.logger.error("Failed to copy transcription to clipboard")
     
     def _transcription_pipeline(self, use_auto_enter: bool = False):
         """
@@ -204,16 +139,22 @@ class StateManager:
             
             # Step 3: Handle clipboard/paste based on configuration and auto-enter flag
             auto_paste_enabled = self.clipboard_config.get('auto_paste', False)
+            paste_method = self.clipboard_config.get('paste_method', 'key_simulation')
+            preserve_clipboard = self.clipboard_config.get('preserve_clipboard', False)
             
             if use_auto_enter:
                 # Auto-enter hotkey: force auto-paste and send ENTER key
-                self._deliver_transcription(transcribed_text, "auto_enter")
+                result = self.clipboard_manager.deliver_transcription(transcribed_text, "auto_enter", preserve_clipboard, paste_method)
             elif auto_paste_enabled:
                 # Standard hotkey with auto-paste enabled: respect config
-                self._deliver_transcription(transcribed_text, "auto_paste")
+                result = self.clipboard_manager.deliver_transcription(transcribed_text, "auto_paste", preserve_clipboard, paste_method)
             else:
                 # Standard hotkey with auto-paste disabled: clipboard only
-                self._deliver_transcription(transcribed_text, "clipboard_only")
+                result = self.clipboard_manager.deliver_transcription(transcribed_text, "clipboard_only", preserve_clipboard, paste_method)
+            
+            # Store for future reference if delivery was successful
+            if result:
+                self.last_transcription = result
             
         except Exception as e:
             self.logger.error(f"Error in recording/processing workflow: {e}")
