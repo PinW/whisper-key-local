@@ -145,6 +145,9 @@ class ConfigManager:
         Stage 1: Load default config.yaml as baseline
         Stage 2: Load user config and merge on top of defaults
         """
+
+        print("📁 Loading configuration...")
+
         # Stage 1: Load default configuration from config.yaml
         default_config = self._load_default_config()
         
@@ -323,10 +326,31 @@ class ConfigManager:
         else:
             self.config['hotkey']['auto_enter_combination'] = auto_enter_combination.strip().lower()
         
-        # Validate that auto-enter combination conflicts with main hotkey combo
-        if self.config['hotkey']['auto_enter_combination'] == main_combination:
-            self.logger.warning("Auto-enter hotkey cannot be the same as main hotkey")
-            self.config['hotkey']['auto_enter_combination'] = 'alt'
+        # Smart conflict detection between auto-enter and main+stop_with_modifier
+        auto_enter_combination = self.config['hotkey']['auto_enter_combination']
+        stop_with_modifier = self.config['hotkey']['stop_with_modifier_enabled']
+        
+        conflict_detected = False
+        conflict_reason = ""
+        
+        if stop_with_modifier:
+            # Extract first modifier from main hotkey for stop-with-modifier comparison
+            main_first_key = main_combination.split('+')[0] if '+' in main_combination else main_combination
+            # Extract first key from auto-enter hotkey
+            auto_enter_first_key = auto_enter_combination.split('+')[0] if '+' in auto_enter_combination else auto_enter_combination
+            
+            if main_first_key == auto_enter_first_key:
+                conflict_detected = True
+                conflict_reason = f"hotkey '{auto_enter_combination}' first key is shared with main hotkey and stop-with-modifier is enabled'"
+        else:
+            # No stop-with-modifier, just check for identical full combinations
+            if auto_enter_combination == main_combination:
+                conflict_detected = True
+                conflict_reason = f"hotkey '{auto_enter_combination}' is same as main hotkey"
+        
+        if conflict_detected:
+            self.logger.warning(f"   ✗ Auto-enter disabled: {conflict_reason}")
+            self.config['hotkey']['auto_enter_enabled'] = False
         
         # Validate VAD configuration ranges
         self._validate_vad_config()
@@ -382,9 +406,6 @@ class ConfigManager:
                     del advanced_config[field]
     
     def _print_config_status(self):
-        """Print configuration loading status for user feedback"""
-        print("📁 Loading configuration...")
-        
         if self.use_user_settings:
             settings_path = self.get_user_settings_path()
             print(f"   ✓ Using user settings from: {settings_path}")
