@@ -30,7 +30,6 @@ class WhisperEngine:
         self.logger = logging.getLogger(__name__)
         
         self._loading_thread = None
-        self._loading_cancelled = False
         self._progress_callback = None
         
         # Load TEN VAD for pre-transcription speech check
@@ -50,9 +49,11 @@ class WhisperEngine:
         cache_dir = os.path.join(userprofile, '.cache', 'huggingface', 'hub')
         return cache_dir
     
-    def _is_model_cached(self):
+    def _is_model_cached(self, model_size=None):
+        if model_size is None:
+            model_size = self.model_size
         cache_dir = self._get_cache_directory()
-        model_folder = f"{self.MODEL_CACHE_PREFIX}{self.model_size}"
+        model_folder = f"{self.MODEL_CACHE_PREFIX}{model_size}"
         return os.path.exists(os.path.join(cache_dir, model_folder))
     
     def _load_model(self):
@@ -78,54 +79,31 @@ class WhisperEngine:
             self.logger.error(f"Failed to load Whisper model: {e}")
             raise RuntimeError(f"Could not load Whisper model: {e}")
     
-    def _load_model_async(self, new_model_size: str, progress_callback: Optional[Callable[[str], None]] = None):
-        """
-        Load the Whisper model asynchronously in a background thread
-        
-        This prevents the UI from freezing during model downloads.
-        
-        Parameters:
-        - new_model_size: The model size to load
-        - progress_callback: Optional callback function to report progress updates
-        """
+    def _load_model_async(self,
+                          new_model_size: str,
+                          progress_callback: Optional[Callable[[str], None]] = None):
         def _background_loader():
-            try:
-                self._loading_cancelled = False
-                
+            try:             
                 if progress_callback:
                     progress_callback("Checking model cache...")
                 
-                # Check if model is already cached
                 old_model_size = self.model_size
-                self.model_size = new_model_size  # Temporarily set for cache check
-                was_cached = self._is_model_cached()
+                was_cached = self._is_model_cached(new_model_size)
                 
                 if progress_callback:
                     if was_cached:
                         progress_callback("Loading cached model...")
                     else:
                         progress_callback("Downloading model...")
-                
-                # Check for cancellation before starting heavy work
-                if self._loading_cancelled:
-                    self.model_size = old_model_size  # Restore original
-                    return
-                
+                               
                 self.logger.info(f"Loading Whisper model: {new_model_size} (async)")
-                
-                # Create the Whisper model
+
                 new_model = WhisperModel(
                     new_model_size,
                     device=self.device,
                     compute_type=self.compute_type
                 )
                 
-                # Check for cancellation before applying changes
-                if self._loading_cancelled:
-                    self.model_size = old_model_size  # Restore original
-                    return
-                
-                # Successfully loaded - apply changes
                 self.model = new_model
                 self.logger.info(f"Whisper model [{new_model_size}] loaded successfully (async)")
                 
@@ -133,60 +111,34 @@ class WhisperEngine:
                     progress_callback("Model ready!")
                 
             except Exception as e:
-                # Restore original model size on error
                 self.model_size = old_model_size
                 self.logger.error(f"Failed to load Whisper model async: {e}")
                 if progress_callback:
                     progress_callback(f"Failed to load model: {e}")
                 raise
             finally:
-                # Clear loading state
                 self._loading_thread = None
                 self._progress_callback = None
         
-        # Start background thread
         if self._loading_thread and self._loading_thread.is_alive():
-            self.logger.warning("Model loading already in progress, cancelling previous load")
-            self.cancel_model_loading()
+            self.logger.warning("Model loading already in progress, ignoring new request")
+            return
         
         self._progress_callback = progress_callback
         self._loading_thread = threading.Thread(target=_background_loader, daemon=True)
         self._loading_thread.start()
     
-    def cancel_model_loading(self):
-        """
-        Cancel any ongoing model loading operation
-        """
-        if self._loading_thread and self._loading_thread.is_alive():
-            print("🛑 Cancelling model loading...")
-            self.logger.info("Cancelling model loading...")
-            self._loading_cancelled = True
-            # Wait for thread to finish with timeout
-            self._loading_thread.join(timeout=2.0)
-            if self._loading_thread.is_alive():
-                self.logger.warning("Model loading thread did not terminate cleanly")
-    
     def is_loading(self) -> bool:
-        """
-        Check if a model is currently being loaded
-        
-        Returns:
-        - True if model loading is in progress, False otherwise
-        """
         return self._loading_thread is not None and self._loading_thread.is_alive()
     
-    def _detect_speech_with_hysteresis(self, probabilities: list, onset: float = None, offset: float = None, min_duration: float = None) -> bool:
+    def _detect_speech_with_hysteresis(self,
+                                       probabilities: list,
+                                       onset: float = None,
+                                       offset: float = None,
+                                       min_duration: float = None) -> bool:
         """
-        Apply hysteresis + consecutive frame logic for robust speech detection
-        
-        Parameters:
-        - probabilities: List of per-frame speech probabilities
-        - onset: Threshold to START detecting speech
-        - offset: Threshold to STOP detecting speech
-        - min_duration: Minimum speech duration in seconds
-        
-        Returns:
-        - True if any valid speech segment found, False otherwise
+        Apply upper/lower bounds after speech starts and consecutive
+        frame logic to detect speech
         """
         if not probabilities:
             return False
