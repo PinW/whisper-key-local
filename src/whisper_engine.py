@@ -18,7 +18,10 @@ class WhisperEngine:
                  compute_type: str = "int8", 
                  language: str = None, 
                  beam_size: int = 5, 
-                 vad_enabled: bool = True):
+                 vad_enabled: bool = True,
+                 vad_onset_threshold: float = 0.7,
+                 vad_offset_threshold: float = 0.55,
+                 vad_min_speech_duration: float = 0.1):
         
         self.model_size = model_size
         self.device = device
@@ -26,6 +29,9 @@ class WhisperEngine:
         self.language = language
         self.beam_size = beam_size
         self.vad_enabled = vad_enabled
+        self.vad_onset_threshold = vad_onset_threshold
+        self.vad_offset_threshold = vad_offset_threshold
+        self.vad_min_speech_duration = vad_min_speech_duration
         self.model = None
         self.logger = logging.getLogger(__name__)
         
@@ -143,13 +149,12 @@ class WhisperEngine:
         if not probabilities:
             return False
         
-        # Use instance variables as defaults if parameters not provided
         if onset is None:
-            onset = getattr(self, 'vad_onset_threshold', 0.7)
+            onset = self.vad_onset_threshold
         if offset is None:
-            offset = getattr(self, 'vad_offset_threshold', 0.55)
+            offset = self.vad_offset_threshold
         if min_duration is None:
-            min_duration = getattr(self, 'vad_min_speech_duration', 0.1)
+            min_duration = self.vad_min_speech_duration
             
         hop_sec = 0.016  # 256 samples at 16kHz = 16ms per frame
         min_frames = int(min_duration / hop_sec)

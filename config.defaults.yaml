@@ -45,10 +45,6 @@ whisper:
   
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
-  
-  # Voice Activity Detection (VAD) pre-check for short recordings
-  # Skips transcription of silent recordings ≤2.5 seconds to prevent hallucinations
-  vad_precheck_enabled: true
 
 # =============================================================================
 # HOTKEY CONFIGURATION
@@ -77,6 +73,22 @@ hotkey:
 
   # Key combination for auto-ENTER function
   auto_enter_combination: alt
+
+# =============================================================================
+# VOICE ACTIVITY DETECTION (VAD) SETTINGS
+# =============================================================================
+vad:
+  # Voice Activity Detection (VAD) Pre-check
+  # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
+  # NOTE: This is separate from faster-whisper's built-in VAD
+  vad_precheck_enabled: true
+  
+  # TEN VAD Hysteresis Thresholds (prevent flickering on borderline audio)
+  vad_onset_threshold: 0.7    # Probability to START detecting speech (0.0-1.0)
+  vad_offset_threshold: 0.55  # Probability to STOP detecting speech (0.0-1.0)
+  
+  # Minimum Duration Filtering
+  vad_min_speech_duration: 0.1  # Minimum speech segment length in seconds (filters brief noise)
 
 # =============================================================================
 # AUDIO RECORDING SETTINGS
@@ -202,18 +214,6 @@ system_tray:
 # ADVANCED SETTINGS
 # =============================================================================
 advanced:
-  # Voice Activity Detection (VAD) Pre-check
-  # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
-  # NOTE: This is separate from faster-whisper's built-in VAD
-  vad_precheck_enabled: true
-  
-  # TEN VAD Hysteresis Thresholds (prevent flickering on borderline audio)
-  vad_onset_threshold: 0.7    # Probability to START detecting speech (0.0-1.0)
-  vad_offset_threshold: 0.55  # Probability to STOP detecting speech (0.0-1.0)
-  
-  # Minimum Duration Filtering
-  vad_min_speech_duration: 0.1  # Minimum speech segment length in seconds (filters brief noise)
-  
   # Model download settings
   model_cache_dir: null  # null = use default cache directory
   

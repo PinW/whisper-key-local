@@ -488,6 +488,10 @@ class ConfigManager:
         """Get advanced configuration settings"""
         return self.config['advanced'].copy()
     
+    def get_vad_config(self) -> Dict[str, Any]:
+        """Get Voice Activity Detection (VAD) configuration settings"""
+        return self.config['vad'].copy()
+    
     def get_system_tray_config(self) -> Dict[str, Any]:
         """Get system tray configuration settings"""
         return self.config['system_tray'].copy()

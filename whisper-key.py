@@ -46,14 +46,17 @@ def setup_audio_recorder(audio_config):
         max_duration=audio_config['max_duration']
     )
 
-def setup_whisper_engine(whisper_config):
+def setup_whisper_engine(whisper_config, vad_config):
     return WhisperEngine(
         model_size=whisper_config['model_size'],
         device=whisper_config['device'],
         compute_type=whisper_config['compute_type'],
         language=whisper_config['language'],
         beam_size=whisper_config['beam_size'],
-        vad_enabled=whisper_config['vad_precheck_enabled']
+        vad_enabled=vad_config['vad_precheck_enabled'],
+        vad_onset_threshold=vad_config['vad_onset_threshold'],
+        vad_offset_threshold=vad_config['vad_offset_threshold'],
+        vad_min_speech_duration=vad_config['vad_min_speech_duration']
     )
 
 def setup_clipboard_manager(clipboard_config):
@@ -128,9 +131,10 @@ def main():
         clipboard_config = config_manager.get_clipboard_config()
         tray_config = config_manager.get_system_tray_config()
         audio_feedback_config = config_manager.get_audio_feedback_config()
+        vad_config = config_manager.get_vad_config()
                
         audio_recorder = setup_audio_recorder(audio_config)      
-        whisper_engine = setup_whisper_engine(whisper_config)
+        whisper_engine = setup_whisper_engine(whisper_config, vad_config)
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
