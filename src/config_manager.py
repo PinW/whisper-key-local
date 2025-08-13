@@ -392,10 +392,18 @@ class ConfigManager:
     
     def _validate_vad_config(self):
         """Validate VAD configuration values are within acceptable ranges"""
-        if 'advanced' not in self.config:
+        if 'vad' not in self.config:
             return
             
-        advanced_config = self.config['advanced']
+        vad_config = self.config['vad']
+        
+        # Validate vad_precheck_enabled (boolean)
+        vad_precheck_enabled = vad_config.get('vad_precheck_enabled', True)
+        if not isinstance(vad_precheck_enabled, bool):
+            self.logger.warning(f"Invalid vad_precheck_enabled value '{vad_precheck_enabled}', using True")
+            self.config['vad']['vad_precheck_enabled'] = True
+        else:
+            self.config['vad']['vad_precheck_enabled'] = vad_precheck_enabled
         vad_fields = {
             'vad_onset_threshold': (0.0, 1.0, 'VAD onset threshold'),
             'vad_offset_threshold': (0.0, 1.0, 'VAD offset threshold'),
@@ -403,14 +411,14 @@ class ConfigManager:
         }
         
         for field, (min_val, max_val, description) in vad_fields.items():
-            if field in advanced_config:
-                value = advanced_config[field]
+            if field in vad_config:
+                value = vad_config[field]
                 if not isinstance(value, (int, float)):
-                    self.logger.warning(f"Invalid {description}: '{value}' (must be numeric), removing from config")
-                    del advanced_config[field]
+                    self.logger.warning(f"Invalid {description}: '{value}' (must be numeric), using default")
+                    del vad_config[field]
                 elif not (min_val <= value <= max_val):
-                    self.logger.warning(f"Invalid {description}: {value} (must be {min_val}-{max_val}), removing from config")
-                    del advanced_config[field]
+                    self.logger.warning(f"Invalid {description}: {value} (must be {min_val}-{max_val}), using default")
+                    del vad_config[field]
     
     def _print_config_status(self):
         print("📁 Loading configuration...")
