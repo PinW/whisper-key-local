@@ -9,3 +9,4 @@
 - Use clear variable/function names
 - Avoid comments unless absolutely necessary
 - We are in ALPHA, don't bother with backward compatibility
+- When I say "to temp": `documentation/temp/`

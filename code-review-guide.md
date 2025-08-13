@@ -17,8 +17,8 @@ This branch is dedicated to reading and understanding my own codebase - every co
 
 ### Core Application Files
 - [x] `whisper-key.py` - Main application entry point
-- [ ] `src/state_manager.py` - Application state coordination
-- [ ] `src/audio_recorder.py` - Microphone audio capture
+- [x] `src/state_manager.py` - Application state coordination
+- [x] `src/audio_recorder.py` - Microphone audio capture
 - [ ] `src/whisper_engine.py` - AI speech transcription
 - [ ] `src/clipboard_manager.py` - Clipboard operations & auto-paste
 - [ ] `src/hotkey_listener.py` - Global hotkey detection
