@@ -161,11 +161,6 @@ class ClipboardManager:
             return False
         
     def get_clipboard_info(self) -> dict:
-        """
-        Get information about current clipboard state (for debugging)
-        
-        Returns a dictionary with clipboard information.
-        """
         try:
             content = pyperclip.paste()
             info = {
@@ -175,7 +170,6 @@ class ClipboardManager:
                 "key_simulation_available": True
             }
             
-            # Add active window info
             hwnd = self.get_active_window_handle()
             if hwnd:
                 try:
@@ -188,6 +182,7 @@ class ClipboardManager:
                     info["active_window"] = {"handle": hwnd, "title": "Unknown"}
             
             return info
+            
         except Exception as e:
             return {
                 "has_content": False,
