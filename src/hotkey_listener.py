@@ -165,7 +165,7 @@ class HotkeyListener:
             return
         
         # Check if auto-paste is enabled (required for auto-enter functionality)
-        if not self.state_manager.clipboard_config.get('auto_paste', False):
+        if not self.state_manager.clipboard_manager.auto_paste:
             self.logger.debug("Auto-enter hotkey ignored - auto-paste is disabled")
             return
         

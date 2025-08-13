@@ -159,6 +159,10 @@ class ClipboardManager:
             self.logger.error(f"Delivery workflow failed: {e}")
             return False
         
+    def update_auto_paste(self, enabled: bool):
+        self.auto_paste = enabled
+        self._print_status()
+
     def get_clipboard_info(self) -> dict:
         try:
             content = pyperclip.paste()

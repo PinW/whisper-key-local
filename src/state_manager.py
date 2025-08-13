@@ -15,7 +15,6 @@ class StateManager:
                  audio_recorder: AudioRecorder,
                  whisper_engine: WhisperEngine,
                  clipboard_manager: ClipboardManager,
-                 clipboard_config: dict,
                  config_manager: ConfigManager,
                  system_tray: Optional[SystemTray] = None,
                  audio_feedback: Optional[AudioFeedback] = None):
@@ -23,7 +22,6 @@ class StateManager:
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
         self.clipboard_manager = clipboard_manager
-        self.clipboard_config = clipboard_config
         self.system_tray = OptionalComponent(system_tray)
         self.config_manager = config_manager
         self.audio_feedback = OptionalComponent(audio_feedback)
@@ -214,6 +212,10 @@ class StateManager:
         self.logger.warning(f"Unexpected state for model change: {current_state}")
         return False
     
+    def update_clipboard_setting(self, setting: str, value):
+        if setting == 'auto_paste':
+            self.clipboard_manager.update_auto_paste(value)
+
     def _execute_model_change(self, new_model_size: str):
         def progress_callback(message: str):
             if "ready" in message.lower() or "already loaded" in message.lower():

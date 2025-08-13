@@ -142,7 +142,6 @@ def main():
             audio_recorder=None,
             whisper_engine=whisper_engine,
             clipboard_manager=clipboard_manager,
-            clipboard_config=clipboard_config,
             system_tray=None,
             config_manager=config_manager,
             audio_feedback=audio_feedback

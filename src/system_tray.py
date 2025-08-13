@@ -319,9 +319,9 @@ class SystemTray:
             # Update the setting (ConfigManager will handle user-friendly logging)
             self.config_manager.update_user_setting('clipboard', 'auto_paste', auto_paste)
             
-            # Update the state manager's clipboard config so changes take effect immediately
+            # Update the clipboard manager so changes take effect immediately
             if self.state_manager:
-                self.state_manager.clipboard_config['auto_paste'] = auto_paste
+                self.state_manager.update_clipboard_setting('auto_paste', auto_paste)
             
             # Refresh the menu to show the new radio button state
             if self.icon:
