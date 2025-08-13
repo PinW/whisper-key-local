@@ -138,6 +138,45 @@ class ConfigManager:
                 self.logger.error(error_msg)
                 raise FileNotFoundError(error_msg)
     
+    def _remove_unused_keys(self, user_config: Dict[str, Any], default_config: Dict[str, Any]) -> bool:
+        """
+        Remove keys from user_config that don't exist in default_config
+        
+        Parameters:
+        - user_config: User's configuration to clean up (modified in place)
+        - default_config: Default configuration that defines valid structure
+        
+        Returns:
+        - was_modified: True if any keys were removed
+        """
+        was_modified = False
+        sections_to_remove = []
+        
+        for section, values in user_config.items():
+            if section not in default_config:
+                self.logger.info(f"Removed invalid config section: {section}")
+                sections_to_remove.append(section)
+                was_modified = True
+            elif isinstance(values, dict) and isinstance(default_config[section], dict):
+                keys_to_remove = []
+                for key in values.keys():
+                    if key not in default_config[section]:
+                        self.logger.info(f"Removed invalid config key: {section}.{key}")
+                        keys_to_remove.append(key)
+                        was_modified = True
+                
+                for key in keys_to_remove:
+                    del values[key]
+                    
+                # Remove empty sections
+                if not values:
+                    sections_to_remove.append(section)
+        
+        for section in sections_to_remove:
+            del user_config[section]
+        
+        return was_modified
+    
     def _load_config(self):
         """
         Load configuration using two-stage loading:
@@ -156,6 +195,9 @@ class ConfigManager:
                     user_config = yaml.load(f)
                 
                 if user_config:
+                    # Remove unused keys from user config
+                    self._remove_unused_keys(user_config, default_config)
+                    
                     # Deep merge user config on top of defaults
                     self.config = deep_merge_config(default_config, user_config)
                     self.logger.info(f"Loaded user configuration from {self.config_path}")
