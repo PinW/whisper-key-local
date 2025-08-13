@@ -1,33 +1,17 @@
-"""
-Clipboard Management Module
-
-This module handles copying text to the system clipboard and pasting it into 
-the currently active application.
-
-the transcribed text and automatically pastes it wherever your cursor is.
-"""
-
 import logging
 import pyperclip
 import time
 from typing import Optional
 
-try:
-    import win32gui
-    import win32con
-    import win32clipboard
-    WINDOWS_API_AVAILABLE = True
-except ImportError:
-    WINDOWS_API_AVAILABLE = False
+import win32gui
+import win32con
+import win32clipboard
 
-try:
-    import pyautogui
-    KEY_SIMULATION_AVAILABLE = True
-    # Configure pyautogui for better performance and safety
-    pyautogui.FAILSAFE = True  # Move mouse to corner to abort
-    pyautogui.PAUSE = 0.05  # Default delay between actions (will be configured from settings)
-except ImportError:
-    KEY_SIMULATION_AVAILABLE = False
+import pyautogui
+
+# Configure pyautogui for better performance and safety
+pyautogui.FAILSAFE = True  # Move mouse to corner to abort
+pyautogui.PAUSE = 0.05  # Default delay between actions (will be configured from settings)
 
 class ClipboardManager:
     """
@@ -52,14 +36,8 @@ class ClipboardManager:
     
     def _configure_pyautogui_timing(self):
         """Configure PyAutoGUI timing based on user settings"""
-        if not KEY_SIMULATION_AVAILABLE:
-            return
-            
-        try:
-            pyautogui.PAUSE = self.key_simulation_delay
-            self.logger.info(f"Set PyAutoGUI PAUSE to {self.key_simulation_delay}s from user config")
-        except Exception as e:
-            self.logger.warning(f"Could not configure PyAutoGUI timing: {e}")
+        pyautogui.PAUSE = self.key_simulation_delay
+        self.logger.info(f"Set PyAutoGUI PAUSE to {self.key_simulation_delay}s from user config")
     
     def _test_clipboard_access(self):
         """
@@ -182,12 +160,8 @@ class ClipboardManager:
         Get the handle of the currently active window
         
         Returns:
-        - Window handle (HWND) as integer, or None if Windows API unavailable
+        - Window handle (HWND) as integer, or None if no active window
         """
-        if not WINDOWS_API_AVAILABLE:
-            self.logger.warning("Windows API not available for getting active window")
-            return None
-            
         try:
             hwnd = win32gui.GetForegroundWindow()
             if hwnd:
@@ -214,9 +188,6 @@ class ClipboardManager:
         This method copies text to clipboard and then sends a WM_PASTE message
         directly to the active window, bypassing keyboard simulation.
         """
-        if not WINDOWS_API_AVAILABLE:
-            self.logger.error("Windows API not available for auto-paste")
-            return False
             
         if not text:
             self.logger.warning("Attempted to auto-paste empty text")
@@ -260,9 +231,6 @@ class ClipboardManager:
         This method copies text to clipboard and simulates Ctrl+V keypress,
         which is compatible with most applications.
         """
-        if not KEY_SIMULATION_AVAILABLE:
-            self.logger.error("pyautogui not available for key simulation")
-            return False
             
         if not text:
             self.logger.warning("Attempted to paste empty text via key simulation")
@@ -307,27 +275,12 @@ class ClipboardManager:
         success = False
         method_used = ""
         
-        # Try the preferred method first
         if paste_method == "key_simulation":
             success = self.simulate_paste_keypress(text)
             method_used = "key simulation"
-            
-            # Fallback to Windows API if key simulation fails
-            if not success and WINDOWS_API_AVAILABLE:
-                self.logger.info("Key simulation failed, trying Windows API fallback")
-                success = self.auto_paste_text(text)
-                method_used = "Windows API (fallback)"
-                
         elif paste_method == "windows_api":
             success = self.auto_paste_text(text)
             method_used = "Windows API"
-            
-            # Fallback to key simulation if Windows API fails
-            if not success and KEY_SIMULATION_AVAILABLE:
-                self.logger.info("Windows API failed, trying key simulation fallback")
-                success = self.simulate_paste_keypress(text)
-                method_used = "key simulation (fallback)"
-        
         else:
             self.logger.error(f"Unknown paste method: {paste_method}")
             return False
@@ -337,8 +290,7 @@ class ClipboardManager:
             display_text = text if len(text) <= 100 else text[:97] + "..."
             print(f"   ✓ Auto-pasted via {method_used}")
         elif not success and show_notification:
-            print("❌ Auto-paste failed with all methods, text remains in clipboard for manual paste")
-            # Text should still be in clipboard from the copy attempts
+            print(f"❌ Auto-paste failed with {method_used}, text remains in clipboard for manual paste")
         
         return success
     
@@ -382,27 +334,12 @@ class ClipboardManager:
         paste_success = False
         method_used = ""
         
-        # Try the preferred method first
         if paste_method == "key_simulation":
             paste_success = self._paste_via_key_simulation()
             method_used = "key simulation"
-            
-            # Fallback to Windows API if key simulation fails
-            if not paste_success and WINDOWS_API_AVAILABLE:
-                self.logger.info("Key simulation failed, trying Windows API fallback")
-                paste_success = self._paste_via_windows_api()
-                method_used = "Windows API (fallback)"
-                
         elif paste_method == "windows_api":
             paste_success = self._paste_via_windows_api()
             method_used = "Windows API"
-            
-            # Fallback to key simulation if Windows API fails
-            if not paste_success and KEY_SIMULATION_AVAILABLE:
-                self.logger.info("Windows API failed, trying key simulation fallback")
-                paste_success = self._paste_via_key_simulation()
-                method_used = "key simulation (fallback)"
-        
         else:
             self.logger.error(f"Unknown paste method: {paste_method}")
             paste_success = False
@@ -425,7 +362,7 @@ class ClipboardManager:
             if not restore_success:
                 self.logger.warning("Original clipboard content was not restored")
         elif not paste_success and show_notification:
-            print("❌ Auto-paste failed with all methods")
+            print(f"❌ Auto-paste failed with {method_used}")
             if original_content is not None and restore_success:
                 print("   ✓ Original clipboard content restored")
         
@@ -433,9 +370,6 @@ class ClipboardManager:
     
     def _paste_via_key_simulation(self) -> bool:
         """Helper method for key simulation paste (without copying first)"""
-        if not KEY_SIMULATION_AVAILABLE:
-            return False
-            
         try:
             # PyAutoGUI PAUSE provides timing automatically
             pyautogui.hotkey('ctrl', 'v')
@@ -447,9 +381,6 @@ class ClipboardManager:
     
     def _paste_via_windows_api(self) -> bool:
         """Helper method for Windows API paste (without copying first)"""
-        if not WINDOWS_API_AVAILABLE:
-            return False
-        
         try:
             hwnd = self.get_active_window_handle()
             if not hwnd:
@@ -475,9 +406,6 @@ class ClipboardManager:
         submit text after pasting it (useful for chat applications and forms).
         PyAutoGUI.PAUSE provides automatic timing.
         """
-        if not KEY_SIMULATION_AVAILABLE:
-            self.logger.error("pyautogui not available for ENTER key simulation")
-            return False
         
         try:
             # Send ENTER key press
@@ -586,22 +514,21 @@ class ClipboardManager:
                 "has_content": bool(content),
                 "content_length": len(content) if content else 0,
                 "preview": content[:50] + "..." if content and len(content) > 50 else content,
-                "windows_api_available": WINDOWS_API_AVAILABLE,
-                "key_simulation_available": KEY_SIMULATION_AVAILABLE
+                "windows_api_available": True,
+                "key_simulation_available": True
             }
             
-            # Add active window info if Windows API is available
-            if WINDOWS_API_AVAILABLE:
-                hwnd = self.get_active_window_handle()
-                if hwnd:
-                    try:
-                        window_title = win32gui.GetWindowText(hwnd)
-                        info["active_window"] = {
-                            "handle": hwnd,
-                            "title": window_title
-                        }
-                    except:
-                        info["active_window"] = {"handle": hwnd, "title": "Unknown"}
+            # Add active window info
+            hwnd = self.get_active_window_handle()
+            if hwnd:
+                try:
+                    window_title = win32gui.GetWindowText(hwnd)
+                    info["active_window"] = {
+                        "handle": hwnd,
+                        "title": window_title
+                    }
+                except:
+                    info["active_window"] = {"handle": hwnd, "title": "Unknown"}
             
             return info
         except Exception as e:
@@ -609,6 +536,6 @@ class ClipboardManager:
                 "has_content": False,
                 "content_length": 0,
                 "error": str(e),
-                "windows_api_available": WINDOWS_API_AVAILABLE,
-                "key_simulation_available": KEY_SIMULATION_AVAILABLE
+                "windows_api_available": True,
+                "key_simulation_available": True
             }
