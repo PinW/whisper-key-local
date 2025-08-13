@@ -119,13 +119,6 @@ clipboard:
   # false = only copy to clipboard (paste manually with Ctrl+V)
   auto_paste: true
   
-  # Add extra formatting to transcribed text
-  # Options: "none", "capitalize", "sentence"
-  # - none: exact transcription
-  # - capitalize: Capitalize first letter
-  # - sentence: Capitalize first letter and add period if missing
-  text_formatting: none
-  
   # Preserve existing clipboard content when pasting
   # true = save current clipboard, paste transcription, then restore original clipboard
   # false = replace clipboard with transcription (default behavior)

@@ -296,14 +296,6 @@ class ConfigManager:
         else:
             self.config['logging']['console']['level'] = console_level
         
-        # Validate text formatting
-        valid_formatting = ['none', 'capitalize', 'sentence']
-        text_formatting = self.config['clipboard'].get('text_formatting', 'none')
-        if text_formatting not in valid_formatting:
-            self.logger.warning(f"Invalid text formatting '{text_formatting}', using 'none'")
-            self.config['clipboard']['text_formatting'] = 'none'
-        else:
-            self.config['clipboard']['text_formatting'] = text_formatting
         
         # Validate auto_paste setting
         auto_paste = self.config['clipboard'].get('auto_paste', True)
