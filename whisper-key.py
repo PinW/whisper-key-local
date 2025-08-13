@@ -93,7 +93,7 @@ def setup_signal_handlers(shutdown_event):
 def setup_hotkey_listener(hotkey_config, state_manager):
     return HotkeyListener(
         state_manager=state_manager,
-        hotkey=hotkey_config['combination'],
+        recording_hotkey=hotkey_config['recording_hotkey'],
         auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
         auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
         stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False)
@@ -156,7 +156,7 @@ def main():
         if system_tray.is_available():
             system_tray.start()
         
-        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['combination'])} to start recording.")        
+        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.")        
         print("Press Ctrl+C to quit.")
         
         while not shutdown_event.wait(timeout=0.1):

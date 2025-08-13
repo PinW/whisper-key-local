@@ -58,7 +58,7 @@ hotkey:
   #   - "ctrl+alt+r"
   #   - "win+shift+v"
   #   - "ctrl+shift+f12"
-  combination: ctrl+win
+  recording_hotkey: ctrl+win
   
   # Stop recording with just the first modifier key
   # If enabled, stops recording with first modifier of the main hotkey

@@ -51,7 +51,7 @@ def test_hotkey_basic():
         
         hotkey_listener = HotkeyListener(
             state_manager=mock_state,
-            hotkey="ctrl+shift+space"
+            recording_hotkey="ctrl+shift+space"
         )
         
         print("✓ Hotkey listener created successfully!")
@@ -121,7 +121,7 @@ def test_different_hotkeys():
             mock_state = MockStateManager()
             hotkey_listener = HotkeyListener(
                 state_manager=mock_state,
-                hotkey=hotkey
+                recording_hotkey=hotkey
             )
             
             print(f"   ✓ Listening for: {hotkey}")
@@ -157,7 +157,7 @@ def test_hotkey_while_using_other_apps():
         mock_state = MockStateManager()
         hotkey_listener = HotkeyListener(
             state_manager=mock_state,
-            hotkey="ctrl+shift+space"
+            recording_hotkey="ctrl+shift+space"
         )
         
         print("✓ Hotkey listener active: Ctrl+Shift+Space")
@@ -248,7 +248,7 @@ def interactive_hotkey_test():
                 mock_state = MockStateManager()
                 current_listener = HotkeyListener(
                     state_manager=mock_state,
-                    hotkey=hotkey
+                    recording_hotkey=hotkey
                 )
                 
                 print(f"✓ Now listening for: {hotkey}")

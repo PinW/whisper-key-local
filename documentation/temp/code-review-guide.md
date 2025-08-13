@@ -20,7 +20,7 @@ This branch is dedicated to reading and understanding my own codebase - every co
 - [x] `src/state_manager.py` - Application state coordination
 - [x] `src/audio_recorder.py` - Microphone audio capture
 - [x] `src/whisper_engine.py` - AI speech transcription
-- [ ] `src/clipboard_manager.py` - Clipboard operations & auto-paste
+- [x] `src/clipboard_manager.py` - Clipboard operations & auto-paste
 - [ ] `src/hotkey_listener.py` - Global hotkey detection
 - [ ] `src/config_manager.py` - Configuration management
 - [ ] `src/system_tray.py` - System tray interface
@@ -30,21 +30,3 @@ This branch is dedicated to reading and understanding my own codebase - every co
 ### Test Suite & Tools
 - [ ] Review all test files (`tests/` directory)
 - [ ] Review all utility tools (`tools/` directory)
-
-## Completed
-- [x] Removed all "For beginners:" comments throughout codebase
-- [x] Cleaned up orphaned text fragments left after comment removal
-- [x] Refactored main function with consistent setup patterns
-- [x] Moved status printing to component constructors for better encapsulation
-- [x] Fixed SystemTray availability handling to prevent incomplete objects
-- [x] Resolved circular dependency between SystemTray and StateManager
-- [x] Made StateManager initialization explicit to show architectural importance
-- [x] Moved key_simulation_delay from hotkey config to clipboard config
-- [x] Created dedicated VAD config section and reorganized VAD parameters
-- [x] Added proper VAD config parameter passing to WhisperEngine constructor
-- [x] Removed broken model loading cancellation logic (couldn't cancel during heavy work)
-- [x] Added meaningful constants: SAMPLE_RATE, VAD_CHUNK_SIZE, VAD_HOP_DURATION_SEC
-- [x] Improved variable naming: min_frames_for_speech, consecutive_speech_count
-- [x] Removed dead code: max_consecutive tracking, speech_frame_count, unused threshold
-- [x] Enhanced comments to explain "why" rather than restating "what"
-- [x] Consistent parameter formatting with newlines aligned to brackets

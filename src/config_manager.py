@@ -331,16 +331,16 @@ class ConfigManager:
             self.config['hotkey']['key_simulation_delay'] = key_simulation_delay
         
         # Validate main hotkey combination format
-        main_combination = self.config['hotkey'].get('combination', 'ctrl+win')
+        main_combination = self.config['hotkey'].get('recording_hotkey', 'ctrl+win')
         if not isinstance(main_combination, str) or not main_combination.strip():
             self.logger.warning(f"Invalid main hotkey combination '{main_combination}', using 'ctrl+win'")
-            self.config['hotkey']['combination'] = 'ctrl+win'
+            self.config['hotkey']['recording_hotkey'] = 'ctrl+win'
             main_combination = 'ctrl+win'
         else:
             # Clean up the combination (strip whitespace, convert to lowercase)
             cleaned_combination = main_combination.strip().lower()
             if cleaned_combination != main_combination:
-                self.config['hotkey']['combination'] = cleaned_combination
+                self.config['hotkey']['recording_hotkey'] = cleaned_combination
                 main_combination = cleaned_combination
         
         # Validate stop-with-modifier setting
@@ -469,7 +469,7 @@ class ConfigManager:
         hotkey_config = self.get_hotkey_config()
         clipboard_config = self.get_clipboard_config()
         
-        main_hotkey = hotkey_config['combination']
+        main_hotkey = hotkey_config['recording_hotkey']
         auto_enter_enabled = hotkey_config['auto_enter_enabled']
         auto_enter_hotkey = hotkey_config['auto_enter_combination']
         stop_with_modifier = hotkey_config['stop_with_modifier_enabled']
@@ -658,7 +658,7 @@ class ConfigManager:
                 }
             },
             'hotkey': {
-                'combination': {
+                'recording_hotkey': {
                     'emoji': '⌨️',
                     'ascii': '[Hotkey]',
                     'name': 'Hotkey',
