@@ -95,14 +95,12 @@ class StateManager:
             
             self.system_tray.update_state("processing")
 
-            result = self.clipboard_manager.deliver_transcription(
-                transcribed_text, 
-                self.clipboard_config,
-                use_auto_enter=use_auto_enter
+            success = self.clipboard_manager.deliver_transcription(
+                transcribed_text, use_auto_enter
             )
             
-            if result:
-                self.last_transcription = result
+            if success:
+                self.last_transcription = transcribed_text
             
         except Exception as e:
             self.logger.error(f"Error in processing workflow: {e}")

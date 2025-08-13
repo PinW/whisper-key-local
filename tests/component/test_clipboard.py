@@ -43,7 +43,7 @@ def test_basic_clipboard():
         
         # Test reading it back
         print("\n3. Reading text back from clipboard...")
-        retrieved_text = clipboard.paste_text()
+        retrieved_text = clipboard.get_clipboard_content()
         
         if retrieved_text:
             print(f"✓ Retrieved text: '{retrieved_text}'")
@@ -64,9 +64,9 @@ def test_basic_clipboard():
     except Exception as e:
         print(f"❌ Error during clipboard test: {e}")
 
-def test_copy_and_notify():
+def test_copy_with_notification():
     """
-    Test the copy_and_notify method (what our main app will use)
+    Test the copy_with_notification method (what our main app will use)
     
     This demonstrates the user-friendly copy method with notifications.
     """
@@ -80,7 +80,7 @@ def test_copy_and_notify():
         # Test with normal text
         print("1. Testing with normal text:")
         test_text = "This text will be copied with user notification!"
-        success = clipboard.copy_and_notify(test_text)
+        success = clipboard.copy_with_notification(test_text)
         
         if success:
             print("   ✓ Copy with notification succeeded!")
@@ -90,12 +90,12 @@ def test_copy_and_notify():
         # Test with very long text (should be truncated in display)
         print("\n2. Testing with long text (should truncate display):")
         long_text = "This is a very long piece of text that should be truncated in the user notification but fully copied to clipboard. " * 3
-        success = clipboard.copy_and_notify(long_text)
+        success = clipboard.copy_with_notification(long_text)
         
         if success:
             print("   ✓ Long text copy succeeded!")
             # Verify full text was actually copied
-            retrieved = clipboard.paste_text()
+            retrieved = clipboard.get_clipboard_content()
             if retrieved == long_text:
                 print("   ✓ Full text was copied correctly (despite truncated display)")
             else:
@@ -103,7 +103,7 @@ def test_copy_and_notify():
         
         # Test with empty text
         print("\n3. Testing with empty text:")
-        success = clipboard.copy_and_notify("")
+        success = clipboard.copy_with_notification("")
         if not success:
             print("   ✓ Correctly rejected empty text!")
         else:
@@ -136,7 +136,7 @@ def interactive_clipboard_test():
                 break
             
             if text.strip():  # Only process non-empty text
-                success = clipboard.copy_and_notify(text)
+                success = clipboard.copy_with_notification(text)
                 if success:
                     print("👍 Now try pasting with Ctrl+V in another application!")
                     
@@ -216,7 +216,7 @@ def test_preserve_clipboard():
         clipboard.copy_text(original_text)
         
         # Verify it's there
-        current_content = clipboard.paste_text()
+        current_content = clipboard.get_clipboard_content()
         if current_content == original_text:
             print("✓ Original content set successfully!")
         else:
@@ -241,7 +241,7 @@ def test_preserve_clipboard():
         print("4. Testing clipboard preservation logic...")
         
         # Save original content
-        saved_content = clipboard.paste_text()
+        saved_content = clipboard.get_clipboard_content()
         print(f"   Saved original: '{saved_content[:50]}...' ({len(saved_content)} chars)")
         
         # Copy transcription
@@ -253,7 +253,7 @@ def test_preserve_clipboard():
             return
         
         # Verify transcription is in clipboard
-        current_content = clipboard.paste_text()
+        current_content = clipboard.get_clipboard_content()
         if current_content == transcription_text:
             print("   ✓ Transcription is now in clipboard")
         else:
@@ -269,7 +269,7 @@ def test_preserve_clipboard():
             return
         
         # Verify original content is back
-        final_content = clipboard.paste_text()
+        final_content = clipboard.get_clipboard_content()
         if final_content == original_text:
             print("   ✓ Original clipboard content successfully preserved!")
         else:
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     
     # Run all tests
     test_basic_clipboard()
-    test_copy_and_notify()
+    test_copy_with_notification()
     test_preserve_clipboard()
     test_clipboard_info()
     
