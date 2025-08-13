@@ -99,6 +99,7 @@ class ClipboardManager:
     
     def execute_auto_paste(self, text: str, preserve_clipboard: bool) -> bool:              
         try:
+            original_content = None
             if preserve_clipboard:
                 original_content = pyperclip.paste()
 
@@ -136,8 +137,6 @@ class ClipboardManager:
                               use_auto_enter: bool = False) -> bool:
         
         try:
-            success = False
-
             if use_auto_enter:
                 print("🚀 Auto-pasting text and SENDING with ENTER...")
                
@@ -182,7 +181,7 @@ class ClipboardManager:
                     info["active_window"] = {"handle": hwnd, "title": "Unknown"}
             
             return info
-            
+
         except Exception as e:
             return {
                 "has_content": False,
