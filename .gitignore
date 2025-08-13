@@ -123,6 +123,3 @@ user-testing/
 
 # Build configuration (user-specific paths)
 py-build/build-config.json
-
-# Temp documentation
-documentation/temp/
