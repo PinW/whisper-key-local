@@ -76,11 +76,6 @@ class HotkeyListener:
         return len(combination.split('+'))
     
     def _standard_hotkey_pressed(self):
-        """
-        Called when the standard recording hotkey is pressed
-        
-        This triggers the normal toggle recording behavior.
-        """
         self.logger.info(f"Standard hotkey pressed: {self.recording_hotkey}")
         
         # Disable stop-modifier until key is released (prevents immediate stopping)
@@ -90,26 +85,16 @@ class HotkeyListener:
             self.state_manager.toggle_recording()
     
     def _auto_enter_hotkey_pressed(self):
-        """
-        Called when the auto-enter hotkey is pressed
-        
-        AUTO-ENTER STOP-ONLY HOTKEY:
-        - When not recording or auto-paste is disabled, the hotkey press is ignored
-        - Provides automatic pasting with ENTER key press when stopping
-        """
         self.logger.info(f"Auto-enter hotkey pressed: {self.auto_enter_hotkey}")
         
-        # Check if currently recording (stop-only behavior)
         if not self.state_manager.audio_recorder.get_recording_status():
             self.logger.debug("Auto-enter hotkey ignored - not currently recording")
             return
         
-        # Check if auto-paste is enabled (required for auto-enter functionality)
         if not self.state_manager.clipboard_manager.auto_paste:
             self.logger.debug("Auto-enter hotkey ignored - auto-paste is disabled")
             return
         
-        # Apply stop-modifier protection if enabled
         if self.stop_with_modifier_enabled and not self.modifier_key_released:
             self.logger.debug("Auto-enter hotkey ignored - waiting for modifier key release")
             return
@@ -121,15 +106,6 @@ class HotkeyListener:
             self.state_manager.stop_recording(use_auto_enter=True)
     
     def _stop_modifier_hotkey_pressed(self):
-        """
-        Called when the stop-modifier hotkey is pressed (just the first modifier)
-        
-        This only stops recording if:
-        1. Currently recording 
-        2. The modifier key has been released since the last full hotkey press
-        
-        This prevents immediate stopping when the modifier is part of the start combination.
-        """
         self.logger.debug(f"Stop-modifier hotkey pressed: {self.stop_modifier_hotkey}, modifier_released={self.modifier_key_released}")
         
         # Only stop if the modifier key has been released since last full hotkey press
@@ -141,45 +117,11 @@ class HotkeyListener:
             self.logger.debug("Stop-modifier ignored - waiting for key release first")
     
     def _arm_stop_modifier_hotkey_on_release(self):
-        """
-        Called when the stop-modifier key is released
-        
-        This enables the stop functionality after the key is released.
-        """
         self.logger.debug(f"Stop-modifier key released: {self.stop_modifier_hotkey}")
         self.modifier_key_released = True
-    
-    
-    
+        
     def _extract_first_modifier(self, hotkey_str: str) -> str:
-        """
-        Extract the first modifier key from a hotkey combination
-        
-        Examples:
-        - "ctrl+win" -> "ctrl"
-        - "ctrl+shift+t" -> "ctrl"  
-        - "alt+f4" -> "alt"
-        - "win+space" -> "win"
-        
-        Parameters:
-        - hotkey_str: The full hotkey combination string
-        
-        Returns:
-        - String with just the first modifier, or None if no modifiers found
-        """
-        keys = hotkey_str.lower().split('+')
-        modifiers = ['ctrl', 'shift', 'alt', 'win', 'windows', 'cmd', 'super']
-        
-        # Find the first modifier in the combination
-        for key in keys:
-            key = key.strip()
-            if key in modifiers:
-                self.logger.info(f"Extracted first modifier '{key}' from hotkey '{hotkey_str}'")
-                return key
-        
-        self.logger.warning(f"No modifier found in hotkey '{hotkey_str}' - stop-with-modifier disabled")
-        return None
-    
+        return hotkey_str.lower().split('+')[0].strip()
     
     def start_listening(self):
         """
