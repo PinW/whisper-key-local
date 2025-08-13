@@ -41,7 +41,7 @@ class AudioRecorder:
 
         except Exception as e:
             self.logger.error(f"Microphone test failed: {e}")
-            raise RuntimeError("Could not access microphone. Please check your audio settings.")
+            raise
     
     def start_recording(self):
         if self.is_recording:

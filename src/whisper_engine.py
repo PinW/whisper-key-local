@@ -82,7 +82,7 @@ class WhisperEngine:
             
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")
-            raise RuntimeError(f"Could not load Whisper model: {e}")
+            raise
     
     def _load_model_async(self,
                           new_model_size: str,

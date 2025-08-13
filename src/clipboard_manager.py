@@ -28,7 +28,7 @@ class ClipboardManager:
             
         except Exception as e:
             self.logger.error(f"Clipboard access test failed: {e}")
-            raise RuntimeError("Could not access system clipboard. Please check permissions.")
+            raise
     
     def _print_status(self):
         if self.auto_paste:

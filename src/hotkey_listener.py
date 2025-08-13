@@ -124,31 +124,19 @@ class HotkeyListener:
         return hotkey_str.lower().split('+')[0].strip()
     
     def start_listening(self):
-        """
-        Start listening for hotkey presses
-        
-        This registers our hotkeys with the operating system and starts the
-        global hotkey checker thread.
-        """
         if self.is_listening:
-            self.logger.warning("Already listening for hotkeys!")
             return
         
-        try:
-            self.logger.info("Starting hotkey listener...")
-            
-            # Register our hotkeys with the global-hotkeys library
+        try:            
             register_hotkeys(self.hotkey_bindings)
             
-            # Start the global hotkey checker
             start_checking_hotkeys()
             
             self.is_listening = True
-            self.logger.info("Hotkey listener started successfully")
             
         except Exception as e:
             self.logger.error(f"Failed to start hotkey listener: {e}")
-            raise RuntimeError(f"Could not start hotkey listener: {e}")
+            raise
     
     def stop_listening(self):
         """
