@@ -54,7 +54,7 @@ class HotkeyListener:
         
         self.hotkey_bindings = []
         for config in hotkey_configs:
-            formatted_hotkey = self._convert_hotkey_to_global_format(config['combination'])
+            formatted_hotkey = self._convert_hotkey_to_global_hotkeys_format(config['combination'])
             
             # Setup for global-hotkeys
             # Expected format: [hotkey, press_callback, release_callback, actuate_on_partial_release]
@@ -128,10 +128,8 @@ class HotkeyListener:
             return
         
         try:            
-            register_hotkeys(self.hotkey_bindings)
-            
+            register_hotkeys(self.hotkey_bindings)        
             start_checking_hotkeys()
-            
             self.is_listening = True
             
         except Exception as e:
@@ -139,35 +137,19 @@ class HotkeyListener:
             raise
     
     def stop_listening(self):
-        """
-        Stop listening for hotkey presses
-        
-        This is important for cleanup when the app shuts down.
-        """
         if not self.is_listening:
             return
         
         try:
-            self.logger.info("Stopping hotkey listener...")
-            
-            # Stop the global hotkey checker
-            stop_checking_hotkeys()
-            
+            stop_checking_hotkeys()            
             self.is_listening = False
             self.logger.info("Hotkey listener stopped")
             
         except Exception as e:
             self.logger.error(f"Error stopping hotkey listener: {e}")
     
-    def _convert_hotkey_to_global_format(self, hotkey_str: str) -> str:
-        """
-        Convert hotkey string format to global_hotkeys format
-        
-        Examples:
-        - "ctrl+shift+space" -> "control + shift + space"
-        - "alt+f4" -> "alt + f4"
-        """
-        # Mapping from common string formats to global_hotkeys format
+    def _convert_hotkey_to_global_hotkeys_format(self, hotkey_str: str) -> str:
+
         key_mapping = {
             'ctrl': 'control',
             'shift': 'shift',
@@ -186,65 +168,27 @@ class HotkeyListener:
         
         for key in keys:
             key = key.strip()
-            # Use mapping if available, otherwise use the key as-is
             converted_keys.append(key_mapping.get(key, key))
         
-        # Join with ' + ' format expected by global_hotkeys
-        return ' + '.join(converted_keys)
+        return ' + '.join(converted_keys)    
     
-    
-    def change_hotkey(self, new_hotkey: str = None, new_auto_enter_hotkey: str = None, auto_enter_enabled: bool = None, stop_with_modifier_enabled: bool = None):
-        """
-        Change the hotkey combinations (for future customization)
+    def change_hotkey_config(self, setting: str, value):
+        valid_settings = ['recording_hotkey', 'auto_enter_hotkey', 'auto_enter_enabled', 'stop_with_modifier_enabled']
         
-        This allows users to customize which keys trigger recording and auto-enter.
+        if setting not in valid_settings:
+            raise ValueError(f"Invalid setting '{setting}'. Valid options: {valid_settings}")
         
-        Parameters:
-        - new_hotkey: New standard recording hotkey (optional)
-        - new_auto_enter_hotkey: New auto-enter hotkey (optional)  
-        - auto_enter_enabled: Enable/disable auto-enter hotkey (optional)
-        - stop_with_modifier_enabled: Enable/disable stop-with-modifier hotkey (optional)
-        """
-        changes = []
+        old_value = getattr(self, setting)
         
-        if new_hotkey is not None:
-            changes.append(f"standard: {self.recording_hotkey} -> {new_hotkey}")
-            self.recording_hotkey = new_hotkey
+        if old_value == value:
+            return
         
-        if new_auto_enter_hotkey is not None:
-            changes.append(f"auto-enter: {self.auto_enter_hotkey} -> {new_auto_enter_hotkey}")
-            self.auto_enter_hotkey = new_auto_enter_hotkey
-            
-        if auto_enter_enabled is not None:
-            changes.append(f"auto-enter enabled: {self.auto_enter_enabled} -> {auto_enter_enabled}")
-            self.auto_enter_enabled = auto_enter_enabled
-            
-        if stop_with_modifier_enabled is not None:
-            changes.append(f"stop-with-modifier enabled: {self.stop_with_modifier_enabled} -> {stop_with_modifier_enabled}")
-            self.stop_with_modifier_enabled = stop_with_modifier_enabled
+        setattr(self, setting, value)
+        self.logger.info(f"Changed {setting}: {old_value} -> {value}")
         
-        if changes:
-            self.logger.info(f"Changing hotkeys: {', '.join(changes)}")
-            
-            # Stop current listener
-            self.stop_listening()
-            
-            # Update hotkey configuration
-            self._setup_hotkeys()
-            
-            # Restart listener with new hotkeys
-            self.start_listening()
-    
-    def get_current_hotkey(self) -> str:
-        """
-        Get the currently configured hotkey
-        
-        Simple getter method to see what hotkey is active.
-        """
-        return self.recording_hotkey
+        self.stop_listening()
+        self._setup_hotkeys()
+        self.start_listening()
     
     def is_active(self) -> bool:
-        """
-        Check if the hotkey listener is currently active
-        """
         return self.is_listening

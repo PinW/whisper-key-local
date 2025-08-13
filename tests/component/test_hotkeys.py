@@ -55,7 +55,7 @@ def test_hotkey_basic():
         )
         
         print("✓ Hotkey listener created successfully!")
-        print(f"✓ Listening for: {hotkey_listener.get_current_hotkey()}")
+        print(f"✓ Listening for: {hotkey_listener.recording_hotkey}")
         print()
         
         # Test the hotkey
