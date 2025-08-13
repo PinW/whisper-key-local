@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from faster_whisper import WhisperModel
-from typing import Optional, Tuple, Callable
+from typing import Optional, Callable
 import os
 import time
 import threading
@@ -9,8 +9,10 @@ from ten_vad import TenVad
 from src.utils import OptionalComponent
 
 class WhisperEngine:    
-    SPEECH_DETECTION_THRESHOLD = 0.6
-    MODEL_CACHE_PREFIX = "models--Systran--faster-whisper-"
+    MODEL_CACHE_PREFIX = "models--Systran--faster-whisper-"  # file prefix for hugging-face model
+    SAMPLE_RATE = 16000  # Fixed 16kHz sample rate for TEN VAD and Whisper
+    VAD_HOP_DURATION_SEC = 0.016  # Fixed 256 samples at 16kHz
+    VAD_CHUNK_SIZE = 256  
 
     def __init__(self, 
                  model_size: str = "tiny", 
@@ -38,11 +40,8 @@ class WhisperEngine:
         self._loading_thread = None
         self._progress_callback = None
         
-        # Load TEN VAD for pre-transcription speech check
         vad_instance = TenVad() if self.vad_enabled else None
         self.ten_vad = OptionalComponent(vad_instance)
-        if self.vad_enabled and vad_instance:
-            self.ten_vad.threshold = self.SPEECH_DETECTION_THRESHOLD
         
         self._load_model()
     
@@ -142,67 +141,49 @@ class WhisperEngine:
                                        onset: float = None,
                                        offset: float = None,
                                        min_duration: float = None) -> bool:
-        """
-        Apply upper/lower bounds after speech starts and consecutive
-        frame logic to detect speech
-        """
         if not probabilities:
             return False
         
-        if onset is None:
-            onset = self.vad_onset_threshold
-        if offset is None:
-            offset = self.vad_offset_threshold
-        if min_duration is None:
-            min_duration = self.vad_min_speech_duration
+        onset = onset or self.vad_onset_threshold
+        offset = offset or self.vad_offset_threshold
+        min_duration = min_duration or self.vad_min_speech_duration
             
-        hop_sec = 0.016  # 256 samples at 16kHz = 16ms per frame
-        min_frames = int(min_duration / hop_sec)
+        min_frames_for_speech = int(min_duration / self.VAD_HOP_DURATION_SEC)
         
-        # Step 1: Apply hysteresis to get stable speech state flags
         speech_state = False
         hysteresis_flags = []
         
+        # Apply hysteresis to prevent "flickering"
         for prob in probabilities:
             if not speech_state and prob >= onset:
-                speech_state = True  # Turn ON when crossing onset threshold
+                speech_state = True
             elif speech_state and prob <= offset:
-                speech_state = False  # Turn OFF when crossing offset threshold
-            # Otherwise maintain current state (prevents flickering)
+                speech_state = False
             hysteresis_flags.append(speech_state)
         
-        # Step 2: Apply consecutive frame minimum duration filtering
-        consecutive_count = 0
-        max_consecutive = 0
-        speech_frame_count = sum(hysteresis_flags)
+        consecutive_speech_count = 0
         
         for flag in hysteresis_flags:
             if flag:
-                consecutive_count += 1
-                max_consecutive = max(max_consecutive, consecutive_count)
-                if consecutive_count >= min_frames:
-                    return True  # Found valid speech segment!
+                consecutive_speech_count += 1
+
+                if consecutive_speech_count >= min_frames_for_speech:
+                    return True  # Speech segment detected
             else:
-                consecutive_count = 0  # Reset counter on silence
+                consecutive_speech_count = 0
         
-        return False  # No valid consecutive speech segments found
+        return False
 
     def _check_audio_for_speech(self, audio_data: np.ndarray) -> bool:
-        """
-        Check if audio contains speech using TEN VAD
-        Returns True if speech detected, False otherwise
-        Note: Audio is always 16kHz (app standard), perfect for TEN VAD
-        """
-        duration = len(audio_data) / 16000  # Fixed 16kHz sample rate
+        duration = len(audio_data) / self.SAMPLE_RATE
         
-        # Skip VAD if not available or disabled
         if not self.ten_vad:
-            return True  # Default to transcribing if VAD unavailable
+            return True # Skip speech check, but still transcribe
         
         vad_start_time = time.time()
         
         try:
-            # Flatten audio if needed (TEN VAD expects 1D array)
+            # Flatten audio (TEN VAD expects 1D array)
             if len(audio_data.shape) > 1:
                 audio_flat = audio_data.flatten()
             else:
@@ -210,35 +191,30 @@ class WhisperEngine:
             
             # Convert float32 to int16 for TEN VAD (range -32768 to 32767)
             if audio_flat.dtype == np.float32:
-                # Clamp to [-1, 1] range then scale to int16
                 audio_flat = np.clip(audio_flat, -1.0, 1.0)
                 audio_int16 = (audio_flat * 32767).astype(np.int16)
             else:
                 audio_int16 = audio_flat.astype(np.int16)
             
-            # TEN VAD processes audio in 256-sample chunks (16ms at 16kHz)
-            chunk_size = 256
+            chunk_size = self.VAD_CHUNK_SIZE
             
-            # Collect ALL probabilities first (no early exit)
             probabilities = []
             for i in range(0, len(audio_int16), chunk_size):
                 chunk = audio_int16[i:i + chunk_size]
                 
-                # Pad the last chunk if it's smaller than 256 samples
+                # Make sure chunk meets TEN VAD 256-sample requirement
                 if len(chunk) < chunk_size:
                     chunk = np.pad(chunk, (0, chunk_size - len(chunk)), mode='constant', constant_values=0)
                 
-                # Process this chunk - TEN VAD returns (probability, flag) per example
-                out_probability, _ = self.ten_vad.process(chunk)  # Use probability for post-processing
+                out_probability, _ = self.ten_vad.process(chunk)
                 probabilities.append(out_probability)
             
-            # Calculate timing after processing all chunks
+            # Capture processing time for performance monitoring
             vad_time = (time.time() - vad_start_time) * 1000
             
             # Apply hysteresis + consecutive frame detection
             speech_detected = self._detect_speech_with_hysteresis(probabilities)
             
-            # Log VAD result
             if speech_detected:
                 self.logger.info(f"TEN VAD check: SPEECH detected (duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
             else:
@@ -249,23 +225,12 @@ class WhisperEngine:
         except Exception as e:
             vad_time = (time.time() - vad_start_time) * 1000
             self.logger.warning(f"TEN VAD check failed after {vad_time:.1f}ms: {e}")
-            return True  # Default to transcribing on VAD error
+            return True
     
-    def transcribe_audio(self, audio_data: np.ndarray, sample_rate: int = 16000) -> Optional[str]:
-        """
-        Convert audio data to text using Whisper AI
-        
-        Parameters:
-        - audio_data: The recorded audio as a numpy array
-        - sample_rate: How many audio samples per second the audio was recorded at
-        
-        Returns:
-        - The transcribed text, or None if transcription failed
-        
-        audio and converts it to text, like a super-smart voice-to-text converter.
-        """
+    def transcribe_audio(self,
+                         audio_data: np.ndarray,
+                         sample_rate: int = SAMPLE_RATE) -> Optional[str]:
         if self.model is None:
-            self.logger.error("Whisper model not loaded!")
             return None
         
         if audio_data is None or len(audio_data) == 0:
@@ -273,55 +238,40 @@ class WhisperEngine:
             return None
         
         try:
-            # TEN VAD check on all recordings
             speech_detected = self._check_audio_for_speech(audio_data)
             
-            # Skip transcription if no speech detected
             if not speech_detected:
                 print("   ✗ No speech detected, skipping transcription")
                 return None
+                       
+            start_time = time.time() # Time transcription for user feedback
             
-            self.logger.info("Starting transcription...")
-            
-            # Start timing the transcription process
-            start_time = time.time()
-            
-            # Whisper expects audio as a 1D array (flat list of numbers)
+            # Prep audio for faster-whisper
             if len(audio_data.shape) > 1:
                 audio_data = audio_data.flatten()
             
-            # Make sure audio data is the right type (32-bit floating point numbers)
             audio_data = audio_data.astype(np.float32)
             
-            # Transcribe the audio
-            # This is where we ask the AI: "What words do you hear in this audio?"
             segments, info = self.model.transcribe(
                 audio_data,
-                beam_size=self.beam_size,  # How many possibilities to consider (configurable)
-                language=self.language,  # Language setting from config (None = auto-detect)
-                condition_on_previous_text=False  # Don't use context from previous transcriptions
+                beam_size=self.beam_size,
+                language=self.language,
+                condition_on_previous_text=False 
             )
             
-            # Collect all the transcribed text segments
-            # Whisper breaks long audio into segments and transcribes each part
             transcribed_text = ""
             for segment in segments:
                 transcribed_text += segment.text
             
-            # Clean up the text (remove extra spaces, etc.)
             transcribed_text = transcribed_text.strip()
             
-            # Calculate transcription time
             end_time = time.time()
             transcription_time = end_time - start_time
-            
-            # Show transcription time to user
             print(f"   ✓ Transcription completed in {transcription_time:.1f} seconds")
             
             # Log some info about what we transcribed
             detected_language = info.language
             confidence = info.language_probability
-            
             self.logger.info(f"Transcription complete. Language: {detected_language} (confidence: {confidence:.2f}) - Time: {transcription_time:.2f}s")
             self.logger.info(f"Transcribed text: '{transcribed_text}'")
             
@@ -334,15 +284,11 @@ class WhisperEngine:
                 
         except Exception as e:
             self.logger.error(f"Transcription failed: {e}")
-            print(f"Transcription error: {e}")
             return None
     
     def transcribe_file(self, audio_file_path: str) -> Optional[str]:
         """
-        Transcribe audio from a file (for future use/testing)
-        
-        This method can transcribe audio files directly, which is useful for 
-        testing.
+        Transcribe audio from a file (for testing)
         """
         if self.model is None:
             self.logger.error("Whisper model not loaded!")
@@ -367,11 +313,6 @@ class WhisperEngine:
             return None
     
     def get_model_info(self) -> dict:
-        """
-        Get information about the currently loaded model
-        
-        Returns a dictionary with model details for debugging/info purposes.
-        """
         return {
             "model_size": self.model_size,
             "device": self.device,
@@ -379,24 +320,14 @@ class WhisperEngine:
             "model_loaded": self.model is not None
         }
     
-    def change_model(self, new_model_size: str, progress_callback: Optional[Callable[[str], None]] = None):
-        """
-        Switch to a different Whisper model size (for future customization)
+    def change_model(self,
+                     new_model_size: str,
+                     progress_callback: Optional[Callable[[str], None]] = None):
         
-        This allows users to switch between tiny/base/small models depending 
-        on their preference for speed or accuracy.
-        
-        Parameters:
-        - new_model_size: The new model size to switch to
-        - progress_callback: Optional callback function to report progress updates
-        """
         if new_model_size == self.model_size:
-            self.logger.info(f"Already using model size: {new_model_size}")
             if progress_callback:
                 progress_callback("Model already loaded")
             return
         
-        self.logger.info(f"Switching from {self.model_size} to {new_model_size} model")
-        
-        # Use async loading to prevent UI blocking
         self._load_model_async(new_model_size, progress_callback)
+    
