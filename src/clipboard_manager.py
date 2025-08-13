@@ -19,7 +19,7 @@ class ClipboardManager:
     This class can put text onto the clipboard and retrieve text from it.
     """
     
-    def __init__(self, key_simulation_delay=0.05, auto_paste=False, paste_method='key_simulation'):
+    def __init__(self, key_simulation_delay=0.05, auto_paste=False):
         """
         Initialize the clipboard manager
         
@@ -28,7 +28,6 @@ class ClipboardManager:
         self.logger = logging.getLogger(__name__)
         self.key_simulation_delay = key_simulation_delay
         self.auto_paste = auto_paste
-        self.paste_method = paste_method
         self._configure_pyautogui_timing()
         self._test_clipboard_access()
         self._print_status()
@@ -57,7 +56,7 @@ class ClipboardManager:
     def _print_status(self):
         """Print the clipboard manager's configuration status"""
         if self.auto_paste:
-            method_name = "key simulation (CTRL+V)" if self.paste_method == "key_simulation" else "Windows API"
+            method_name = "key simulation (CTRL+V)"
             print(f"   ✓ Auto-paste is ENABLED using {method_name}")
         else:
             print("   ✗ Auto-paste is DISABLED - paste manually with Ctrl+V")
@@ -174,48 +173,6 @@ class ClipboardManager:
             self.logger.error(f"Failed to get active window handle: {e}")
             return None
     
-    def auto_paste_text(self, text: str) -> bool:
-        """
-        Automatically paste text into the active application using Windows API
-        
-        Parameters:
-        - text: The text to paste
-        
-        Returns:
-        - True if successful, False if failed
-        
-        This method copies text to clipboard and then sends a WM_PASTE message
-        directly to the active window, bypassing keyboard simulation.
-        """
-            
-        if not text:
-            self.logger.warning("Attempted to auto-paste empty text")
-            return False
-        
-        try:
-            # First, copy text to clipboard
-            if not self.copy_text(text):
-                self.logger.error("Failed to copy text to clipboard for auto-paste")
-                return False
-            
-            # Get the active window handle
-            hwnd = self.get_active_window_handle()
-            if not hwnd:
-                self.logger.error("No active window available for auto-paste")
-                return False
-            
-            # Send WM_PASTE message directly to the active window
-            self.logger.info(f"Sending WM_PASTE to window handle: {hwnd}")
-            result = win32gui.SendMessage(hwnd, win32con.WM_PASTE, 0, 0)
-            
-            # Note: SendMessage return value doesn't reliably indicate success for WM_PASTE
-            # We'll assume success if no exception was thrown
-            self.logger.info("Auto-paste command sent successfully")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"Failed to auto-paste text: {e}")
-            return False
     
     def simulate_paste_keypress(self, text: str) -> bool:
         """
@@ -252,13 +209,12 @@ class ClipboardManager:
             self.logger.error(f"Failed to simulate paste keypress: {e}")
             return False
     
-    def copy_and_paste(self, text: str, paste_method: str = "key_simulation", show_notification: bool = True) -> bool:
+    def copy_and_paste(self, text: str, show_notification: bool = True) -> bool:
         """
         Copy text to clipboard and automatically paste it using specified method
         
         Parameters:
         - text: Text to copy and paste
-        - paste_method: Method to use ("key_simulation" or "windows_api")
         - show_notification: Whether to print status messages
         
         Returns:
@@ -274,15 +230,8 @@ class ClipboardManager:
         success = False
         method_used = ""
         
-        if paste_method == "key_simulation":
-            success = self.simulate_paste_keypress(text)
-            method_used = "key simulation"
-        elif paste_method == "windows_api":
-            success = self.auto_paste_text(text)
-            method_used = "Windows API"
-        else:
-            self.logger.error(f"Unknown paste method: {paste_method}")
-            return False
+        success = self.simulate_paste_keypress(text)
+        method_used = "key simulation"
         
         # Provide user feedback
         if success and show_notification:
@@ -293,13 +242,12 @@ class ClipboardManager:
         
         return success
     
-    def preserve_and_paste(self, text: str, paste_method: str = "key_simulation", show_notification: bool = True) -> bool:
+    def preserve_and_paste(self, text: str, show_notification: bool = True) -> bool:
         """
         Copy text to clipboard, paste it, then restore original clipboard content
         
         Parameters:
         - text: Text to copy and paste
-        - paste_method: Method to use ("key_simulation" or "windows_api")  
         - show_notification: Whether to print status messages
         
         Returns:
@@ -333,15 +281,8 @@ class ClipboardManager:
         paste_success = False
         method_used = ""
         
-        if paste_method == "key_simulation":
-            paste_success = self._paste_via_key_simulation()
-            method_used = "key simulation"
-        elif paste_method == "windows_api":
-            paste_success = self._paste_via_windows_api()
-            method_used = "Windows API"
-        else:
-            self.logger.error(f"Unknown paste method: {paste_method}")
-            paste_success = False
+        paste_success = self._paste_via_key_simulation()
+        method_used = "key simulation"
         
         # Step 4: Restore original clipboard content (if we saved it successfully)
         restore_success = True
@@ -378,21 +319,6 @@ class ClipboardManager:
             self.logger.error(f"Key simulation paste failed: {e}")
             return False
     
-    def _paste_via_windows_api(self) -> bool:
-        """Helper method for Windows API paste (without copying first)"""
-        try:
-            hwnd = self.get_active_window_handle()
-            if not hwnd:
-                self.logger.error("Could not get active window handle for paste")
-                return False
-            
-            # Send WM_PASTE message to the active window
-            win32gui.SendMessage(hwnd, win32con.WM_PASTE, 0, 0)
-            self.logger.info(f"Sent WM_PASTE message to window handle {hwnd}")
-            return True
-        except Exception as e:
-            self.logger.error(f"Windows API paste failed: {e}")
-            return False
     
     def send_enter_key(self) -> bool:
         """
@@ -432,7 +358,6 @@ class ClipboardManager:
         """
         auto_paste_enabled = clipboard_config.get('auto_paste', False)
         preserve_clipboard = clipboard_config.get('preserve_clipboard', False)
-        paste_method = clipboard_config.get('paste_method', 'key_simulation')
         
         # Determine delivery mode based on configuration
         if use_auto_enter:
@@ -446,9 +371,9 @@ class ClipboardManager:
             
             # Force auto-paste when using auto-enter hotkey
             if preserve_clipboard:
-                paste_success = self.preserve_and_paste(transcribed_text, paste_method)
+                paste_success = self.preserve_and_paste(transcribed_text)
             else:
-                paste_success = self.copy_and_paste(transcribed_text, paste_method)
+                paste_success = self.copy_and_paste(transcribed_text)
             
             if paste_success:
                 # Send ENTER key after successful paste (timing handled by PyAutoGUI.PAUSE)
@@ -473,9 +398,9 @@ class ClipboardManager:
             print("🚀 Auto-pasting text...")
             
             if preserve_clipboard:
-                success = self.preserve_and_paste(transcribed_text, paste_method)
+                success = self.preserve_and_paste(transcribed_text)
             else:
-                success = self.copy_and_paste(transcribed_text, paste_method)
+                success = self.copy_and_paste(transcribed_text)
             
             if success:
                 self.logger.info("Complete workflow with auto-paste successful")
@@ -513,7 +438,6 @@ class ClipboardManager:
                 "has_content": bool(content),
                 "content_length": len(content) if content else 0,
                 "preview": content[:50] + "..." if content and len(content) > 50 else content,
-                "windows_api_available": True,
                 "key_simulation_available": True
             }
             
@@ -535,6 +459,5 @@ class ClipboardManager:
                 "has_content": False,
                 "content_length": 0,
                 "error": str(e),
-                "windows_api_available": True,
                 "key_simulation_available": True
             }

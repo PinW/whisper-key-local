@@ -62,8 +62,7 @@ def setup_whisper_engine(whisper_config, vad_config):
 def setup_clipboard_manager(clipboard_config):
     return ClipboardManager(
         key_simulation_delay=clipboard_config['key_simulation_delay'],
-        auto_paste=clipboard_config['auto_paste'],
-        paste_method=clipboard_config['paste_method']
+        auto_paste=clipboard_config['auto_paste']
     )
 
 def setup_audio_feedback(audio_feedback_config):
