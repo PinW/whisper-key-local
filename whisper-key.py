@@ -3,6 +3,7 @@
 import logging
 import os
 import signal
+import sys
 import threading
 from src.config_manager import ConfigManager
 from src.audio_recorder import AudioRecorder
@@ -38,6 +39,17 @@ def setup_logging(config_manager: ConfigManager):
         console_handler.setLevel(getattr(logging, console_level))
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
+
+def setup_exception_handler():
+    def exception_handler(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        
+        logging.getLogger().error("Uncaught exception", 
+                                 exc_info=(exc_type, exc_value, exc_traceback))
+    
+    sys.excepthook = exception_handler
 
 def setup_audio_recorder(audio_config, state_manager):
     return AudioRecorder(
@@ -125,6 +137,7 @@ def main():
         config_manager = ConfigManager()
         setup_logging(config_manager)
         logger = logging.getLogger(__name__)
+        setup_exception_handler()
         
         whisper_config = config_manager.get_whisper_config()
         audio_config = config_manager.get_audio_config()

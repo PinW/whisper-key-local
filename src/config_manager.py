@@ -1,13 +1,3 @@
-"""
-Configuration Manager
-
-This module handles loading and validating configuration settings from config.yaml.
-It provides a central place to manage all application settings and ensures they
-have sensible defaults if the config file is missing or incomplete.
-
-configuration file and provides all the settings to other parts of the program.
-"""
-
 import os
 import logging
 from ruamel.yaml import YAML
@@ -16,48 +6,21 @@ from typing import Dict, Any, Optional
 from .utils import resolve_asset_path
 from pathlib import Path
 
-def deep_merge_config(default_config: Dict[str, Any], user_config: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Deep merge user configuration on top of default configuration
+def deep_merge_config(default_config: Dict[str, Any],
+                      user_config: Dict[str, Any]) -> Dict[str, Any]:
     
-    Parameters:
-    - default_config: The base configuration with all default values
-    - user_config: User's configuration that may have missing keys
-    
-    Returns:
-    - Merged configuration with user values overlaid on defaults
-    
-    settings override the defaults, but missing user settings keep the defaults.
-    """
     result = default_config.copy()
     
     for key, value in user_config.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            # Recursively merge nested dictionaries
             result[key] = deep_merge_config(result[key], value)
         else:
-            # Override with user value
             result[key] = value
     
     return result
 
-class ConfigManager:
-    """
-    Manages configuration loading and validation for the application
-    
-    This class loads settings from config.yaml and provides them to other components
-    with proper validation and fallback defaults.
-    """
-    
+class ConfigManager:   
     def __init__(self, config_path: str = None, use_user_settings: bool = True):
-        """
-        Initialize the configuration manager
-        
-        Parameters:
-        - config_path: Path to the default YAML configuration file (None for auto-detection)
-        - use_user_settings: Whether to use user-specific settings from AppData
-        """
-        # Auto-detect config path relative to the main script
         if config_path is None:
             config_path = resolve_asset_path("config.defaults.yaml")
         
@@ -66,89 +29,43 @@ class ConfigManager:
         self.config = {}
         self.logger = logging.getLogger(__name__)
         
-        # Determine actual config path to use
         if use_user_settings:
             self.user_settings_path = self._get_user_settings_path()
-            self.config_path = self.user_settings_path
-            # Create user settings if they don't exist
             self._ensure_user_settings_exist()
+            self.config_path = self.user_settings_path
         else:
             self.config_path = config_path
         
-        # Print status for user
         self._print_config_status()
-
-        # Load the configuration
-        self._load_config()
-        
-        # Validate configuration
+        self._load_config()       
         self._validate_config()
         
         self.logger.info("Configuration loaded successfully")
     
     def _get_user_settings_path(self) -> str:
-        r"""
-        Get the path to user settings file in Windows AppData
-        
-        Returns the path to user_settings.yaml in %APPDATA%\whisperkey\
-        """
-        # Get Windows AppData path
         appdata = os.getenv('APPDATA')
-        if not appdata:
-            # Fallback for non-Windows systems or if APPDATA not set
-            home = os.path.expanduser('~')
-            appdata = os.path.join(home, 'AppData', 'Roaming')
-        
-        # Create whisperkey directory path
         whisperkey_dir = os.path.join(appdata, 'whisperkey')
         user_settings_file = os.path.join(whisperkey_dir, 'user_settings.yaml')
         
         return user_settings_file
     
     def _ensure_user_settings_exist(self):
-        """
-        Ensure user settings directory and file exist
-        
-        Creates the directory and copies default config if user_settings.yaml doesn't exist
-        """
         user_settings_dir = os.path.dirname(self.user_settings_path)
         
-        # Create directory if it doesn't exist
         if not os.path.exists(user_settings_dir):
-            try:
-                os.makedirs(user_settings_dir, exist_ok=True)
-                self.logger.info(f"Created user settings directory: {user_settings_dir}")
-            except Exception as e:
-                self.logger.error(f"Failed to create user settings directory: {e}")
-                raise
+            os.makedirs(user_settings_dir, exist_ok=True)
         
-        # Copy default config if user settings don't exist
         if not os.path.exists(self.user_settings_path):
             if os.path.exists(self.default_config_path):
-                try:
-                    shutil.copy2(self.default_config_path, self.user_settings_path)
-                    self.logger.info(f"Created initial user settings from {self.default_config_path}")
-                except Exception as e:
-                    self.logger.error(f"Failed to create initial user settings: {e}")
-                    raise
+                shutil.copy2(self.default_config_path, self.user_settings_path)
+                self.logger.info(f"Created initial user settings from {self.default_config_path}")
             else:
-                # If no default config.yaml exists, we can't create user settings
-                # This is a critical error since we need config.yaml as our source of truth
                 error_msg = f"Default config {self.default_config_path} not found - cannot create user settings"
                 self.logger.error(error_msg)
                 raise FileNotFoundError(error_msg)
     
-    def _remove_unused_keys(self, user_config: Dict[str, Any], default_config: Dict[str, Any]) -> bool:
-        """
-        Remove keys from user_config that don't exist in default_config
+    def _remove_unused_keys_from_user_config(self, user_config: Dict[str, Any], default_config: Dict[str, Any]) -> bool:
         
-        Parameters:
-        - user_config: User's configuration to clean up (modified in place)
-        - default_config: Default configuration that defines valid structure
-        
-        Returns:
-        - was_modified: True if any keys were removed
-        """
         was_modified = False
         sections_to_remove = []
         
@@ -167,10 +84,6 @@ class ConfigManager:
                 
                 for key in keys_to_remove:
                     del values[key]
-                    
-                # Remove empty sections
-                if not values:
-                    sections_to_remove.append(section)
         
         for section in sections_to_remove:
             del user_config[section]
@@ -196,7 +109,7 @@ class ConfigManager:
                 
                 if user_config:
                     # Remove unused keys from user config
-                    self._remove_unused_keys(user_config, default_config)
+                    self._remove_unused_keys_from_user_config(user_config, default_config)
                     
                     # Deep merge user config on top of defaults
                     self.config = deep_merge_config(default_config, user_config)
