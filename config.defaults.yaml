@@ -108,7 +108,7 @@ audio:
   
   # Maximum recording duration (seconds)
   # Set to 0 for unlimited recording
-  max_duration: 30
+  max_duration: 300
 
 # =============================================================================
 # CLIPBOARD BEHAVIOR

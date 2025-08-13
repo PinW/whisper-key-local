@@ -8,7 +8,7 @@ from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
 from .config_manager import ConfigManager
 from .audio_feedback import AudioFeedback
-from .utils import beautify_hotkey, OptionalComponent
+from .utils import OptionalComponent
 
 class StateManager:
     def __init__(self, 
@@ -35,6 +35,11 @@ class StateManager:
         self._state_lock = threading.Lock()  # Thread safety for state operations
 
         self.logger = logging.getLogger(__name__)
+    
+    def handle_max_recording_duration_reached(self, audio_data):
+        """Called when audio recorder reaches max duration with audio data"""
+        self.logger.info("Max recording duration reached - starting transcription")
+        self._transcription_pipeline(audio_data, use_auto_enter=False)
     
     def stop_recording(self, use_auto_enter: bool = False) -> bool:
         currently_recording = self.audio_recorder.get_recording_status()

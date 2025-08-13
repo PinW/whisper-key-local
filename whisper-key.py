@@ -39,11 +39,12 @@ def setup_logging(config_manager: ConfigManager):
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
 
-def setup_audio_recorder(audio_config):
+def setup_audio_recorder(audio_config, state_manager):
     return AudioRecorder(
         channels=audio_config['channels'],
         dtype=audio_config['dtype'],
-        max_duration=audio_config['max_duration']
+        max_duration=audio_config['max_duration'],
+        on_max_duration_reached=state_manager.handle_max_recording_duration_reached
     )
 
 def setup_whisper_engine(whisper_config, vad_config):
@@ -132,21 +133,22 @@ def main():
         audio_feedback_config = config_manager.get_audio_feedback_config()
         vad_config = config_manager.get_vad_config()
                
-        audio_recorder = setup_audio_recorder(audio_config)      
         whisper_engine = setup_whisper_engine(whisper_config, vad_config)
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
         state_manager = StateManager(
-            audio_recorder=audio_recorder,
+            audio_recorder=None,
             whisper_engine=whisper_engine,
             clipboard_manager=clipboard_manager,
             clipboard_config=clipboard_config,
-            system_tray=None,  # OptionalComponent will handle this safely
+            system_tray=None,
             config_manager=config_manager,
             audio_feedback=audio_feedback
         )
+        audio_recorder = setup_audio_recorder(audio_config, state_manager)
         system_tray = setup_system_tray(tray_config, hotkey_config, config_manager, state_manager)
+        state_manager.audio_recorder = audio_recorder
         state_manager.system_tray = OptionalComponent(system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
