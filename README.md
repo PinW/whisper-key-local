@@ -44,8 +44,8 @@ pip install git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
 - `global-hotkeys` - System-wide hotkey detection  
 - `pyperclip` - Clipboard operations
 - `ruamel.yaml` - Configuration file parsing (YAML)
-- `pywin32` - Windows API access for direct paste method
-- `pyautogui` - Key simulation for Ctrl+V auto-paste (recommended for best compatibility)
+- `pyautogui` - Key simulation for Ctrl+V auto-paste and auto-ENTER
+- `pywin32` - Windows API access for window management
 - `pystray` - System tray integration
 - `Pillow` - Image processing for system tray icons
 - `hf-xet` - Cache management for Hugging Face models

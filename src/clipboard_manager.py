@@ -5,7 +5,6 @@ from typing import Optional
 
 import win32gui
 import win32con
-import win32clipboard
 
 import pyautogui
 
