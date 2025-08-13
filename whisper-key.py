@@ -156,7 +156,7 @@ def main():
         if system_tray.is_available():
             system_tray.start()
         
-        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.")        
+        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.")
         print("Press Ctrl+C to quit.")
         
         while not shutdown_event.wait(timeout=0.1):

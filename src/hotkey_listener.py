@@ -32,7 +32,6 @@ class HotkeyListener:
             'name': 'standard'
         })
         
-        # Add auto-enter hotkey if enabled and configured
         if self.auto_enter_enabled and self.auto_enter_hotkey:
             hotkey_configs.append({
                 'combination': self.auto_enter_hotkey,
@@ -40,63 +39,41 @@ class HotkeyListener:
                 'name': 'auto-enter'
             })
         
-        # Add stop-with-modifier hotkey if enabled
         if self.stop_with_modifier_enabled:
             self.stop_modifier_hotkey = self._extract_first_modifier(self.recording_hotkey)
             if self.stop_modifier_hotkey:
                 hotkey_configs.append({
                     'combination': self.stop_modifier_hotkey,
                     'callback': self._stop_modifier_hotkey_pressed,
-                    'release_callback': self._stop_modifier_key_released,
+                    'release_callback': self._arm_stop_modifier_hotkey_on_release,
                     'name': 'stop-modifier'
                 })
         
+        # More modifiers = higher priority
+        hotkey_configs.sort(key=self._get_hotkey_combination_specificity, reverse=True)
         
-        # Sort by specificity (more modifiers = higher priority)
-        hotkey_configs.sort(key=self._get_hotkey_specificity, reverse=True)
-        
-        # Convert to global_hotkeys format
         self.hotkey_bindings = []
         for config in hotkey_configs:
-            formatted = self._convert_hotkey_to_global_format(config['combination'])
+            formatted_hotkey = self._convert_hotkey_to_global_format(config['combination'])
             
-            # Check if this config has both press and release callbacks
-            if 'release_callback' in config:
-                # Format: [hotkey, press_callback, release_callback, actuate_on_partial_release]
-                self.hotkey_bindings.append([formatted, config['callback'], config['release_callback'], False])
-                self.logger.info(f"Configured {config['name']} hotkey with key-up detection: {config['combination']} -> {formatted}")
-            else:
-                # Standard format: [hotkey, press_callback, None, False] - press callback triggers on key down
-                self.hotkey_bindings.append([formatted, config['callback'], None, False])
-                self.logger.info(f"Configured {config['name']} hotkey: {config['combination']} -> {formatted}")
+            # Setup for global-hotkeys
+            # Expected format: [hotkey, press_callback, release_callback, actuate_on_partial_release]
+            self.hotkey_bindings.append([
+                                         formatted_hotkey,
+                                         config['callback'],
+                                         config.get('release_callback') or None,
+                                         False])
+
+            self.logger.info(f"Configured {config['name']} hotkey: {config['combination']} -> {formatted_hotkey}")
         
         self.logger.info(f"Total hotkeys configured: {len(self.hotkey_bindings)}")
     
-    def _get_hotkey_specificity(self, hotkey_config: dict) -> int:
+    def _get_hotkey_combination_specificity(self, hotkey_config: dict) -> int:
         """
-        Calculate the specificity of a hotkey combination based on number of modifiers
-        
-        More modifiers = higher specificity = higher priority
-        This ensures CTRL+SHIFT+` takes precedence over CTRL+`
-        
-        Parameters:
-        - hotkey_config: Dictionary with 'combination' key
-        
-        Returns:
-        - Integer representing specificity (higher = more specific)
+        Returns specificity score to ensure combos with more keys take priority
         """
         combination = hotkey_config['combination'].lower()
-        
-        # Count modifier keys
-        modifiers = ['ctrl', 'shift', 'alt', 'win', 'cmd', 'super']
-        specificity = sum(1 for modifier in modifiers if modifier in combination)
-        
-        # Add base key count (usually 1, but accounts for complex combinations)
-        keys = combination.split('+')
-        base_keys = [key.strip() for key in keys if key.strip() not in modifiers]
-        specificity += len(base_keys)
-        
-        return specificity
+        return len(combination.split('+'))
     
     def _standard_hotkey_pressed(self):
         """
@@ -163,7 +140,7 @@ class HotkeyListener:
         else:
             self.logger.debug("Stop-modifier ignored - waiting for key release first")
     
-    def _stop_modifier_key_released(self):
+    def _arm_stop_modifier_hotkey_on_release(self):
         """
         Called when the stop-modifier key is released
         
