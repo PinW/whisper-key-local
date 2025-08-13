@@ -7,6 +7,6 @@
 - Ask user to test before committing
 - Prefer elegant code that is modular and consistent
 - Use clear variable/function names
-- Avoid comments unless absolutely necessary
+- AVOID COMMENTS IF AT ALL POSSIBLE!
 - We are in ALPHA, don't bother with backward compatibility
 - When I say "to temp": `documentation/temp/`
