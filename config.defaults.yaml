@@ -192,8 +192,4 @@ system_tray:
   
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
-  
-  # Show desktop notifications for important events
-  # Note: Requires additional setup on some systems
-  notifications: false
 
