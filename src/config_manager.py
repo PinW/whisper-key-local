@@ -361,8 +361,6 @@ class ConfigManager:
         
         if auto_enter_enabled:
             auto_enter_key = beautify_hotkey(auto_enter_hotkey)
-        else:
-            auto_enter_key = None
         
         if not auto_paste_enabled:
             print(f"   Press [{primary_key}] to stop recording and copy to clipboard.")
@@ -370,64 +368,39 @@ class ConfigManager:
             print(f"   Press [{primary_key}] to stop recording and auto-paste.")
         else:
             print(f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press.")
-
-    # Getter methods for easy access to configuration sections
     
     def get_whisper_config(self) -> Dict[str, Any]:
         """Get Whisper AI configuration settings"""
-        whisper_config = self.config['whisper'].copy()
-        
-        # Convert 'auto' language setting to None for whisper system compatibility
-        if whisper_config.get('language') == 'auto':
-            whisper_config['language'] = None
-            
-        return whisper_config
+        return self.config['whisper'].copy()
     
     def get_hotkey_config(self) -> Dict[str, Any]:
-        """Get hotkey configuration settings"""
         return self.config['hotkey'].copy()
     
     def get_audio_config(self) -> Dict[str, Any]:
-        """Get audio recording configuration settings"""
         return self.config['audio'].copy()
     
     def get_clipboard_config(self) -> Dict[str, Any]:
-        """Get clipboard configuration settings"""
         return self.config['clipboard'].copy()
     
     def get_logging_config(self) -> Dict[str, Any]:
-        """Get logging configuration settings"""
         return self.config['logging'].copy()
     
     def get_performance_config(self) -> Dict[str, Any]:
-        """Get performance configuration settings"""
         return self.config['performance'].copy()
     
     def get_advanced_config(self) -> Dict[str, Any]:
-        """Get advanced configuration settings"""
         return self.config['advanced'].copy()
     
     def get_vad_config(self) -> Dict[str, Any]:
-        """Get Voice Activity Detection (VAD) configuration settings"""
         return self.config['vad'].copy()
     
     def get_system_tray_config(self) -> Dict[str, Any]:
-        """Get system tray configuration settings"""
         return self.config['system_tray'].copy()
     
     def get_audio_feedback_config(self) -> Dict[str, Any]:
-        """Get audio feedback configuration settings"""
         return self.config['audio_feedback'].copy()
     
     def get_setting(self, section: str, key: str, default: Any = None) -> Any:
-        """
-        Get a specific configuration setting
-        
-        Parameters:
-        - section: Configuration section (e.g., 'whisper', 'hotkey')
-        - key: Setting key within the section
-        - default: Default value if setting not found
-        """
         try:
             return self.config[section][key]
         except KeyError:
@@ -490,10 +463,4 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Error updating user setting {section}.{key}: {e}")
             raise
-    
-    def reload_config(self):
-        self.logger.info("Reloading configuration...")
-        self._load_config()
-        self._validate_config()
-        self.logger.info("Configuration reloaded successfully")
 

@@ -28,7 +28,7 @@ class WhisperEngine:
         self.model_size = model_size
         self.device = device
         self.compute_type = compute_type
-        self.language = language
+        self.language = None if language == 'auto' else language
         self.beam_size = beam_size
         self.vad_enabled = vad_enabled
         self.vad_onset_threshold = vad_onset_threshold
