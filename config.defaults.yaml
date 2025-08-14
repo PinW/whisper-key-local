@@ -197,15 +197,3 @@ system_tray:
   # Note: Requires additional setup on some systems
   notifications: false
 
-# =============================================================================
-# ADVANCED SETTINGS
-# =============================================================================
-advanced:
-  # Model download settings
-  model_cache_dir: null  # null = use default cache directory
-  
-  # Debugging options
-  debug:
-    save_audio_files: false  # Save recorded audio for debugging
-    audio_output_dir: debug_audio  # Where to save debug audio files
-  
