@@ -343,7 +343,7 @@ class ConfigManager:
         else:
             print(f"   ✗ Using default settings from: {self.config_path}")
     
-    def print_stop_instructions(self):
+    def print_stop_instructions_based_on_config(self):
         from .utils import beautify_hotkey
         
         main_hotkey = self.config['hotkey']['recording_hotkey']

@@ -68,7 +68,7 @@ class StateManager:
         success = self.audio_recorder.start_recording()
         
         if success:
-            self.config_manager.print_stop_instructions()
+            self.config_manager.print_stop_instructions_based_on_config()
             self.audio_feedback.play_start_sound()
             self.system_tray.update_state("recording")
     
