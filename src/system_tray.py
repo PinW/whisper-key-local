@@ -76,22 +76,18 @@ class SystemTray:
         self.available = True
         
         # Check if system tray is available and print status
-        if not self.tray_config.get('enabled', True):
+        if not self.tray_config['enabled']:
             self.logger.info("System tray disabled in configuration")
             print("   ✗ System tray disabled in configuration")
             self.available = False
         elif not TRAY_AVAILABLE:
             self.logger.warning("System tray not available - pystray or Pillow not installed")
-            print("   ⚠️ System tray not available")
             self.available = False
         else:
-            # Load tray icons
             try:
                 self._load_icons()
-                self.logger.info("SystemTray initialized successfully")
             except Exception as e:
                 self.logger.error(f"Failed to load tray icons: {e}")
-                print(f"   ⚠️ System tray initialization failed: {e}")
                 self.available = False
     
     def _load_icons(self):
@@ -196,7 +192,6 @@ class SystemTray:
                     self.logger.debug("No config_manager available, auto-paste disabled")
             except Exception as e:
                 self.logger.error(f"Error reading auto-paste setting: {e}")
-
 
             # Get current model size for radio buttons
             current_model = "tiny"
