@@ -346,14 +346,11 @@ class ConfigManager:
     def print_stop_instructions(self):
         from .utils import beautify_hotkey
         
-        hotkey_config = self.get_hotkey_config()
-        clipboard_config = self.get_clipboard_config()
-        
-        main_hotkey = hotkey_config['recording_hotkey']
-        auto_enter_enabled = hotkey_config['auto_enter_enabled']
-        auto_enter_hotkey = hotkey_config['auto_enter_combination']
-        stop_with_modifier = hotkey_config['stop_with_modifier_enabled']
-        auto_paste_enabled = clipboard_config['auto_paste']
+        main_hotkey = self.config['hotkey']['recording_hotkey']
+        auto_enter_enabled = self.config['hotkey']['auto_enter_enabled']
+        auto_enter_hotkey = self.config['hotkey']['auto_enter_combination']
+        stop_with_modifier = self.config['hotkey']['stop_with_modifier_enabled']
+        auto_paste_enabled = self.config['clipboard']['auto_paste']
         
         if stop_with_modifier:
             # Extract first modifier for display

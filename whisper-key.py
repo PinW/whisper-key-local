@@ -86,11 +86,10 @@ def setup_audio_feedback(audio_feedback_config):
         stop_sound=audio_feedback_config['stop_sound']
     )
 
-def setup_system_tray(tray_config, hotkey_config, config_manager, state_manager=None):
+def setup_system_tray(tray_config, config_manager, state_manager=None):
     return SystemTray(
         state_manager=state_manager,
         tray_config=tray_config,
-        hotkey_config=hotkey_config,
         config_manager=config_manager
     )
 
@@ -160,7 +159,7 @@ def main():
             audio_feedback=audio_feedback
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager)
-        system_tray = setup_system_tray(tray_config, hotkey_config, config_manager, state_manager)
+        system_tray = setup_system_tray(tray_config, config_manager, state_manager)
         state_manager.audio_recorder = audio_recorder
         state_manager.system_tray = OptionalComponent(system_tray)
         

@@ -44,7 +44,7 @@ class SystemTray:
     """
     
     def __init__(self, state_manager: Optional['StateManager'] = None, 
-                 tray_config: dict = None, hotkey_config: dict = None,
+                 tray_config: dict = None,
                  config_manager: Optional['ConfigManager'] = None):
         """
         Initialize the system tray manager
@@ -52,7 +52,6 @@ class SystemTray:
         Parameters:
         - state_manager: Reference to the main StateManager for status updates
         - tray_config: System tray configuration dictionary
-        - hotkey_config: Hotkey configuration dictionary (for menu display)
         - config_manager: Reference to ConfigManager for reading/writing settings
         
         the app is currently doing and show the right icon. We also pass the
@@ -60,7 +59,6 @@ class SystemTray:
         """
         self.state_manager = state_manager
         self.tray_config = tray_config or {}
-        self.hotkey_config = hotkey_config or {}
         self.config_manager = config_manager
         self.logger = logging.getLogger(__name__)
         
@@ -68,7 +66,6 @@ class SystemTray:
         self.logger.debug(f"SystemTray.__init__ called with:")
         self.logger.debug(f"  state_manager: {type(state_manager).__name__ if state_manager else 'None'}")
         self.logger.debug(f"  tray_config keys: {list(self.tray_config.keys()) if self.tray_config else 'None'}")
-        self.logger.debug(f"  hotkey_config keys: {list(self.hotkey_config.keys()) if self.hotkey_config else 'None'}")
         self.logger.debug(f"  config_manager: {type(config_manager).__name__ if config_manager else 'None'}")
         
         # Tray state
@@ -155,20 +152,6 @@ class SystemTray:
         try:
             self.logger.debug("Creating tray menu...")
             
-            # Get current hotkey from config for display
-            hotkey_text = "Unknown"
-            try:
-                if self.state_manager:
-                    self.logger.debug("Getting hotkey from state_manager config")
-                    hotkey_text = self.hotkey_config.get('combination', 'ctrl+`')
-                else:
-                    self.logger.debug("No state_manager available, using default hotkey")
-                    hotkey_text = self.hotkey_config.get('combination', 'ctrl+`')
-                
-                self.logger.debug(f"Hotkey text: {hotkey_text}")
-            except Exception as e:
-                self.logger.error(f"Error getting hotkey text: {e}")
-                hotkey_text = "ctrl+`"
 
             # Determine current state for menu logic
             is_processing = False
@@ -259,11 +242,7 @@ class SystemTray:
             try:
                 self.logger.debug("Creating menu items...")
                 menu_items = [
-                    # Title & Hotkey display
-                    pystray.MenuItem(f"Whisper Key: [{beautify_hotkey(hotkey_text)}]", None, enabled=False),
-                    pystray.Menu.SEPARATOR,  # Separator
                     # Transcription Mode
-                    pystray.MenuItem("Transcription Mode", None, enabled=False),
                     pystray.MenuItem("Auto-paste", lambda icon, item: self._set_transcription_mode(True), radio=True, checked=lambda item: auto_paste_enabled),
                     pystray.MenuItem("Copy to clipboard", lambda icon, item: self._set_transcription_mode(False), radio=True, checked=lambda item: not auto_paste_enabled),
                     pystray.Menu.SEPARATOR,  # Separator below transcription mode options

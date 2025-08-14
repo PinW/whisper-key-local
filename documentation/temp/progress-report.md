@@ -22,25 +22,10 @@ The systematic code review and cleanup is underway. We've successfully completed
 | Audio Feedback | `src/audio_feedback.py` | 211 | 209 | -2 (-1%) | ⏳ Pending |
 | Utilities | `src/utils.py` | 109 | 128 | +19 (+17%) | ⏳ Pending |
 | Instance Manager | `src/instance_manager.py` | 85 | 85 | 0 | ⏳ Pending |
-| **Test Suite** |
-| Test Runner | `tests/run_component_tests.py` | 157 | 157 | 0 | ⏳ Pending |
-| Hotkey Tests | `tests/component/test_hotkeys.py` | 321 | 321 | 0 | ⏳ Pending |
-| Clipboard Tests | `tests/component/test_clipboard.py` | 305 | 305 | 0 | ⏳ Pending |
-| Audio Feedback Tests | `tests/component/test_audio_feedback.py` | 296 | 296 | 0 | ⏳ Pending |
-| Whisper Tests | `tests/component/test_whisper.py` | 270 | 270 | 0 | ⏳ Pending |
-| Audio Tests | `tests/component/test_audio.py` | 157 | 157 | 0 | ⏳ Pending |
-| **Tools** |
-| Key Helper | `tools/key_helper.py` | 255 | 255 | 0 | ⏳ Pending |
-| Log Cleaner | `tools/clear_log.py` | 187 | 187 | 0 | ⏳ Pending |
-| Model Cache Cleaner | `tools/clear_model_cache.py` | 181 | 181 | 0 | ⏳ Pending |
-| Settings Reset | `tools/reset_user_settings.py` | 163 | 163 | 0 | ⏳ Pending |
-| Settings Opener | `tools/open_user_settings.py` | 139 | 139 | 0 | ⏳ Pending |
-| Tray Icon Creator | `tools/create_tray_icons.py` | 108 | 108 | 0 | ⏳ Pending |
-| Alt Key Helper | `tools/key_helper_alt.py` | 56 | 56 | 0 | ⏳ Pending |
 
 ## Overall Progress Summary
 
-- **Original Total:** 6,695 lines across 23 files
-- **Current Total:** 5,997 lines across 24 files  
-- **Net Reduction:** -698 lines (-10%)
-- **Files Completed:** 6/24 (25%)
+- **Original Total:** 4,200 lines across 11 core files
+- **Current Total:** 2,983 lines across 11 core files  
+- **Net Reduction:** -1,217 lines (-29%)
+- **Core Files Completed:** 6/11 (55%)
