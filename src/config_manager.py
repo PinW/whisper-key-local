@@ -473,140 +473,22 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Error saving configuration to {self.user_settings_path}: {e}")
             raise
-    
-    def _get_setting_display_info(self, section: str, key: str, value: Any) -> dict:
-        """
-        Get display information for a setting change (emoji, description, etc.)
-        
-        This centralizes the mapping of settings to user-friendly descriptions.
-        """
-        # Setting display mappings - add new settings here as needed
-        setting_info = {
-            'clipboard': {
-                'auto_paste': {
-                    'emoji': '📋',
-                    'ascii': '[Clipboard]',
-                    'name': '',
-                    'true_desc': 'Auto-pasting transcriptions...',
-                    'false_desc': 'Copying transcriptions to clipboard...'
-                }
-            },
-            'whisper': {
-                'model_size': {
-                    'emoji': '🧠',
-                    'ascii': '[AI]',
-                    'name': 'AI Model',
-                    'format': 'value'  # Just show the value
-                }
-            },
-            'hotkey': {
-                'recording_hotkey': {
-                    'emoji': '⌨️',
-                    'ascii': '[Hotkey]',
-                    'name': 'Hotkey',
-                    'format': 'value'
-                },
-                'auto_enter_combination': {
-                    'emoji': '🚀',
-                    'ascii': '[Auto-Enter]',
-                    'name': 'Auto-Enter Hotkey',
-                    'format': 'value'
-                },
-                'auto_enter_enabled': {
-                    'emoji': '🚀',
-                    'ascii': '[Auto-Enter]',
-                    'name': 'Auto-Enter Mode',
-                    'true_desc': 'enabled',
-                    'false_desc': 'disabled'
-                },
-                'stop_with_modifier_enabled': {
-                    'emoji': '⏹️',
-                    'ascii': '[Stop with Modifier]',
-                    'name': 'Stop with Modifier',
-                    'true_desc': 'enabled',
-                    'false_desc': 'disabled'
-                }
-            },
-            'audio': {
-                'sample_rate': {
-                    'emoji': '🎵',
-                    'ascii': '[Audio]',
-                    'name': 'Audio Quality',
-                    'format': 'value'
-                }
-            }
-        }
-        
-        # Get section info
-        section_info = setting_info.get(section, {})
-        key_info = section_info.get(key, {})
-        
-        # Default fallback
-        if not key_info:
-            return {
-                'emoji': '⚙️',
-                'ascii': '[Setting]',
-                'name': f'{section}.{key}',
-                'description': str(value)
-            }
-        
-        # Handle boolean settings
-        if isinstance(value, bool):
-            if 'true_desc' in key_info and 'false_desc' in key_info:
-                description = key_info['true_desc'] if value else key_info['false_desc']
-            else:
-                description = 'enabled' if value else 'disabled'
-        # Handle other value types
-        else:
-            if key_info.get('format') == 'value':
-                description = str(value)
-            else:
-                description = str(value)
-        
-        return {
-            'emoji': key_info.get('emoji', '⚙️'),
-            'ascii': key_info.get('ascii', '[Setting]'),
-            'name': key_info.get('name', key),
-            'description': description
-        }
 
     def update_user_setting(self, section: str, key: str, value: Any):
         try:
-            # Store old value for comparison
             old_value = None
             if section in self.config and key in self.config[section]:
                 old_value = self.config[section][key]
-            
-            # Update the setting
-            if section not in self.config:
-                self.config[section] = {}
-            
-            self.config[section][key] = value
-            
-            # Get display information for this setting
-            display_info = self._get_setting_display_info(section, key, value)
-            
-            # Get display components
-            emoji = display_info['emoji']
-            ascii_prefix = display_info['ascii']
-            name = display_info['name']
-            description = display_info['description']
-            
-            # Create user-friendly messages
-            if old_value != value:  # Only log if value actually changed
-                # Use ASCII version for logging (avoids Unicode encoding errors on Windows)
-                log_message = " ".join(filter(None, [ascii_prefix, name, description]))
-                self.logger.info(log_message)
+                        
+                if old_value != value:
+                    self.config[section][key] = value
+                    self.save_config_to_user_settings_file()
+
+                    print(f"⚙️ Updated {section} setting")
                 
-                # Use emoji version for console output (usually works fine)
-                console_message = " ".join(filter(None, [emoji, name, description]))
-                print(console_message)
-            
-            # Technical log for debugging
-            self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
-            
-            # Save to user settings file
-            self.save_config_to_user_settings_file()
+                    self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
+            else:
+                self.logger.error(f"Setting {section}:{key} does not exist")
             
         except Exception as e:
             self.logger.error(f"Error updating user setting {section}.{key}: {e}")
