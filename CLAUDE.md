@@ -2,8 +2,8 @@
 
 @documentation/project-index.md
 
-- To use python/test: `powershell.exe -Command "python script.py"`
-    - Build: `powershell.exe -ExecutionPolicy Bypass -File /home/pin/whisper-key-local/py-build/build-windows.ps1` optional:`-NoZip`
+- Build: `powershell.exe -ExecutionPolicy Bypass -File /home/pin/whisper-key-local/py-build/build-windows.ps1` optional:`-NoZip`
+- DO NOT TEST! You are in WSL, app runs on Windows
 - Ask user to test before committing
 - Prefer elegant code that is modular and consistent
 - Use clear variable/function names

@@ -7,210 +7,6 @@ from .utils import resolve_asset_path, beautify_hotkey
 from io import StringIO
 
 
-class ConfigValidator:
-    def __init__(self, logger: logging.Logger):
-        self.logger = logger
-    
-    def validate(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate configuration and apply fixes. Returns modified config."""
-        # Validate whisper model size
-        valid_models = ['tiny', 'base', 'small', 'medium', 'large', 'tiny.en', 'base.en', 'small.en', 'medium.en']
-        if config['whisper']['model_size'] not in valid_models:
-            self.logger.warning(f"Invalid model size '{config['whisper']['model_size']}', using 'tiny'")
-            config['whisper']['model_size'] = 'tiny'
-        
-        # Validate device
-        valid_devices = ['cpu', 'cuda']
-        if config['whisper']['device'] not in valid_devices:
-            self.logger.warning(f"Invalid device '{config['whisper']['device']}', using 'cpu'")
-            config['whisper']['device'] = 'cpu'
-        
-        # Validate compute type
-        valid_compute_types = ['int8', 'float16', 'float32']
-        if config['whisper']['compute_type'] not in valid_compute_types:
-            self.logger.warning(f"Invalid compute type '{config['whisper']['compute_type']}', using 'int8'")
-            config['whisper']['compute_type'] = 'int8'
-        
-        # Validate channels
-        if config['audio']['channels'] not in [1, 2]:
-            self.logger.warning(f"Invalid channels {config['audio']['channels']}, using 1")
-            config['audio']['channels'] = 1
-        
-        # Validate max duration
-        if config['audio']['max_duration'] < 0:
-            self.logger.warning(f"Invalid max duration {config['audio']['max_duration']}, using 30")
-            config['audio']['max_duration'] = 30
-        
-        # Validate logging level
-        valid_log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-        if config['logging']['level'] not in valid_log_levels:
-            self.logger.warning(f"Invalid log level '{config['logging']['level']}', using 'INFO'")
-            config['logging']['level'] = 'INFO'
-        
-        # Validate console logging level
-        console_level = config['logging']['console'].get('level', 'WARNING')
-        if console_level not in valid_log_levels:
-            self.logger.warning(f"Invalid console log level '{console_level}', using 'WARNING'")
-            config['logging']['console']['level'] = 'WARNING'
-        else:
-            config['logging']['console']['level'] = console_level
-        
-        # Validate auto_paste setting
-        auto_paste = config['clipboard'].get('auto_paste', True)
-        if not isinstance(auto_paste, bool):
-            self.logger.warning(f"Invalid auto_paste value '{auto_paste}', using True")
-            config['clipboard']['auto_paste'] = True
-        else:
-            config['clipboard']['auto_paste'] = auto_paste
-        
-        # Validate paste_method setting
-        valid_paste_methods = ['key_simulation', 'windows_api']
-        paste_method = config['clipboard'].get('paste_method', 'key_simulation')
-        if paste_method not in valid_paste_methods:
-            self.logger.warning(f"Invalid paste_method '{paste_method}', using 'key_simulation'")
-            config['clipboard']['paste_method'] = 'key_simulation'
-        else:
-            config['clipboard']['paste_method'] = paste_method
-        
-        # Validate preserve_clipboard setting
-        preserve_clipboard = config['clipboard'].get('preserve_clipboard', True)
-        if not isinstance(preserve_clipboard, bool):
-            self.logger.warning(f"Invalid preserve_clipboard value '{preserve_clipboard}', using True")
-            config['clipboard']['preserve_clipboard'] = True
-        else:
-            config['clipboard']['preserve_clipboard'] = preserve_clipboard
-               
-        # Validate key_simulation_delay setting
-        key_simulation_delay = config['hotkey'].get('key_simulation_delay', 0.05)
-        if not isinstance(key_simulation_delay, (int, float)) or key_simulation_delay < 0:
-            self.logger.warning(f"Invalid key_simulation_delay value '{key_simulation_delay}', using 0.05")
-            config['hotkey']['key_simulation_delay'] = 0.05
-        else:
-            config['hotkey']['key_simulation_delay'] = key_simulation_delay
-        
-        # Validate main hotkey combination format
-        main_combination = config['hotkey'].get('recording_hotkey', 'ctrl+win')
-        if not isinstance(main_combination, str) or not main_combination.strip():
-            self.logger.warning(f"Invalid main hotkey combination '{main_combination}', using 'ctrl+win'")
-            config['hotkey']['recording_hotkey'] = 'ctrl+win'
-            main_combination = 'ctrl+win'
-        else:
-            # Clean up the combination (strip whitespace, convert to lowercase)
-            cleaned_combination = main_combination.strip().lower()
-            if cleaned_combination != main_combination:
-                config['hotkey']['recording_hotkey'] = cleaned_combination
-                main_combination = cleaned_combination
-        
-        # Validate stop-with-modifier setting
-        stop_with_modifier_enabled = config['hotkey'].get('stop_with_modifier_enabled', False)
-        if not isinstance(stop_with_modifier_enabled, bool):
-            self.logger.warning(f"Invalid stop_with_modifier_enabled value '{stop_with_modifier_enabled}', using False")
-            config['hotkey']['stop_with_modifier_enabled'] = False
-        else:
-            config['hotkey']['stop_with_modifier_enabled'] = stop_with_modifier_enabled
-            
-        # Validate auto-enter hotkey settings
-        auto_enter_enabled = config['hotkey'].get('auto_enter_enabled', True)
-        if not isinstance(auto_enter_enabled, bool):
-            self.logger.warning(f"Invalid auto_enter_enabled value '{auto_enter_enabled}', using True")
-            config['hotkey']['auto_enter_enabled'] = True
-        else:
-            config['hotkey']['auto_enter_enabled'] = auto_enter_enabled
-            
-        # Validate auto-enter hotkey combination format
-        auto_enter_combination = config['hotkey'].get('auto_enter_combination', 'alt')
-        if not isinstance(auto_enter_combination, str) or not auto_enter_combination.strip():
-            self.logger.warning(f"Invalid auto_enter_combination '{auto_enter_combination}'")
-            config['hotkey']['auto_enter_combination'] = 'alt'
-        else:
-            config['hotkey']['auto_enter_combination'] = auto_enter_combination.strip().lower()
-        
-        # Smart conflict detection between auto-enter and main+stop_with_modifier
-        auto_enter_combination = config['hotkey']['auto_enter_combination']
-        stop_with_modifier = config['hotkey']['stop_with_modifier_enabled']
-        
-        conflict_detected = False
-        conflict_reason = ""
-        
-        if stop_with_modifier:
-            # Extract first modifier from main hotkey for stop-with-modifier comparison
-            main_first_key = main_combination.split('+')[0] if '+' in main_combination else main_combination
-            # Extract first key from auto-enter hotkey
-            auto_enter_first_key = auto_enter_combination.split('+')[0] if '+' in auto_enter_combination else auto_enter_combination
-            
-            if main_first_key == auto_enter_first_key:
-                conflict_detected = True
-                conflict_reason = f"hotkey '{auto_enter_combination}' first key is shared with main hotkey and stop-with-modifier is enabled'"
-        else:
-            # No stop-with-modifier, just check for identical full combinations
-            if auto_enter_combination == main_combination:
-                conflict_detected = True
-                conflict_reason = f"hotkey '{auto_enter_combination}' is same as main hotkey"
-        
-        if conflict_detected:
-            self.logger.warning(f"   ✗ Auto-enter disabled: {conflict_reason}")
-            config['hotkey']['auto_enter_enabled'] = False
-        
-        # Validate VAD configuration ranges
-        self._validate_vad_config(config)
-        
-        # Validate audio_feedback enabled setting
-        audio_feedback_enabled = config.get('audio_feedback', {}).get('enabled', True)
-        if not isinstance(audio_feedback_enabled, bool):
-            self.logger.warning(f"Invalid audio_feedback enabled value '{audio_feedback_enabled}', using True")
-            if 'audio_feedback' not in config:
-                config['audio_feedback'] = {}
-            config['audio_feedback']['enabled'] = True
-        else:
-            if 'audio_feedback' not in config:
-                config['audio_feedback'] = {}
-            config['audio_feedback']['enabled'] = audio_feedback_enabled
-        
-        # Validate system_tray enabled setting
-        system_tray_enabled = config.get('system_tray', {}).get('enabled', True)
-        if not isinstance(system_tray_enabled, bool):
-            self.logger.warning(f"Invalid system_tray enabled value '{system_tray_enabled}', using True")
-            if 'system_tray' not in config:
-                config['system_tray'] = {}
-            config['system_tray']['enabled'] = True
-        else:
-            if 'system_tray' not in config:
-                config['system_tray'] = {}
-            config['system_tray']['enabled'] = system_tray_enabled
-        
-        return config
-    
-    def _validate_vad_config(self, config: Dict[str, Any]):
-        """Validate VAD configuration values are within acceptable ranges"""
-        if 'vad' not in config:
-            return
-            
-        vad_config = config['vad']
-        
-        # Validate vad_precheck_enabled (boolean)
-        vad_precheck_enabled = vad_config.get('vad_precheck_enabled', True)
-        if not isinstance(vad_precheck_enabled, bool):
-            self.logger.warning(f"Invalid vad_precheck_enabled value '{vad_precheck_enabled}', using True")
-            config['vad']['vad_precheck_enabled'] = True
-        else:
-            config['vad']['vad_precheck_enabled'] = vad_precheck_enabled
-            
-        vad_fields = {
-            'vad_onset_threshold': (0.0, 1.0, 'VAD onset threshold'),
-            'vad_offset_threshold': (0.0, 1.0, 'VAD offset threshold'),
-            'vad_min_speech_duration': (0.001, 5.0, 'VAD minimum speech duration')
-        }
-        
-        for field, (min_val, max_val, description) in vad_fields.items():
-            if field in vad_config:
-                value = vad_config[field]
-                if not isinstance(value, (int, float)):
-                    self.logger.warning(f"Invalid {description}: '{value}' (must be numeric), using default")
-                    del vad_config[field]
-                elif not (min_val <= value <= max_val):
-                    self.logger.warning(f"Invalid {description}: {value} (must be between {min_val} and {max_val}), using default")
-                    del vad_config[field]
-
 def deep_merge_config(default_config: Dict[str, Any],
                       user_config: Dict[str, Any]) -> Dict[str, Any]:
     
@@ -224,6 +20,7 @@ def deep_merge_config(default_config: Dict[str, Any],
     
     return result
 
+
 class ConfigManager:   
     def __init__(self, config_path: str = None, use_user_settings: bool = True):
         if config_path is None:
@@ -235,20 +32,19 @@ class ConfigManager:
         self.logger = logging.getLogger(__name__)
         self.validator = ConfigValidator(self.logger)
         
-        if use_user_settings:
-            self.user_settings_path = self._compute_user_settings_path()
-            self.config_path = self.user_settings_path
-        else:
-            self.config_path = config_path
+        self.config_path = self._determine_config_path(use_user_settings, config_path)
         
         self._print_config_status()
-        self.config = self._load_config()       
-        self.config = self.validator.validate(self.config)
-        
-        if self.use_user_settings:
-            self.save_config_to_user_settings_file()
+        self.config = self._load_config()
         
         self.logger.info("Configuration loaded successfully")
+    
+    def _determine_config_path(self, use_user_settings: bool, config_path: str) -> str:
+        if use_user_settings:
+            self.user_settings_path = self._compute_user_settings_path()
+            return self.user_settings_path
+        else:
+            return config_path
     
     def _compute_user_settings_path(self) -> str:
         appdata = os.getenv('APPDATA')
@@ -257,13 +53,22 @@ class ConfigManager:
         
         return user_settings_file
     
+    def _is_user_config_empty(self) -> bool:
+        try:
+            with open(self.user_settings_path, 'r', encoding='utf-8') as f:
+                yaml = YAML()
+                content = yaml.load(f)
+                return content is None or len(content) == 0
+        except:
+            return True
+    
     def _ensure_user_settings_exist(self):
         user_settings_dir = os.path.dirname(self.user_settings_path)
         
         if not os.path.exists(user_settings_dir):
             os.makedirs(user_settings_dir, exist_ok=True)
         
-        if not os.path.exists(self.user_settings_path) or os.path.getsize(self.user_settings_path) == 0:
+        if not os.path.exists(self.user_settings_path) or self._is_user_config_empty():
             if os.path.exists(self.default_config_path):
                 shutil.copy2(self.default_config_path, self.user_settings_path)
                 self.logger.info(f"Created user settings from {self.default_config_path}")
@@ -299,6 +104,7 @@ class ConfigManager:
         
         if self.use_user_settings:
             self._ensure_user_settings_exist()
+
             try:
                 yaml = YAML()
                 with open(self.config_path, 'r', encoding='utf-8') as file:
@@ -308,7 +114,12 @@ class ConfigManager:
                 merged_config = deep_merge_config(default_config, user_config)
                 self.logger.info(f"Loaded user configuration from {self.config_path}")
                 
-                return merged_config
+                validated_config = self.validator.fix_config(merged_config, default_config)
+                self.config = validated_config
+                
+                self.save_config_to_user_settings_file()
+
+                return validated_config
                     
             except Exception as e:
                 if "YAML" in str(e):
@@ -338,7 +149,6 @@ class ConfigManager:
             else:
                 self.logger.error(f"Error loading default config file: {e}")
             raise
-    
     
     def _print_config_status(self):
         print("📁 Loading configuration...")
@@ -467,3 +277,125 @@ class ConfigManager:
             self.logger.error(f"Error updating user setting {section}.{key}: {e}")
             raise
 
+
+class ConfigValidator:
+    def __init__(self, logger: logging.Logger):
+        self.logger = logger
+        self.config = None
+        self.default_config = None
+    
+    def _validate_enum(self, path: str, valid_values: list):
+        current_value = self._get_config_value_at_path(self.config, path)
+        if current_value not in valid_values:
+            self._set_to_default(path, current_value)
+    
+    def _validate_boolean(self, path: str):
+        current_value = self._get_config_value_at_path(self.config, path)
+        if not isinstance(current_value, bool):
+            self._set_to_default(path, current_value)
+    
+    def _validate_numeric_range(self, path: str, min_val: float = None, max_val: float = None, description: str = None):
+        current_value = self._get_config_value_at_path(self.config, path)
+        
+        if not isinstance(current_value, (int, float)):
+            self.logger.warning(f"{current_value} must be numeric")
+            self._set_to_default(path, current_value)
+        elif min_val is not None and current_value < min_val:
+            self.logger.warning(f"{current_value} must be >= {min_val}")
+            self._set_to_default(path, current_value)
+        elif max_val is not None and current_value > max_val:
+            self.logger.warning(f"{current_value} must be <= {max_val}")
+            self._set_to_default(path, current_value)
+    
+    def _get_config_value_at_path(self, config_dict: dict, path: str):
+        keys = path.split('.')
+        current = config_dict
+        for key in keys:
+            current = current[key]
+        return current
+    
+    def _set_config_value_at_path(self, config_dict: dict, path: str, value):
+        keys = path.split('.')
+        current = config_dict
+        for key in keys[:-1]:
+            current = current[key]
+        current[keys[-1]] = value
+    
+    def _validate_hotkey_string(self, path: str):
+        current_value = self._get_config_value_at_path(self.config, path)
+        
+        if not isinstance(current_value, str) or not current_value.strip():
+            self._set_to_default(path, current_value)
+            return self._get_config_value_at_path(self.config, path)
+        
+        cleaned_combination = current_value.strip().lower()
+        if cleaned_combination != current_value:
+            self._set_config_value_at_path(self.config, path, cleaned_combination)
+        
+        return cleaned_combination
+    
+    def _set_to_default(self, path: str, prev_value: str):
+        default_value = self._get_config_value_at_path(self.default_config, path)
+        self._set_config_value_at_path(self.config, path, default_value)
+        self.logger.warning(f"{prev_value} value not validated for config {path}, setting to default")
+    
+    def _ensure_nested_section(self, section: str, key: str, value: any):
+        """Ensure nested config section exists and set value"""
+        if section not in self.config:
+            self.config[section] = {}
+        self.config[section][key] = value
+    
+    def fix_config(self, config: Dict[str, Any], default_config: Dict[str, Any]) -> Dict[str, Any]:
+        self.config = config
+        self.default_config = default_config
+        
+        self._validate_enum('whisper.model_size', 
+                            ['tiny', 'base', 'small', 'medium', 'large', 'tiny.en', 'base.en', 'small.en', 'medium.en'])
+        self._validate_enum('whisper.device', ['cpu', 'cuda'])
+        self._validate_enum('whisper.compute_type', ['int8', 'float16', 'float32'])
+        
+        self._validate_enum('audio.channels', [1, 2])       
+        self._validate_numeric_range('audio.max_duration', min_val=0, description='max duration')
+        
+        self._validate_enum('logging.level', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+        self._validate_enum('logging.console.level', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+        
+        self._validate_boolean('clipboard.auto_paste')
+        self._validate_boolean('clipboard.preserve_clipboard')
+        self._validate_numeric_range('clipboard.key_simulation_delay', min_val=0, description='key simulation delay')
+        
+        self._validate_boolean('hotkey.stop_with_modifier_enabled')
+        self._validate_boolean('hotkey.auto_enter_enabled')
+
+        main_combination = self._validate_hotkey_string('hotkey.recording_hotkey')
+        auto_enter_combination = self._validate_hotkey_string('hotkey.auto_enter_combination')
+        self._resolve_hotkey_conflicts(main_combination, auto_enter_combination)
+        
+        self._validate_boolean('vad.vad_precheck_enabled')
+        self._validate_numeric_range('vad.vad_onset_threshold', min_val=0.0, max_val=1.0, description='VAD onset threshold')
+        self._validate_numeric_range('vad.vad_offset_threshold', min_val=0.0, max_val=1.0, description='VAD offset threshold')
+        self._validate_numeric_range('vad.vad_min_speech_duration', min_val=0.001, max_val=5.0, description='VAD minimum speech duration')
+        
+        self._validate_boolean('audio_feedback.enabled')
+        self._validate_boolean('system_tray.enabled')
+        
+        return self.config
+    
+    def _resolve_hotkey_conflicts(self, main_combination: str, auto_enter_combination: str):
+        stop_with_modifier = self._get_config_value_at_path(self.config, 'hotkey.stop_with_modifier_enabled')
+
+        conflict_detected = ""
+        
+        if stop_with_modifier:
+            main_first_key = main_combination.split('+')[0] if '+' in main_combination else main_combination
+            auto_enter_first_key = auto_enter_combination.split('+')[0] if '+' in auto_enter_combination else auto_enter_combination
+            
+            if main_first_key == auto_enter_first_key:
+                conflict_detected = f"hotkey '{auto_enter_combination}' first key is shared with main hotkey and stop-with-modifier is enabled'"
+        else:
+            if auto_enter_combination == main_combination:
+                conflict_detected = f"hotkey '{auto_enter_combination}' is same as main hotkey"
+        
+        if conflict_detected:
+            self.logger.warning(f"   ✗ Auto-enter disabled: {conflict_detected}")
+            self._set_config_value_at_path(self.config, 'hotkey.auto_enter_enabled', False)
