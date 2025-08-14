@@ -144,14 +144,11 @@ logging:
   file:
     enabled: true
     filename: app.log
-    max_size_mb: 10  # Rotate log when it gets this big
-    backup_count: 3  # Keep this many old log files
   
   # Console output
   console:
     enabled: true
     level: WARNING  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
-    colored: true  # Use colored output in terminal (if supported)
 
 
 # =============================================================================
