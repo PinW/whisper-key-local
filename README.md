@@ -18,7 +18,7 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 - Microphone
 
 ### Option 1: Download Portable App
-1. [Download the latest release zip](https://github.com/pin/whisper-key-local/releases/latest)
+1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
 2. Extract the zip file
 3. Run `whisper-key.exe`
 
