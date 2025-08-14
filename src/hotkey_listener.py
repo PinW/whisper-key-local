@@ -1,14 +1,10 @@
 import logging
 from global_hotkeys import register_hotkeys, start_checking_hotkeys, stop_checking_hotkeys
-from typing import TYPE_CHECKING
 from .utils import error_logging
-
-# This import trick prevents circular imports (advanced concept)
-if TYPE_CHECKING:
-    from .state_manager import StateManager
+from .state_manager import StateManager
 
 class HotkeyListener:   
-    def __init__(self, state_manager: 'StateManager', recording_hotkey: str, auto_enter_hotkey: str = None, auto_enter_enabled: bool = True, stop_with_modifier_enabled: bool = False):
+    def __init__(self, state_manager: StateManager, recording_hotkey: str, auto_enter_hotkey: str = None, auto_enter_enabled: bool = True, stop_with_modifier_enabled: bool = False):
         self.state_manager = state_manager
         self.recording_hotkey = recording_hotkey
         self.auto_enter_hotkey = auto_enter_hotkey

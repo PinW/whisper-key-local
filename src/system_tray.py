@@ -1,24 +1,12 @@
-"""
-System Tray Manager
-
-This module handles the system tray icon functionality for our speech-to-text app.
-It shows the current status (idle, recording, processing) and provides a context menu
-for quick access to app controls.
-
-corner of Windows (next to the clock). It lets you know the app is running and 
-gives you quick access to controls without opening a main window.
-"""
-
 import logging
 import threading
-import time
 import os
+import signal
 from typing import Optional, Callable, TYPE_CHECKING
 from pathlib import Path
 
 from .utils import beautify_hotkey, resolve_asset_path
 
-# System tray imports
 try:
     import pystray
     from PIL import Image
@@ -28,7 +16,6 @@ except ImportError:
     pystray = None
     Image = None
 
-# Type checking imports (won't cause circular imports)
 if TYPE_CHECKING:
     from .state_manager import StateManager
     from .config_manager import ConfigManager
@@ -363,8 +350,7 @@ class SystemTray:
         
         # In a real application, you'd trigger a clean shutdown
         # For now, we'll raise KeyboardInterrupt to simulate Ctrl+C
-        import os
-        import signal
+        
         os.kill(os.getpid(), signal.SIGINT)
     
     def update_state(self, new_state: str):
