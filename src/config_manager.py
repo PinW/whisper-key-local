@@ -5,6 +5,7 @@ import shutil
 from typing import Dict, Any, Optional
 from .utils import resolve_asset_path
 from pathlib import Path
+from io import StringIO
 
 def deep_merge_config(default_config: Dict[str, Any],
                       user_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -30,19 +31,18 @@ class ConfigManager:
         self.logger = logging.getLogger(__name__)
         
         if use_user_settings:
-            self.user_settings_path = self._get_user_settings_path()
-            self._ensure_user_settings_exist()
+            self.user_settings_path = self._compute_user_settings_path()
             self.config_path = self.user_settings_path
         else:
             self.config_path = config_path
         
         self._print_config_status()
-        self._load_config()       
+        self.config = self._load_config()       
         self._validate_config()
         
         self.logger.info("Configuration loaded successfully")
     
-    def _get_user_settings_path(self) -> str:
+    def _compute_user_settings_path(self) -> str:
         appdata = os.getenv('APPDATA')
         whisperkey_dir = os.path.join(appdata, 'whisperkey')
         user_settings_file = os.path.join(whisperkey_dir, 'user_settings.yaml')
@@ -55,99 +55,67 @@ class ConfigManager:
         if not os.path.exists(user_settings_dir):
             os.makedirs(user_settings_dir, exist_ok=True)
         
-        if not os.path.exists(self.user_settings_path):
+        if not os.path.exists(self.user_settings_path) or os.path.getsize(self.user_settings_path) == 0:
             if os.path.exists(self.default_config_path):
                 shutil.copy2(self.default_config_path, self.user_settings_path)
-                self.logger.info(f"Created initial user settings from {self.default_config_path}")
+                self.logger.info(f"Created user settings from {self.default_config_path}")
             else:
                 error_msg = f"Default config {self.default_config_path} not found - cannot create user settings"
                 self.logger.error(error_msg)
                 raise FileNotFoundError(error_msg)
     
-    def _remove_unused_keys_from_user_config(self, user_config: Dict[str, Any], default_config: Dict[str, Any]) -> bool:
+    def _remove_unused_keys_from_user_config(self, user_config: Dict[str, Any], default_config: Dict[str, Any]):
         
-        was_modified = False
         sections_to_remove = []
         
         for section, values in user_config.items():
             if section not in default_config:
                 self.logger.info(f"Removed invalid config section: {section}")
                 sections_to_remove.append(section)
-                was_modified = True
             elif isinstance(values, dict) and isinstance(default_config[section], dict):
                 keys_to_remove = []
                 for key in values.keys():
                     if key not in default_config[section]:
                         self.logger.info(f"Removed invalid config key: {section}.{key}")
                         keys_to_remove.append(key)
-                        was_modified = True
                 
                 for key in keys_to_remove:
                     del values[key]
         
         for section in sections_to_remove:
             del user_config[section]
-        
-        return was_modified
     
     def _load_config(self):
-        """
-        Load configuration using two-stage loading:
-        Stage 1: Load default config.yaml as baseline
-        Stage 2: Load user config and merge on top of defaults
-        """
 
-        # Stage 1: Load default configuration from config.yaml
         default_config = self._load_default_config()
         
-        # Stage 2: Load user configuration and merge with defaults
-        if self.use_user_settings and os.path.exists(self.config_path):
+        if self.use_user_settings:
+            self._ensure_user_settings_exist()
             try:
                 yaml = YAML()
-                with open(self.config_path, 'r', encoding='utf-8') as f:
-                    user_config = yaml.load(f)
+                with open(self.config_path, 'r', encoding='utf-8') as file:
+                    user_config = yaml.load(file)
                 
-                if user_config:
-                    # Remove unused keys from user config
-                    self._remove_unused_keys_from_user_config(user_config, default_config)
+                self._remove_unused_keys_from_user_config(user_config, default_config)
+                merged_config = deep_merge_config(default_config, user_config)
+                self.logger.info(f"Loaded user configuration from {self.config_path}")
+                
+                return merged_config
                     
-                    # Deep merge user config on top of defaults
-                    self.config = deep_merge_config(default_config, user_config)
-                    self.logger.info(f"Loaded user configuration from {self.config_path}")
-                else:
-                    # Empty user config, use defaults
-                    self.config = default_config
-                    self.logger.warning(f"User config file {self.config_path} is empty, using defaults")
-                    
-            except yaml.YAMLError as e:
-                self.logger.error(f"Error parsing user YAML config: {e}")
-                self.logger.warning("Using default configuration")
-                self.config = default_config
             except Exception as e:
-                self.logger.error(f"Error loading user config file: {e}")
-                self.logger.warning("Using default configuration")
-                self.config = default_config
-        else:
-            # No user config or not using user settings, use defaults
-            self.config = default_config
-            if self.use_user_settings:
-                self.logger.info(f"User config file {self.config_path} not found, using defaults")
-            else:
-                self.logger.info("Using default configuration (user settings disabled)")
+                if "YAML" in str(e):
+                    self.logger.error(f"Error parsing user YAML config: {e}")
+                else:
+                    self.logger.error(f"Error loading user config file: {e}")
+                
+        self.logger.info(f"Using default configuration from {self.default_config_path}")
+        return default_config
     
     def _load_default_config(self) -> Dict[str, Any]:
-        """
-        Load the default configuration from config.yaml
-        
-        Returns:
-        - Default configuration dictionary loaded from config.yaml
-        
-        This ensures config.yaml is the single source of truth for all defaults.
-        """
         try:
             yaml = YAML()
-            with open(self.default_config_path, 'r', encoding='utf-8') as f:
-                default_config = yaml.load(f)
+            with open(self.default_config_path, 'r', encoding='utf-8') as file:
+                default_config = yaml.load(file)
             
             if default_config:
                 self.logger.info(f"Loaded default configuration from {self.default_config_path}")
@@ -335,7 +303,7 @@ class ConfigManager:
         
         # Save validation fixes to user file
         if self.use_user_settings:
-            self.save_user_settings()
+            self.save_config_to_user_settings_file()
     
     def _validate_vad_config(self):
         """Validate VAD configuration values are within acceptable ranges"""
@@ -371,8 +339,7 @@ class ConfigManager:
         print("📁 Loading configuration...")
 
         if self.use_user_settings:
-            settings_path = self.get_user_settings_path()
-            print(f"   ✓ Using user settings from: {settings_path}")
+            print(f"   ✓ Using user settings from: {self.user_settings_path}")
         else:
             print(f"   ✗ Using default settings from: {self.config_path}")
     
@@ -455,10 +422,6 @@ class ConfigManager:
         """Get audio feedback configuration settings"""
         return self.config['audio_feedback'].copy()
     
-    def get_full_config(self) -> Dict[str, Any]:
-        """Get the complete configuration"""
-        return self.config.copy()
-    
     def get_setting(self, section: str, key: str, default: Any = None) -> Any:
         """
         Get a specific configuration setting
@@ -474,76 +437,42 @@ class ConfigManager:
             self.logger.warning(f"Setting '{section}.{key}' not found, using default: {default}")
             return default
     
-    def _save_config_to_file(self, file_path: str):
-        """
-        Helper method to save configuration to a specific file
-        Preserves YAML comments and formatting using ruamel.yaml
-        """
+    def _prepare_user_config_header(self, config_data):
+        yaml = YAML()
+        yaml.preserve_quotes = True
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        
+        temp_output = StringIO()
+        yaml.dump(config_data, temp_output)
+        lines = temp_output.getvalue().split('\n')
+        
+        # Find end of header - first blank line is the cutoff
+        data_start = 0
+        for i, line in enumerate(lines):
+            if not line.strip():  # Empty line found
+                data_start = i
+                break
+        
+        user_config = []
+        user_config.append("# =============================================================================")
+        user_config.append("# WHISPER KEY - PERSONAL CONFIGURATION")
+        user_config.append("# =============================================================================")
+        user_config.extend(lines[data_start:])
+        
+        return '\n'.join(user_config)
+
+    def save_config_to_user_settings_file(self):
         try:
-            yaml = YAML()
-            yaml.preserve_quotes = True
-            yaml.indent(mapping=2, sequence=4, offset=2)
+            config_to_save = self.config
+            config_with_user_header = self._prepare_user_config_header(config_to_save)
             
-            # Read the original file to preserve structure and comments
-            original_data = None
-            if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    original_data = yaml.load(f)
+            with open(self.user_settings_path, 'w', encoding='utf-8') as f:
+                f.write(config_with_user_header)
             
-            # Always use clean config structure to avoid preserving formatting issues
-            # This ensures proper section organization and prevents structural corruption
-            data_to_save = self.config
-            
-            # Write back with preserved formatting
-            with open(file_path, 'w', encoding='utf-8') as f:
-                # If this is the user settings file, write custom header and clean data
-                if file_path == getattr(self, 'user_settings_path', None):
-                    # Write personal header
-                    f.write("# =============================================================================\n")
-                    f.write("# WHISPER KEY - PERSONAL CONFIGURATION\n") 
-                    f.write("# =============================================================================\n")
-                    f.write("# Overrides default configs at:\n")
-                    f.write("# config.defaults.yaml (in application folder)\n")
-                    f.write("#")
-                    
-                    # Hack: dump to string first, then skip the first 8 lines (old header)
-                    from io import StringIO
-                    temp_output = StringIO()
-                    yaml.dump(data_to_save, temp_output)
-                    lines = temp_output.getvalue().split('\n')
-                    
-                    # Skip first 8 lines (old header) and write the rest
-                    for line in lines[8:]:
-                        f.write(line + '\n')
-                else:
-                    # For other files, use normal dump with comment preservation
-                    yaml.dump(data_to_save, f)
-            
-            self.logger.info(f"Configuration saved to {file_path}")
+            self.logger.info(f"Configuration saved to {self.user_settings_path}")
         except Exception as e:
-            self.logger.error(f"Error saving configuration to {file_path}: {e}")
+            self.logger.error(f"Error saving configuration to {self.user_settings_path}: {e}")
             raise
-    
-    def save_config(self, output_path: Optional[str] = None):
-        """
-        Save current configuration to YAML file
-        
-        This can be useful for creating a config file with current settings.
-        """
-        output_file = output_path or self.config_path
-        self._save_config_to_file(output_file)
-    
-    def save_user_settings(self):
-        """
-        Save current configuration to user settings file
-        
-        Only works if user settings are enabled
-        """
-        if not self.use_user_settings:
-            self.logger.warning("User settings not enabled, cannot save user settings")
-            return
-        
-        self._save_config_to_file(self.user_settings_path)
     
     def _get_setting_display_info(self, section: str, key: str, value: Any) -> dict:
         """
@@ -642,18 +571,6 @@ class ConfigManager:
         }
 
     def update_user_setting(self, section: str, key: str, value: Any):
-        """
-        Update a specific user setting and save to file
-        
-        Parameters:
-        - section: Configuration section (e.g., 'whisper', 'hotkey')
-        - key: Setting key within the section
-        - value: New value for the setting
-        """
-        if not self.use_user_settings:
-            self.logger.warning("User settings not enabled, cannot update user setting")
-            return
-        
         try:
             # Store old value for comparison
             old_value = None
@@ -689,45 +606,15 @@ class ConfigManager:
             self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
             
             # Save to user settings file
-            self.save_user_settings()
+            self.save_config_to_user_settings_file()
             
         except Exception as e:
             self.logger.error(f"Error updating user setting {section}.{key}: {e}")
             raise
     
-    def get_user_settings_path(self) -> Optional[str]:
-        """
-        Get the path to the user settings file
-        
-        Returns None if user settings are not enabled
-        """
-        if self.use_user_settings:
-            return self.user_settings_path
-        return None
-    
     def reload_config(self):
-        """
-        Reload configuration from file
-        
-        Useful if the config file has been modified while the app is running.
-        """
         self.logger.info("Reloading configuration...")
         self._load_config()
         self._validate_config()
         self.logger.info("Configuration reloaded successfully")
-    
-    def _update_yaml_data(self, original_data: Dict[str, Any], new_data: Dict[str, Any]):
-        """
-        Update original YAML data with new values while preserving structure
-        
-        This recursively updates the original data structure with new values,
-        maintaining comments and formatting from the original file.
-        """
-        for key, value in new_data.items():
-            if key in original_data and isinstance(original_data[key], dict) and isinstance(value, dict):
-                # Recursively update nested dictionaries
-                self._update_yaml_data(original_data[key], value)
-            else:
-                # Update with new value
-                original_data[key] = value
 
