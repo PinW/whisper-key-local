@@ -153,19 +153,6 @@ logging:
     level: WARNING  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
     colored: true  # Use colored output in terminal (if supported)
 
-# =============================================================================
-# PERFORMANCE SETTINGS
-# =============================================================================
-performance:
-  # CPU threads to use for processing
-  # 0 = auto-detect (recommended)
-  # Higher numbers may speed up transcription on multi-core systems
-  cpu_threads: 0
-  
-  # Memory management
-  # true = clear model cache between transcriptions (saves memory)
-  # false = keep model in memory (faster but uses more RAM)
-  clear_cache: false
 
 # =============================================================================
 # AUDIO FEEDBACK SETTINGS

@@ -198,9 +198,6 @@ class ConfigManager:
     def get_logging_config(self) -> Dict[str, Any]:
         return self.config['logging'].copy()
     
-    def get_performance_config(self) -> Dict[str, Any]:
-        return self.config['performance'].copy()
-    
     def get_vad_config(self) -> Dict[str, Any]:
         return self.config['vad'].copy()
     
