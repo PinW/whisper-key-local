@@ -16,6 +16,7 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+
 | **Configuration** | `config_manager.py` | YAML settings management & validation | ruamel.yaml |
 | **System Integration** | `system_tray.py` | System tray icon & menu interface | pystray, Pillow |
 | **State Coordination** | `state_manager.py` | Component orchestration & workflow | threading, logging |
+| **Instance Management** | `instance_manager.py` | Single instance enforcement & window focusing | win32api, win32event, win32gui |
 | **Utilities** | `utils.py` | Common utility functions | - |
 
 ## Project Structure
@@ -36,6 +37,7 @@ whisper-key-local/
 │   ├── clipboard_manager.py    # clipboard & auto-paste operations
 │   ├── config_manager.py       # YAML configuration management
 │   ├── hotkey_listener.py      # global hotkey detection
+│   ├── instance_manager.py     # single instance enforcement
 │   ├── state_manager.py        # component coordination & workflow
 │   ├── system_tray.py          # system tray icon & menu
 │   ├── utils.py                # common utility functions
