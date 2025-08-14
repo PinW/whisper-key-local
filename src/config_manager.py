@@ -339,12 +339,6 @@ class ConfigValidator:
         self._set_config_value_at_path(self.config, path, default_value)
         self.logger.warning(f"{prev_value} value not validated for config {path}, setting to default")
     
-    def _ensure_nested_section(self, section: str, key: str, value: any):
-        """Ensure nested config section exists and set value"""
-        if section not in self.config:
-            self.config[section] = {}
-        self.config[section][key] = value
-    
     def fix_config(self, config: Dict[str, Any], default_config: Dict[str, Any]) -> Dict[str, Any]:
         self.config = config
         self.default_config = default_config
