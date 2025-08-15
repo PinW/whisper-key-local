@@ -107,15 +107,14 @@ class StateManager:
             with self._state_lock:
                 self.is_processing = False
                 
-                pending_model = self._pending_model_change
-                if pending_model:
-                    self._pending_model_change = None
-                    self.logger.info(f"Executing pending model change to: {pending_model}")
+                pending_model = self._pending_model_change                    
             
             # Execute pending model change outside of lock to avoid deadlock
             if 'pending_model' in locals() and pending_model:
+                self.logger.info(f"Executing pending model change to: {pending_model}")
                 print(f"🔄 Processing complete, now switching to {pending_model} model...")
                 self._execute_model_change(pending_model)
+                self._pending_model_change = None
             else:
                 self.system_tray.update_state("idle")
     
