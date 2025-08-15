@@ -167,33 +167,19 @@ class SystemTray:
             self.logger.error(f"Error selecting model {model_size}: {e}")
 
     def _quit_application_from_tray(self, icon=None, item=None):        
-        self.state_manager.shutdown()
+        os.kill(os.getpid(), signal.SIGINT)
     
     def update_state(self, new_state: str):
-        """
-        Update the tray icon to reflect a new application state
-        
-        Parameters:
-        - new_state: The new state ("idle", "recording", "processing")
-        
-        This method is called by the StateManager when the app status changes.
-        """
         if not TRAY_AVAILABLE or not self.is_running:
             return
         
-        old_state = self.current_state
         self.current_state = new_state
         
-        # Update the icon if we have one loaded
-        if self.icon and new_state in self.icons:
-            try:
-                self.icon.icon = self.icons[new_state]
-                self.icon.title = f"Whisper Key - {new_state.title()}"
-                # Refresh the menu to update the Start/Stop action
-                self.icon.menu = self._create_menu()
-                self.logger.debug(f"Tray icon updated: {old_state} -> {new_state}")
-            except Exception as e:
-                self.logger.error(f"Failed to update tray icon: {e}")
+        try:
+            self.icon.icon = self.icons[new_state]
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Failed to update tray icon: {e}")
     
     def start(self):        
         if not self.available:
@@ -228,7 +214,7 @@ class SystemTray:
     
     def _run_tray(self):
         try:
-            self.icon.run()  # pystray event looop method
+            self.icon.run()  # pystray provided loop method
         except Exception as e:
             self.logger.error(f"System tray thread error: {e}")
         finally:
