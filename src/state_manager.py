@@ -120,17 +120,12 @@ class StateManager:
             else:
                 self.system_tray.update_state("idle")
     
-    def get_application_status(self) -> dict:
+    def get_application_state(self) -> dict:
         status = {
             "recording": self.audio_recorder.get_recording_status(),
             "processing": self.is_processing,
             "model_loading": self.is_model_loading,
-            "last_transcription": self.last_transcription,
-            "whisper_model_info": self.whisper_engine.get_model_info(),
-            "clipboard_info": self.clipboard_manager.get_clipboard_info()
         }
-        
-        status["system_tray"] = self.system_tray.get_status_info()
         
         return status
     
@@ -151,6 +146,8 @@ class StateManager:
             print(f"❌ Test failed: {e}")
     
     def shutdown(self):        
+        print("Whisper Key is shutting down... good bye!")
+
         if self.audio_recorder.get_recording_status():
             self.audio_recorder.stop_recording()
         
@@ -212,9 +209,9 @@ class StateManager:
         self.logger.warning(f"Unexpected state for model change: {current_state}")
         return False
     
-    def update_clipboard_setting(self, setting: str, value):
-        if setting == 'auto_paste':
-            self.clipboard_manager.update_auto_paste(value)
+    def update_transcription_mode(self, value):            
+        self.config_manager.update_user_setting('clipboard', 'auto_paste', value)
+        self.clipboard_manager.update_auto_paste(value)
 
     def _execute_model_change(self, new_model_size: str):
         def progress_callback(message: str):

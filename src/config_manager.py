@@ -207,12 +207,8 @@ class ConfigManager:
     def get_audio_feedback_config(self) -> Dict[str, Any]:
         return self.config['audio_feedback'].copy()
     
-    def get_setting(self, section: str, key: str, default: Any = None) -> Any:
-        try:
-            return self.config[section][key]
-        except KeyError:
-            self.logger.warning(f"Setting '{section}.{key}' not found, using default: {default}")
-            return default
+    def get_setting(self, section: str, key: str) -> Any:
+        return self.config[section][key]
     
     def _prepare_user_config_header(self, config_data):
         yaml = YAML()
