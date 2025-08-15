@@ -165,8 +165,7 @@ def main():
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
         
-        if system_tray.is_available():
-            system_tray.start()
+        system_tray.start()
         
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.")
         print("Press Ctrl+C to quit.")
