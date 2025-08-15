@@ -2,6 +2,39 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.2.0] - 2025-08-15
+
+### Added
+- Max recording duration with callback-based duration limiting for audio capture
+- Intelligent hotkey conflict detection with automatic resolution
+- Global exception handling with stderr redirection to app.log
+- VAD configuration reorganization into dedicated Voice Activity Detection section
+- Instance Manager component (renamed from single_instance.py for consistency)
+
+### Changed
+- Massive code reduction: 50% reduction across 11 core files (4,200 → 2,087 lines)
+- Complete removal of redundant docstrings and beginner-friendly comments
+- Simplified component interfaces and eliminated circular dependencies
+- Enhanced build script with improved Start Menu compatibility and asset path resolution
+- Updated automation workflow to focus on real issues over defensive programming
+- Exception handling standardization across all components
+- Import reorganization following PEP 8 standards
+- Magic number extraction to named constants
+- Component interface simplification with better separation of concerns
+
+### Fixed
+- Critical race conditions in transcription pipeline and pending model changes
+- Bare except clause that could mask critical exceptions
+- Inconsistent OptionalComponent usage in SystemTray type annotations
+
+### Removed
+- Entire test suite to focus on shipping over ceremony
+- Defensive programming patterns and unnecessary validation
+- Windows API clipboard fallback complexity
+- Complex model loading progress tracking
+- Redundant configuration options and unused settings
+- Dead code and unused functions throughout codebase
+
 ## [0.1.3] - 2025-08-11
 
 ### Added
