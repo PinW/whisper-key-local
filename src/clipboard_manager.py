@@ -162,34 +162,3 @@ class ClipboardManager:
     def update_auto_paste(self, enabled: bool):
         self.auto_paste = enabled
         self._print_status()
-
-    def get_clipboard_info(self) -> dict:
-        try:
-            content = pyperclip.paste()
-            info = {
-                "has_content": bool(content),
-                "content_length": len(content) if content else 0,
-                "preview": content[:50] + "..." if content and len(content) > 50 else content,
-                "key_simulation_available": True
-            }
-            
-            hwnd = self.get_active_window_handle()
-            if hwnd:
-                try:
-                    window_title = win32gui.GetWindowText(hwnd)
-                    info["active_window"] = {
-                        "handle": hwnd,
-                        "title": window_title
-                    }
-                except:
-                    info["active_window"] = {"handle": hwnd, "title": "Unknown"}
-            
-            return info
-
-        except Exception as e:
-            return {
-                "has_content": False,
-                "content_length": 0,
-                "error": str(e),
-                "key_simulation_available": True
-            }

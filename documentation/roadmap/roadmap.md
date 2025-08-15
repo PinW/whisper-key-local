@@ -38,6 +38,7 @@
 
 ### Technical
 - As a *developer* I want a **simplified config manager** so that DHH won't cry
+- As a *developer*, I want **end-to-end tests** so that I can refactor with confidence
 
 ### Learning & Code Exploration
 - Try something out with **Python decorators** - explore using decorators for timing, caching, or retry logic in the codebase

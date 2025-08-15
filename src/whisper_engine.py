@@ -313,14 +313,6 @@ class WhisperEngine:
             self.logger.error(f"File transcription failed: {e}")
             return None
     
-    def get_model_info(self) -> dict:
-        return {
-            "model_size": self.model_size,
-            "device": self.device,
-            "compute_type": self.compute_type,
-            "model_loaded": self.model is not None
-        }
-    
     def change_model(self,
                      new_model_size: str,
                      progress_callback: Optional[Callable[[str], None]] = None):
