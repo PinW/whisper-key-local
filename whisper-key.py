@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""
-Main application entry point for Windows Whisper Speech-to-Text App
-
-This is the main file that starts our application. It coordinates all the 
-different components (audio recording, hotkeys, transcription, etc.) working together.
-
-For beginners: This file is like the "conductor" of an orchestra - it doesn't 
-play music itself, but tells all the musicians (our modules) when to start and stop.
-"""
 
 import logging
-import os
-import time
+import signal
+import sys
+import threading
+
 from src.config_manager import ConfigManager
 from src.audio_recorder import AudioRecorder
 from src.hotkey_listener import HotkeyListener
@@ -20,269 +13,176 @@ from src.clipboard_manager import ClipboardManager
 from src.state_manager import StateManager
 from src.system_tray import SystemTray
 from src.audio_feedback import AudioFeedback
-from src.single_instance import ensure_single_instance
-from src.utils import beautify_hotkey
+from src.instance_manager import guard_against_multiple_instances
+from src.utils import beautify_hotkey, OptionalComponent, resolve_asset_path
 
 def setup_logging(config_manager: ConfigManager):
-    """
-    Configure logging based on configuration settings
-    
-    Logging is like leaving breadcrumbs - it helps us understand what our 
-    program is doing and find problems when they occur.
-    """
     log_config = config_manager.get_logging_config()
     
-    # Create root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)  # Set to lowest level, handlers will filter
     
-    # Clear any existing handlers
     root_logger.handlers.clear()
     
-    # Create formatter
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
-    # Add file handler if enabled
     if log_config['file']['enabled']:
-        file_handler = logging.FileHandler(log_config['file']['filename'], encoding='utf-8')
+        log_file_path = resolve_asset_path(log_config['file']['filename'])
+        file_handler = logging.FileHandler(log_file_path, encoding='utf-8')
         file_handler.setLevel(getattr(logging, log_config['level']))
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
     
-    # Add console handler if enabled with separate level
     if log_config['console']['enabled']:
         console_handler = logging.StreamHandler()
-        console_level = log_config['console'].get('level', 'WARNING')  # Default to WARNING if not set
+        console_level = log_config['console'].get('level', 'WARNING')
         console_handler.setLevel(getattr(logging, console_level))
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
 
-def main():
-    """
-    Main application function that ties everything together
-    """
-    # Fix working directory for Start Menu compatibility
-    # Change to the directory containing this script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(script_dir)
+def setup_exception_handler():
+    def exception_handler(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        
+        logging.getLogger().error("Uncaught exception", 
+                                 exc_info=(exc_type, exc_value, exc_traceback))
     
-    print("Starting Whisper Key... Windows Whisper Speech-to-Text App...")
+    sys.excepthook = exception_handler
+
+def setup_audio_recorder(audio_config, state_manager):
+    return AudioRecorder(
+        channels=audio_config['channels'],
+        dtype=audio_config['dtype'],
+        max_duration=audio_config['max_duration'],
+        on_max_duration_reached=state_manager.handle_max_recording_duration_reached
+    )
+
+def setup_whisper_engine(whisper_config, vad_config):
+    return WhisperEngine(
+        model_size=whisper_config['model_size'],
+        device=whisper_config['device'],
+        compute_type=whisper_config['compute_type'],
+        language=whisper_config['language'],
+        beam_size=whisper_config['beam_size'],
+        vad_enabled=vad_config['vad_precheck_enabled'],
+        vad_onset_threshold=vad_config['vad_onset_threshold'],
+        vad_offset_threshold=vad_config['vad_offset_threshold'],
+        vad_min_speech_duration=vad_config['vad_min_speech_duration']
+    )
+
+def setup_clipboard_manager(clipboard_config):
+    return ClipboardManager(
+        key_simulation_delay=clipboard_config['key_simulation_delay'],
+        auto_paste=clipboard_config['auto_paste'],
+        preserve_clipboard=clipboard_config['preserve_clipboard']
+    )
+
+def setup_audio_feedback(audio_feedback_config):
+    return AudioFeedback(
+        enabled=audio_feedback_config['enabled'],
+        start_sound=audio_feedback_config['start_sound'],
+        stop_sound=audio_feedback_config['stop_sound']
+    )
+
+def setup_system_tray(tray_config, config_manager, state_manager=None):
+    return SystemTray(
+        state_manager=state_manager,
+        tray_config=tray_config,
+        config_manager=config_manager
+    )
+
+def setup_signal_handlers(shutdown_event):
+    def signal_handler(signum, frame):
+        shutdown_event.set()
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+
+def setup_hotkey_listener(hotkey_config, state_manager):
+    return HotkeyListener(
+        state_manager=state_manager,
+        recording_hotkey=hotkey_config['recording_hotkey'],
+        auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
+        auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
+        stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False)
+    )
+
+def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
+    # Stop hotkey listener first to prevent new events during shutdown
+    try:
+        if 'hotkey_listener' in locals() and hotkey_listener.is_active():
+            logger.info("Stopping hotkey listener...")
+            hotkey_listener.stop_listening()
+    except Exception as ex:
+        logger.error(f"Error stopping hotkey listener: {ex}")
     
     try:
-        # Load configuration first (will use user settings from AppData)
-        print("📁 Loading configuration...")
+        state_manager.shutdown()
+    except:
+        pass  # StateManager may not be initialized if error occurred early
+
+def main():   
+    guard_against_multiple_instances()
+    
+    print("Starting Whisper Key... Local Speech-to-Text App...")
+    
+    shutdown_event = threading.Event()
+    setup_signal_handlers(shutdown_event)
+    
+    try:
         config_manager = ConfigManager()
-        
-        
-        # Show where settings are loaded from
-        if config_manager.use_user_settings:
-            settings_path = config_manager.get_user_settings_path()
-            print(f"   ✓ Using user settings from: {settings_path}")
-        else:
-            print(f"   ✗ Using default settings from: {config_manager.config_path}")
-        
-        # Set up logging based on configuration
         setup_logging(config_manager)
         logger = logging.getLogger(__name__)
+        setup_exception_handler()
         
-        # Get configuration for each component
         whisper_config = config_manager.get_whisper_config()
         audio_config = config_manager.get_audio_config()
         hotkey_config = config_manager.get_hotkey_config()
         clipboard_config = config_manager.get_clipboard_config()
-        tray_config = config_manager.config.get('system_tray', {})
-        audio_feedback_config = config_manager.config.get('audio_feedback', {})
-        
-        logger.info("Initializing application components...")
-        
-        # Create our main components with configuration
-        audio_recorder = AudioRecorder(
-            channels=audio_config['channels'],
-            dtype=audio_config['dtype'],
-            max_duration=audio_config['max_duration']
-        )
-        
-        whisper_engine = WhisperEngine(
-            model_size=whisper_config['model_size'],
-            device=whisper_config['device'],
-            compute_type=whisper_config['compute_type'],
-            language=whisper_config['language'],
-            beam_size=whisper_config['beam_size'],
-            vad_enabled=whisper_config['vad_precheck_enabled']
-        )
-        
-        clipboard_manager = ClipboardManager(config_manager)
-        
-        # Initialize audio feedback (optional - may not be available on non-Windows)
-        audio_feedback = None
-        if audio_feedback_config.get('enabled', True):  # Default to enabled
-            try:
-                logger.debug("Initializing audio feedback...")
-                audio_feedback = AudioFeedback(audio_feedback_config)
-                
-                status = audio_feedback.get_status()
-                if status['enabled']:
-                    logger.info("Audio feedback initialized successfully")
-                    print(f"   ✓ Audio feedback enabled...")
-                else:
-                    logger.warning("Audio feedback not available (likely not on Windows)")
-                    print("⚠️  Audio feedback not available (likely not on Windows)")
-                    audio_feedback = None
-                    
-            except Exception as e:
-                logger.error(f"Failed to initialize audio feedback: {e}")
-                print(f"⚠️  Audio feedback initialization failed: {e}")
-                audio_feedback = None
-        else:
-            logger.info("Audio feedback disabled in configuration")
-            print("   ✗ Audio feedback disabled in configuration")
-        
-        # Show auto-paste status
-        if clipboard_config.get('auto_paste', False):
-            paste_method = clipboard_config.get('paste_method', 'key_simulation')
-            method_name = "key simulation (CTRL+V)" if paste_method == "key_simulation" else "Windows API"
-            print(f"   ✓ Auto-paste is ENABLED using {method_name}")
-        else:
-            print("   ✗ Auto-paste is DISABLED - paste manually with Ctrl+V")
+        tray_config = config_manager.get_system_tray_config()
+        audio_feedback_config = config_manager.get_audio_feedback_config()
+        vad_config = config_manager.get_vad_config()
+               
+        whisper_engine = setup_whisper_engine(whisper_config, vad_config)
+        clipboard_manager = setup_clipboard_manager(clipboard_config)
+        audio_feedback = setup_audio_feedback(audio_feedback_config)
 
-        # Initialize system tray (optional - may not be available)
-        system_tray = None
-        if tray_config.get('enabled', True):  # Default to enabled
-            try:
-                logger.debug("Initializing system tray...")
-                logger.debug(f"Tray config: {tray_config}")
-                logger.debug(f"Hotkey config: {hotkey_config}")
-                logger.debug(f"Config manager type: {type(config_manager)}")
-                
-                # Create tray with reference to full configuration for hotkey display
-                tray_full_config = {
-                    'hotkey': hotkey_config,
-                    'system_tray': tray_config
-                }
-                logger.debug(f"Creating SystemTray with config: {tray_full_config}")
-                
-                system_tray = SystemTray(state_manager=None, config=tray_full_config, config_manager=config_manager)
-                logger.debug("SystemTray object created")
-                
-                if system_tray.is_available():
-                    logger.info("System tray initialized successfully")
-                else:
-                    logger.warning("System tray dependencies not available")
-                    print("⚠️  System tray not available (pystray/Pillow not installed)")
-                    system_tray = None
-                    
-            except Exception as e:
-                logger.error(f"Failed to initialize system tray: {e}")
-                import traceback
-                logger.error(f"SystemTray initialization traceback: {traceback.format_exc()}")
-                print(f"⚠️  System tray initialization failed: {e}")
-                system_tray = None
-        else:
-            logger.info("System tray disabled in configuration")
-            print("📟 System tray disabled in configuration")
-        
-        # The state manager coordinates everything
         state_manager = StateManager(
-            audio_recorder=audio_recorder,
+            audio_recorder=None,
             whisper_engine=whisper_engine,
             clipboard_manager=clipboard_manager,
-            clipboard_config=clipboard_config,
-            system_tray=system_tray,
+            system_tray=None,
             config_manager=config_manager,
             audio_feedback=audio_feedback
         )
+        audio_recorder = setup_audio_recorder(audio_config, state_manager)
+        system_tray = setup_system_tray(tray_config, config_manager, state_manager)
+        state_manager.audio_recorder = audio_recorder
+        state_manager.system_tray = OptionalComponent(system_tray)
         
-        # Set up hotkey listener (this detects when you press the recording key)
-        hotkey_listener = HotkeyListener(
-            state_manager=state_manager,
-            hotkey=hotkey_config['combination'],
-            auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
-            auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
-            stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False)
-        )
+        hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
         
-        # Start system tray if available
-        if system_tray:
-            try:
-                logger.debug("Setting state_manager reference on system_tray")
-                # Set state manager reference for tray to access app status
-                system_tray.state_manager = state_manager
-                logger.debug("Starting system tray...")
-                
-                tray_started = system_tray.start()
-                if tray_started:
-                    logger.info("System tray started successfully")
-                    print("🎤 System tray icon is running...")
-                else:
-                    logger.warning("Failed to start system tray")
-                    print("⚠️  System tray failed to start")
-                    
-            except Exception as e:
-                logger.error(f"Exception during system tray start: {e}")
-                import traceback
-                logger.error(f"SystemTray start traceback: {traceback.format_exc()}")
-                print(f"⚠️  System tray start failed with exception: {e}")
+        system_tray.start()
         
-
-        logger.info("All components initialized successfully!")
-        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['combination'])} to start recording.")
-        
-        
+        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.")
         print("Press Ctrl+C to quit.")
         
-        # Keep the application running
-        # This is called a "main loop" - the program stays alive waiting for events
-        while True:
-            time.sleep(0.1)  # Small pause to prevent using too much CPU
-            
-            # Keep reference to hotkey_listener so it doesn't get garbage collected
-            if not hotkey_listener.is_active():
-                logger.error("Hotkey listener stopped unexpectedly!")
-                break
+        while not shutdown_event.wait(timeout=0.1):
+            pass
             
     except KeyboardInterrupt:
-        # This happens when user presses Ctrl+C
         logger.info("Application shutting down...")
         print("\nShutting down application...")
         
-        # Stop hotkey listener first to prevent new events during shutdown
-        try:
-            if 'hotkey_listener' in locals() and hotkey_listener.is_active():
-                logger.info("Stopping hotkey listener...")
-                hotkey_listener.stop_listening()
-        except Exception as e:
-            logger.error(f"Error stopping hotkey listener: {e}")
-        
-        # Clean shutdown of state manager (includes system tray)
-        try:
-            state_manager.shutdown()
-        except:
-            pass  # StateManager may not be initialized if error occurred early
-        
     except Exception as e:
-        # This catches any unexpected errors
         logger.error(f"Unexpected error: {e}")
         print(f"Error occurred: {e}")
         
-        # Stop hotkey listener first to prevent new events during shutdown
-        try:
-            if 'hotkey_listener' in locals() and hotkey_listener.is_active():
-                logger.info("Stopping hotkey listener...")
-                hotkey_listener.stop_listening()
-        except Exception as ex:
-            logger.error(f"Error stopping hotkey listener: {ex}")
-        
-        # Clean shutdown on error
-        try:
-            state_manager.shutdown()
-        except:
-            pass  # StateManager may not be initialized if error occurred early
+    finally:
+        shutdown_app(hotkey_listener, state_manager, logger)
 
 if __name__ == "__main__":
-    # This line means "only run main() if this file is executed directly"
-    # It's a Python convention you'll see everywhere
-    
-    # Check for single instance before doing anything else
-    mutex_handle = ensure_single_instance()
-    
     main()

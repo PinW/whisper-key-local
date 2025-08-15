@@ -5,7 +5,6 @@ Key Helper Utility
 This utility helps you discover what key combinations to use in your config.defaults.yaml file.
 It listens for any key combination you press and shows you the exact format to use.
 
-For beginners: This is like a "key detector" - press any combination of keys and 
 it will tell you what to put in your configuration file.
 
 Usage:

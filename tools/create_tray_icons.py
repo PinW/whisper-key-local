@@ -5,7 +5,6 @@ Icon Generator for System Tray
 This utility creates the icon files needed for the system tray feature.
 We generate simple 16x16 pixel icons in different colors to represent app states.
 
-For beginners: This is a helper script that creates small image files (icons) 
 that will appear in your system tray to show what the app is doing.
 """
 

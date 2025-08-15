@@ -38,6 +38,7 @@
 
 ### Technical
 - As a *developer* I want a **simplified config manager** so that DHH won't cry
+- As a *developer*, I want **end-to-end tests** so that I can refactor with confidence
 
 ### Learning & Code Exploration
 - Try something out with **Python decorators** - explore using decorators for timing, caching, or retry logic in the codebase
@@ -47,6 +48,7 @@
 - As a phone *user*, I want this app on **mobile**
 
 ### Transcription Quality
+- As a *user*, I want **parakeet models** so I can get transcriptions faster wit more accuracy
 - As a *user*, I want to choose different **languages for transcription** to improve accuracy
 - As a *user*, I want to add **custom words** to improve accuracy
 - As a *user*, I want **automatic punctuation and text formatting** so the output is human-friendly (not just LLM)

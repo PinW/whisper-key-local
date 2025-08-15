@@ -1,197 +1,141 @@
-"""
-Configuration Manager
-
-This module handles loading and validating configuration settings from config.yaml.
-It provides a central place to manage all application settings and ensures they
-have sensible defaults if the config file is missing or incomplete.
-
-For beginners: This is like the "settings menu" of our app - it reads the 
-configuration file and provides all the settings to other parts of the program.
-"""
-
 import os
 import logging
-from ruamel.yaml import YAML
 import shutil
-from typing import Dict, Any, Optional
-from pathlib import Path
+from typing import Dict, Any
+from io import StringIO
 
-def deep_merge_config(default_config: Dict[str, Any], user_config: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Deep merge user configuration on top of default configuration
+from ruamel.yaml import YAML
+
+from .utils import resolve_asset_path, beautify_hotkey
+
+def deep_merge_config(default_config: Dict[str, Any],
+                      user_config: Dict[str, Any]) -> Dict[str, Any]:
     
-    Parameters:
-    - default_config: The base configuration with all default values
-    - user_config: User's configuration that may have missing keys
-    
-    Returns:
-    - Merged configuration with user values overlaid on defaults
-    
-    For beginners: This is like combining two dictionaries where the user's
-    settings override the defaults, but missing user settings keep the defaults.
-    """
     result = default_config.copy()
     
     for key, value in user_config.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            # Recursively merge nested dictionaries
             result[key] = deep_merge_config(result[key], value)
         else:
-            # Override with user value
             result[key] = value
     
     return result
 
-class ConfigManager:
-    """
-    Manages configuration loading and validation for the application
-    
-    This class loads settings from config.yaml and provides them to other components
-    with proper validation and fallback defaults.
-    """
-    
+
+class ConfigManager:   
     def __init__(self, config_path: str = None, use_user_settings: bool = True):
-        """
-        Initialize the configuration manager
-        
-        Parameters:
-        - config_path: Path to the default YAML configuration file (None for auto-detection)
-        - use_user_settings: Whether to use user-specific settings from AppData
-        """
-        # Auto-detect config path relative to the main script
         if config_path is None:
-            # Go up from src/ to project root, then to config.defaults.yaml
-            project_root = os.path.dirname(os.path.dirname(__file__))
-            config_path = os.path.join(project_root, "config.defaults.yaml")
+            config_path = resolve_asset_path("config.defaults.yaml")
         
         self.default_config_path = config_path
         self.use_user_settings = use_user_settings
         self.config = {}
         self.logger = logging.getLogger(__name__)
+        self.validator = ConfigValidator(self.logger)
         
-        # Determine actual config path to use
-        if use_user_settings:
-            self.user_settings_path = self._get_user_settings_path()
-            self.config_path = self.user_settings_path
-            # Create user settings if they don't exist
-            self._ensure_user_settings_exist()
-        else:
-            self.config_path = config_path
+        self.config_path = self._determine_config_path(use_user_settings, config_path)
         
-        # Load the configuration
-        self._load_config()
-        
-        # Validate configuration
-        self._validate_config()
+        self._print_config_status()
+        self.config = self._load_config()
         
         self.logger.info("Configuration loaded successfully")
     
-    def _get_user_settings_path(self) -> str:
-        r"""
-        Get the path to user settings file in Windows AppData
-        
-        Returns the path to user_settings.yaml in %APPDATA%\whisperkey\
-        """
-        # Get Windows AppData path
+    def _determine_config_path(self, use_user_settings: bool, config_path: str) -> str:
+        if use_user_settings:
+            self.user_settings_path = self._compute_user_settings_path()
+            return self.user_settings_path
+        else:
+            return config_path
+    
+    def _compute_user_settings_path(self) -> str:
         appdata = os.getenv('APPDATA')
-        if not appdata:
-            # Fallback for non-Windows systems or if APPDATA not set
-            home = os.path.expanduser('~')
-            appdata = os.path.join(home, 'AppData', 'Roaming')
-        
-        # Create whisperkey directory path
         whisperkey_dir = os.path.join(appdata, 'whisperkey')
         user_settings_file = os.path.join(whisperkey_dir, 'user_settings.yaml')
         
         return user_settings_file
     
+    def _is_user_config_empty(self) -> bool:
+        try:
+            with open(self.user_settings_path, 'r', encoding='utf-8') as f:
+                yaml = YAML()
+                content = yaml.load(f)
+                return content is None or len(content) == 0
+        except:
+            return True
+    
     def _ensure_user_settings_exist(self):
-        """
-        Ensure user settings directory and file exist
-        
-        Creates the directory and copies default config if user_settings.yaml doesn't exist
-        """
         user_settings_dir = os.path.dirname(self.user_settings_path)
         
-        # Create directory if it doesn't exist
         if not os.path.exists(user_settings_dir):
-            try:
-                os.makedirs(user_settings_dir, exist_ok=True)
-                self.logger.info(f"Created user settings directory: {user_settings_dir}")
-            except Exception as e:
-                self.logger.error(f"Failed to create user settings directory: {e}")
-                raise
+            os.makedirs(user_settings_dir, exist_ok=True)
         
-        # Copy default config if user settings don't exist
-        if not os.path.exists(self.user_settings_path):
+        if not os.path.exists(self.user_settings_path) or self._is_user_config_empty():
             if os.path.exists(self.default_config_path):
-                try:
-                    shutil.copy2(self.default_config_path, self.user_settings_path)
-                    self.logger.info(f"Created initial user settings from {self.default_config_path}")
-                except Exception as e:
-                    self.logger.error(f"Failed to create initial user settings: {e}")
-                    raise
+                shutil.copy2(self.default_config_path, self.user_settings_path)
+                self.logger.info(f"Created user settings from {self.default_config_path}")
             else:
-                # If no default config.yaml exists, we can't create user settings
-                # This is a critical error since we need config.yaml as our source of truth
                 error_msg = f"Default config {self.default_config_path} not found - cannot create user settings"
                 self.logger.error(error_msg)
                 raise FileNotFoundError(error_msg)
     
+    def _remove_unused_keys_from_user_config(self, user_config: Dict[str, Any], default_config: Dict[str, Any]):
+        
+        sections_to_remove = []
+        
+        for section, values in user_config.items():
+            if section not in default_config:
+                self.logger.info(f"Removed invalid config section: {section}")
+                sections_to_remove.append(section)
+            elif isinstance(values, dict) and isinstance(default_config[section], dict):
+                keys_to_remove = []
+                for key in values.keys():
+                    if key not in default_config[section]:
+                        self.logger.info(f"Removed invalid config key: {section}.{key}")
+                        keys_to_remove.append(key)
+                
+                for key in keys_to_remove:
+                    del values[key]
+        
+        for section in sections_to_remove:
+            del user_config[section]
+    
     def _load_config(self):
-        """
-        Load configuration using two-stage loading:
-        Stage 1: Load default config.yaml as baseline
-        Stage 2: Load user config and merge on top of defaults
-        """
-        # Stage 1: Load default configuration from config.yaml
+
         default_config = self._load_default_config()
         
-        # Stage 2: Load user configuration and merge with defaults
-        if self.use_user_settings and os.path.exists(self.config_path):
+        if self.use_user_settings:
+            self._ensure_user_settings_exist()
+
             try:
                 yaml = YAML()
-                with open(self.config_path, 'r', encoding='utf-8') as f:
-                    user_config = yaml.load(f)
+                with open(self.config_path, 'r', encoding='utf-8') as file:
+                    user_config = yaml.load(file)
                 
-                if user_config:
-                    # Deep merge user config on top of defaults
-                    self.config = deep_merge_config(default_config, user_config)
-                    self.logger.info(f"Loaded user configuration from {self.config_path}")
-                else:
-                    # Empty user config, use defaults
-                    self.config = default_config
-                    self.logger.warning(f"User config file {self.config_path} is empty, using defaults")
+                self._remove_unused_keys_from_user_config(user_config, default_config)
+                merged_config = deep_merge_config(default_config, user_config)
+                self.logger.info(f"Loaded user configuration from {self.config_path}")
+                
+                validated_config = self.validator.fix_config(merged_config, default_config)
+                self.config = validated_config
+                
+                self.save_config_to_user_settings_file()
+
+                return validated_config
                     
-            except yaml.YAMLError as e:
-                self.logger.error(f"Error parsing user YAML config: {e}")
-                self.logger.warning("Using default configuration")
-                self.config = default_config
             except Exception as e:
-                self.logger.error(f"Error loading user config file: {e}")
-                self.logger.warning("Using default configuration")
-                self.config = default_config
-        else:
-            # No user config or not using user settings, use defaults
-            self.config = default_config
-            if self.use_user_settings:
-                self.logger.info(f"User config file {self.config_path} not found, using defaults")
-            else:
-                self.logger.info("Using default configuration (user settings disabled)")
+                if "YAML" in str(e):
+                    self.logger.error(f"Error parsing user YAML config: {e}")
+                else:
+                    self.logger.error(f"Error loading user config file: {e}")
+                
+        self.logger.info(f"Using default configuration from {self.default_config_path}")
+        return default_config
     
     def _load_default_config(self) -> Dict[str, Any]:
-        """
-        Load the default configuration from config.yaml
-        
-        Returns:
-        - Default configuration dictionary loaded from config.yaml
-        
-        This ensures config.yaml is the single source of truth for all defaults.
-        """
         try:
             yaml = YAML()
-            with open(self.default_config_path, 'r', encoding='utf-8') as f:
-                default_config = yaml.load(f)
+            with open(self.default_config_path, 'r', encoding='utf-8') as file:
+                default_config = yaml.load(file)
             
             if default_config:
                 self.logger.info(f"Loaded default configuration from {self.default_config_path}")
@@ -207,465 +151,236 @@ class ConfigManager:
                 self.logger.error(f"Error loading default config file: {e}")
             raise
     
-    def _validate_config(self):
-        """
-        Validate configuration settings and fix invalid values
-        """
-        # Validate whisper model size
-        valid_models = ['tiny', 'base', 'small', 'medium', 'large', 'tiny.en', 'base.en', 'small.en', 'medium.en']
-        if self.config['whisper']['model_size'] not in valid_models:
-            self.logger.warning(f"Invalid model size '{self.config['whisper']['model_size']}', using 'tiny'")
-            self.config['whisper']['model_size'] = 'tiny'
-        
-        # Validate device
-        valid_devices = ['cpu', 'cuda']
-        if self.config['whisper']['device'] not in valid_devices:
-            self.logger.warning(f"Invalid device '{self.config['whisper']['device']}', using 'cpu'")
-            self.config['whisper']['device'] = 'cpu'
-        
-        # Validate compute type
-        valid_compute_types = ['int8', 'float16', 'float32']
-        if self.config['whisper']['compute_type'] not in valid_compute_types:
-            self.logger.warning(f"Invalid compute type '{self.config['whisper']['compute_type']}', using 'int8'")
-            self.config['whisper']['compute_type'] = 'int8'
-        
-        # Sample rate is fixed at 16000 Hz for Whisper and TEN VAD compatibility
-        # No validation needed as it's hardcoded in the audio recorder
-        
-        # Validate channels
-        if self.config['audio']['channels'] not in [1, 2]:
-            self.logger.warning(f"Invalid channels {self.config['audio']['channels']}, using 1")
-            self.config['audio']['channels'] = 1
-        
-        # Validate max duration
-        if self.config['audio']['max_duration'] < 0:
-            self.logger.warning(f"Invalid max duration {self.config['audio']['max_duration']}, using 30")
-            self.config['audio']['max_duration'] = 30
-        
-        # Validate logging level
-        valid_log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-        if self.config['logging']['level'] not in valid_log_levels:
-            self.logger.warning(f"Invalid log level '{self.config['logging']['level']}', using 'INFO'")
-            self.config['logging']['level'] = 'INFO'
-        
-        # Validate console logging level
-        console_level = self.config['logging']['console'].get('level', 'WARNING')
-        if console_level not in valid_log_levels:
-            self.logger.warning(f"Invalid console log level '{console_level}', using 'WARNING'")
-            self.config['logging']['console']['level'] = 'WARNING'
-        else:
-            self.config['logging']['console']['level'] = console_level
-        
-        # Validate text formatting
-        valid_formatting = ['none', 'capitalize', 'sentence']
-        text_formatting = self.config['clipboard'].get('text_formatting', 'none')
-        if text_formatting not in valid_formatting:
-            self.logger.warning(f"Invalid text formatting '{text_formatting}', using 'none'")
-            self.config['clipboard']['text_formatting'] = 'none'
-        else:
-            self.config['clipboard']['text_formatting'] = text_formatting
-        
-        # Validate auto_paste setting
-        auto_paste = self.config['clipboard'].get('auto_paste', True)
-        if not isinstance(auto_paste, bool):
-            self.logger.warning(f"Invalid auto_paste value '{auto_paste}', using True")
-            self.config['clipboard']['auto_paste'] = True
-        else:
-            self.config['clipboard']['auto_paste'] = auto_paste
-        
-        # Validate paste_method setting
-        valid_paste_methods = ['key_simulation', 'windows_api']
-        paste_method = self.config['clipboard'].get('paste_method', 'key_simulation')
-        if paste_method not in valid_paste_methods:
-            self.logger.warning(f"Invalid paste_method '{paste_method}', using 'key_simulation'")
-            self.config['clipboard']['paste_method'] = 'key_simulation'
-        else:
-            self.config['clipboard']['paste_method'] = paste_method
-        
-        # Validate preserve_clipboard setting
-        preserve_clipboard = self.config['clipboard'].get('preserve_clipboard', True)
-        if not isinstance(preserve_clipboard, bool):
-            self.logger.warning(f"Invalid preserve_clipboard value '{preserve_clipboard}', using True")
-            self.config['clipboard']['preserve_clipboard'] = True
-        else:
-            self.config['clipboard']['preserve_clipboard'] = preserve_clipboard
-        
-        # Validate auto-enter hotkey settings
-        auto_enter_enabled = self.config['hotkey'].get('auto_enter_enabled', True)
-        if not isinstance(auto_enter_enabled, bool):
-            self.logger.warning(f"Invalid auto_enter_enabled value '{auto_enter_enabled}', using True")
-            self.config['hotkey']['auto_enter_enabled'] = True
-        else:
-            self.config['hotkey']['auto_enter_enabled'] = auto_enter_enabled
-        
-        # Validate key_simulation_delay setting
-        key_simulation_delay = self.config['hotkey'].get('key_simulation_delay', 0.05)
-        if not isinstance(key_simulation_delay, (int, float)) or key_simulation_delay < 0:
-            self.logger.warning(f"Invalid key_simulation_delay value '{key_simulation_delay}', using 0.05")
-            self.config['hotkey']['key_simulation_delay'] = 0.05
-        else:
-            self.config['hotkey']['key_simulation_delay'] = key_simulation_delay
-        
-        # Validate auto-enter hotkey combination format
-        auto_enter_combination = self.config['hotkey'].get('auto_enter_combination', 'ctrl+shift+`')
-        if not isinstance(auto_enter_combination, str) or not auto_enter_combination.strip():
-            self.logger.warning(f"Invalid auto_enter_combination '{auto_enter_combination}', using 'ctrl+shift+`'")
-            self.config['hotkey']['auto_enter_combination'] = 'ctrl+shift+`'
-        else:
-            self.config['hotkey']['auto_enter_combination'] = auto_enter_combination.strip().lower()
-        
-        # Validate that auto-enter combination is different from main combination
-        main_combination = self.config['hotkey'].get('combination', 'ctrl+`')
-        if self.config['hotkey']['auto_enter_combination'] == main_combination:
-            self.logger.warning("Auto-enter hotkey cannot be the same as main hotkey, using 'ctrl+shift+`'")
-            self.config['hotkey']['auto_enter_combination'] = 'ctrl+shift+`'
-        
-        # Validate stop-with-modifier setting
-        stop_with_modifier_enabled = self.config['hotkey'].get('stop_with_modifier_enabled', False)
-        if not isinstance(stop_with_modifier_enabled, bool):
-            self.logger.warning(f"Invalid stop_with_modifier_enabled value '{stop_with_modifier_enabled}', using False")
-            self.config['hotkey']['stop_with_modifier_enabled'] = False
-        else:
-            self.config['hotkey']['stop_with_modifier_enabled'] = stop_with_modifier_enabled
-        
-        # Validate VAD configuration ranges
-        self._validate_vad_config()
-        
-        # Save validation fixes to user file
+    def _print_config_status(self):
+        print("📁 Loading configuration...")
+
         if self.use_user_settings:
-            self.save_user_settings()
+            print(f"   ✓ Using user settings from: {self.user_settings_path}")
+        else:
+            print(f"   ✗ Using default settings from: {self.config_path}")
     
-    def _validate_vad_config(self):
-        """Validate VAD configuration values are within acceptable ranges"""
-        if 'advanced' not in self.config:
-            return
-            
-        advanced_config = self.config['advanced']
-        vad_fields = {
-            'vad_onset_threshold': (0.0, 1.0, 'VAD onset threshold'),
-            'vad_offset_threshold': (0.0, 1.0, 'VAD offset threshold'),
-            'vad_min_speech_duration': (0.001, 5.0, 'VAD minimum speech duration')  # 1ms minimum, 5s maximum
-        }
+    def print_stop_instructions_based_on_config(self):        
+        main_hotkey = self.config['hotkey']['recording_hotkey']
+        auto_enter_enabled = self.config['hotkey']['auto_enter_enabled']
+        auto_enter_hotkey = self.config['hotkey']['auto_enter_combination']
+        stop_with_modifier = self.config['hotkey']['stop_with_modifier_enabled']
+        auto_paste_enabled = self.config['clipboard']['auto_paste']
         
-        for field, (min_val, max_val, description) in vad_fields.items():
-            if field in advanced_config:
-                value = advanced_config[field]
-                if not isinstance(value, (int, float)):
-                    self.logger.warning(f"Invalid {description}: '{value}' (must be numeric), removing from config")
-                    del advanced_config[field]
-                elif not (min_val <= value <= max_val):
-                    self.logger.warning(f"Invalid {description}: {value} (must be {min_val}-{max_val}), removing from config")
-                    del advanced_config[field]
-    
-    # Getter methods for easy access to configuration sections
+        if stop_with_modifier:
+            # Extract first modifier for display
+            primary_key = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
+            primary_key = primary_key.upper()
+        else:
+            primary_key = beautify_hotkey(main_hotkey)
+        
+        if auto_enter_enabled:
+            auto_enter_key = beautify_hotkey(auto_enter_hotkey)
+        
+        if not auto_paste_enabled:
+            print(f"   Press [{primary_key}] to stop recording and copy to clipboard.")
+        elif not auto_enter_enabled:
+            print(f"   Press [{primary_key}] to stop recording and auto-paste.")
+        else:
+            print(f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press.")
     
     def get_whisper_config(self) -> Dict[str, Any]:
         """Get Whisper AI configuration settings"""
-        whisper_config = self.config['whisper'].copy()
-        
-        # Convert 'auto' language setting to None for whisper system compatibility
-        if whisper_config.get('language') == 'auto':
-            whisper_config['language'] = None
-            
-        return whisper_config
+        return self.config['whisper'].copy()
     
     def get_hotkey_config(self) -> Dict[str, Any]:
-        """Get hotkey configuration settings"""
         return self.config['hotkey'].copy()
     
     def get_audio_config(self) -> Dict[str, Any]:
-        """Get audio recording configuration settings"""
         return self.config['audio'].copy()
     
     def get_clipboard_config(self) -> Dict[str, Any]:
-        """Get clipboard configuration settings"""
         return self.config['clipboard'].copy()
     
     def get_logging_config(self) -> Dict[str, Any]:
-        """Get logging configuration settings"""
         return self.config['logging'].copy()
     
-    def get_performance_config(self) -> Dict[str, Any]:
-        """Get performance configuration settings"""
-        return self.config['performance'].copy()
+    def get_vad_config(self) -> Dict[str, Any]:
+        return self.config['vad'].copy()
     
-    def get_advanced_config(self) -> Dict[str, Any]:
-        """Get advanced configuration settings"""
-        return self.config['advanced'].copy()
+    def get_system_tray_config(self) -> Dict[str, Any]:
+        return self.config['system_tray'].copy()
     
-    def get_full_config(self) -> Dict[str, Any]:
-        """Get the complete configuration"""
-        return self.config.copy()
+    def get_audio_feedback_config(self) -> Dict[str, Any]:
+        return self.config['audio_feedback'].copy()
     
-    def get_setting(self, section: str, key: str, default: Any = None) -> Any:
-        """
-        Get a specific configuration setting
+    def get_setting(self, section: str, key: str) -> Any:
+        return self.config[section][key]
+    
+    def _prepare_user_config_header(self, config_data):
+        yaml = YAML()
+        yaml.preserve_quotes = True
+        yaml.indent(mapping=2, sequence=4, offset=2)
         
-        Parameters:
-        - section: Configuration section (e.g., 'whisper', 'hotkey')
-        - key: Setting key within the section
-        - default: Default value if setting not found
-        """
+        temp_output = StringIO()
+        yaml.dump(config_data, temp_output)
+        lines = temp_output.getvalue().split('\n')
+        
+        # Find end of header - first blank line is the cutoff
+        data_start = 0
+        for i, line in enumerate(lines):
+            if not line.strip():  # Empty line found
+                data_start = i
+                break
+        
+        user_config = []
+        user_config.append("# =============================================================================")
+        user_config.append("# WHISPER KEY - PERSONAL CONFIGURATION")
+        user_config.append("# =============================================================================")
+        user_config.extend(lines[data_start:])
+        
+        return '\n'.join(user_config)
+
+    def save_config_to_user_settings_file(self):
         try:
-            return self.config[section][key]
-        except KeyError:
-            self.logger.warning(f"Setting '{section}.{key}' not found, using default: {default}")
-            return default
-    
-    def _save_config_to_file(self, file_path: str):
-        """
-        Helper method to save configuration to a specific file
-        Preserves YAML comments and formatting using ruamel.yaml
-        """
-        try:
-            yaml = YAML()
-            yaml.preserve_quotes = True
-            yaml.indent(mapping=2, sequence=4, offset=2)
+            config_to_save = self.config
+            config_with_user_header = self._prepare_user_config_header(config_to_save)
             
-            # Read the original file to preserve structure and comments
-            original_data = None
-            if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    original_data = yaml.load(f)
+            with open(self.user_settings_path, 'w', encoding='utf-8') as f:
+                f.write(config_with_user_header)
             
-            # Always use clean config structure to avoid preserving formatting issues
-            # This ensures proper section organization and prevents structural corruption
-            data_to_save = self.config
-            
-            # Write back with preserved formatting
-            with open(file_path, 'w', encoding='utf-8') as f:
-                # If this is the user settings file, write custom header and clean data
-                if file_path == getattr(self, 'user_settings_path', None):
-                    # Write personal header
-                    f.write("# =============================================================================\n")
-                    f.write("# WHISPER KEY - PERSONAL CONFIGURATION\n") 
-                    f.write("# =============================================================================\n")
-                    f.write("# Overrides default configs at:\n")
-                    f.write("# config.defaults.yaml (in application folder)\n")
-                    f.write("#")
-                    
-                    # Hack: dump to string first, then skip the first 8 lines (old header)
-                    from io import StringIO
-                    temp_output = StringIO()
-                    yaml.dump(data_to_save, temp_output)
-                    lines = temp_output.getvalue().split('\n')
-                    
-                    # Skip first 8 lines (old header) and write the rest
-                    for line in lines[8:]:
-                        f.write(line + '\n')
-                else:
-                    # For other files, use normal dump with comment preservation
-                    yaml.dump(data_to_save, f)
-            
-            self.logger.info(f"Configuration saved to {file_path}")
+            self.logger.info(f"Configuration saved to {self.user_settings_path}")
         except Exception as e:
-            self.logger.error(f"Error saving configuration to {file_path}: {e}")
+            self.logger.error(f"Error saving configuration to {self.user_settings_path}: {e}")
             raise
-    
-    def save_config(self, output_path: Optional[str] = None):
-        """
-        Save current configuration to YAML file
-        
-        This can be useful for creating a config file with current settings.
-        """
-        output_file = output_path or self.config_path
-        self._save_config_to_file(output_file)
-    
-    def save_user_settings(self):
-        """
-        Save current configuration to user settings file
-        
-        Only works if user settings are enabled
-        """
-        if not self.use_user_settings:
-            self.logger.warning("User settings not enabled, cannot save user settings")
-            return
-        
-        self._save_config_to_file(self.user_settings_path)
-    
-    def _get_setting_display_info(self, section: str, key: str, value: Any) -> dict:
-        """
-        Get display information for a setting change (emoji, description, etc.)
-        
-        This centralizes the mapping of settings to user-friendly descriptions.
-        """
-        # Setting display mappings - add new settings here as needed
-        setting_info = {
-            'clipboard': {
-                'auto_paste': {
-                    'emoji': '📋',
-                    'ascii': '[Clipboard]',
-                    'name': '',
-                    'true_desc': 'Auto-pasting transcriptions...',
-                    'false_desc': 'Copying transcriptions to clipboard...'
-                }
-            },
-            'whisper': {
-                'model_size': {
-                    'emoji': '🧠',
-                    'ascii': '[AI]',
-                    'name': 'AI Model',
-                    'format': 'value'  # Just show the value
-                }
-            },
-            'hotkey': {
-                'combination': {
-                    'emoji': '⌨️',
-                    'ascii': '[Hotkey]',
-                    'name': 'Hotkey',
-                    'format': 'value'
-                },
-                'auto_enter_combination': {
-                    'emoji': '🚀',
-                    'ascii': '[Auto-Enter]',
-                    'name': 'Auto-Enter Hotkey',
-                    'format': 'value'
-                },
-                'auto_enter_enabled': {
-                    'emoji': '🚀',
-                    'ascii': '[Auto-Enter]',
-                    'name': 'Auto-Enter Mode',
-                    'true_desc': 'enabled',
-                    'false_desc': 'disabled'
-                },
-                'stop_with_modifier_enabled': {
-                    'emoji': '⏹️',
-                    'ascii': '[Stop with Modifier]',
-                    'name': 'Stop with Modifier',
-                    'true_desc': 'enabled',
-                    'false_desc': 'disabled'
-                }
-            },
-            'audio': {
-                'sample_rate': {
-                    'emoji': '🎵',
-                    'ascii': '[Audio]',
-                    'name': 'Audio Quality',
-                    'format': 'value'
-                }
-            }
-        }
-        
-        # Get section info
-        section_info = setting_info.get(section, {})
-        key_info = section_info.get(key, {})
-        
-        # Default fallback
-        if not key_info:
-            return {
-                'emoji': '⚙️',
-                'ascii': '[Setting]',
-                'name': f'{section}.{key}',
-                'description': str(value)
-            }
-        
-        # Handle boolean settings
-        if isinstance(value, bool):
-            if 'true_desc' in key_info and 'false_desc' in key_info:
-                description = key_info['true_desc'] if value else key_info['false_desc']
-            else:
-                description = 'enabled' if value else 'disabled'
-        # Handle other value types
-        else:
-            if key_info.get('format') == 'value':
-                description = str(value)
-            else:
-                description = str(value)
-        
-        return {
-            'emoji': key_info.get('emoji', '⚙️'),
-            'ascii': key_info.get('ascii', '[Setting]'),
-            'name': key_info.get('name', key),
-            'description': description
-        }
 
     def update_user_setting(self, section: str, key: str, value: Any):
-        """
-        Update a specific user setting and save to file
-        
-        Parameters:
-        - section: Configuration section (e.g., 'whisper', 'hotkey')
-        - key: Setting key within the section
-        - value: New value for the setting
-        """
-        if not self.use_user_settings:
-            self.logger.warning("User settings not enabled, cannot update user setting")
-            return
-        
         try:
-            # Store old value for comparison
             old_value = None
             if section in self.config and key in self.config[section]:
                 old_value = self.config[section][key]
-            
-            # Update the setting
-            if section not in self.config:
-                self.config[section] = {}
-            
-            self.config[section][key] = value
-            
-            # Get display information for this setting
-            display_info = self._get_setting_display_info(section, key, value)
-            
-            # Get display components
-            emoji = display_info['emoji']
-            ascii_prefix = display_info['ascii']
-            name = display_info['name']
-            description = display_info['description']
-            
-            # Create user-friendly messages
-            if old_value != value:  # Only log if value actually changed
-                # Use ASCII version for logging (avoids Unicode encoding errors on Windows)
-                log_message = " ".join(filter(None, [ascii_prefix, name, description]))
-                self.logger.info(log_message)
+                        
+                if old_value != value:
+                    self.config[section][key] = value
+                    self.save_config_to_user_settings_file()
+
+                    print(f"⚙️ Updated {section} setting")
                 
-                # Use emoji version for console output (usually works fine)
-                console_message = " ".join(filter(None, [emoji, name, description]))
-                print(console_message)
-            
-            # Technical log for debugging
-            self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
-            
-            # Save to user settings file
-            self.save_user_settings()
+                    self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
+            else:
+                self.logger.error(f"Setting {section}:{key} does not exist")
             
         except Exception as e:
             self.logger.error(f"Error updating user setting {section}.{key}: {e}")
             raise
-    
-    def get_user_settings_path(self) -> Optional[str]:
-        """
-        Get the path to the user settings file
-        
-        Returns None if user settings are not enabled
-        """
-        if self.use_user_settings:
-            return self.user_settings_path
-        return None
-    
-    def reload_config(self):
-        """
-        Reload configuration from file
-        
-        Useful if the config file has been modified while the app is running.
-        """
-        self.logger.info("Reloading configuration...")
-        self._load_config()
-        self._validate_config()
-        self.logger.info("Configuration reloaded successfully")
-    
-    def _update_yaml_data(self, original_data: Dict[str, Any], new_data: Dict[str, Any]):
-        """
-        Update original YAML data with new values while preserving structure
-        
-        This recursively updates the original data structure with new values,
-        maintaining comments and formatting from the original file.
-        """
-        for key, value in new_data.items():
-            if key in original_data and isinstance(original_data[key], dict) and isinstance(value, dict):
-                # Recursively update nested dictionaries
-                self._update_yaml_data(original_data[key], value)
-            else:
-                # Update with new value
-                original_data[key] = value
 
+
+class ConfigValidator:
+    def __init__(self, logger: logging.Logger):
+        self.logger = logger
+        self.config = None
+        self.default_config = None
+    
+    def _validate_enum(self, path: str, valid_values: list):
+        current_value = self._get_config_value_at_path(self.config, path)
+        if current_value not in valid_values:
+            self._set_to_default(path, current_value)
+    
+    def _validate_boolean(self, path: str):
+        current_value = self._get_config_value_at_path(self.config, path)
+        if not isinstance(current_value, bool):
+            self._set_to_default(path, current_value)
+    
+    def _validate_numeric_range(self, path: str, min_val: float = None, max_val: float = None, description: str = None):
+        current_value = self._get_config_value_at_path(self.config, path)
+        
+        if not isinstance(current_value, (int, float)):
+            self.logger.warning(f"{current_value} must be numeric")
+            self._set_to_default(path, current_value)
+        elif min_val is not None and current_value < min_val:
+            self.logger.warning(f"{current_value} must be >= {min_val}")
+            self._set_to_default(path, current_value)
+        elif max_val is not None and current_value > max_val:
+            self.logger.warning(f"{current_value} must be <= {max_val}")
+            self._set_to_default(path, current_value)
+    
+    def _get_config_value_at_path(self, config_dict: dict, path: str):
+        keys = path.split('.')
+        current = config_dict
+        for key in keys:
+            current = current[key]
+        return current
+    
+    def _set_config_value_at_path(self, config_dict: dict, path: str, value):
+        keys = path.split('.')
+        current = config_dict
+        for key in keys[:-1]:
+            current = current[key]
+        current[keys[-1]] = value
+    
+    def _validate_hotkey_string(self, path: str):
+        current_value = self._get_config_value_at_path(self.config, path)
+        
+        if not isinstance(current_value, str) or not current_value.strip():
+            self._set_to_default(path, current_value)
+            return self._get_config_value_at_path(self.config, path)
+        
+        cleaned_combination = current_value.strip().lower()
+        if cleaned_combination != current_value:
+            self._set_config_value_at_path(self.config, path, cleaned_combination)
+        
+        return cleaned_combination
+    
+    def _set_to_default(self, path: str, prev_value: str):
+        default_value = self._get_config_value_at_path(self.default_config, path)
+        self._set_config_value_at_path(self.config, path, default_value)
+        self.logger.warning(f"{prev_value} value not validated for config {path}, setting to default")
+    
+    def fix_config(self, config: Dict[str, Any], default_config: Dict[str, Any]) -> Dict[str, Any]:
+        self.config = config
+        self.default_config = default_config
+        
+        self._validate_enum('whisper.model_size', 
+                            ['tiny', 'base', 'small', 'medium', 'large', 'tiny.en', 'base.en', 'small.en', 'medium.en'])
+        self._validate_enum('whisper.device', ['cpu', 'cuda'])
+        self._validate_enum('whisper.compute_type', ['int8', 'float16', 'float32'])
+        
+        self._validate_enum('audio.channels', [1, 2])       
+        self._validate_numeric_range('audio.max_duration', min_val=0, description='max duration')
+        
+        self._validate_enum('logging.level', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+        self._validate_enum('logging.console.level', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+        
+        self._validate_boolean('clipboard.auto_paste')
+        self._validate_boolean('clipboard.preserve_clipboard')
+        self._validate_numeric_range('clipboard.key_simulation_delay', min_val=0, description='key simulation delay')
+        
+        self._validate_boolean('hotkey.stop_with_modifier_enabled')
+        self._validate_boolean('hotkey.auto_enter_enabled')
+
+        main_combination = self._validate_hotkey_string('hotkey.recording_hotkey')
+        auto_enter_combination = self._validate_hotkey_string('hotkey.auto_enter_combination')
+        self._resolve_hotkey_conflicts(main_combination, auto_enter_combination)
+        
+        self._validate_boolean('vad.vad_precheck_enabled')
+        self._validate_numeric_range('vad.vad_onset_threshold', min_val=0.0, max_val=1.0, description='VAD onset threshold')
+        self._validate_numeric_range('vad.vad_offset_threshold', min_val=0.0, max_val=1.0, description='VAD offset threshold')
+        self._validate_numeric_range('vad.vad_min_speech_duration', min_val=0.001, max_val=5.0, description='VAD minimum speech duration')
+        
+        self._validate_boolean('audio_feedback.enabled')
+        self._validate_boolean('system_tray.enabled')
+        
+        return self.config
+    
+    def _resolve_hotkey_conflicts(self, main_combination: str, auto_enter_combination: str):
+        stop_with_modifier = self._get_config_value_at_path(self.config, 'hotkey.stop_with_modifier_enabled')
+
+        conflict_detected = ""
+        
+        if stop_with_modifier:
+            main_first_key = main_combination.split('+')[0] if '+' in main_combination else main_combination
+            auto_enter_first_key = auto_enter_combination.split('+')[0] if '+' in auto_enter_combination else auto_enter_combination
+            
+            if main_first_key == auto_enter_first_key:
+                conflict_detected = f"hotkey '{auto_enter_combination}' first key is shared with main hotkey and stop-with-modifier is enabled'"
+        else:
+            if auto_enter_combination == main_combination:
+                conflict_detected = f"hotkey '{auto_enter_combination}' is same as main hotkey"
+        
+        if conflict_detected:
+            self.logger.warning(f"   ✗ Auto-enter disabled: {conflict_detected}")
+            self._set_config_value_at_path(self.config, 'hotkey.auto_enter_enabled', False)

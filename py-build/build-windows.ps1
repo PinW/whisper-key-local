@@ -3,7 +3,8 @@ param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$AppName = "whisper-key",
     [string]$AppVersion = "0.1.3",
-    [switch]$Clean
+    [switch]$Clean,
+    [switch]$NoZip
 )
 
 # Helper function to resolve paths (absolute or relative to base directory)
@@ -104,20 +105,24 @@ Write-Host "Executable location: $DistDir" -ForegroundColor Green
 $Size = (Get-ChildItem -Recurse $DistDir | Measure-Object -Property Length -Sum).Sum / 1MB
 Write-Host "Distribution size: $Size MB" -ForegroundColor Green
 
-# Create compressed distribution
-Write-Host "Creating compressed distribution..." -ForegroundColor Yellow
-$ZipFileName = "$AppName-v$AppVersion-windows.zip"
-$ZipPath = Join-Path $DistDir $ZipFileName
-$AppDir = Join-Path $DistDir $AppName
+# Create compressed distribution (optional)
+if (-not $NoZip) {
+    Write-Host "Creating compressed distribution..." -ForegroundColor Yellow
+    $ZipFileName = "$AppName-v$AppVersion-windows.zip"
+    $ZipPath = Join-Path $DistDir $ZipFileName
+    $AppDir = Join-Path $DistDir $AppName
 
-try {
-    Compress-Archive -Path $AppDir -DestinationPath $ZipPath -CompressionLevel Optimal
-    $ZipSize = (Get-Item $ZipPath).Length / 1MB
-    $CompressionRatio = [math]::Round((1 - ($ZipSize / $Size)) * 100, 1)
-    Write-Host "Compressed distribution created: $ZipFileName" -ForegroundColor Green
-    Write-Host "Compressed size: $([math]::Round($ZipSize, 2)) MB ($CompressionRatio% reduction)" -ForegroundColor Green
-} catch {
-    Write-Host "Failed to create compressed distribution: $_" -ForegroundColor Red
+    try {
+        Compress-Archive -Path $AppDir -DestinationPath $ZipPath -CompressionLevel Optimal
+        $ZipSize = (Get-Item $ZipPath).Length / 1MB
+        $CompressionRatio = [math]::Round((1 - ($ZipSize / $Size)) * 100, 1)
+        Write-Host "Compressed distribution created: $ZipFileName" -ForegroundColor Green
+        Write-Host "Compressed size: $([math]::Round($ZipSize, 2)) MB ($CompressionRatio% reduction)" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to create compressed distribution: $_" -ForegroundColor Red
+    }
+} else {
+    Write-Host "Skipping zip creation (NoZip parameter specified)" -ForegroundColor Cyan
 }
 
 # Play victory sound

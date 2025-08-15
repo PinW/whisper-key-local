@@ -1,191 +1,139 @@
-"""
-Audio Recording Module
-
-This module handles recording audio from your microphone using the sounddevice library.
-Think of it like a digital tape recorder that can start and stop on command.
-
-For beginners: This is where we capture the sound from your microphone and convert 
-it into data that our computer can process.
-"""
-
 import logging
-import numpy as np
-import sounddevice as sd
 import threading
+import time
 from typing import Optional
 
+import numpy as np
+import sounddevice as sd
+
 class AudioRecorder:
-    """
-    A class that handles audio recording functionality
-    
-    Classes in Python are like blueprints - they define what something can do.
-    This class knows how to record audio, start/stop recording, and store the audio data.
-    """
-    
-    def __init__(self, channels: int = 1, dtype: str = "float32", 
-                 max_duration: int = 30):
-        """
-        Initialize the audio recorder
+    WHISPER_SAMPLE_RATE = 16000
+    THREAD_JOIN_TIMEOUT = 2.0
+    RECORDING_SLEEP_INTERVAL = 100
+    STREAM_DTYPE = np.float32
+       
+    def __init__(self, 
+                 channels: int = 1,
+                 dtype: str = "float32", 
+                 max_duration: int = 30,
+                 on_max_duration_reached: callable = None):
         
-        Parameters:
-        - channels: 1 for mono (single channel), 2 for stereo
-        - dtype: Audio data type ("float32", "int16", etc.)
-        - max_duration: Maximum recording length in seconds (0 = unlimited)
-        
-        For beginners: Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance.
-        """
-        self.sample_rate = 16000  # Fixed for Whisper and TEN VAD compatibility
+        self.sample_rate = self.WHISPER_SAMPLE_RATE
         self.channels = channels
         self.dtype = dtype
         self.max_duration = max_duration
+        self.on_max_duration_reached = on_max_duration_reached
         self.is_recording = False
-        self.audio_data = []  # This will store our recorded audio
+        self.audio_data = []
         self.recording_thread = None
+        self.recording_start_time = None
         self.logger = logging.getLogger(__name__)
         
-        # Test if we can access the microphone
         self._test_microphone()
     
+    def _wait_for_thread_finish(self):
+        if self.recording_thread:
+            self.recording_thread.join(timeout=self.THREAD_JOIN_TIMEOUT)
+    
     def _test_microphone(self):
-        """
-        Test if we can access the microphone
-        
-        Private method (starts with _) - this is just for internal use
-        """
         try:
-            # Try to get list of audio devices
-            devices = sd.query_devices()
-            self.logger.info(f"Found {len(devices)} audio devices")
-            
-            # Find default input device (microphone)
             default_input = sd.query_devices(kind='input')
             self.logger.info(f"Default microphone: {default_input['name']}")
-            
+
         except Exception as e:
             self.logger.error(f"Microphone test failed: {e}")
-            raise RuntimeError("Could not access microphone. Please check your audio settings.")
+            raise
     
     def start_recording(self):
-        """
-        Start recording audio from the microphone
-        
-        This creates a separate thread for recording so it doesn't block the main program.
-        Threading is like having multiple workers doing different jobs at the same time.
-        """
         if self.is_recording:
-            self.logger.warning("Already recording!")
             return False
         
-        self.logger.info("Starting audio recording...")
-        self.is_recording = True
-        self.audio_data = []  # Clear any previous recording
-        
-        # Start recording in a separate thread
-        self.recording_thread = threading.Thread(target=self._record_audio)
-        self.recording_thread.daemon = True  # Thread will close when main program closes
-        self.recording_thread.start()
-        
-        return True
+        try:
+            self.logger.info("Starting audio recording...")
+            self.is_recording = True
+            self.audio_data = []
+            self.recording_start_time = time.time()
+            
+            self.recording_thread = threading.Thread(target=self._record_audio)
+            self.recording_thread.daemon = True  # Thread will close when main program closes
+            self.recording_thread.start()
+            
+            print("🎤 Recording started! Speak now...")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to start audio recording: {e}")
+            print("❌ Failed to start recording!")
+            self.is_recording = False
+            return False
     
     def stop_recording(self) -> Optional[np.ndarray]:
-        """
-        Stop recording and return the recorded audio data
-        
-        Returns:
-        - numpy array of audio data, or None if no recording was made
-        
-        For beginners: numpy arrays are like super-powered lists that are great 
-        for handling large amounts of numerical data (like audio samples).
-        """
         if not self.is_recording:
-            self.logger.warning("Not currently recording!")
             return None
         
-        self.logger.info("Stopping audio recording...")
         self.is_recording = False
+        self._wait_for_thread_finish()
         
-        # Wait for recording thread to finish
-        if self.recording_thread:
-            self.recording_thread.join(timeout=2.0)  # Wait max 2 seconds
-        
+        return self._process_audio_data()
+    
+    def _process_audio_data(self) -> Optional[np.ndarray]:
         if len(self.audio_data) == 0:
-            self.logger.warning("No audio data recorded!")
+            print("   ✗ No audio data recorded!")
             return None
         
         # Convert list of audio chunks into a single numpy array
         audio_array = np.concatenate(self.audio_data, axis=0)
         self.logger.info(f"Recorded {len(audio_array) / self.sample_rate:.2f} seconds of audio")
-        
         return audio_array
     
     def cancel_recording(self):
-        """
-        Cancel the current recording without returning audio data
-        
-        This is used when we need to abort recording (e.g., for model changes)
-        without processing the audio that was recorded so far.
-        """
         if not self.is_recording:
-            self.logger.warning("Not currently recording, nothing to cancel!")
             return
         
-        self.logger.info("Cancelling audio recording...")
         self.is_recording = False
+        self._wait_for_thread_finish()
         
-        # Wait for recording thread to finish
-        if self.recording_thread:
-            self.recording_thread.join(timeout=2.0)  # Wait max 2 seconds
-        
-        # Clear the audio data without processing it
         self.audio_data = []
-        self.logger.info("Recording cancelled and audio data cleared")
+        self.recording_start_time = None
     
     def _record_audio(self):
-        """
-        The actual recording function that runs in a separate thread
-        
-        This is the "worker" function that continuously captures audio while recording.
-        """
         try:
-            # Define callback function that gets called for each chunk of audio
-            def audio_callback(indata, frames, time, status):
-                """
-                This function gets called automatically by sounddevice
-                every time it has new audio data for us.
-                
-                indata: the audio data (what we want to save)
-                """
-                if status:
-                    self.logger.warning(f"Audio callback status: {status}")
-                
-                # Save this chunk of audio data
+            def audio_callback(audio_data, frames, time, status):                
                 if self.is_recording:
-                    self.audio_data.append(indata.copy())
+                    self.audio_data.append(audio_data.copy())
+
+                if status:
+                    self.logger.debug(f"Audio callback status: {status}")
             
-            # Start the audio stream
-            # This is like pressing "record" on a tape recorder
-            with sd.InputStream(
-                samplerate=self.sample_rate,
-                channels=self.channels,
-                callback=audio_callback,
-                dtype=np.float32  # Type of numbers to use for audio data
-            ):
-                self.logger.info("Audio stream started")
+            with sd.InputStream(samplerate=self.sample_rate,
+                                channels=self.channels,
+                                callback=audio_callback,
+                                dtype=self.STREAM_DTYPE):
                 
-                # Keep recording while is_recording is True
                 while self.is_recording:
-                    sd.sleep(100)  # Sleep for 100ms, then check again
-                
-                self.logger.info("Audio stream stopped")
+                    if self._check_max_duration_exceeded():
+                        break
+                    
+                    sd.sleep(self.RECORDING_SLEEP_INTERVAL)
                 
         except Exception as e:
             self.logger.error(f"Error during audio recording: {e}")
             self.is_recording = False
     
+    def _check_max_duration_exceeded(self) -> bool:
+        if self.max_duration > 0 and self.recording_start_time:
+            elapsed_time = time.time() - self.recording_start_time
+            if elapsed_time >= self.max_duration:
+                self.logger.info(f"Maximum recording duration of {self.max_duration}s reached")
+                print(f"⏰ Maximum recording duration of {self.max_duration}s reached - stopping recording")
+                
+                self.is_recording = False
+                audio_data = self._process_audio_data()
+                
+                if self.on_max_duration_reached:
+                    self.on_max_duration_reached(audio_data)
+                return True
+        return False
+    
     def get_recording_status(self) -> bool:
-        """
-        Check if we're currently recording
-        
-        Simple getter method - returns True if recording, False if not
-        """
         return self.is_recording

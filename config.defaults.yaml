@@ -45,10 +45,6 @@ whisper:
   
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
-  
-  # Voice Activity Detection (VAD) pre-check for short recordings
-  # Skips transcription of silent recordings ≤2.5 seconds to prevent hallucinations
-  vad_precheck_enabled: true
 
 # =============================================================================
 # HOTKEY CONFIGURATION
@@ -62,25 +58,37 @@ hotkey:
   #   - "ctrl+alt+r"
   #   - "win+shift+v"
   #   - "ctrl+shift+f12"
-  combination: ctrl+win
-  
-  # Auto-ENTER hotkey - Stop recording and send automatic ENTER key press after
-  # (This hotkey cannot start recording)
-  auto_enter_combination: alt+win
-  
-  # Enable/disable the auto-ENTER hotkey functionality
-  auto_enter_enabled: true
-  
-  # Delay for key simulation operations (seconds)
-  # Small delay ensures operations complete reliably
-  key_simulation_delay: 0.05
+  recording_hotkey: ctrl+win
   
   # Stop recording with just the first modifier key
-  # If enabled, you can stop recording by pressing just the first modifier 
-  # (e.g., if your combination is 'ctrl+win', just pressing 'ctrl' will stop)
-  # (e.g., if your combination is 'ctrl+shift+t', just pressing 'ctrl' will stop)
-  # This provides a simpler way to stop recording without the full key combination
+  # If enabled, stops recording with first modifier of the main hotkey
+  # (e.g., if combination is 'ctrl+win', pressing 'ctrl' will stop)
+  # (e.g., if combination is 'ctrl+shift+t', pressing 'ctrl' will stop)
   stop_with_modifier_enabled: true
+
+  # Auto-ENTER functionality
+  # If enabled, allows alternative stop key that sends ENTER key press
+  # Only works when auto-paste is also enabled
+  auto_enter_enabled: true
+
+  # Key combination for auto-ENTER function
+  auto_enter_combination: alt
+
+# =============================================================================
+# VOICE ACTIVITY DETECTION (VAD) SETTINGS
+# =============================================================================
+vad:
+  # Voice Activity Detection (VAD) Pre-check
+  # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
+  # NOTE: This is separate from faster-whisper's built-in VAD
+  vad_precheck_enabled: true
+  
+  # TEN VAD Hysteresis Thresholds (prevent flickering on borderline audio)
+  vad_onset_threshold: 0.7    # Probability to START detecting speech (0.0-1.0)
+  vad_offset_threshold: 0.55  # Probability to STOP detecting speech (0.0-1.0)
+  
+  # Minimum Duration Filtering
+  vad_min_speech_duration: 0.1  # Minimum speech segment length in seconds (filters brief noise)
 
 # =============================================================================
 # AUDIO RECORDING SETTINGS
@@ -100,7 +108,7 @@ audio:
   
   # Maximum recording duration (seconds)
   # Set to 0 for unlimited recording
-  max_duration: 30
+  max_duration: 300
 
 # =============================================================================
 # CLIPBOARD BEHAVIOR
@@ -111,23 +119,14 @@ clipboard:
   # false = only copy to clipboard (paste manually with Ctrl+V)
   auto_paste: true
   
-  # Method for auto-pasting (when auto_paste is true)
-  # Options: "key_simulation", "windows_api"
-  # - key_simulation: Simulates Ctrl+V keypress (recommended - works with most apps)
-  # - windows_api: Direct Windows API paste (faster but less compatible)
-  paste_method: key_simulation
-  
-  # Add extra formatting to transcribed text
-  # Options: "none", "capitalize", "sentence"
-  # - none: exact transcription
-  # - capitalize: Capitalize first letter
-  # - sentence: Capitalize first letter and add period if missing
-  text_formatting: none
-  
   # Preserve existing clipboard content when pasting
   # true = save current clipboard, paste transcription, then restore original clipboard
   # false = replace clipboard with transcription (default behavior)
   preserve_clipboard: true
+  
+  # Delay for key simulation operations (seconds)
+  # Small delay ensures operations complete reliably
+  key_simulation_delay: 0.05
 
 # =============================================================================
 # LOGGING CONFIGURATION
@@ -145,28 +144,12 @@ logging:
   file:
     enabled: true
     filename: app.log
-    max_size_mb: 10  # Rotate log when it gets this big
-    backup_count: 3  # Keep this many old log files
   
   # Console output
   console:
     enabled: true
     level: WARNING  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
-    colored: true  # Use colored output in terminal (if supported)
 
-# =============================================================================
-# PERFORMANCE SETTINGS
-# =============================================================================
-performance:
-  # CPU threads to use for processing
-  # 0 = auto-detect (recommended)
-  # Higher numbers may speed up transcription on multi-core systems
-  cpu_threads: 0
-  
-  # Memory management
-  # true = clear model cache between transcriptions (saves memory)
-  # false = keep model in memory (faster but uses more RAM)
-  clear_cache: false
 
 # =============================================================================
 # AUDIO FEEDBACK SETTINGS
@@ -193,32 +176,4 @@ system_tray:
   
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
-  
-  # Show desktop notifications for important events
-  # Note: Requires additional setup on some systems
-  notifications: false
 
-# =============================================================================
-# ADVANCED SETTINGS
-# =============================================================================
-advanced:
-  # Voice Activity Detection (VAD) Pre-check
-  # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
-  # NOTE: This is separate from faster-whisper's built-in VAD
-  vad_precheck_enabled: true
-  
-  # TEN VAD Hysteresis Thresholds (prevent flickering on borderline audio)
-  vad_onset_threshold: 0.7    # Probability to START detecting speech (0.0-1.0)
-  vad_offset_threshold: 0.55  # Probability to STOP detecting speech (0.0-1.0)
-  
-  # Minimum Duration Filtering
-  vad_min_speech_duration: 0.1  # Minimum speech segment length in seconds (filters brief noise)
-  
-  # Model download settings
-  model_cache_dir: null  # null = use default cache directory
-  
-  # Debugging options
-  debug:
-    save_audio_files: false  # Save recorded audio for debugging
-    audio_output_dir: debug_audio  # Where to save debug audio files
-  
