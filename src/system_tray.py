@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 class SystemTray:   
     def __init__(self,
-                 state_manager: Optional['StateManager'] = None, 
+                 state_manager: 'StateManager',
                  tray_config: dict = None,
                  config_manager: Optional['ConfigManager'] = None):
 
