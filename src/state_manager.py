@@ -83,13 +83,11 @@ class StateManager:
             print("🎤 Recording stopped! Transcribing...")
 
             if audio_data is None:
-                self.is_processing = False
                 return
             
             transcribed_text = self.whisper_engine.transcribe_audio(audio_data)
             
             if not transcribed_text:
-                self.is_processing = False
                 return
             
             self.system_tray.update_state("processing")
