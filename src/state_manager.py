@@ -2,6 +2,7 @@ import logging
 import time
 import threading
 from typing import Optional
+
 from .audio_recorder import AudioRecorder
 from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager

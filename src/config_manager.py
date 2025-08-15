@@ -1,11 +1,12 @@
 import os
 import logging
-from ruamel.yaml import YAML
 import shutil
 from typing import Dict, Any
-from .utils import resolve_asset_path, beautify_hotkey
 from io import StringIO
 
+from ruamel.yaml import YAML
+
+from .utils import resolve_asset_path, beautify_hotkey
 
 def deep_merge_config(default_config: Dict[str, Any],
                       user_config: Dict[str, Any]) -> Dict[str, Any]:

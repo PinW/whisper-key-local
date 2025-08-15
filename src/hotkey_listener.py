@@ -1,5 +1,7 @@
 import logging
+
 from global_hotkeys import register_hotkeys, start_checking_hotkeys, stop_checking_hotkeys
+
 from .utils import error_logging
 from .state_manager import StateManager
 

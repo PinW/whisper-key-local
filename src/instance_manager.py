@@ -1,12 +1,7 @@
-"""
-Single Instance Manager for Windows Applications
-
-Simple, clean single-instance detection using Windows mutex.
-"""
-
 import logging
 import sys
 import time
+
 import win32api
 import win32event
 import win32gui

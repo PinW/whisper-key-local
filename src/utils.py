@@ -1,15 +1,6 @@
-"""
-Utility functions for the Whisper Key application.
-
-This module contains common utility functions that are used across multiple
-components of the application to maintain consistency and reduce code duplication.
-"""
-
 import os
-import sys
 from contextlib import contextmanager
 from pathlib import Path
-
 
 class OptionalComponent:
     """

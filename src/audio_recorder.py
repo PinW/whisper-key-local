@@ -1,9 +1,10 @@
 import logging
-import numpy as np
-import sounddevice as sd
 import threading
 import time
 from typing import Optional
+
+import numpy as np
+import sounddevice as sd
 
 class AudioRecorder:
     WHISPER_SAMPLE_RATE = 16000

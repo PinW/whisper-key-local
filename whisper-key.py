@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import logging
-import os
 import signal
 import sys
 import threading
+
 from src.config_manager import ConfigManager
 from src.audio_recorder import AudioRecorder
 from src.hotkey_listener import HotkeyListener

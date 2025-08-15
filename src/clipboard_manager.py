@@ -1,8 +1,8 @@
 import logging
-import pyperclip
 import time
 from typing import Optional
 
+import pyperclip
 import win32gui
 import pyautogui
 

@@ -1,23 +1,9 @@
-"""
-Audio Feedback Module
-
-Plays sound files for recording start/stop events to give users clear audio feedback.
-
-you hear one sound file, when it stops you hear another sound file.
-"""
-
 import logging
-import threading
 import os
-from typing import Optional
-from .utils import resolve_asset_path
+import threading
+import winsound
 
-try:
-    import winsound
-    WINSOUND_AVAILABLE = True
-except ImportError:
-    # winsound is only available on Windows
-    WINSOUND_AVAILABLE = False
+from .utils import resolve_asset_path
 
 class AudioFeedback:
     """
@@ -44,12 +30,7 @@ class AudioFeedback:
         self.start_sound_path = resolve_asset_path(start_sound)
         self.stop_sound_path = resolve_asset_path(stop_sound)
         
-        # Check if we can play sounds and print status
-        if not WINSOUND_AVAILABLE:
-            self.logger.warning("winsound module not available - audio feedback disabled")
-            self.enabled = False
-            print("   ⚠️ Audio feedback not available (likely not on Windows)")
-        elif not self.enabled:
+        if not self.enabled:
             self.logger.info("Audio feedback disabled by configuration")
             print("   ✗ Audio feedback disabled")
         else:
@@ -131,9 +112,6 @@ class AudioFeedback:
             print("Audio feedback is disabled")
             return
         
-        if not WINSOUND_AVAILABLE:
-            print("Audio feedback not available on this system")
-            return
         
         print("Testing start sound...")
         if self.start_sound_path:
@@ -160,9 +138,6 @@ class AudioFeedback:
         Parameters:
         - enabled: True to enable sounds, False to disable
         """
-        if not WINSOUND_AVAILABLE and enabled:
-            self.logger.warning("Cannot enable audio feedback - winsound not available")
-            return False
         
         old_state = self.enabled
         self.enabled = enabled
@@ -180,7 +155,7 @@ class AudioFeedback:
         - new_config: New configuration dictionary
         """
         self.config = new_config
-        self.enabled = new_config.get('enabled', True) and WINSOUND_AVAILABLE
+        self.enabled = new_config.get('enabled', True)
         
         self.start_sound_path = resolve_asset_path(new_config.get('start_sound', ''))
         self.stop_sound_path = resolve_asset_path(new_config.get('stop_sound', ''))
@@ -202,7 +177,6 @@ class AudioFeedback:
         """
         return {
             'enabled': self.enabled,
-            'winsound_available': WINSOUND_AVAILABLE,
             'start_sound_path': self.start_sound_path,
             'stop_sound_path': self.stop_sound_path,
             'start_sound_exists': os.path.isfile(self.start_sound_path) if self.start_sound_path else False,

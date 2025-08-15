@@ -1,10 +1,11 @@
 import logging
-import numpy as np
-from faster_whisper import WhisperModel
-from typing import Optional, Callable
 import os
 import time
 import threading
+from typing import Optional, Callable
+
+import numpy as np
+from faster_whisper import WhisperModel
 from ten_vad import TenVad
 from src.utils import OptionalComponent
 
