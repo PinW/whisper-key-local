@@ -25,9 +25,8 @@ This branch is dedicated to reading and understanding my own codebase - every co
 - [x] `src/config_manager.py` - Configuration management
 - [x] `src/system_tray.py` - System tray interface
 - [x] `src/audio_feedback.py` - Recording sound notifications
-- [ ] `src/instance_manager.py` - Single instance management
-- [ ] `src/utils.py` - Common utilities
+- [x] `src/instance_manager.py` - Single instance management
+- [x] `src/utils.py` - Common utilities
 
 ### Test Suite & Tools
 - [ ] Review all test files (`tests/` directory)
-- [ ] Review all utility tools (`tools/` directory)
