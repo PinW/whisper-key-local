@@ -287,31 +287,6 @@ class WhisperEngine:
             self.logger.error(f"Transcription failed: {e}")
             return None
     
-    def transcribe_file(self, audio_file_path: str) -> Optional[str]:
-        """
-        Transcribe audio from a file (for testing)
-        """
-        if self.model is None:
-            self.logger.error("Whisper model not loaded!")
-            return None
-        
-        try:
-            self.logger.info(f"Transcribing file: {audio_file_path}")
-            
-            segments, info = self.model.transcribe(audio_file_path)
-            
-            transcribed_text = ""
-            for segment in segments:
-                transcribed_text += segment.text
-            
-            transcribed_text = transcribed_text.strip()
-            
-            self.logger.info(f"File transcription complete: '{transcribed_text}'")
-            return transcribed_text if transcribed_text else None
-            
-        except Exception as e:
-            self.logger.error(f"File transcription failed: {e}")
-            return None
     
     def change_model(self,
                      new_model_size: str,
