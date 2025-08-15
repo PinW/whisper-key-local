@@ -75,8 +75,8 @@ class SystemTray:
                     self.logger.error(f"Failed to load icon {icon_path}: {e}")
                     self.icons[state] = self._create_fallback_icon(state)
 
-        except:
-            self.logger.error(f"Failed to load system tray {e}")
+        except Exception as e:
+            self.logger.error(f"Failed to load system tray: {e}")
             self.available = False
         
     def _create_fallback_icon(self, state: str) -> Image.Image:
