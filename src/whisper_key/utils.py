@@ -1,5 +1,7 @@
 import os
 import sys
+import importlib.metadata
+import importlib.resources
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -22,49 +24,20 @@ def beautify_hotkey(hotkey_string: str) -> str:
     
     return hotkey_string.replace('+', '+').upper()
 
+def is_installed_package():
+    # Check if running from an installed package
+    return 'site-packages' in __file__
+
 def resolve_asset_path(relative_path: str) -> str:
     
-    if not relative_path:
+    if not relative_path or os.path.isabs(relative_path):
         return relative_path
     
-    if os.path.isabs(relative_path):
-        return relative_path
+    if getattr(sys, 'frozen', False): # PyInstaller
+        return str(Path(sys._MEIPASS) / relative_path)
     
-    # PyInstaller mode (existing)
-    if getattr(sys, 'frozen', False):
-        base_dir = Path(sys._MEIPASS)
-        return str(base_dir / relative_path)
+    if is_installed_package(): # pip / pipx
+        with importlib.resources.path("whisper_key", relative_path) as path:
+            return str(path)
     
-    # pip/pipx installation mode
-    try:
-        import importlib.resources as pkg_resources
-        package = "whisper_key"
-        resource_path = Path(relative_path)
-        
-        # Handle nested paths like "assets/sounds/record_start.wav"
-        if resource_path.parts[0] == "assets":
-            sub_package = ".".join([package] + list(resource_path.parts[:-1]))
-            filename = resource_path.parts[-1]
-            
-            with pkg_resources.path(sub_package, filename) as path:
-                return str(path)
-        
-        # Handle config files directly in package root
-        elif resource_path.name in ["config.defaults.yaml"]:
-            with pkg_resources.path(package, resource_path.name) as path:
-                return str(path)
-                
-    except (ImportError, FileNotFoundError, AttributeError):
-        pass
-    
-    # Development mode (existing fallback)
-    package_dir = Path(__file__).parent
-    
-    # Check if the file exists in the package directory first
-    package_path = package_dir / relative_path
-    if package_path.exists():
-        return str(package_path)
-    
-    # Fallback to old project root for compatibility
-    project_root = package_dir.parent.parent
-    return str(project_root / relative_path)
+    return str(Path(__file__).parent / relative_path) # Development
