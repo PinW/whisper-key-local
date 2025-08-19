@@ -107,7 +107,8 @@ def setup_hotkey_listener(hotkey_config, state_manager):
         recording_hotkey=hotkey_config['recording_hotkey'],
         auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
         auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
-        stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False)
+        stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False),
+        cancel_combination=hotkey_config.get('cancel_combination')
     )
 
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):

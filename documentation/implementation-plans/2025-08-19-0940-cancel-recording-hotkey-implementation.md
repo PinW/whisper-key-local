@@ -33,20 +33,39 @@ As a *user*, I want **cancel recording action** so I can reset if I mess up too 
   - ✅ Validation ensures string format and converts to lowercase for consistency
 
 ### Phase 2: Hotkey System Integration
-- [ ] Extend `HotkeyListener._setup_hotkeys()` to register cancel hotkey
-- [ ] Add `_cancel_hotkey_pressed()` callback method to HotkeyListener
-- [ ] Add cancel hotkey to hotkey_configs list with proper priority
+- [x] Extend `HotkeyListener._setup_hotkeys()` to register cancel hotkey
+  - ✅ Added cancel_combination parameter to constructor with proper line formatting
+  - ✅ Integrated cancel hotkey registration into _setup_hotkeys() method
+- [x] Add `_cancel_hotkey_pressed()` callback method to HotkeyListener
+  - ✅ Added _cancel_hotkey_pressed() method that calls state_manager.cancel_recording()
+  - ✅ Added proper logging for cancel hotkey activation
+- [x] Add cancel hotkey to hotkey_configs list with proper priority
+  - ✅ Cancel hotkey added to hotkey_configs following existing pattern
+  - ✅ Updated change_hotkey_config() to support cancel_combination for dynamic changes
 
 ### Phase 3: State Management Integration
-- [ ] Add public `cancel_recording()` method to StateManager (separate from model-switching logic)
-- [ ] Implement state check: only allow cancel during "recording" state
-- [ ] Add appropriate logging and user feedback for cancel action
-- [ ] Update system tray state transition (recording → idle)
+- [x] Add public `cancel_recording_hotkey_pressed()` method to StateManager (separate from model-switching logic)
+  - ✅ Added state-checking hotkey handler method that validates recording state
+  - ✅ Created shared `cancel_active_recording()` method for DRY code reuse
+  - ✅ Updated model-switching logic to use shared cancellation method
+- [x] Implement state check: only allow cancel during "recording" state
+  - ✅ Only cancels when current_state == "recording", ignores otherwise
+  - ✅ Returns boolean to indicate if cancel was actually performed
+- [x] Add appropriate user feedback for cancel action
+  - ✅ Clear "🛑 Recording cancelled" message for user feedback
+- [x] Update system tray state transition (recording → idle)
+  - ✅ System tray properly transitions from recording to idle state
 
 ### Phase 4: Integration & Constructor Updates
-- [ ] Update HotkeyListener constructor to accept cancel_combination parameter
-- [ ] Update whisper-key.py to pass cancel_combination from config to HotkeyListener
-- [ ] Ensure all components properly wire together
+- [x] Update HotkeyListener constructor to accept cancel_combination parameter
+  - ✅ Added cancel_combination parameter with proper line formatting (completed in Phase 2)
+- [x] Update whisper-key.py to pass cancel_combination from config to HotkeyListener
+  - ✅ Updated setup_hotkey_listener() to pass cancel_combination from hotkey_config
+  - ✅ Integration follows existing pattern with .get() for optional parameter
+- [x] Ensure all components properly wire together
+  - ✅ Complete configuration chain: defaults → validation → config manager → main app
+  - ✅ Complete initialization chain: main → setup_hotkey_listener → HotkeyListener
+  - ✅ Complete runtime chain: ESC key → hotkey callback → state manager → cancellation
 
 ## Implementation Details
 
