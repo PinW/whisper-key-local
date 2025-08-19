@@ -83,7 +83,8 @@ class AudioRecorder:
         
         # Convert list of audio chunks into a single numpy array
         audio_array = np.concatenate(self.audio_data, axis=0)
-        self.logger.info(f"Recorded {len(audio_array) / self.sample_rate:.2f} seconds of audio")
+        duration = self.get_audio_duration(audio_array)
+        self.logger.info(f"Recorded {duration:.2f} seconds of audio")
         return audio_array
     
     def cancel_recording(self):
@@ -137,3 +138,8 @@ class AudioRecorder:
     
     def get_recording_status(self) -> bool:
         return self.is_recording
+    
+    def get_audio_duration(self, audio_data: np.ndarray) -> float:
+        if audio_data is None or len(audio_data) == 0:
+            return 0.0
+        return len(audio_data) / self.sample_rate

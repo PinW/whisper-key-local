@@ -95,10 +95,12 @@ class StateManager:
                 self.is_processing = True
 
             self.audio_feedback.play_stop_sound()
-            print("🎤 Recording stopped! Transcribing...")
-
+            
             if audio_data is None:
                 return
+            
+            duration = self.audio_recorder.get_audio_duration(audio_data)
+            print(f"🎤 Recorded {duration:.1f} seconds! Transcribing...")
             
             transcribed_text = self.whisper_engine.transcribe_audio(audio_data)
             
