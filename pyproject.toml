@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "whisper-key"
+version = "0.3.0"
+description = "Local faster-whisper speech-to-text app with global hotkeys for Windows"
+readme = "README.md"
+authors = [
+    {name = "Pin Wang", email = "pinwang@gmail.com"}
+]
+requires-python = ">=3.11"
+dependencies = [
+    "faster-whisper>=1.1.1",
+    "numpy>=1.24.0",
+    "sounddevice>=0.4.6",
+    "global-hotkeys>=0.1.7; platform_system=='Windows'",
+    "pyperclip>=1.8.2",
+    "ruamel.yaml>=0.18.14",
+    "pywin32>=306; platform_system=='Windows'",
+    "pyautogui>=0.9.54; platform_system=='Windows'",
+    "pystray>=0.19.5",
+    "Pillow>=10.0.0",
+    "hf-xet>=1.1.5",
+    # Note: ten-vad git dependency handled separately
+]
+
+[project.scripts]
+whisper-key = "whisper_key.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"whisper_key" = ["assets/**/*", "config.defaults.yaml"]

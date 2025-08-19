@@ -6,8 +6,14 @@ from typing import Optional, Callable
 
 import numpy as np
 from faster_whisper import WhisperModel
-from ten_vad import TenVad
-from src.utils import OptionalComponent
+from .utils import OptionalComponent
+
+try:
+    from ten_vad import TenVad
+    HAS_TEN_VAD = True
+except ImportError:
+    TenVad = None
+    HAS_TEN_VAD = False
 
 class WhisperEngine:    
     MODEL_CACHE_PREFIX = "models--Systran--faster-whisper-"  # file prefix for hugging-face model
@@ -41,7 +47,12 @@ class WhisperEngine:
         self._loading_thread = None
         self._progress_callback = None
         
-        vad_instance = TenVad() if self.vad_enabled else None
+        vad_instance = None
+        if self.vad_enabled and HAS_TEN_VAD:
+            vad_instance = TenVad()
+        elif self.vad_enabled and not HAS_TEN_VAD:
+            logging.getLogger(__name__).warning("VAD enabled but ten-vad not available. VAD will be disabled.")
+        
         self.ten_vad = OptionalComponent(vad_instance)
         
         self._load_model()

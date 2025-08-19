@@ -9,4 +9,4 @@ allowed-tools: Bash(git describe:*), Bash(git tag:*), Bash(gh release:*), Bash(g
 4. Git push
 5. Create GitHub release: `gh release create [VERSION] --title "[VERSION]"" --notes "[VERSION CHANGELOG]"`
 6. Re-build the app
-7. Upload built zip to release: `gh release upload [VERSION] [PATH_TO_ZIP]`
+7. Upload built zip to release: `gh release upload [VERSION] [PATH_TO_ZIP]`go

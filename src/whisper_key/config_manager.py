@@ -6,7 +6,7 @@ from io import StringIO
 
 from ruamel.yaml import YAML
 
-from .utils import resolve_asset_path, beautify_hotkey
+from .utils import resolve_asset_path, beautify_hotkey, get_user_app_data_path
 
 def deep_merge_config(default_config: Dict[str, Any],
                       user_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -42,17 +42,12 @@ class ConfigManager:
     
     def _determine_config_path(self, use_user_settings: bool, config_path: str) -> str:
         if use_user_settings:
-            self.user_settings_path = self._compute_user_settings_path()
+            whisperkey_dir = get_user_app_data_path()
+            self.user_settings_path = os.path.join(whisperkey_dir, 'user_settings.yaml')
             return self.user_settings_path
         else:
             return config_path
     
-    def _compute_user_settings_path(self) -> str:
-        appdata = os.getenv('APPDATA')
-        whisperkey_dir = os.path.join(appdata, 'whisperkey')
-        user_settings_file = os.path.join(whisperkey_dir, 'user_settings.yaml')
-        
-        return user_settings_file
     
     def _is_user_config_empty(self) -> bool:
         try:

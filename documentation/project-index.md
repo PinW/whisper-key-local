@@ -7,7 +7,7 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+
 
 | Component | File | Primary Responsibility | Key Technologies |
 |-----------|------|----------------------|------------------|
-| **Entry Point** | `whisper-key.py` | Component initialization, signal handling | logging, threading |
+| **Entry Point** | `main.py` | Component initialization, signal handling | logging, threading |
 | **State Coordination** | `state_manager.py` | Component orchestration & workflow | threading, logging |
 | **Audio Capture** | `audio_recorder.py` | Microphone recording & audio buffering | sounddevice, numpy |
 | **Audio Feedback** | `audio_feedback.py` | Recording event sound notifications | winsound, threading |
@@ -23,26 +23,31 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+
 
 ```
 whisper-key-local/
-├── whisper-key.py              # Main application entry point
-├── config.defaults.yaml        # Default configuration template
-├── requirements.txt            # Python dependencies
+├── whisper-key.py              # Development wrapper script
+├── pyproject.toml              # PyPI package configuration & dependencies
 ├── CLAUDE.md                   # Claude AI project instructions
 ├── README.md                   # Project documentation
 ├── CHANGELOG.md                # Version history and changes
 ├── app.log                     # Application log file
 │
-├── src/                        # Core application modules
-│   ├── __init__.py             
-│   ├── audio_feedback.py       # Audio feedback for recording events
-│   ├── audio_recorder.py       # Sounddevice audio capture
-│   ├── clipboard_manager.py    # Clipboard & auto-paste operations
-│   ├── config_manager.py       # YAML configuration management
-│   ├── hotkey_listener.py      # Global hotkey detection
-│   ├── instance_manager.py     # Single instance enforcement
-│   ├── state_manager.py        # Component coordination & workflow
-│   ├── system_tray.py          # System tray icon & menu
-│   ├── utils.py                # Common utility functions
-│   └── whisper_engine.py       # Faster-whisper transcription
+├── src/
+│   └── whisper_key/            # Python package
+│       ├── __init__.py         # Package initialization
+│       ├── main.py             # Main application entry point
+│       ├── config.defaults.yaml # Default configuration template
+│       ├── assets/             # Application assets (sounds, icons)
+│       │   ├── sounds/
+│       │   └── *.png
+│       ├── audio_feedback.py   # Audio feedback for recording events
+│       ├── audio_recorder.py   # Sounddevice audio capture
+│       ├── clipboard_manager.py # Clipboard & auto-paste operations
+│       ├── config_manager.py   # YAML configuration management
+│       ├── hotkey_listener.py  # Global hotkey detection
+│       ├── instance_manager.py # Single instance enforcement
+│       ├── state_manager.py    # Component coordination & workflow
+│       ├── system_tray.py      # System tray icon & menu
+│       ├── utils.py            # Common utility functions
+│       └── whisper_engine.py   # Faster-whisper transcription
 │
 ├── tools/                      # Utility scripts
 │   ├── clear_log.py            # Log file cleanup
@@ -66,9 +71,9 @@ whisper-key-local/
 │   ├── implementation-plans/   # Technical implementation plan .md files
 │   └── temp/                   # Temporary documentation files
 │
-└── py-build/                   # Build scripts and configuration
+└── py-build/                   # PyInstaller build scripts and configuration
 ```
 
 ---
 
-*Last Updated: 2025-08-15 | Project Status: Active Development*
+*Last Updated: 2025-08-19 | Project Status: Active Development*
