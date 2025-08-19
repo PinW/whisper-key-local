@@ -18,12 +18,12 @@ for site_dir in site.getsitepackages():
         break
 
 a = Analysis(
-    [str(project_root / 'whisper-key.py')],
+    [str(project_root / 'src' / 'whisper_key' / 'main.py')],
     pathex=[str(project_root)],
     binaries=[],
     datas=[
-        (str(project_root / 'config.defaults.yaml'), '.'),
-        (str(project_root / 'assets'), 'assets'),
+        (str(project_root / 'src' / 'whisper_key' / 'config.defaults.yaml'), '.'),
+        (str(project_root / 'src' / 'whisper_key' / 'assets'), 'assets'),
     ] + ten_vad_data,
     hiddenimports=[
         'win32gui', 'win32con', 'win32clipboard', 'win32api',
