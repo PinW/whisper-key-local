@@ -42,7 +42,7 @@ def resolve_asset_path(relative_path: str) -> str:
         return str(Path(sys._MEIPASS) / relative_path)
     
     if is_installed_package(): # pip / pipx
-        with importlib.resources.path("whisper_key", relative_path) as path:
-            return str(path)
+        files = importlib.resources.files("whisper_key")
+        return str(files / relative_path)
     
     return str(Path(__file__).parent / relative_path) # Development
