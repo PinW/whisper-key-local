@@ -2,7 +2,6 @@
 param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$AppName = "whisper-key",
-    [string]$AppVersion = "0.2.0",
     [switch]$Clean,
     [switch]$NoZip
 )
@@ -12,6 +11,34 @@ function Get-ResolvedPath {
     param($Path, $BaseDir)
     if ([System.IO.Path]::IsPathRooted($Path)) { $Path } else { Join-Path $BaseDir $Path }
 }
+
+# Helper function to extract version from pyproject.toml
+function Get-ProjectVersion {
+    param($ProjectRoot)
+    $PyProjectFile = Join-Path $ProjectRoot "pyproject.toml"
+    if (-not (Test-Path $PyProjectFile)) {
+        Write-Host "Error: pyproject.toml not found at $PyProjectFile" -ForegroundColor Red
+        exit 1
+    }
+    
+    try {
+        $Content = Get-Content $PyProjectFile
+        foreach ($Line in $Content) {
+            if ($Line -match '^version\s*=\s*["'']([^"'']+)["'']') {
+                return $Matches[1]
+            }
+        }
+        Write-Host "Error: Could not find version in pyproject.toml" -ForegroundColor Red
+        exit 1
+    } catch {
+        Write-Host "Error: Could not parse pyproject.toml: $_" -ForegroundColor Red
+        exit 1
+    }
+}
+
+# Get version from pyproject.toml (required)
+$AppVersion = Get-ProjectVersion $ProjectRoot
+Write-Host "Using version from pyproject.toml: $AppVersion" -ForegroundColor Cyan
 
 # Configuration - Check for build config file
 $ConfigFile = Join-Path $PSScriptRoot "build-config.json"
