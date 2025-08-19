@@ -127,7 +127,7 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
         state_manager.shutdown()
 
 def main():   
-    guard_against_multiple_instances()
+    mutex_handle = guard_against_multiple_instances()
     
     print("Starting Whisper Key... Local Speech-to-Text App...")
     
