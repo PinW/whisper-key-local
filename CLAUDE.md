@@ -11,3 +11,4 @@
 - AVOID COMMENTS IF AT ALL POSSIBLE! DO NOT WRITE DOCSTRINGS!
 - We are in ALPHA, don't bother with backward compatibility or too much testing
 - When I say "to temp": `documentation/temp/`
+go
