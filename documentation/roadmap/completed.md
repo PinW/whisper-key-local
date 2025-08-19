@@ -1,5 +1,7 @@
 # Windows Whisper Speech-to-Text App - Completed Stories
 
+- As a *developer*, I want **beginner comments removed** so that the code is forced to be readable and can be read easily
+- As a *developer* I want a **simplified config manager** so that DHH won't cry
 - As a *deveoper*, I want **github release** so that users can download a zip package
 - As a *developer*, I want **CHANGELOG.md** so I can track progress across releases
 - As a *developer*, I want **version management** so that I can release the app
