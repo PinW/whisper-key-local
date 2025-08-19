@@ -4,8 +4,7 @@
 ## Bugs
 
 ## Next
-- As a *developer*, I want **beginner comments removed** so that the code is forced to be readable and can be read easily
-- As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
+- As a *user*, I want **distinct cancel sound** so I can immediately tell when I cancelled vs stopped recording
 - As a *user*, I want **audio recording length** so I can get a feel for transcription times
 - As a *tester*, I want **PyPi** so I can easily install the app
 
@@ -28,16 +27,21 @@
         - Preserve clipboard as sub-option (auto-paste only)
     - Language
 
-## Keyword Controls
-- As a *user* I want **auto-stop recording** so I don't need to hit the hotkey again when i'm lazy
-- As a *user* I want **verbal stop recording** command si I don't need to hit the hotkey
+### Transcription History
+- As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
+
+### VAD & Keyword Controls
+- As a *user* I want **auto-stop recording** so I won't record to the limit when I accidentally turn it on or forget it is on
+- As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
 
 ### Voice Commands
 - As a *user* I want **voice API** so I can do more than just transcribe voice
 - As a *user* I want **voice commands** so I can quickly activate tasks
 
+### Meeting Mode
+- As a *user* I want **meeting mode** so I can transcribe an entire meeting in real-time
+
 ### Technical
-- As a *developer* I want a **simplified config manager** so that DHH won't cry
 - As a *developer*, I want **end-to-end tests** so that I can refactor with confidence
 
 ### Learning & Code Exploration
@@ -55,4 +59,7 @@
 - As a *user*, I want to see my **transcription history** so I can search through it
 
 ### Recording
-- As a user, I want **real-time transcription** so that I can get immediate feedback
+- As a *user*, I want **real-time transcription** so that I can get immediate feedback
+
+### Developer Use Cases
+- As a *developer* I want **project file context** so I can reference files in voice and tag them in chats hands free

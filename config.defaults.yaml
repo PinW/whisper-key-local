@@ -73,6 +73,11 @@ hotkey:
 
   # Key combination for auto-ENTER function
   auto_enter_combination: alt
+  
+  # Key combination to cancel recording
+  # Format: modifier+modifier+key (use lowercase) or single key
+  # Examples: "esc", "ctrl+c", "shift+esc" 
+  cancel_combination: esc
 
 # =============================================================================
 # VOICE ACTIVITY DETECTION (VAD) SETTINGS
@@ -164,6 +169,7 @@ audio_feedback:
   # Use .wav files for best Windows compatibility
   start_sound: assets/sounds/record_start.wav
   stop_sound: assets/sounds/record_stop.wav
+  cancel_sound: assets/sounds/record_cancel.wav
 
 # =============================================================================
 # SYSTEM TRAY SETTINGS

@@ -1,5 +1,7 @@
 # Windows Whisper Speech-to-Text App - Completed Stories
 
+- As a *developer*, I want **beginner comments removed** so that the code is forced to be readable and can be read easily
+- As a *developer* I want a **simplified config manager** so that DHH won't cry
 - As a *deveoper*, I want **github release** so that users can download a zip package
 - As a *developer*, I want **CHANGELOG.md** so I can track progress across releases
 - As a *developer*, I want **version management** so that I can release the app
@@ -10,3 +12,4 @@
 - As a *user*, I want **multiple hotkeys** so I can utilize different recording modes without changing settings
 - As a *user*, I want a **Windows executable installer** so I can install without setting up python and depdencies
 - As a *user*, I want **Start Menu launch compatibility** so the app works when launched from Windows Start Menu
+- As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted

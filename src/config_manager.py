@@ -354,6 +354,7 @@ class ConfigValidator:
 
         main_combination = self._validate_hotkey_string('hotkey.recording_hotkey')
         auto_enter_combination = self._validate_hotkey_string('hotkey.auto_enter_combination')
+        cancel_combination = self._validate_hotkey_string('hotkey.cancel_combination')
         self._resolve_hotkey_conflicts(main_combination, auto_enter_combination)
         
         self._validate_boolean('vad.vad_precheck_enabled')

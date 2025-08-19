@@ -50,6 +50,21 @@ class StateManager:
         else:
             return False
     
+    def cancel_active_recording(self):
+        self.audio_recorder.cancel_recording()
+        self.audio_feedback.play_cancel_sound()
+        self.system_tray.update_state("idle")
+    
+    def cancel_recording_hotkey_pressed(self) -> bool:
+        current_state = self.get_current_state()
+        
+        if current_state == "recording":
+            print("🎤 Recording cancelled!")            
+            self.cancel_active_recording()
+            return True
+        else:
+            return False
+    
     def toggle_recording(self):
         was_recording = self.stop_recording(use_auto_enter=False)
         
@@ -188,10 +203,8 @@ class StateManager:
             return False
         
         if current_state == "recording":
-            print(f"🛑 Cancelling recording to switch to {new_model_size} model...")
-            self.audio_recorder.cancel_recording()
-            self.audio_feedback.play_stop_sound()
-            self.system_tray.update_state("idle")          
+            print(f"🎤 Cancelling recording to switch to {new_model_size} model...")
+            self.cancel_active_recording()
             self._execute_model_change(new_model_size)
             return True
         
