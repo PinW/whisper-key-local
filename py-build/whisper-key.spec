@@ -18,7 +18,7 @@ for site_dir in site.getsitepackages():
         break
 
 a = Analysis(
-    [str(project_root / 'src' / 'whisper_key' / 'main.py')],
+    [str(project_root / 'whisper-key.py')],
     pathex=[str(project_root)],
     binaries=[],
     datas=[
