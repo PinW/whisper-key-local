@@ -117,16 +117,14 @@ def setup_hotkey_listener(hotkey_config, state_manager):
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
     # Stop hotkey listener first to prevent new events during shutdown
     try:
-        if 'hotkey_listener' in locals() and hotkey_listener.is_active():
+        if hotkey_listener and hotkey_listener.is_active():
             logger.info("Stopping hotkey listener...")
             hotkey_listener.stop_listening()
     except Exception as ex:
         logger.error(f"Error stopping hotkey listener: {ex}")
     
-    try:
+    if state_manager:
         state_manager.shutdown()
-    except:
-        pass  # StateManager may not be initialized if error occurred early
 
 def main():   
     guard_against_multiple_instances()
@@ -135,6 +133,10 @@ def main():
     
     shutdown_event = threading.Event()
     setup_signal_handlers(shutdown_event)
+    
+    hotkey_listener = None
+    state_manager = None
+    logger = None
     
     try:
         config_manager = ConfigManager()
