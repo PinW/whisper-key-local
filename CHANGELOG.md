@@ -2,6 +2,22 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.3.0] - 2025-08-19
+
+### Added
+- Complete PyPI package distribution support with robust asset resolution
+- Audio recording duration display
+- Cancel recording hotkey with distinct sound feedback
+
+### Changed
+- Unified version tracking from pyproject.toml
+- Centralized user data directory with proper app.log location handling
+- Enhanced release script to include git push and use version-specific changelog notes
+- Updated README with new install instructions
+
+### Fixed
+- Various typos and documentation inconsistencies
+
 ## [0.2.0] - 2025-08-15
 
 ### Added
