@@ -22,22 +22,49 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 2. Extract the zip file
 3. Run `whisper-key.exe`
 
-### Option 2: Manual Installation
+### Option 2: Install via pipx
+**Prerequisites:**
+- Python 3.8+ installed on Windows
+- pipx installed (`pip install pipx`)
+
+```powershell
+# Install the application globally
+pipx install whisper-key
+
+# Add VAD support (prevents silence hallucinations)
+pipx inject whisper-key git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
+
+# Run from anywhere
+whisper-key
+```
+
+### Option 3: Manual Installation
 **Prerequisites for manual installation:**
 - Python 3.8+ installed on Windows
 
-Install the required Python packages:
+Clone the repository:
 ```powershell
-pip install -r requirements.txt
+git clone https://github.com/PinW/whisper-key-local.git
+cd whisper-key-local
 ```
 
-Or install manually:
+Install the dependencies:
 ```powershell
-pip install faster-whisper numpy sounddevice global-hotkeys pyperclip ruamel.yaml pywin32 pyautogui pystray Pillow hf-xet
+pip install -e .
+```
+
+Add VAD support (prevents silence hallucinations):
+```powershell
 pip install git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
 ```
 
-**Package descriptions:**
+Run the application:
+```powershell
+python whisper-key.py
+```
+
+## 📦 Package Dependencies
+
 - `faster-whisper` - Fast AI speech recognition
 - `numpy` - Numerical computing support
 - `sounddevice` - Audio recording
@@ -51,26 +78,23 @@ pip install git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
 - `hf-xet` - Cache management for Hugging Face models
 - `ten-vad` - Voice Activity Detection to prevent silent hallucinations
 
-### Running the App
+## 🎮 Basic Usage
 
-1. **Run the Full Application**:
-   ```powershell
-   python whisper-key.py
-   ```
+- Boot the app, the "tiny" model will download and start
+- Press `Ctrl+Win` to start recording
+- Speak into your microphone  
+- Press `Ctrl` to stop recording and transcribe
+- The transcribed text is auto-pasted on your text cursor
+- Alternatively press `Alt` to stop recording, and 
+- Right click the system tray icon to change models
 
-2. **Use the App**:
-   - Press your configured hotkey (default: `Ctrl+Win`) to start recording
-   - Speak clearly into your microphone  
-   - Press the hotkey again to stop recording
-   - The transcribed text is automatically pasted into the active application
-   - Right click the system tray icon for basic settings
 
-3. **Configuration** (Optional):
-   - The app automatically creates a user settings file in `%APPDATA%\Roaming\whisperkey\user_settings.yaml` 
-     - Change Whisper model size (tiny/base/small/medium/large)
-     - Modify hotkeys
-     - Configure automation (auto-paste, auto-ENTER)
-     - And much more
+### Configuration
+The app automatically creates a user settings file in `%APPDATA%\Roaming\whisperkey\user_settings.yaml`, where you can:
+- Change whisper model size (tiny/base/small/medium/large)
+- Hotkeys
+- Configure automation (auto-paste, auto-ENTER)
+- And much more
 
 ## 🔧 Troubleshooting
 
