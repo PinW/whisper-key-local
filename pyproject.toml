@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "whisper-key"
+name = "whisper-key-local"
 version = "0.3.0"
 description = "Local faster-whisper speech-to-text app with global hotkeys for Windows"
 readme = "README.md"

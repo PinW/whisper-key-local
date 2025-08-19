@@ -29,12 +29,12 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 
 Install the application globally:
 ```powershell
-pipx install whisper-key
+pipx install whisper-key-local
 ```
 
 Add VAD support (prevents silence hallucinations):
 ```powershell
-pipx inject whisper-key git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
+pipx inject whisper-key-local git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
 ```
 
 Run from anywhere:
