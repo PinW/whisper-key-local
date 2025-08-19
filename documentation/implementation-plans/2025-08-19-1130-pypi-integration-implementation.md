@@ -52,24 +52,54 @@ As a *developer/advanced user* I want **to install whisper-key via pip/pipx** so
   - ✅ Added warning log when VAD is enabled but ten-vad unavailable
 
 ### Phase 2: Asset and Path Resolution
-- [ ] Update `resolve_asset_path()` in `utils.py` for dual-mode (PyInstaller + pip)
-- [ ] Test asset loading with package resources
-- [ ] Ensure sounds and icons are accessible from package
-- [ ] Verify config.defaults.yaml bundling
-- [ ] Update PyInstaller spec file paths for new package structure
+- [x] Update `resolve_asset_path()` in `utils.py` for dual-mode (PyInstaller + pip)
+  - ✅ Added PyInstaller mode detection with sys._MEIPASS
+  - ✅ Implemented pip/pipx mode using importlib.resources
+  - ✅ Added development mode fallback with package directory priority
+  - ✅ Fixed asset path resolution for both nested assets and config files
+- [x] Test asset loading with package resources
+  - ✅ Verified all assets (sounds, icons) properly bundled in wheel
+  - ✅ Tested importlib.resources path resolution for nested structures
+- [x] Ensure sounds and icons are accessible from package
+  - ✅ All assets installed to site-packages/whisper_key/assets/
+  - ✅ Package data configuration working correctly
+- [x] Verify config.defaults.yaml bundling
+  - ✅ config.defaults.yaml properly included in package root
+  - ✅ Asset resolution correctly finds config in development and pip modes
+- [x] Update PyInstaller spec file paths for new package structure
+  - ✅ Updated main script path to src/whisper_key/main.py
+  - ✅ Updated asset paths to src/whisper_key/assets and config locations
 
 ### Phase 3: Entry Point Configuration
-- [ ] Define console script entry point in pyproject.toml
-- [ ] Add `__version__` to package for version management
-- [ ] Test global command availability
-- [ ] Verify no behavioral changes from existing .exe
+- [x] Define console script entry point in pyproject.toml
+  - ✅ Added `whisper-key = "whisper_key.main:main"` console script
+  - ✅ Entry point properly configured for global command access
+- [x] Add `__version__` to package for version management
+  - ✅ Added __version__ = "0.2.0" to package __init__.py
+  - ✅ Version management properly integrated with package metadata
+- [x] Test global command availability
+  - ✅ pipx installation creates global whisper-key command successfully
+  - ✅ Command accessible from anywhere in system PATH
+- [x] Verify no behavioral changes from existing .exe
+  - ✅ Backward-compatible wrapper maintains existing script functionality
+  - ✅ PyInstaller build paths updated for new package structure
 
 ### Phase 4: Build and Test
-- [ ] Install build tools (`pip install build twine`)
-- [ ] Build package with `python -m build`
-- [ ] Test local installation with `pip install dist/*.whl`
-- [ ] Test with pipx for isolated installation
-- [ ] Verify all functionality works as expected
+- [x] Install build tools (`pip install build twine`)
+  - ✅ Installed build tools in Windows Python environment
+- [x] Build package with `python -m build`
+  - ✅ Successfully built whisper_key-0.2.0.tar.gz and whisper_key-0.2.0-py3-none-any.whl
+  - ✅ All assets properly included in distribution files
+- [x] Test local installation with `pip install dist/*.whl`
+  - ✅ Package installed successfully with all dependencies
+  - ✅ Assets properly bundled in site-packages location
+- [x] Test with pipx for isolated installation
+  - ✅ pipx installation successful with global command availability
+  - ✅ ten-vad dependency injectable via `pipx inject whisper-key git+https://...`
+- [x] Verify all functionality works as expected
+  - ✅ Local development script works with updated asset resolution
+  - ✅ pipx global command functional
+  - ✅ Asset bundling and path resolution working correctly
 
 ### Phase 5: PyPI Release (Optional/Future)
 - [ ] Create PyPI account
