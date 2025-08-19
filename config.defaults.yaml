@@ -73,6 +73,11 @@ hotkey:
 
   # Key combination for auto-ENTER function
   auto_enter_combination: alt
+  
+  # Key combination to cancel recording
+  # Format: modifier+modifier+key (use lowercase) or single key
+  # Examples: "esc", "ctrl+c", "shift+esc" 
+  cancel_combination: esc
 
 # =============================================================================
 # VOICE ACTIVITY DETECTION (VAD) SETTINGS

@@ -25,8 +25,12 @@ As a *user*, I want **cancel recording action** so I can reset if I mess up too 
 ## Implementation Plan
 
 ### Phase 1: Configuration Setup
-- [ ] Add `cancel_combination: esc` to `config.defaults.yaml` hotkey section
-- [ ] Update `ConfigValidator.fix_config()` to validate cancel_combination hotkey string
+- [x] Add `cancel_combination: esc` to `config.defaults.yaml` hotkey section
+  - ✅ Added cancel_combination configuration with default value "esc"
+  - ✅ Added descriptive comments explaining format and examples
+- [x] Update `ConfigValidator.fix_config()` to validate cancel_combination hotkey string
+  - ✅ Added cancel_combination validation using existing _validate_hotkey_string method
+  - ✅ Validation ensures string format and converts to lowercase for consistency
 
 ### Phase 2: Hotkey System Integration
 - [ ] Extend `HotkeyListener._setup_hotkeys()` to register cancel hotkey
