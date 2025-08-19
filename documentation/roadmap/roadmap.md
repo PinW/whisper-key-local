@@ -4,7 +4,6 @@
 ## Bugs
 
 ## Next
-- As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
 - As a *user*, I want **distinct cancel sound** so I can immediately tell when I cancelled vs stopped recording
 - As a *user*, I want **audio recording length** so I can get a feel for transcription times
 - As a *tester*, I want **PyPi** so I can easily install the app

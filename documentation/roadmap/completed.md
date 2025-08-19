@@ -12,3 +12,4 @@
 - As a *user*, I want **multiple hotkeys** so I can utilize different recording modes without changing settings
 - As a *user*, I want a **Windows executable installer** so I can install without setting up python and depdencies
 - As a *user*, I want **Start Menu launch compatibility** so the app works when launched from Windows Start Menu
+- As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
