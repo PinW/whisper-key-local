@@ -83,7 +83,8 @@ def setup_audio_feedback(audio_feedback_config):
     return AudioFeedback(
         enabled=audio_feedback_config['enabled'],
         start_sound=audio_feedback_config['start_sound'],
-        stop_sound=audio_feedback_config['stop_sound']
+        stop_sound=audio_feedback_config['stop_sound'],
+        cancel_sound=audio_feedback_config['cancel_sound']
     )
 
 def setup_system_tray(tray_config, config_manager, state_manager=None):

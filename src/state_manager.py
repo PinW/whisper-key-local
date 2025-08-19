@@ -52,7 +52,7 @@ class StateManager:
     
     def cancel_active_recording(self):
         self.audio_recorder.cancel_recording()
-        self.audio_feedback.play_stop_sound()
+        self.audio_feedback.play_cancel_sound()
         self.system_tray.update_state("idle")
     
     def cancel_recording_hotkey_pressed(self) -> bool:

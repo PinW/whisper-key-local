@@ -169,6 +169,7 @@ audio_feedback:
   # Use .wav files for best Windows compatibility
   start_sound: assets/sounds/record_start.wav
   stop_sound: assets/sounds/record_stop.wav
+  cancel_sound: assets/sounds/record_cancel.wav
 
 # =============================================================================
 # SYSTEM TRAY SETTINGS
