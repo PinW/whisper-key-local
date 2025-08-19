@@ -28,17 +28,17 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 - pipx installed (`pip install pipx`)
 
 Install the application globally:
-```powershell
+```bash
 pipx install whisper-key-local
 ```
 
 Add VAD support (prevents silence hallucinations):
-```powershell
+```bash
 pipx inject whisper-key-local git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
 ```
 
 Run from anywhere:
-```powershell
+```bash
 whisper-key
 ```
 
@@ -47,23 +47,23 @@ whisper-key
 - Python 3.8+ installed on Windows
 
 Clone the repository:
-```powershell
+```bash
 git clone https://github.com/PinW/whisper-key-local.git
 cd whisper-key-local
 ```
 
 Install the dependencies:
-```powershell
+```bash
 pip install -e .
 ```
 
 Add VAD support (prevents silence hallucinations):
-```powershell
+```bash
 pip install git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
 ```
 
 Run the application:
-```powershell
+```bash
 python whisper-key.py
 ```
 
