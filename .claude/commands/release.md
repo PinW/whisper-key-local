@@ -8,5 +8,6 @@ allowed-tools: Bash(git describe:*), Bash(git tag:*), Bash(gh release:*), Bash(g
 3. Commit changelog and re-tag: `git add CHANGELOG.md && git commit -m "Update CHANGELOG.md for [VERSION] release" && git tag -d [VERSION] && git tag [VERSION]`
 4. Git push
 5. Create GitHub release: `gh release create [VERSION] --title "[VERSION]"" --notes "[VERSION CHANGELOG]"`
-6. Re-build the app
-7. Upload built zip to release: `gh release upload [VERSION] [PATH_TO_ZIP]`go
+6. Re-build for PyInstaller: `powershell.exe -ExecutionPolicy Bypass -File /home/pin/whisper-key-local/py-build/build-windows.ps1`
+7. Upload built zip to release: `gh release upload [VERSION] [PATH_TO_ZIP]`
+8. Re-build and upload to PyPI: `powershell.exe -Command "python -m build && twine upload dist/*"`
