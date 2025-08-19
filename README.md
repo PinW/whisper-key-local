@@ -27,19 +27,23 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 - Python 3.8+ installed on Windows
 - pipx installed (`pip install pipx`)
 
+Install the application globally:
 ```powershell
-# Install the application globally
 pipx install whisper-key
+```
 
-# Add VAD support (prevents silence hallucinations)
+Add VAD support (prevents silence hallucinations):
+```powershell
 pipx inject whisper-key git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
+```
 
-# Run from anywhere
+Run from anywhere:
+```powershell
 whisper-key
 ```
 
-### Option 3: Manual Installation
-**Prerequisites for manual installation:**
+### Option 3: Development Installation
+**Prerequisites:**
 - Python 3.8+ installed on Windows
 
 Clone the repository:
@@ -87,7 +91,6 @@ python whisper-key.py
 - The transcribed text is auto-pasted on your text cursor
 - Alternatively press `Alt` to stop recording, and 
 - Right click the system tray icon to change models
-
 
 ### Configuration
 The app automatically creates a user settings file in `%APPDATA%\Roaming\whisperkey\user_settings.yaml`, where you can:
