@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+import os
 import signal
 import sys
 import threading
@@ -14,7 +15,7 @@ from .state_manager import StateManager
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .instance_manager import guard_against_multiple_instances
-from .utils import beautify_hotkey, OptionalComponent, resolve_asset_path
+from .utils import beautify_hotkey, OptionalComponent, resolve_asset_path, get_user_app_data_path
 
 def setup_logging(config_manager: ConfigManager):
     log_config = config_manager.get_logging_config()
@@ -27,7 +28,8 @@ def setup_logging(config_manager: ConfigManager):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
     if log_config['file']['enabled']:
-        log_file_path = resolve_asset_path(log_config['file']['filename'])
+        whisperkey_dir = get_user_app_data_path()
+        log_file_path = os.path.join(whisperkey_dir, log_config['file']['filename'])
         file_handler = logging.FileHandler(log_file_path, encoding='utf-8')
         file_handler.setLevel(getattr(logging, log_config['level']))
         file_handler.setFormatter(formatter)

@@ -1,6 +1,5 @@
 import os
 import sys
-import importlib.metadata
 import importlib.resources
 from contextlib import contextmanager
 from pathlib import Path
@@ -27,6 +26,12 @@ def beautify_hotkey(hotkey_string: str) -> str:
 def is_installed_package():
     # Check if running from an installed package
     return 'site-packages' in __file__
+
+def get_user_app_data_path():
+    appdata = os.getenv('APPDATA')
+    whisperkey_dir = os.path.join(appdata, 'whisperkey')
+    os.makedirs(whisperkey_dir, exist_ok=True)
+    return whisperkey_dir
 
 def resolve_asset_path(relative_path: str) -> str:
     
