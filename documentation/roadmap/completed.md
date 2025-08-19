@@ -1,5 +1,6 @@
 # Windows Whisper Speech-to-Text App - Completed Stories
 
+- As a *user*, I want **audio recording length** so I can get a feel for transcription times
 - As a *user*, I want **distinct cancel sound** so I can immediately tell when I cancelled vs stopped recording
 - As a *developer*, I want **beginner comments removed** so that the code is forced to be readable and can be read easily
 - As a *developer* I want a **simplified config manager** so that DHH won't cry

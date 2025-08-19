@@ -4,7 +4,6 @@
 ## Bugs
 
 ## Next
-- As a *user*, I want **audio recording length** so I can get a feel for transcription times
 - As a *tester*, I want **PyPi** so I can easily install the app
 
 ## Backlog
