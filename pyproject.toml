@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "whisper-key"
-version = "0.2.0"
+version = "0.3.0"
 description = "Local faster-whisper speech-to-text app with global hotkeys for Windows"
 readme = "README.md"
 authors = [
