@@ -10,7 +10,11 @@ on:
 
 jobs:
   claude-review:
-    if: ${{ !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'skip-review') }}
+    if: ${{ 
+      !github.event.pull_request.draft && 
+      !contains(github.event.pull_request.labels.*.name, 'skip-review') &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-further-reviews')
+    }}
     
     runs-on: ubuntu-latest
     permissions:
