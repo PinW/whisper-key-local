@@ -4,7 +4,12 @@
 ## Bugs
 
 ## Next
-- As a *tester*, I want **PyPi** so I can easily install the app
+- As a *user* I want **auto-stop recording** so I won't record to the limit when I accidentally turn it on or forget it is on
+
+### Cross-Platform
+- As a *mac user*, I want to use this app on **macOS**
+    - As a *mac user*, I want 
+    - As a *developer*, I want **removed window handle support** so I'll have one less Windows-dependant dependancy
 
 ## Backlog
 
@@ -26,7 +31,6 @@
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
 
 ### VAD & Keyword Controls
-- As a *user* I want **auto-stop recording** so I won't record to the limit when I accidentally turn it on or forget it is on
 - As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
 
 ### Voice Commands
@@ -39,11 +43,7 @@
 ### Technical
 - As a *developer*, I want **end-to-end tests** so that I can refactor with confidence
 
-### Learning & Code Exploration
-- Try something out with **Python decorators** - explore using decorators for timing, caching, or retry logic in the codebase
-
 ### Cross-Platform
-- As a Mac *user*, I want to use this app on **macOS**
 - As a phone *user*, I want this app on **mobile**
 
 ### Transcription Quality
