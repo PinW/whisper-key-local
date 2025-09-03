@@ -15,6 +15,7 @@
 ## Backlog
 
 ### Packaging & Updates
+- As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
 - As a *user*, I want **automatic updates** to get new features
 
 ### GUI
