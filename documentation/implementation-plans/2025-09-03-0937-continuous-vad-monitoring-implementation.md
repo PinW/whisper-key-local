@@ -19,14 +19,22 @@ As a **User** I want **continuous VAD monitoring during recording with configura
 ## Implementation Plan
 
 ### Phase 1: Core Streaming VAD Infrastructure
-- [ ] Create reusable `Hysteresis` class in `voice_activity_detection.py` for DRY implementation
-- [ ] Create `ContinuousVoiceDetector` class in `voice_activity_detection.py`
-- [ ] Refactor `whisper_engine._detect_speech_with_hysteresis()` to use shared `Hysteresis` class from `voice_activity_detection.py`
-- [ ] Implement circular buffer for continuous probability tracking with `deque`
-- [ ] Add consecutive silence frame counting
-- [ ] Create robust state machine: WAITING/SPEECH_DETECTED/SILENCE_COUNTING/TIMEOUT_TRIGGERED
-- [ ] Design for `sounddevice` callback thread execution (thread-safe, minimal processing)
-- [ ] Add callback mechanism for silence events with thread-safe event dispatch
+- [x] Create reusable `Hysteresis` class in `voice_activity_detection.py` for DRY implementation
+  - ✅ Created Hysteresis class with high/low thresholds and speech state tracking
+- [x] Create `ContinuousVoiceDetector` class in `voice_activity_detection.py`
+  - ✅ Implemented complete ContinuousVoiceDetector with state machine and event system
+- [x] Refactor `whisper_engine._detect_speech_with_hysteresis()` to use shared `Hysteresis` class from `voice_activity_detection.py`
+  - ✅ Refactored to use shared Hysteresis class while maintaining same behavior
+- [x] Implement circular buffer for continuous probability tracking with `deque`
+  - ✅ Added probability_buffer as deque with maxlen=frames_for_timeout
+- [x] Add consecutive silence frame counting
+  - ✅ Implemented silence_frame_count tracking in state machine
+- [x] Create robust state machine: WAITING/SPEECH_DETECTED/SILENCE_COUNTING/TIMEOUT_TRIGGERED
+  - ✅ Complete state machine with VadState enum and _update_state() method
+- [x] Design for `sounddevice` callback thread execution (thread-safe, minimal processing)
+  - ✅ Thread-safe design with threading.Lock and minimal processing in process_chunk()
+- [x] Add callback mechanism for silence events with thread-safe event dispatch
+  - ✅ Event callback system with VadEvent enum and threaded event dispatch
 
 ### Phase 2: Configuration System
 - [ ] Add VAD monitoring settings to `config.defaults.yaml`:

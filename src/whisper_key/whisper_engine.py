@@ -7,6 +7,7 @@ from typing import Optional, Callable
 import numpy as np
 from faster_whisper import WhisperModel
 from .utils import OptionalComponent
+from .voice_activity_detection import Hysteresis
 
 try:
     from ten_vad import TenVad
@@ -21,16 +22,17 @@ class WhisperEngine:
     VAD_HOP_DURATION_SEC = 0.016  # Fixed 256 samples at 16kHz
     VAD_CHUNK_SIZE = 256  
 
-    def __init__(self, 
-                 model_size: str = "tiny", 
-                 device: str = "cpu", 
-                 compute_type: str = "int8", 
-                 language: str = None, 
-                 beam_size: int = 5, 
+    def __init__(self,
+                 model_size: str = "tiny",
+                 device: str = "cpu",
+                 compute_type: str = "int8",
+                 language: str = None,
+                 beam_size: int = 5,
                  vad_enabled: bool = True,
                  vad_onset_threshold: float = 0.7,
                  vad_offset_threshold: float = 0.55,
-                 vad_min_speech_duration: float = 0.1):
+                 vad_min_speech_duration: float = 0.1,
+                 vad_silence_timeout_seconds: float = 20.0):
         
         self.model_size = model_size
         self.device = device
@@ -41,6 +43,7 @@ class WhisperEngine:
         self.vad_onset_threshold = vad_onset_threshold
         self.vad_offset_threshold = vad_offset_threshold
         self.vad_min_speech_duration = vad_min_speech_duration
+        self.vad_silence_timeout_seconds = vad_silence_timeout_seconds
         self.model = None
         self.logger = logging.getLogger(__name__)
         
@@ -148,43 +151,6 @@ class WhisperEngine:
     def is_loading(self) -> bool:
         return self._loading_thread is not None and self._loading_thread.is_alive()
     
-    def _detect_speech_with_hysteresis(self,
-                                       probabilities: list,
-                                       onset: float = None,
-                                       offset: float = None,
-                                       min_duration: float = None) -> bool:
-        if not probabilities:
-            return False
-        
-        onset = onset or self.vad_onset_threshold
-        offset = offset or self.vad_offset_threshold
-        min_duration = min_duration or self.vad_min_speech_duration
-            
-        min_frames_for_speech = int(min_duration / self.VAD_HOP_DURATION_SEC)
-        
-        speech_state = False
-        hysteresis_flags = []
-        
-        # Apply hysteresis to prevent "flickering"
-        for prob in probabilities:
-            if not speech_state and prob >= onset:
-                speech_state = True
-            elif speech_state and prob <= offset:
-                speech_state = False
-            hysteresis_flags.append(speech_state)
-        
-        consecutive_speech_count = 0
-        
-        for flag in hysteresis_flags:
-            if flag:
-                consecutive_speech_count += 1
-
-                if consecutive_speech_count >= min_frames_for_speech:
-                    return True  # Speech segment detected
-            else:
-                consecutive_speech_count = 0
-        
-        return False
 
     def _check_audio_for_speech(self, audio_data: np.ndarray) -> bool:
         duration = len(audio_data) / self.SAMPLE_RATE
@@ -224,8 +190,13 @@ class WhisperEngine:
             # Capture processing time for performance monitoring
             vad_time = (time.time() - vad_start_time) * 1000
             
-            # Apply hysteresis + consecutive frame detection
-            speech_detected = self._detect_speech_with_hysteresis(probabilities)
+            hysteresis = Hysteresis(high_threshold=self.vad_onset_threshold,
+                                   low_threshold=self.vad_offset_threshold,
+                                   frame_duration_sec=self.VAD_HOP_DURATION_SEC)
+            speech_detected = hysteresis.detect_speech_in_probabilities(
+                probabilities,
+                self.vad_min_speech_duration
+            )
             
             if speech_detected:
                 self.logger.info(f"TEN VAD check: SPEECH detected (duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")

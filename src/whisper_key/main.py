@@ -71,7 +71,8 @@ def setup_whisper_engine(whisper_config, vad_config):
         vad_enabled=vad_config['vad_precheck_enabled'],
         vad_onset_threshold=vad_config['vad_onset_threshold'],
         vad_offset_threshold=vad_config['vad_offset_threshold'],
-        vad_min_speech_duration=vad_config['vad_min_speech_duration']
+        vad_min_speech_duration=vad_config['vad_min_speech_duration'],
+        vad_silence_timeout_seconds=vad_config['vad_silence_timeout_seconds']
     )
 
 def setup_clipboard_manager(clipboard_config):
