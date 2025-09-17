@@ -102,4 +102,4 @@ The app automatically creates a user settings file in `%APPDATA%\Roaming\whisper
 ## 🔧 Troubleshooting
 
 - Check the log file `app.log` for detailed error messages
-- Delete the user settings file in `%APPDATA%\Roaming\whisperkey\user_settings.yaml` and restart to reset to defaults
+- Delete the user settings file in `%APPDATA%/whisperkey/user_settings.yaml` and restart to reset to defaults
