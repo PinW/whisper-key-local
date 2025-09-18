@@ -10,13 +10,15 @@ from .system_tray import SystemTray
 from .config_manager import ConfigManager
 from .audio_feedback import AudioFeedback
 from .utils import OptionalComponent
+from .voice_activity_detection import VadEvent, VadManager
 
 class StateManager:
-    def __init__(self, 
+    def __init__(self,
                  audio_recorder: AudioRecorder,
                  whisper_engine: WhisperEngine,
                  clipboard_manager: ClipboardManager,
                  config_manager: ConfigManager,
+                 vad_manager: VadManager,
                  system_tray: Optional[SystemTray] = None,
                  audio_feedback: Optional[AudioFeedback] = None):
 
@@ -26,6 +28,7 @@ class StateManager:
         self.system_tray = OptionalComponent(system_tray)
         self.config_manager = config_manager
         self.audio_feedback = OptionalComponent(audio_feedback)
+        self.vad_manager = vad_manager
         
         self.is_processing = False
         self.is_model_loading = False
@@ -36,9 +39,22 @@ class StateManager:
         self.logger = logging.getLogger(__name__)
     
     def handle_max_recording_duration_reached(self, audio_data):
-        """Called when audio recorder reaches max duration with audio data"""
         self.logger.info("Max recording duration reached - starting transcription")
         self._transcription_pipeline(audio_data, use_auto_enter=False)
+
+    def handle_vad_event(self, event: VadEvent):
+        if event == VadEvent.SILENCE_TIMEOUT:
+            self.logger.info("VAD silence timeout detected - stopping recording")
+            timeout_seconds = int(self.vad_manager.vad_silence_timeout_seconds)
+            print(f"⏰ Stopping recording after {timeout_seconds} seconds of silence...")
+            audio_data = self.audio_recorder.stop_recording()
+            self._transcription_pipeline(audio_data, use_auto_enter=False)
+        elif event == VadEvent.SPEECH_STARTED:
+            self.logger.debug("VAD detected speech started")
+        elif event == VadEvent.SPEECH_ENDED:
+            self.logger.debug("VAD detected speech ended")
+        else:
+            self.logger.debug(f"VAD event: {event}")
     
     def stop_recording(self, use_auto_enter: bool = False) -> bool:
         currently_recording = self.audio_recorder.get_recording_status()

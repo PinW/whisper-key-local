@@ -37,23 +37,50 @@ As a **User** I want **continuous VAD monitoring during recording with configura
   - ✅ Event callback system with VadEvent enum and threaded event dispatch
 
 ### Phase 2: Configuration System
-- [ ] Add VAD monitoring settings to `config.defaults.yaml`:
-  - `vad_realtime_enabled: true` (enabled by default)
-  - `vad_silence_timeout_seconds: 30.0`
-- [ ] Update `config_manager.py` with validation for new settings
+- [x] Add VAD monitoring settings to `config.defaults.yaml`:
+  - ✅ Added `vad_realtime_enabled: true` (enabled by default)
+  - ✅ Added `vad_silence_timeout_seconds: 20.0` (already completed in Phase 1)
+- [x] Update `config_manager.py` with validation for new settings
+  - ✅ Added boolean validation for `vad_realtime_enabled`
+  - ✅ Added numeric range validation for `vad_silence_timeout_seconds` (1.0 to 36000.0 seconds)
 
 ### Phase 3: Audio Pipeline Integration
-- [ ] Modify `audio_recorder.py` to instantiate `ContinuousVoiceDetector` from `voice_activity_detection.py` when `vad.mode` is "realtime"
-- [ ] Integrate VAD processing directly in `sounddevice` callback thread (`audio_callback`)
-- [ ] Call `ContinuousVoiceDetector.process_chunk()` for each 256-sample audio chunk
-- [ ] Add thread-safe event dispatch from callback to main thread for silence events
+- [x] Modify `audio_recorder.py` to instantiate `ContinuousVoiceDetector` from `voice_activity_detection.py` when `vad.mode` is "realtime"
+  - ✅ Updated AudioRecorder constructor to accept VAD configuration and whisper_engine reference
+  - ✅ Added ContinuousVoiceDetector instantiation when `vad_realtime_enabled` is true
+  - ✅ Added VAD event handling callback integration
+- [x] Integrate VAD processing directly in `sounddevice` callback thread (`audio_callback`)
+  - ✅ Modified audio_callback to process VAD chunks in real-time
+  - ✅ Added 256-sample blocksize for optimal TEN VAD processing
+  - ✅ Added error handling for VAD processing in callback thread
+- [x] Call `ContinuousVoiceDetector.process_chunk()` for each 256-sample audio chunk
+  - ✅ Implemented chunk processing with proper audio format handling
+  - ✅ Added frame size validation (256 samples) for TEN VAD compatibility
+  - ✅ Added audio dimension flattening for correct VAD input format
+- [x] Add thread-safe event dispatch from callback to main thread for silence events
+  - ✅ Updated main.py setup_audio_recorder to pass VAD configuration
+  - ✅ Added StateManager.handle_vad_event() method for processing VAD events
+  - ✅ Implemented automatic recording stop on SILENCE_TIMEOUT event
+  - ✅ Added VAD state reset on new recording start
 
 ### Phase 4: State Management Integration
-- [ ] Update `state_manager.py` to handle VAD silence events
-- [ ] Add automatic recording stop on silence timeout
-- [ ] Implement early transcription trigger for hallucination prevention
-- [ ] Add user notification for timeout events
-- [ ] Ensure existing post-recording VAD still works when `vad.mode` is "precheck"
+- [x] Update `state_manager.py` to handle VAD silence events
+  - ✅ Added handle_vad_event() method to StateManager class
+  - ✅ Added VadEvent import and event type handling
+- [x] Add automatic recording stop on silence timeout
+  - ✅ Implemented SILENCE_TIMEOUT event handling with automatic stop_recording()
+  - ✅ Added user notification message for timeout events
+- [x] Implement early transcription trigger for hallucination prevention
+  - ✅ Automatic transcription pipeline triggered on silence timeout
+  - ✅ Prevents silence hallucinations by stopping recording early
+- [x] Add user notification for timeout events
+  - ✅ Added console message "⏰ Silence timeout detected - stopping recording"
+  - ✅ Added logging for VAD events (INFO for timeout, DEBUG for speech events)
+- [x] Ensure existing post-recording VAD still works when `vad.mode` is "precheck"
+  - ✅ Verified that WhisperEngine.transcribe_audio() still calls _check_audio_for_speech()
+  - ✅ Confirmed both realtime and post-recording VAD can work independently or together
+  - ✅ Backward compatibility maintained - existing VAD behavior unchanged
+  - ✅ Configuration allows flexible combinations: vad_precheck_enabled + vad_realtime_enabled
 
 ### Phase 5: Documentation Updates
 - [ ] Update `documentation/project-index.md` component architecture table to include `voice_activity_detection.py`

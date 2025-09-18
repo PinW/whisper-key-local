@@ -95,7 +95,9 @@ vad:
   # Minimum Duration Filtering
   vad_min_speech_duration: 0.1  # Minimum speech segment length in seconds (filters brief noise)
 
-  # Silence Timeout
+  # Real-time VAD monitoring during recording
+  # Enables continuous silence detection and automatic recording stop
+  vad_realtime_enabled: true 
   vad_silence_timeout_seconds: 20.0  # Auto-stop recording after this many seconds of silence
 
 # =============================================================================

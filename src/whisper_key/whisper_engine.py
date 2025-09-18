@@ -7,20 +7,9 @@ from typing import Optional, Callable
 import numpy as np
 from faster_whisper import WhisperModel
 from .utils import OptionalComponent
-from .voice_activity_detection import Hysteresis
 
-try:
-    from ten_vad import TenVad
-    HAS_TEN_VAD = True
-except ImportError:
-    TenVad = None
-    HAS_TEN_VAD = False
-
-class WhisperEngine:    
+class WhisperEngine:
     MODEL_CACHE_PREFIX = "models--Systran--faster-whisper-"  # file prefix for hugging-face model
-    SAMPLE_RATE = 16000  # Fixed 16kHz sample rate for TEN VAD and Whisper
-    VAD_HOP_DURATION_SEC = 0.016  # Fixed 256 samples at 16kHz
-    VAD_CHUNK_SIZE = 256  
 
     def __init__(self,
                  model_size: str = "tiny",
@@ -28,35 +17,20 @@ class WhisperEngine:
                  compute_type: str = "int8",
                  language: str = None,
                  beam_size: int = 5,
-                 vad_enabled: bool = True,
-                 vad_onset_threshold: float = 0.7,
-                 vad_offset_threshold: float = 0.55,
-                 vad_min_speech_duration: float = 0.1,
-                 vad_silence_timeout_seconds: float = 20.0):
+                 vad_manager = None):
         
         self.model_size = model_size
         self.device = device
         self.compute_type = compute_type
         self.language = None if language == 'auto' else language
         self.beam_size = beam_size
-        self.vad_enabled = vad_enabled
-        self.vad_onset_threshold = vad_onset_threshold
-        self.vad_offset_threshold = vad_offset_threshold
-        self.vad_min_speech_duration = vad_min_speech_duration
-        self.vad_silence_timeout_seconds = vad_silence_timeout_seconds
         self.model = None
         self.logger = logging.getLogger(__name__)
-        
+
         self._loading_thread = None
         self._progress_callback = None
-        
-        vad_instance = None
-        if self.vad_enabled and HAS_TEN_VAD:
-            vad_instance = TenVad()
-        elif self.vad_enabled and not HAS_TEN_VAD:
-            logging.getLogger(__name__).warning("VAD enabled but ten-vad not available. VAD will be disabled.")
-        
-        self.ten_vad = OptionalComponent(vad_instance)
+
+        self.vad_manager = vad_manager
         
         self._load_model()
     
@@ -152,67 +126,8 @@ class WhisperEngine:
         return self._loading_thread is not None and self._loading_thread.is_alive()
     
 
-    def _check_audio_for_speech(self, audio_data: np.ndarray) -> bool:
-        duration = len(audio_data) / self.SAMPLE_RATE
-        
-        if not self.ten_vad:
-            return True # Skip speech check, but still transcribe
-        
-        vad_start_time = time.time()
-        
-        try:
-            # Flatten audio (TEN VAD expects 1D array)
-            if len(audio_data.shape) > 1:
-                audio_flat = audio_data.flatten()
-            else:
-                audio_flat = audio_data
-            
-            # Convert float32 to int16 for TEN VAD (range -32768 to 32767)
-            if audio_flat.dtype == np.float32:
-                audio_flat = np.clip(audio_flat, -1.0, 1.0)
-                audio_int16 = (audio_flat * 32767).astype(np.int16)
-            else:
-                audio_int16 = audio_flat.astype(np.int16)
-            
-            chunk_size = self.VAD_CHUNK_SIZE
-            
-            probabilities = []
-            for i in range(0, len(audio_int16), chunk_size):
-                chunk = audio_int16[i:i + chunk_size]
-                
-                # Make sure chunk meets TEN VAD 256-sample requirement
-                if len(chunk) < chunk_size:
-                    chunk = np.pad(chunk, (0, chunk_size - len(chunk)), mode='constant', constant_values=0)
-                
-                out_probability, _ = self.ten_vad.process(chunk)
-                probabilities.append(out_probability)
-            
-            # Capture processing time for performance monitoring
-            vad_time = (time.time() - vad_start_time) * 1000
-            
-            hysteresis = Hysteresis(high_threshold=self.vad_onset_threshold,
-                                   low_threshold=self.vad_offset_threshold,
-                                   frame_duration_sec=self.VAD_HOP_DURATION_SEC)
-            speech_detected = hysteresis.detect_speech_in_probabilities(
-                probabilities,
-                self.vad_min_speech_duration
-            )
-            
-            if speech_detected:
-                self.logger.info(f"TEN VAD check: SPEECH detected (duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
-            else:
-                self.logger.info(f"TEN VAD check: SILENCE (duration: {duration:.2f}s, processing: {vad_time:.1f}ms)")
-            
-            return speech_detected
-            
-        except Exception as e:
-            vad_time = (time.time() - vad_start_time) * 1000
-            self.logger.warning(f"TEN VAD check failed after {vad_time:.1f}ms: {e}")
-            return True
-    
     def transcribe_audio(self,
-                         audio_data: np.ndarray,
-                         sample_rate: int = SAMPLE_RATE) -> Optional[str]:
+                         audio_data: np.ndarray) -> Optional[str]:
         if self.model is None:
             return None
         
@@ -221,7 +136,9 @@ class WhisperEngine:
             return None
         
         try:
-            speech_detected = self._check_audio_for_speech(audio_data)
+            speech_detected = True
+            if self.vad_manager and self.vad_manager.is_available():
+                speech_detected = self.vad_manager.check_audio_for_speech(audio_data)
             
             if not speech_detected:
                 print("   ✗ No speech detected, skipping transcription")
