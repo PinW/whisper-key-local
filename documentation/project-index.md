@@ -11,7 +11,8 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+
 | **State Coordination** | `state_manager.py` | Component orchestration & workflow | threading, logging |
 | **Audio Capture** | `audio_recorder.py` | Microphone recording & audio buffering | sounddevice, numpy |
 | **Audio Feedback** | `audio_feedback.py` | Recording event sound notifications | winsound, threading |
-| **Speech Recognition** | `whisper_engine.py` | Audio transcription using AI | faster-whisper, ten-vad |
+| **Speech Recognition** | `whisper_engine.py` | Audio transcription using AI | faster-whisper |
+| **Voice Activity Detection** | `voice_activity_detection.py` | Continuous VAD monitoring & silence detection | ten-vad, threading |
 | **Clipboard Operations** | `clipboard_manager.py` | Text copying & auto-paste functionality | pyperclip, pywin32, pyautogui |
 | **Hotkey Detection** | `hotkey_listener.py` | Global hotkey monitoring | global-hotkeys |
 | **Configuration** | `config_manager.py` | YAML settings management & validation | ruamel.yaml |
@@ -47,6 +48,7 @@ whisper-key-local/
 │       ├── state_manager.py    # Component coordination & workflow
 │       ├── system_tray.py      # System tray icon & menu
 │       ├── utils.py            # Common utility functions
+│       ├── voice_activity_detection.py # Voice activity detection
 │       └── whisper_engine.py   # Faster-whisper transcription
 │
 ├── tools/                      # Utility scripts
@@ -76,4 +78,4 @@ whisper-key-local/
 
 ---
 
-*Last Updated: 2025-08-19 | Project Status: Active Development*
+*Last Updated: 2025-09-18 | Project Status: Active Development*

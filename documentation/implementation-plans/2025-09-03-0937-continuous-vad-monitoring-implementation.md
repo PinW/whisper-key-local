@@ -83,10 +83,18 @@ As a **User** I want **continuous VAD monitoring during recording with configura
   - ✅ Configuration allows flexible combinations: vad_precheck_enabled + vad_realtime_enabled
 
 ### Phase 5: Documentation Updates
-- [ ] Update `documentation/project-index.md` component architecture table to include `voice_activity_detection.py`
-- [ ] Add continuous VAD monitoring feature description to `README.md`
-- [ ] Update component responsibilities and key technologies in project index
-- [ ] Document new configuration options in README
+- [x] Update `documentation/project-index.md` component architecture table to include `voice_activity_detection.py`
+  - ✅ Added Voice Activity Detection component to architecture table with proper description
+  - ✅ Added voice_activity_detection.py to project structure section
+  - ✅ Updated last modified date to 2025-09-18
+- [x] Add continuous VAD monitoring feature description to `README.md`
+  - ✅ Added "Voice activity detection" feature to main features list
+  - ✅ Enhanced configuration section to mention VAD settings
+- [x] Update component responsibilities and key technologies in project index
+  - ✅ Listed "Continuous VAD monitoring & silence detection" as primary responsibility
+  - ✅ Listed "ten-vad, threading, collections" as key technologies
+- [x] Document new configuration options in README
+  - ✅ Added VAD configuration mention to README configuration section
 
 ## Implementation Details
 
