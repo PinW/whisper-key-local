@@ -16,3 +16,4 @@
 - As a *user*, I want **Start Menu launch compatibility** so the app works when launched from Windows Start Menu
 - As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
 - As a *tester*, I want **PyPI** so I can easily install the app
+- As a *user* I want **auto-stop recording** so I won't record to the limit when I accidentally turn it on or forget it is on

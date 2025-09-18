@@ -4,8 +4,8 @@
 ## Bugs
 
 ## Next
-- As a *user* I want **auto-stop recording** so I won't record to the limit when I accidentally turn it on or forget it is on
 - As a *user* I want **lock output to window/field** so I don't need to click back into Claude Code terminal before start record
+- As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
 
 ### Cross-Platform
 - As a *mac user*, I want to use this app on **macOS**
