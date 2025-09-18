@@ -1,10 +1,12 @@
 import logging
 import threading
 import time
-from typing import Optional
+from typing import Optional, Callable
 
 import numpy as np
 import sounddevice as sd
+
+from .voice_activity_detection import VadEvent, VAD_CHUNK_SIZE
 
 class AudioRecorder:
     WHISPER_SAMPLE_RATE = 16000
@@ -12,12 +14,14 @@ class AudioRecorder:
     RECORDING_SLEEP_INTERVAL = 100
     STREAM_DTYPE = np.float32
        
-    def __init__(self, 
+    def __init__(self,
+                 on_vad_event: Callable[[VadEvent], None],
                  channels: int = 1,
-                 dtype: str = "float32", 
+                 dtype: str = "float32",
                  max_duration: int = 30,
-                 on_max_duration_reached: callable = None):
-        
+                 on_max_duration_reached: callable = None,
+                 vad_manager = None):
+
         self.sample_rate = self.WHISPER_SAMPLE_RATE
         self.channels = channels
         self.dtype = dtype
@@ -28,9 +32,25 @@ class AudioRecorder:
         self.recording_thread = None
         self.recording_start_time = None
         self.logger = logging.getLogger(__name__)
-        
+
+        self.vad_manager = vad_manager
+        self.on_vad_event = on_vad_event
+        self.continuous_vad = self._setup_continuous_vad_monitoring()
+
         self._test_microphone()
-    
+
+    def _setup_continuous_vad_monitoring(self):
+        if self.vad_manager.is_available():
+            continuous_vad = self.vad_manager.create_continuous_detector(
+                event_callback=self._handle_vad_event
+            )
+            return continuous_vad
+        else:
+            return None
+
+    def _handle_vad_event(self, event: VadEvent):
+        self.on_vad_event(event)
+
     def _wait_for_thread_finish(self):
         if self.recording_thread:
             self.recording_thread.join(timeout=self.THREAD_JOIN_TIMEOUT)
@@ -47,20 +67,23 @@ class AudioRecorder:
     def start_recording(self):
         if self.is_recording:
             return False
-        
+
         try:
             self.logger.info("Starting audio recording...")
             self.is_recording = True
             self.audio_data = []
             self.recording_start_time = time.time()
-            
+
+            if self.continuous_vad:
+                self.continuous_vad.reset()
+
             self.recording_thread = threading.Thread(target=self._record_audio)
             self.recording_thread.daemon = True  # Thread will close when main program closes
             self.recording_thread.start()
-            
+
             print("🎤 Recording started! Speak now...")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to start audio recording: {e}")
             print("❌ Failed to start recording!")
@@ -99,24 +122,30 @@ class AudioRecorder:
     
     def _record_audio(self):
         try:
-            def audio_callback(audio_data, frames, time, status):                
+            def audio_callback(audio_data, frames, _time, status):
                 if self.is_recording:
                     self.audio_data.append(audio_data.copy())
 
+                    if self.continuous_vad and frames == VAD_CHUNK_SIZE:
+                        self.continuous_vad.process_chunk(audio_data)
+
                 if status:
                     self.logger.debug(f"Audio callback status: {status}")
-            
+
+            blocksize = VAD_CHUNK_SIZE if self.continuous_vad else None
+
             with sd.InputStream(samplerate=self.sample_rate,
                                 channels=self.channels,
                                 callback=audio_callback,
-                                dtype=self.STREAM_DTYPE):
-                
+                                dtype=self.STREAM_DTYPE,
+                                blocksize=blocksize):
+
                 while self.is_recording:
                     if self._check_max_duration_exceeded():
                         break
-                    
+
                     sd.sleep(self.RECORDING_SLEEP_INTERVAL)
-                
+
         except Exception as e:
             self.logger.error(f"Error during audio recording: {e}")
             self.is_recording = False

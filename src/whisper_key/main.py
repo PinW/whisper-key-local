@@ -10,12 +10,13 @@ from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
 from .whisper_engine import WhisperEngine
+from .voice_activity_detection import VadManager
 from .clipboard_manager import ClipboardManager
 from .state_manager import StateManager
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .instance_manager import guard_against_multiple_instances
-from .utils import beautify_hotkey, OptionalComponent, resolve_asset_path, get_user_app_data_path
+from .utils import beautify_hotkey, OptionalComponent, get_user_app_data_path
 
 def setup_logging(config_manager: ConfigManager):
     log_config = config_manager.get_logging_config()
@@ -53,25 +54,34 @@ def setup_exception_handler():
     
     sys.excepthook = exception_handler
 
-def setup_audio_recorder(audio_config, state_manager):
+def setup_audio_recorder(audio_config, state_manager, vad_manager):
     return AudioRecorder(
         channels=audio_config['channels'],
         dtype=audio_config['dtype'],
         max_duration=audio_config['max_duration'],
-        on_max_duration_reached=state_manager.handle_max_recording_duration_reached
+        on_max_duration_reached=state_manager.handle_max_recording_duration_reached,
+        on_vad_event=state_manager.handle_vad_event,
+        vad_manager=vad_manager
     )
 
-def setup_whisper_engine(whisper_config, vad_config):
+def setup_vad(vad_config):
+    return VadManager(
+        vad_precheck_enabled=vad_config['vad_precheck_enabled'],
+        vad_realtime_enabled=vad_config['vad_realtime_enabled'],
+        vad_onset_threshold=vad_config['vad_onset_threshold'],
+        vad_offset_threshold=vad_config['vad_offset_threshold'],
+        vad_min_speech_duration=vad_config['vad_min_speech_duration'],
+        vad_silence_timeout_seconds=vad_config['vad_silence_timeout_seconds']
+    )
+
+def setup_whisper_engine(whisper_config, vad_manager):
     return WhisperEngine(
         model_size=whisper_config['model_size'],
         device=whisper_config['device'],
         compute_type=whisper_config['compute_type'],
         language=whisper_config['language'],
         beam_size=whisper_config['beam_size'],
-        vad_enabled=vad_config['vad_precheck_enabled'],
-        vad_onset_threshold=vad_config['vad_onset_threshold'],
-        vad_offset_threshold=vad_config['vad_offset_threshold'],
-        vad_min_speech_duration=vad_config['vad_min_speech_duration']
+        vad_manager=vad_manager
     )
 
 def setup_clipboard_manager(clipboard_config):
@@ -102,7 +112,6 @@ def setup_signal_handlers(shutdown_event):
     
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-
 
 def setup_hotkey_listener(hotkey_config, state_manager):
     return HotkeyListener(
@@ -151,8 +160,9 @@ def main():
         tray_config = config_manager.get_system_tray_config()
         audio_feedback_config = config_manager.get_audio_feedback_config()
         vad_config = config_manager.get_vad_config()
-               
-        whisper_engine = setup_whisper_engine(whisper_config, vad_config)
+
+        vad_manager = setup_vad(vad_config)
+        whisper_engine = setup_whisper_engine(whisper_config, vad_manager)
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
@@ -162,9 +172,10 @@ def main():
             clipboard_manager=clipboard_manager,
             system_tray=None,
             config_manager=config_manager,
-            audio_feedback=audio_feedback
+            audio_feedback=audio_feedback,
+            vad_manager=vad_manager
         )
-        audio_recorder = setup_audio_recorder(audio_config, state_manager)
+        audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager)
         state_manager.audio_recorder = audio_recorder
         state_manager.system_tray = OptionalComponent(system_tray)

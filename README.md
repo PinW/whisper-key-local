@@ -9,6 +9,7 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 - **Auto-Send**: Press `Alt` to stop, auto-paste, and auto-send with ENTER keypress
 - **Offline Capable**: No internet required after models downloaded
 - **Local Processing**: Voice data never leaves your computer
+- **Voice activity detection**: Prevent hallucinations, auto-stop accidental hotkey presses
 - **Configurable**: Customize hotkeys, model, transcription actions, and audio settings
 
 ## 🚀 Quick Start
@@ -97,6 +98,7 @@ The app automatically creates a user settings file in `%APPDATA%\Roaming\whisper
 - Change whisper model size (tiny/base/small/medium/large)
 - Hotkeys
 - Configure automation (auto-paste, auto-ENTER)
+- Voice activity detection
 - And much more
 
 ## 🔧 Troubleshooting
