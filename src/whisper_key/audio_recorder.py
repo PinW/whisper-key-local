@@ -6,7 +6,7 @@ from typing import Optional, Callable
 import numpy as np
 import sounddevice as sd
 
-from .voice_activity_detection import VadEvent, _convert_audio_for_ten_vad, VAD_CHUNK_SIZE
+from .voice_activity_detection import VadEvent, VAD_CHUNK_SIZE
 
 class AudioRecorder:
     WHISPER_SAMPLE_RATE = 16000
@@ -127,8 +127,7 @@ class AudioRecorder:
                     self.audio_data.append(audio_data.copy())
 
                     if self.continuous_vad and frames == VAD_CHUNK_SIZE:
-                        audio_chunk = _convert_audio_for_ten_vad(audio_data)
-                        self.continuous_vad.process_chunk(audio_chunk)
+                        self.continuous_vad.process_chunk(audio_data)
 
                 if status:
                     self.logger.debug(f"Audio callback status: {status}")

@@ -17,7 +17,7 @@ SAMPLE_RATE = 16000  # Fixed 16kHz sample rate for TEN VAD and Whisper
 VAD_HOP_DURATION_SEC = 0.016  # Fixed 256 samples at 16kHz
 VAD_CHUNK_SIZE = 256
 
-def _convert_audio_for_ten_vad(audio_data: np.ndarray) -> np.ndarray:
+def convert_audio_for_ten_vad(audio_data: np.ndarray) -> np.ndarray:
     # Flatten audio (TEN VAD expects 1D array)
     if len(audio_data.shape) > 1:
         audio_flat = audio_data.flatten()
@@ -78,7 +78,7 @@ class VadManager:
         vad_start_time = time.time()
 
         try:
-            audio_int16 = _convert_audio_for_ten_vad(audio_data)
+            audio_int16 = convert_audio_for_ten_vad(audio_data)
             chunk_size = VAD_CHUNK_SIZE
 
             probabilities = []
@@ -189,7 +189,7 @@ class ContinuousVoiceDetector:
             return VadEvent.NO_EVENT
 
         try:
-            audio_int16 = _convert_audio_for_ten_vad(audio_chunk)
+            audio_int16 = convert_audio_for_ten_vad(audio_chunk)
             probability, _ = self.ten_vad.process(audio_int16)
             speech_detected = self.hysteresis.detect_speech(probability)
             self.probability_buffer.append(probability)
