@@ -34,15 +34,12 @@ def _convert_audio_for_ten_vad(audio_data: np.ndarray) -> np.ndarray:
     return audio_int16
 
 class VadState(Enum):
-    WAITING = "waiting"
-    SPEECH_DETECTED = "speech_detected"
     SILENCE_COUNTING = "silence_counting"
+    SPEECH_DETECTED = "speech_detected"
     TIMEOUT_TRIGGERED = "timeout_triggered"
 
 class VadEvent(Enum):
     NO_EVENT = "no_event"
-    SPEECH_STARTED = "speech_started"
-    SPEECH_ENDED = "speech_ended"
     SILENCE_TIMEOUT = "silence_timeout"
 
 class VadManager:
@@ -178,7 +175,7 @@ class ContinuousVoiceDetector:
         self.silence_frame_count = 0
         self.frames_for_timeout = int(self.silence_timeout_sec / self.frame_duration_sec)
         self.probability_buffer = deque(maxlen=self.frames_for_timeout) # Control memory growth with circular buffer
-        self.state = VadState.WAITING
+        self.state = VadState.SILENCE_COUNTING
         self._lock = threading.Lock()
         self.event_callback = event_callback
         self.logger = logging.getLogger(__name__)
@@ -207,13 +204,7 @@ class ContinuousVoiceDetector:
             current_state = self.state
             event = VadEvent.NO_EVENT
 
-            if current_state == VadState.WAITING:
-                if speech_detected:
-                    self.state = VadState.SPEECH_DETECTED
-                    self.silence_frame_count = 0
-                    event = VadEvent.SPEECH_STARTED
-
-            elif current_state == VadState.SPEECH_DETECTED:
+            if current_state == VadState.SPEECH_DETECTED:
                 if speech_detected:
                     self.silence_frame_count = 0
                 else:
@@ -240,7 +231,7 @@ class ContinuousVoiceDetector:
 
     def reset(self):
         with self._lock:
-            self.state = VadState.WAITING
+            self.state = VadState.SILENCE_COUNTING
             self.silence_frame_count = 0
             self.probability_buffer.clear()
             self.hysteresis.speech_detected = False

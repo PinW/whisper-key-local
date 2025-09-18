@@ -49,12 +49,6 @@ class StateManager:
             print(f"⏰ Stopping recording after {timeout_seconds} seconds of silence...")
             audio_data = self.audio_recorder.stop_recording()
             self._transcription_pipeline(audio_data, use_auto_enter=False)
-        elif event == VadEvent.SPEECH_STARTED:
-            self.logger.debug("VAD detected speech started")
-        elif event == VadEvent.SPEECH_ENDED:
-            self.logger.debug("VAD detected speech ended")
-        else:
-            self.logger.debug(f"VAD event: {event}")
     
     def stop_recording(self, use_auto_enter: bool = False) -> bool:
         currently_recording = self.audio_recorder.get_recording_status()
