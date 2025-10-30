@@ -2,8 +2,10 @@
 @completed.md
 
 ## Bugs
+- Auto-pasting does not work in Notepad on Windows (the auto-ENTER does though)
 
 ## Next
+- As a *user*, I want to **hide the console window** so the app runs cleanly in the background ([#8](https://github.com/PinW/whisper-key-local/issues/8))
 - As a *user* I want **lock output to window/field** so I don't need to click back into Claude Code terminal before start record
 - As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
 - As a *user*, I want to choose different **languages for transcription** so that I can get a free/passive accuracy boost
@@ -15,6 +17,10 @@
     - As a *developer*, I want **removed window handle support** so I'll have one less Windows-dependant dependancy
 
 ## Backlog
+
+### User Requests
+- As a *user*, I want to **load custom local models** so I can use specialized or fine-tuned models ([#10](https://github.com/PinW/whisper-key-local/issues/10))
+- As a *user*, I want a **shortcut to access the log file in the systray menu** so I can quickly troubleshoot issues ([#9](https://github.com/PinW/whisper-key-local/issues/9))
 
 ### Transcription History
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
