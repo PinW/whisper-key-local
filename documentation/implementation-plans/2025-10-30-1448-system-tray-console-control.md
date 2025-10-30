@@ -45,8 +45,7 @@ As a *user*, I want to **control console visibility through system tray** so I c
 - [ ] Update `config.defaults.yaml` - add new console section
   - [ ] Add `console:` section after system_tray section
   - [ ] Add `start_hidden: false` - start with console hidden
-  - [ ] Add `minimize_to_tray: false` - minimize hides to tray instead of taskbar
-  - [ ] Add documentation comments for each setting
+  - [ ] Add documentation comments for setting
 
 ### Phase 3: System Tray Menu Updates
 - [ ] Modify `system_tray.py` menu structure
@@ -55,34 +54,20 @@ As a *user*, I want to **control console visibility through system tray** so I c
   - [ ] Add `_show_console()` method to handle tray click and menu click
   - [ ] Remove Start/Stop Recording menu item (line 136)
 
-### Phase 4: Console Window Event Monitoring
-- [ ] Extend `console_manager.py` with window message monitoring
-  - [ ] Add `start_window_monitoring()` - monitor console window events
-  - [ ] Add window procedure to intercept WM_SIZE messages (minimize events)
-  - [ ] Add callback mechanism for minimize events
-  - [ ] Use separate thread for message loop
-  - [ ] Add `stop_window_monitoring()` for cleanup
-
-### Phase 5: Minimize to Tray Integration
-- [ ] Implement minimize-to-tray behavior in `console_manager.py`
-  - [ ] On minimize event, check config `minimize_to_tray` setting
-  - [ ] If enabled, hide console instead of minimizing to taskbar
-  - [ ] Log minimize-to-tray actions
-
-### Phase 6: State Manager Integration
+### Phase 4: State Manager Integration
 - [ ] Update `state_manager.py` to coordinate console visibility
   - [ ] Add console_manager instance initialization
   - [ ] Add `show_console()` method (delegates to console_manager)
   - [ ] Ensure console_manager available to system_tray
 
-### Phase 7: Startup Behavior
+### Phase 5: Startup Behavior
 - [ ] Update `main.py` initialization sequence
   - [ ] Initialize console_manager before other components
   - [ ] Check `console.start_hidden` config after startup complete
   - [ ] Hide console if configured after brief delay (allow startup messages to display)
   - [ ] Add logging for console visibility actions
 
-### Phase 8: Executable vs CLI Detection
+### Phase 6: Executable vs CLI Detection
 - [ ] Add runtime detection for built executable vs source/CLI mode
   - [ ] Detect if running as PyInstaller executable (check `sys.frozen` attribute)
   - [ ] Initialize console_manager for both modes, but with different capabilities
@@ -90,9 +75,7 @@ As a *user*, I want to **control console visibility through system tray** so I c
 - [ ] Extend console_manager for CLI mode terminal focusing
   - [ ] Use `win32console.GetConsoleWindow()` to get terminal window handle in CLI mode
   - [ ] Add `focus_terminal()` method using `win32gui.SetWindowPos()` with `HWND_TOP`
-  - [ ] Alternative: Use `win32gui.ShowWindow(handle, SW_RESTORE)` + `SetForegroundWindow()`
-  - [ ] In CLI mode, ignore `start_hidden` and `minimize_to_tray` config (log warning if set)
-  - [ ] Minimize event monitoring not applicable in CLI mode (terminal is external process)
+  - [ ] In CLI mode, ignore `start_hidden` config (log warning if set)
 - [ ] Update system_tray.py to handle both modes
   - [ ] In executable mode: "Show Console" menu item with full control
   - [ ] In CLI mode: "Focus Terminal" menu item (brings terminal to front)
@@ -109,19 +92,15 @@ import logging
 import threading
 
 class ConsoleManager:
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, is_executable_mode: bool = False):
         self.logger = logging.getLogger(__name__)
         self.config = config
+        self.is_executable_mode = is_executable_mode
         self.console_handle = None
-        self.monitoring_thread = None
-        self.minimize_callback = None
 
     def get_console_window(self):
         # Returns console window handle or None
-
-    def is_console_owned(self):
-        # Check if console belongs to this process
-        # Return len(win32console.GetConsoleProcessList()) == 1
+        # self.console_handle = win32console.GetConsoleWindow()
 
     def show_console(self):
         # Executable mode: Show/restore and focus console window
@@ -131,38 +110,21 @@ class ConsoleManager:
     def hide_console(self):
         # Executable mode only: Hide console to background
         # win32gui.ShowWindow(handle, win32con.SW_HIDE)
-        # Only called internally by minimize-to-tray, not exposed to user actions
 
     def focus_terminal(self):
-        # CLI mode: Bring terminal window to front (best effort)
-        # Method 1 (preferred): win32gui.SetWindowPos(handle, win32con.HWND_TOP, 0, 0, 0, 0,
-        #                                              win32con.SWP_NOSIZE | win32con.SWP_NOMOVE)
-        # Method 2 (fallback): win32gui.ShowWindow(handle, win32con.SW_RESTORE)
-        #                      win32gui.SetForegroundWindow(handle)
-
-    def is_console_visible(self):
-        # win32gui.IsWindowVisible(handle)
-
-    def start_window_monitoring(self, minimize_callback):
-        # Start monitoring thread for window events
-
-    def stop_window_monitoring(self):
-        # Stop monitoring and cleanup
+        # CLI mode: Bring terminal window to front
+        # win32gui.SetWindowPos(handle, win32con.HWND_TOP, 0, 0, 0, 0,
+        #                       win32con.SWP_NOSIZE | win32con.SWP_NOMOVE)
 ```
 
 ### Configuration Schema
 ```yaml
-# Console visibility and behavior settings
+# Console visibility settings
 console:
   # Start with console hidden
   # true = app starts with console hidden to system tray
   # false = app starts with console visible (default)
   start_hidden: false
-
-  # Minimize console to system tray instead of taskbar
-  # true = clicking minimize hides console to tray
-  # false = clicking minimize minimizes to taskbar normally
-  minimize_to_tray: false
 ```
 
 ### System Tray Menu Updates
@@ -181,13 +143,8 @@ menu_items = [
 ```
 
 **Behavior Notes:**
-- Hiding console only possible via minimize button (which respects `minimize_to_tray` config)
-
-### Window Event Detection Approach
-- Use `win32gui.SetWindowLong()` to install window procedure
-- Monitor `WM_SIZE` message with `SIZE_MINIMIZED` parameter
-- Alternative: Poll `win32gui.IsIconic()` in separate thread if SetWindowLong doesn't work
-- Call minimize_callback when minimize detected
+- Tray icon only shows/focuses console (never hides)
+- Console can be minimized normally to taskbar
 
 ### Executable vs CLI Mode Detection
 ```python
@@ -209,15 +166,12 @@ class ConsoleManager:
         self.console_handle = win32console.GetConsoleWindow()
 
         if is_executable_mode:
-            # Full console control: hide/show, minimize monitoring
+            # Full console control: hide/show
             if config.get('console', {}).get('start_hidden'):
                 # Initialize with start_hidden behavior
-            if config.get('console', {}).get('minimize_to_tray'):
-                # Start window event monitoring
         else:
             # CLI mode: only terminal focusing, ignore config
-            if config.get('console', {}).get('start_hidden') or \
-               config.get('console', {}).get('minimize_to_tray'):
+            if config.get('console', {}).get('start_hidden'):
                 self.logger.warning("Console config ignored in CLI mode")
 ```
 
@@ -229,32 +183,29 @@ class ConsoleManager:
 
 **Focusing Approach (avoids "Access Denied" errors):**
 ```python
-# Method 1: SetWindowPos with HWND_TOP (preferred)
+# SetWindowPos with HWND_TOP
 win32gui.SetWindowPos(
     console_handle,
     win32con.HWND_TOP,  # Bring to top of Z-order
     0, 0, 0, 0,  # Position (ignored with flags below)
     win32con.SWP_NOSIZE | win32con.SWP_NOMOVE  # Don't change size/position
 )
-
-# Method 2: ShowWindow + SetForegroundWindow (fallback)
-win32gui.ShowWindow(console_handle, win32con.SW_RESTORE)
-win32gui.SetForegroundWindow(console_handle)
 ```
 
+**Notes:**
+- If SetWindowPos doesn't work, fallback approach is `win32gui.ShowWindow(handle, win32con.SW_RESTORE)` + `win32gui.SetForegroundWindow(handle)`
+
 **Target Use Cases:**
-- **Windows 10 + Executable**: Full console control (hide/show, minimize-to-tray)
-- **Windows 11 + CLI**: Terminal focusing only (executable flagged as virus)
-- **Development**: Terminal focusing for quick access during coding
+- **Windows Executable**: Console show/focus control
+- **CLI**: Terminal focusing
 
 ## Files to Modify
 
 1. **NEW: `src/whisper_key/console_manager.py`**
    - Create new module for console visibility control
-   - Window event monitoring for minimize detection
 
 2. **`src/whisper_key/config.defaults.yaml`**
-   - Add new `console:` section with `start_hidden` and `minimize_to_tray` settings
+   - Add new `console:` section with `start_hidden` setting
 
 3. **`src/whisper_key/system_tray.py`**
    - Remove Start/Stop Recording menu item
@@ -277,13 +228,12 @@ win32gui.SetForegroundWindow(console_handle)
 - [ ] Clicking system tray icon shows the console window
 - [ ] Clicking tray icon when console is already visible brings it to foreground and focuses it
 - [ ] When `start_hidden: true`, app starts with console hidden to tray
-- [ ] When `minimize_to_tray: true`, clicking minimize button hides console to tray
-- [ ] When `minimize_to_tray: false`, clicking minimize button minimizes to taskbar normally
 - [ ] Closing console window (X button) exits the application
 - [ ] All recording/transcription functionality works with console hidden
 - [ ] "Show Console" menu item appears in system tray
 
 ### CLI Mode
-- [ ] Console manager initialized with terminal focusing capability only
+- [ ] Console manager initialized with terminal focusing capability
 - [ ] Tray icon click successfully brings terminal window to front
-- [ ] Console config options (`start_hidden`, `minimize_to_tray`) ignored with warning
+- [ ] "Focus Terminal" menu item appears in system tray
+- [ ] `start_hidden` config ignored with warning in CLI mode
