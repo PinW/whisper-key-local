@@ -6,6 +6,8 @@
 ## Next
 - As a *user* I want **lock output to window/field** so I don't need to click back into Claude Code terminal before start record
 - As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
+- As a *user*, I want to choose different **languages for transcription** so that I can get a free/passive accuracy boost
+- As a *user*, I want to add **custom words** so rare words that I say often are translated accurately
 
 ### Cross-Platform
 - As a *mac user*, I want to use this app on **macOS**
@@ -13,6 +15,16 @@
     - As a *developer*, I want **removed window handle support** so I'll have one less Windows-dependant dependancy
 
 ## Backlog
+
+### Transcription History
+- As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
+
+### VAD & Keyword Controls
+- As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
+
+### Voice Commands
+- As a *user* I want **voice API** so I can do more than just transcribe voice
+- As a *user* I want **voice commands** so I can quickly activate tasks
 
 ### Packaging & Updates
 - As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
@@ -28,18 +40,7 @@
     - Paste mode
         - Preserve clipboard as sub-option (auto-paste only)
     - Language
-
-### Transcription History
-- As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
-
-### VAD & Keyword Controls
-- As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
-
-### Voice Commands
-- As a *user* I want **voice API** so I can do more than just transcribe voice
-- As a *user* I want **voice commands** so I can quickly activate tasks
-
-### Meeting Mode
+### Real-Time Transcription
 - As a *user* I want **meeting mode** so I can transcribe an entire meeting in real-time
 
 ### Technical
@@ -50,8 +51,6 @@
 
 ### Transcription Quality
 - As a *user*, I want **parakeet models** so I can get transcriptions faster wit more accuracy
-- As a *user*, I want to choose different **languages for transcription** to improve accuracy
-- As a *user*, I want to add **custom words** to improve accuracy
 - As a *user*, I want **automatic punctuation and text formatting** so the output is human-friendly (not just LLM)
 - As a *user*, I want to see my **transcription history** so I can search through it
 
