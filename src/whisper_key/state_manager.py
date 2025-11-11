@@ -9,6 +9,7 @@ from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
 from .config_manager import ConfigManager
 from .audio_feedback import AudioFeedback
+from .console_manager import ConsoleManager
 from .utils import OptionalComponent
 from .voice_activity_detection import VadEvent, VadManager
 
@@ -19,12 +20,14 @@ class StateManager:
                  clipboard_manager: ClipboardManager,
                  config_manager: ConfigManager,
                  vad_manager: VadManager,
+                 console_manager: ConsoleManager,
                  system_tray: Optional[SystemTray] = None,
                  audio_feedback: Optional[AudioFeedback] = None):
 
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
         self.clipboard_manager = clipboard_manager
+        self.console_manager = console_manager
         self.system_tray = OptionalComponent(system_tray)
         self.config_manager = config_manager
         self.audio_feedback = OptionalComponent(audio_feedback)
@@ -232,9 +235,12 @@ class StateManager:
         self.logger.warning(f"Unexpected state for model change: {current_state}")
         return False
     
-    def update_transcription_mode(self, value):            
+    def update_transcription_mode(self, value):
         self.config_manager.update_user_setting('clipboard', 'auto_paste', value)
         self.clipboard_manager.update_auto_paste(value)
+
+    def show_console(self):
+        self.console_manager.show_console()
 
     def _execute_model_change(self, new_model_size: str):
         def progress_callback(message: str):

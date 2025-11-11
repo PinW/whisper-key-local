@@ -15,8 +15,12 @@ from .clipboard_manager import ClipboardManager
 from .state_manager import StateManager
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
+from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
 from .utils import beautify_hotkey, OptionalComponent, get_user_app_data_path
+
+def is_built_executable():
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
 def setup_logging(config_manager: ConfigManager):
     log_config = config_manager.get_logging_config()
@@ -99,6 +103,12 @@ def setup_audio_feedback(audio_feedback_config):
         cancel_sound=audio_feedback_config['cancel_sound']
     )
 
+def setup_console_manager(console_config, is_executable_mode):
+    return ConsoleManager(
+        config=console_config,
+        is_executable_mode=is_executable_mode
+    )
+
 def setup_system_tray(tray_config, config_manager, state_manager=None):
     return SystemTray(
         state_manager=state_manager,
@@ -160,6 +170,10 @@ def main():
         tray_config = config_manager.get_system_tray_config()
         audio_feedback_config = config_manager.get_audio_feedback_config()
         vad_config = config_manager.get_vad_config()
+        console_config = config_manager.get_console_config()
+
+        is_executable = is_built_executable()
+        console_manager = setup_console_manager(console_config, is_executable)
 
         vad_manager = setup_vad(vad_config)
         whisper_engine = setup_whisper_engine(whisper_config, vad_manager)
@@ -170,6 +184,7 @@ def main():
             audio_recorder=None,
             whisper_engine=whisper_engine,
             clipboard_manager=clipboard_manager,
+            console_manager=console_manager,
             system_tray=None,
             config_manager=config_manager,
             audio_feedback=audio_feedback,
@@ -183,10 +198,10 @@ def main():
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
         
         system_tray.start()
-        
+
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.")
         print("Press Ctrl+C to quit.")
-        
+
         while not shutdown_event.wait(timeout=0.1):
             pass
             
