@@ -99,8 +99,6 @@ class SystemTray:
             auto_paste_enabled = self.config_manager.get_setting('clipboard', 'auto_paste')
             current_model = self.config_manager.get_setting('whisper', 'model_size')
 
-            console_label = "Focus Terminal" if hasattr(self.state_manager, 'console_manager') and not self.state_manager.console_manager.is_executable_mode else "Show Console"
-
             def is_current_model(model_name):
                 return model_name == current_model
             
@@ -125,11 +123,19 @@ class SystemTray:
                 pystray.MenuItem("Copy to clipboard", lambda icon, item: self._set_transcription_mode(False), radio=True, checked=lambda item: not auto_paste_enabled),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_sub_menu_items)),
-                pystray.Menu.SEPARATOR,
-                pystray.MenuItem(console_label, self._show_console, default=True),
+            ]
+
+            is_executable = self.state_manager.console_manager.is_executable_mode
+            if is_executable:
+                menu_items.extend([
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem("Show Console", self._show_console, default=True),
+                ])
+
+            menu_items.extend([
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Exit", self._quit_application_from_tray)
-            ]
+            ])
             
             menu = pystray.Menu(*menu_items)
 
