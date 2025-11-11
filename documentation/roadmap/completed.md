@@ -17,3 +17,4 @@
 - As a *user*, I want **cancel recording action** so I can reset if I mess up too much without going through transcription and deleting what was pasted
 - As a *tester*, I want **PyPI** so I can easily install the app
 - As a *user* I want **auto-stop recording** so I won't record to the limit when I accidentally turn it on or forget it is on
+- As a *user*, I want to **hide the console window** so the app runs cleanly in the background ([#8](https://github.com/PinW/whisper-key-local/issues/8))
