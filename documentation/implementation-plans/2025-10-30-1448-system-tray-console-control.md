@@ -32,53 +32,59 @@ As a *user*, I want to **control console visibility through system tray** so I c
 ## Implementation Plan
 
 ### Phase 1: Console Visibility Module
-- [ ] Create `src/whisper_key/console_manager.py` with console control functionality
-  - [ ] Import win32console, win32gui, win32con
-  - [ ] Add `get_console_window()` - safely get console window handle
-  - [ ] Add `is_console_owned()` - verify console belongs to this process
-  - [ ] Add `show_console()` - make console visible
-  - [ ] Add `hide_console()` - hide console to background
-  - [ ] Add `is_console_visible()` - check current visibility state
-  - [ ] Add error handling and logging for all operations
+- [x] Create `src/whisper_key/console_manager.py` with console control functionality
+  - ✅ Imported win32console, win32gui, win32con, win32process
+  - ✅ Added `get_console_window()` - safely gets console window handle with error handling
+  - ✅ Added `is_console_owned()` - verifies console belongs to this process using PID comparison
+  - ✅ Added `show_console()` - shows/restores console in executable mode, focuses terminal in CLI mode with fallback
+  - ✅ Added `hide_console()` - hides console (executable mode only, warns in CLI mode)
+  - ✅ Added `is_console_visible()` - checks current visibility state using win32gui.IsWindowVisible
+  - ✅ Added comprehensive error handling, logging, and thread safety with lock
 
 ### Phase 2: Configuration Schema
-- [ ] Update `config.defaults.yaml` - add new console section
-  - [ ] Add `console:` section after system_tray section
-  - [ ] Add `start_hidden: false` - start with console hidden
-  - [ ] Add documentation comments for setting
+- [x] Update `config.defaults.yaml` - add new console section
+  - ✅ Added `console:` section after system_tray section (lines 190-196)
+  - ✅ Added `start_hidden: false` setting with default value
+  - ✅ Added documentation comments explaining the setting and CLI mode behavior
 
 ### Phase 3: System Tray Menu Updates
-- [ ] Modify `system_tray.py` menu structure
-  - [ ] Add "Show Console" menu item (or focuses if already shown but in background)
-  - [ ] Change default click action from recording toggle to show console
-  - [ ] Add `_show_console()` method to handle tray click and menu click
-  - [ ] Remove Start/Stop Recording menu item (line 136)
+- [x] Modify `system_tray.py` menu structure
+  - ✅ Added "Show Console" menu item (executable mode) / "Focus Terminal" (CLI mode) with dynamic label
+  - ✅ Changed default click action to show console (default=True on menu item)
+  - ✅ Added `_show_console()` method that delegates to state_manager.show_console()
+  - ✅ Removed Start/Stop Recording menu item and related action_label/action_enabled logic
 
 ### Phase 4: State Manager Integration
-- [ ] Update `state_manager.py` to coordinate console visibility
-  - [ ] Add console_manager instance initialization
-  - [ ] Add `show_console()` method (delegates to console_manager)
-  - [ ] Ensure console_manager available to system_tray
+- [x] Update `state_manager.py` to coordinate console visibility
+  - ✅ Added ConsoleManager import (line 12)
+  - ✅ Added console_manager as required parameter (line 23) and instance variable (line 30)
+  - ✅ Added `show_console()` method at line 242-243 that delegates to console_manager
+  - ✅ Console manager is accessible to system_tray via state_manager.console_manager
 
 ### Phase 5: Startup Behavior
-- [ ] Update `main.py` initialization sequence
-  - [ ] Initialize console_manager before other components
-  - [ ] Check `console.start_hidden` config after startup complete
-  - [ ] Hide console if configured after brief delay (allow startup messages to display)
-  - [ ] Add logging for console visibility actions
+- [x] Update `main.py` initialization sequence
+  - ✅ Added ConsoleManager import (line 18)
+  - ✅ Added `is_built_executable()` helper function (lines 22-23) to detect PyInstaller executable
+  - ✅ Added `setup_console_manager()` function (lines 106-110)
+  - ✅ Added `get_console_config()` method to ConfigManager (config_manager.py:206-207)
+  - ✅ Initialize console_manager early with mode detection (lines 173-176)
+  - ✅ Pass console_manager to StateManager (line 187)
+  - ✅ Check `console.start_hidden` config after startup (lines 205-211)
+  - ✅ Hide console after 2-second delay if configured (executable mode only)
+  - ✅ Log warning if start_hidden set in CLI mode (line 211)
 
 ### Phase 6: Executable vs CLI Detection
-- [ ] Add runtime detection for built executable vs source/CLI mode
-  - [ ] Detect if running as PyInstaller executable (check `sys.frozen` attribute)
-  - [ ] Initialize console_manager for both modes, but with different capabilities
-  - [ ] Log mode detection (executable vs CLI)
-- [ ] Extend console_manager for CLI mode terminal focusing
-  - [ ] Use `win32console.GetConsoleWindow()` to get terminal window handle in CLI mode
-  - [ ] Add `focus_terminal()` method using `win32gui.SetWindowPos()` with `HWND_TOP`
-  - [ ] In CLI mode, ignore `start_hidden` config (log warning if set)
-- [ ] Update system_tray.py to handle both modes
-  - [ ] In executable mode: "Show Console" menu item with full control
-  - [ ] In CLI mode: "Focus Terminal" menu item (brings terminal to front)
+- [x] Add runtime detection for built executable vs source/CLI mode
+  - ✅ Detect PyInstaller executable using `sys.frozen` and `sys._MEIPASS` (line 22-23)
+  - ✅ Console_manager initialized with is_executable_mode parameter (line 176)
+  - ✅ Mode logged in console_manager.__init__() (console_manager.py:22)
+- [x] Extend console_manager for CLI mode terminal focusing
+  - ✅ `win32console.GetConsoleWindow()` works in both modes (console_manager.py:30)
+  - ✅ `show_console()` uses SetWindowPos for CLI, ShowWindow/SetForegroundWindow for executable (lines 59-88)
+  - ✅ `start_hidden` config ignored in CLI mode with warning (main.py:211)
+- [x] Update system_tray.py to handle both modes
+  - ✅ Dynamic menu label: "Show Console" (executable) / "Focus Terminal" (CLI) (system_tray.py:102)
+  - ✅ Both modes use same _show_console() method with different behavior based on is_executable_mode
 
 ## Implementation Details
 

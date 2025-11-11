@@ -183,7 +183,15 @@ system_tray:
   # true = show icon in system tray with status and menu
   # false = run without system tray (console mode only)
   enabled: true
-  
+
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
+
+# =============================================================================
+# CONSOLE VISIBILITY SETTINGS
+# =============================================================================
+console:
+  # Start with console hidden to system tray
+  # Note: This setting is ignored in CLI mode
+  start_hidden: false
 

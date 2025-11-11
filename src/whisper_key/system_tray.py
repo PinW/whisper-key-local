@@ -92,21 +92,14 @@ class SystemTray:
         return icon
     
     def _create_menu(self):
-        try:           
+        try:
             app_state = self.state_manager.get_application_state()
-            is_processing = app_state.get('processing', False)
-            is_recording = app_state.get('recording', False)
             is_model_loading = app_state.get('model_loading', False)
 
-            action_label = "Start Recording"
-            action_enabled = True
-            if is_recording:
-                action_label = "Stop Recording"
-            elif is_processing or is_model_loading:
-                action_enabled = False
-            
             auto_paste_enabled = self.config_manager.get_setting('clipboard', 'auto_paste')
             current_model = self.config_manager.get_setting('whisper', 'model_size')
+
+            console_label = "Focus Terminal" if hasattr(self.state_manager, 'console_manager') and not self.state_manager.console_manager.is_executable_mode else "Show Console"
 
             def is_current_model(model_name):
                 return model_name == current_model
@@ -133,7 +126,7 @@ class SystemTray:
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_sub_menu_items)),
                 pystray.Menu.SEPARATOR,
-                pystray.MenuItem(action_label, self._tray_toggle_recording, enabled=action_enabled, default=True),
+                pystray.MenuItem(console_label, self._show_console, default=True),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Exit", self._quit_application_from_tray)
             ]
@@ -148,6 +141,9 @@ class SystemTray:
 
     def _tray_toggle_recording(self, icon=None, item=None):
         self.state_manager.toggle_recording()
+
+    def _show_console(self, icon=None, item=None):
+        self.state_manager.show_console()
 
     def _set_transcription_mode(self, auto_paste: bool):        
         self.state_manager.update_transcription_mode(auto_paste)

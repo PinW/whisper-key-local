@@ -202,7 +202,10 @@ class ConfigManager:
     
     def get_audio_feedback_config(self) -> Dict[str, Any]:
         return self.config['audio_feedback'].copy()
-    
+
+    def get_console_config(self) -> Dict[str, Any]:
+        return self.config.get('console', {}).copy()
+
     def get_setting(self, section: str, key: str) -> Any:
         return self.config[section][key]
     
