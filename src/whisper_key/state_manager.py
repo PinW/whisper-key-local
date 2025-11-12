@@ -328,4 +328,3 @@ class StateManager:
 
         except Exception as e:
             self.logger.error(f"❌ Failed to change audio device: {e}")
-            print(f"❌ Failed to change audio device: {e}")
