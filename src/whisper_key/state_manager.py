@@ -36,8 +36,9 @@ class StateManager:
         self.is_processing = False
         self.is_model_loading = False
         self.last_transcription = None
-        self._pending_model_change = None  # Store pending model change request
-        self._state_lock = threading.Lock()  # Thread safety for state operations
+        self._pending_model_change = None
+        self._pending_device_change = None
+        self._state_lock = threading.Lock()
 
         self.logger = logging.getLogger(__name__)
     
@@ -136,16 +137,22 @@ class StateManager:
         finally:
             with self._state_lock:
                 self.is_processing = False
-                
-                pending_model = self._pending_model_change                    
-            
-            # Execute pending model change outside of lock to avoid deadlock
-            if 'pending_model' in locals() and pending_model:
+                pending_model = self._pending_model_change
+                pending_device = self._pending_device_change
+
+            if pending_device:
+                device_id, device_name = pending_device
+                self.logger.info(f"Executing pending device change to: {device_name}")
+                self._execute_audio_device_change(device_id, device_name)
+                self._pending_device_change = None
+
+            if pending_model:
                 self.logger.info(f"Executing pending model change to: {pending_model}")
                 print(f"🔄 Processing complete, now switching to {pending_model} model...")
                 self._execute_model_change(pending_model)
                 self._pending_model_change = None
-            else:
+
+            if not (pending_device or pending_model):
                 self.system_tray.update_state("idle")
     
     def get_application_state(self) -> dict:
@@ -264,3 +271,61 @@ class StateManager:
             self.logger.error(f"Failed to initiate model change: {e}")
             print(f"❌ Failed to change model: {e}")
             self.set_model_loading(False)
+
+    def get_available_audio_devices(self):
+        return AudioRecorder.get_available_audio_devices()
+
+    def get_current_audio_device_id(self):
+        return self.audio_recorder.device
+
+    def request_audio_device_change(self, device_id: int, device_name: str):
+        current_state = self.get_current_state()
+
+        if device_id == self.audio_recorder.device:
+            return True
+
+        if current_state == "recording":
+            print(f"🎤 Cancelling recording to switch audio device...")
+            self.cancel_active_recording()
+            self._execute_audio_device_change(device_id, device_name)
+            return True
+
+        if current_state == "processing":
+            print(f"⏳ Queueing audio device change until transcription completes...")
+            self._pending_device_change = (device_id, device_name)
+            return True
+
+        if current_state == "idle":
+            self._execute_audio_device_change(device_id, device_name)
+            return True
+
+        self.logger.warning(f"Unexpected state for device change: {current_state}")
+        return False
+
+    def _execute_audio_device_change(self, device_id: int, device_name: str):
+        try:
+            print(f"🎤 Switching to: {device_name}")
+
+            channels = self.audio_recorder.channels
+            dtype = self.audio_recorder.dtype
+            max_duration = self.audio_recorder.max_duration
+            on_max_duration = self.audio_recorder.on_max_duration_reached
+            vad_manager = self.audio_recorder.vad_manager
+
+            new_recorder = AudioRecorder(
+                on_vad_event=self.handle_vad_event,
+                channels=channels,
+                dtype=dtype,
+                max_duration=max_duration,
+                on_max_duration_reached=on_max_duration,
+                vad_manager=vad_manager,
+                device=device_id if device_id != -1 else None
+            )
+
+            self.audio_recorder = new_recorder
+
+            print(f"✅ Successfully switched audio device to: {device_name}")
+
+        except Exception as e:
+            self.logger.error(f"❌ Failed to change audio device: {e}")
+            print(f"❌ Failed to change audio device: {e}")

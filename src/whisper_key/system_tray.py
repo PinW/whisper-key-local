@@ -99,12 +99,42 @@ class SystemTray:
             auto_paste_enabled = self.config_manager.get_setting('clipboard', 'auto_paste')
             current_model = self.config_manager.get_setting('whisper', 'model_size')
 
+            available_devices = self.state_manager.get_available_audio_devices()
+
+            def is_current_device(dev_id):
+                return self.state_manager.get_current_audio_device_id() == dev_id
+
+            def make_device_action(dev_id, dev_name):
+                return lambda icon, item: self._select_audio_device(dev_id, dev_name)
+
+            def make_device_checker(dev_id):
+                return lambda item: is_current_device(dev_id)
+
+            audio_device_items = []
+
+            if available_devices:
+                for device in available_devices:
+                    device_id = device['id']
+                    device_name = device['name']
+
+                    if len(device_name) > 32:
+                        device_name = device_name[:29] + "..."
+
+                    audio_device_items.append(
+                        pystray.MenuItem(
+                            device_name,
+                            make_device_action(device_id, device['name']),
+                            radio=True,
+                            checked=make_device_checker(device_id)
+                        )
+                    )
+
             def is_current_model(model_name):
                 return model_name == current_model
-            
+
             def model_selection_enabled():
                 return not is_model_loading
-            
+
             model_sub_menu_items = [
                 pystray.MenuItem("Tiny (75MB, fastest)", lambda icon, item: self._select_model("tiny"), radio=True, checked=lambda item: is_current_model("tiny"), enabled=model_selection_enabled()),
                 pystray.MenuItem("Base (142MB, balanced)", lambda icon, item: self._select_model("base"), radio=True, checked=lambda item: is_current_model("base"), enabled=model_selection_enabled()),
@@ -119,6 +149,11 @@ class SystemTray:
             ]
 
             menu_items = [
+                pystray.MenuItem(
+                    f"Audio Source",
+                    pystray.Menu(*audio_device_items)
+                ),
+                pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Auto-paste", lambda icon, item: self._set_transcription_mode(True), radio=True, checked=lambda item: auto_paste_enabled),
                 pystray.MenuItem("Copy to clipboard", lambda icon, item: self._set_transcription_mode(False), radio=True, checked=lambda item: not auto_paste_enabled),
                 pystray.Menu.SEPARATOR,
@@ -155,18 +190,27 @@ class SystemTray:
         self.state_manager.update_transcription_mode(auto_paste)
         self.icon.menu = self._create_menu()
 
-    def _select_model(self, model_size: str):        
+    def _select_model(self, model_size: str):
         try:
             success = self.state_manager.request_model_change(model_size)
-            
+
             if success:
-                self.config_manager.update_user_setting('whisper', 'model_size', model_size)                
+                self.config_manager.update_user_setting('whisper', 'model_size', model_size)
                 self.icon.menu = self._create_menu()
             else:
                 self.logger.warning(f"Request to change model to {model_size} was not accepted")
-                
+
         except Exception as e:
             self.logger.error(f"Error selecting model {model_size}: {e}")
+
+    def _select_audio_device(self, device_id: int, device_name: str):
+        success = self.state_manager.request_audio_device_change(device_id, device_name)
+
+        if success:
+            self.config_manager.update_user_setting('audio', 'input_device', device_id)
+            self.icon.menu = self._create_menu()
+        else:
+            self.logger.warning(f"Request to change audio device to {device_id} was not accepted")
 
     def _quit_application_from_tray(self, icon=None, item=None):        
         os.kill(os.getpid(), signal.SIGINT)

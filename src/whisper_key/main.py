@@ -65,7 +65,8 @@ def setup_audio_recorder(audio_config, state_manager, vad_manager):
         max_duration=audio_config['max_duration'],
         on_max_duration_reached=state_manager.handle_max_recording_duration_reached,
         on_vad_event=state_manager.handle_vad_event,
-        vad_manager=vad_manager
+        vad_manager=vad_manager,
+        device=audio_config['input_device']
     )
 
 def setup_vad(vad_config):

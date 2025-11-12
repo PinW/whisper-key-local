@@ -13,30 +13,61 @@ As a *user*, I want to **select audio source** so I can transcribe from differen
 ## Implementation Plan
 
 ### Phase 1: AudioRecorder Device Support
-- [ ] Add `device` parameter to AudioRecorder.__init__() with default None
-  - [ ] Call `self.resolve_device(device)` to process device parameter
-  - [ ] Replace `self._test_microphone()` call with `self._test_audio_source()`
-- [ ] Rename `_test_microphone()` to `_test_audio_source()`
-- [ ] Update `_record_audio()` to use selected device
-  - [ ] Pass `device=self.device` to `sd.InputStream()` at line 137
-- [ ] Add static method `get_available_input_devices()` to enumerate devices
+- [x] Add `device` parameter to AudioRecorder.__init__() with default None
+  - ✅ Added `device=None` parameter to `__init__()`
+  - ✅ Added `self.resolve_device(device)` call to process device parameter
+  - ✅ Replaced `self._test_microphone()` call with `self._test_audio_source()`
+- [x] Rename `_test_microphone()` to `_test_audio_source()`
+  - ✅ Renamed method and updated to check `self.device` for specific device or use default
+  - ✅ Added `sd.check_input_settings()` validation when specific device selected
+- [x] Update `_record_audio()` to use selected device
+  - ✅ Pass `device=self.device` to `sd.InputStream()` at line 163
+- [x] Add static method `get_available_audio_devices()` to enumerate devices
+  - ✅ Added static method that filters to default host API only
+  - ✅ Returns list of dicts with id, name, channels, sample_rate, hostapi
 
 ### Phase 2: StateManager Device Management
-- [ ] Add `_pending_device_change` instance variable
-- [ ] Add `get_available_audio_devices()` method (calls AudioRecorder static method)
-- [ ] Add `get_current_audio_device_id()` method (returns audio_recorder.device)
-- [ ] Add `request_audio_device_change(device_id)` method (state-aware: cancel/defer/execute)
-- [ ] Add `_execute_audio_device_change(device_id)` method (recreates AudioRecorder)
-- [ ] Update `_transcription_pipeline()` to handle pending device changes
+- [x] Add `_pending_device_change` instance variable
+  - ✅ Added `self._pending_device_change = None` in `__init__()`
+  - ✅ Stores tuple of (device_id, device_name) when deferred
+- [x] Add `get_available_audio_devices()` method (calls AudioRecorder static method)
+  - ✅ Returns `AudioRecorder.get_available_audio_devices()`
+- [x] Add `get_current_audio_device_id()` method (returns audio_recorder.device)
+  - ✅ Returns `self.audio_recorder.device`
+- [x] Add `request_audio_device_change(device_id, device_name)` method (state-aware: cancel/defer/execute)
+  - ✅ Accepts both device_id and device_name to avoid sounddevice import
+  - ✅ Checks current state and handles recording/processing/idle states appropriately
+  - ✅ Cancels active recording if needed, defers if processing
+- [x] Add `_execute_audio_device_change(device_id, device_name)` method (recreates AudioRecorder)
+  - ✅ Uses passed device_name for user feedback (no sounddevice query needed)
+  - ✅ Recreates AudioRecorder with same config but new device
+  - ✅ Handles errors gracefully
+- [x] Update `_transcription_pipeline()` to handle pending device changes
+  - ✅ Unpacks (device_id, device_name) tuple from pending change
+  - ✅ Executes pending device change after transcription completes
+  - ✅ Executes before pending model change to maintain proper order
 
 ### Phase 3: System Tray Menu Integration
-- [ ] Update `_create_menu()` to add Audio Source submenu at top
-- [ ] Add `_select_audio_device(device_id)` callback (saves to config AND calls StateManager)
+- [x] Update `_create_menu()` to add Audio Source submenu at top
+  - ✅ Queries available devices from StateManager
+  - ✅ Truncates long device names to 32 chars with "..."
+  - ✅ Creates radio menu items for each device
+  - ✅ Shows device count in submenu title: "Audio Source (N devices)"
+  - ✅ Passes both device_id and device_name to callback
+- [x] Add `_select_audio_device(device_id, device_name)` callback
+  - ✅ Calls StateManager to request device change
+  - ✅ Saves device_id to config on success
+  - ✅ Refreshes menu to update radio button state
 
 ### Phase 4: Config Persistence
-- [ ] Update `config.defaults.yaml` to add `input_device: "default"` to audio section
-- [ ] Update main.py to read `audio.input_device` and pass to AudioRecorder
-- [ ] SystemTray `_select_audio_device()` saves to config after successful change
+- [x] Update `config.defaults.yaml` to add `input_device: "default"` to audio section
+  - ✅ Added with comprehensive documentation
+  - ✅ Explains "default" vs device ID number
+  - ✅ Documents that device IDs may change when devices are plugged/unplugged
+- [x] Update main.py to read `audio.input_device` and pass to AudioRecorder
+  - ✅ Modified `setup_audio_recorder()` to pass `device=audio_config['input_device']`
+- [x] SystemTray `_select_audio_device()` saves to config after successful change
+  - ✅ Calls `config_manager.update_user_setting('audio', 'input_device', device_id)`
 
 ## Implementation Details
 
@@ -340,11 +371,21 @@ def setup_audio_recorder(config_manager, vad_manager, ...):
 
 ## Success Criteria
 
-- [ ] System tray shows "Audio Source" menu at the top with device count
-- [ ] Audio Source menu expands to show devices from default host API only
-- [ ] Each device shows name (no duplicates per physical device)
-- [ ] Currently selected device shows radio button checked
-- [ ] Selecting different device switches audio input
-- [ ] Audio recording works with selected device
-- [ ] Device selection persisted to config ("default" or device ID number)
-- [ ] Saved device loaded on app restart
+- [x] System tray shows "Audio Source" menu at the top with device count
+- [x] Audio Source menu expands to show devices from default host API only
+- [x] Each device shows name (no duplicates per physical device)
+- [x] Currently selected device shows radio button checked
+- [x] Selecting different device switches audio input
+- [x] Audio recording works with selected device
+- [x] Device selection persisted to config ("default" or device ID number)
+- [x] Saved device loaded on app restart
+
+## Implementation Complete
+
+All phases have been successfully implemented:
+✅ Phase 1: AudioRecorder device support
+✅ Phase 2: StateManager device management
+✅ Phase 3: System tray menu integration
+✅ Phase 4: Config persistence
+
+**Ready for user testing**

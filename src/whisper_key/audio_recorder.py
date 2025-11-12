@@ -20,7 +20,8 @@ class AudioRecorder:
                  dtype: str = "float32",
                  max_duration: int = 30,
                  on_max_duration_reached: callable = None,
-                 vad_manager = None):
+                 vad_manager = None,
+                 device = None):
 
         self.sample_rate = self.WHISPER_SAMPLE_RATE
         self.channels = channels
@@ -37,7 +38,8 @@ class AudioRecorder:
         self.on_vad_event = on_vad_event
         self.continuous_vad = self._setup_continuous_vad_monitoring()
 
-        self._test_microphone()
+        self.resolve_device(device)
+        self._test_audio_source()
 
     def _setup_continuous_vad_monitoring(self):
         if self.vad_manager.is_available():
@@ -48,6 +50,15 @@ class AudioRecorder:
         else:
             return None
 
+    def resolve_device(self, device):
+        if device == "default" or device is None:
+            self.device = None
+        elif isinstance(device, int):
+            self.device = device
+        else:
+            self.logger.warning(f"Invalid device parameter: {device}, using default")
+            self.device = None
+
     def _handle_vad_event(self, event: VadEvent):
         self.on_vad_event(event)
 
@@ -55,13 +66,23 @@ class AudioRecorder:
         if self.recording_thread:
             self.recording_thread.join(timeout=self.THREAD_JOIN_TIMEOUT)
     
-    def _test_microphone(self):
+    def _test_audio_source(self):
         try:
-            default_input = sd.query_devices(kind='input')
-            self.logger.info(f"Default microphone: {default_input['name']}")
+            if self.device is not None:
+                device_info = sd.query_devices(self.device, kind='input')
+                self.logger.info(f"Selected source: {device_info['name']}")
 
+                sd.check_input_settings(
+                    device=self.device,
+                    channels=self.channels,
+                    samplerate=self.sample_rate,
+                    dtype=self.STREAM_DTYPE
+                )
+            else:
+                default_input = sd.query_devices(kind='input')
+                self.logger.info(f"Default source: {default_input['name']}")
         except Exception as e:
-            self.logger.error(f"Microphone test failed: {e}")
+            self.logger.error(f"Audio source test failed: {e}")
             raise
     
     def start_recording(self):
@@ -138,7 +159,8 @@ class AudioRecorder:
                                 channels=self.channels,
                                 callback=audio_callback,
                                 dtype=self.STREAM_DTYPE,
-                                blocksize=blocksize):
+                                blocksize=blocksize,
+                                device=self.device):
 
                 while self.is_recording:
                     if self._check_max_duration_exceeded():
@@ -172,3 +194,29 @@ class AudioRecorder:
         if audio_data is None or len(audio_data) == 0:
             return 0.0
         return len(audio_data) / self.sample_rate
+
+    @staticmethod
+    def get_available_audio_devices():
+        devices = []
+        all_devices = sd.query_devices()
+
+        default_device = sd.query_devices(kind='input')
+        default_hostapi = default_device['hostapi']
+
+        for idx, device in enumerate(all_devices):
+            if device['hostapi'] != default_hostapi:
+                continue
+
+            if device['max_input_channels'] > 0 or device['max_output_channels'] > 0:
+                hostapi_name = sd.query_hostapis(device['hostapi'])['name']
+
+                devices.append({
+                    'id': idx,
+                    'name': device['name'],
+                    'input_channels': device['max_input_channels'],
+                    'output_channels': device['max_output_channels'],
+                    'sample_rate': device['default_samplerate'],
+                    'hostapi': hostapi_name
+                })
+
+        return devices
