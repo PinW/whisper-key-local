@@ -69,15 +69,8 @@ class AudioRecorder:
     def _test_audio_source(self):
         try:
             if self.device is not None:
-                device_info = sd.query_devices(self.device, kind='input')
-                self.logger.info(f"Selected source: {device_info['name']}")
-
-                sd.check_input_settings(
-                    device=self.device,
-                    channels=self.channels,
-                    samplerate=self.sample_rate,
-                    dtype=self.STREAM_DTYPE
-                )
+                device_info = sd.query_devices(self.device)
+                self.logger.info(f"Using device: {device_info['name']}")
             else:
                 default_input = sd.query_devices(kind='input')
                 self.logger.info(f"Default source: {default_input['name']}")
@@ -124,8 +117,7 @@ class AudioRecorder:
         if len(self.audio_data) == 0:
             print("   ✗ No audio data recorded!")
             return None
-        
-        # Convert list of audio chunks into a single numpy array
+
         audio_array = np.concatenate(self.audio_data, axis=0)
         duration = self.get_audio_duration(audio_array)
         self.logger.info(f"Recorded {duration:.2f} seconds of audio")
