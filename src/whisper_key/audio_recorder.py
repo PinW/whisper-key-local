@@ -211,11 +211,10 @@ class AudioRecorder:
         default_hostapi = default_device['hostapi']
 
         for idx, device in enumerate(all_devices):
-            if device['hostapi'] != default_hostapi:
+            hostapi_name = sd.query_hostapis(device['hostapi'])['name']
+            if 'WASAPI' not in hostapi_name.upper():
                 continue
             if device['max_input_channels'] > 0:
-                hostapi_name = sd.query_hostapis(device['hostapi'])['name']
-
                 devices.append({
                     'id': idx,
                     'name': device['name'],

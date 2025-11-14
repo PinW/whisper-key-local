@@ -108,7 +108,6 @@ class SystemTray:
             def switch_device(dev_id, dev_name):
                 return lambda icon, item: self._select_audio_device(dev_id, dev_name)
 
-
             audio_device_items = []
 
             if available_devices:
