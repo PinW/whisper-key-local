@@ -54,7 +54,16 @@ class AudioRecorder:
         if device == "default" or device is None:
             self.device = None
         elif isinstance(device, int):
-            self.device = device
+            try:
+                device_info = sd.query_devices(device)
+                if device_info.get('max_input_channels', 0) > 0:
+                    self.device = device
+                else:
+                    self.logger.warning(f"Selected device {device} has no input channels; using default input instead")
+                    self.device = None
+            except Exception as e:
+                self.logger.warning(f"Failed to load device {device}: {e}. Falling back to default input")
+                self.device = None
         else:
             self.logger.warning(f"Invalid device parameter: {device}, using default")
             self.device = None
@@ -187,6 +196,12 @@ class AudioRecorder:
             return 0.0
         return len(audio_data) / self.sample_rate
 
+    def get_device_id(self) -> Optional[int]:
+        if self.device is not None:
+            return self.device
+        default_device_id = sd.query_devices(kind='input')['index']
+        return default_device_id
+
     @staticmethod
     def get_available_audio_devices():
         devices = []
@@ -198,15 +213,13 @@ class AudioRecorder:
         for idx, device in enumerate(all_devices):
             if device['hostapi'] != default_hostapi:
                 continue
-
-            if device['max_input_channels'] > 0 or device['max_output_channels'] > 0:
+            if device['max_input_channels'] > 0:
                 hostapi_name = sd.query_hostapis(device['hostapi'])['name']
 
                 devices.append({
                     'id': idx,
                     'name': device['name'],
                     'input_channels': device['max_input_channels'],
-                    'output_channels': device['max_output_channels'],
                     'sample_rate': device['default_samplerate'],
                     'hostapi': hostapi_name
                 })

@@ -100,15 +100,14 @@ class SystemTray:
             current_model = self.config_manager.get_setting('whisper', 'model_size')
 
             available_devices = self.state_manager.get_available_audio_devices()
+            current_device = self.state_manager.get_current_audio_device_id()
 
             def is_current_device(dev_id):
-                return self.state_manager.get_current_audio_device_id() == dev_id
+                return lambda item: current_device == dev_id
 
-            def make_device_action(dev_id, dev_name):
+            def switch_device(dev_id, dev_name):
                 return lambda icon, item: self._select_audio_device(dev_id, dev_name)
 
-            def make_device_checker(dev_id):
-                return lambda item: is_current_device(dev_id)
 
             audio_device_items = []
 
@@ -123,9 +122,9 @@ class SystemTray:
                     audio_device_items.append(
                         pystray.MenuItem(
                             device_name,
-                            make_device_action(device_id, device['name']),
+                            switch_device(device_id, device['name']),
                             radio=True,
-                            checked=make_device_checker(device_id)
+                            checked=is_current_device(device_id)
                         )
                     )
 

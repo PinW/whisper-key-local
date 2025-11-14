@@ -276,7 +276,7 @@ class StateManager:
         return AudioRecorder.get_available_audio_devices()
 
     def get_current_audio_device_id(self):
-        return self.audio_recorder.device
+        return self.audio_recorder.get_device_id()
 
     def request_audio_device_change(self, device_id: int, device_name: str):
         current_state = self.get_current_state()
