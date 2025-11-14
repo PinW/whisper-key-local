@@ -116,9 +116,6 @@ class SystemTray:
                     device_id = device['id']
                     device_name = device['name']
 
-                    if len(device_name) > 48:
-                        device_name = device_name[:45] + "..."
-
                     audio_device_items.append(
                         pystray.MenuItem(
                             device_name,
