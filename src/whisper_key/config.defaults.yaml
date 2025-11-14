@@ -105,6 +105,11 @@ vad:
 audio:
   # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
 
+  # Audio host API selection
+  # null = let Whisper Key choose the best option (WASAPI on Windows, first available elsewhere)
+  # e.g., "WASAPI", "MME", "DirectSound", "Core Audio"
+  host: null
+
   # Audio channels
   # 1 = mono (recommended for speech)
   # 2 = stereo
@@ -202,4 +207,3 @@ console:
   # Start with console hidden to system tray
   # Note: This setting is ignored in CLI mode
   start_hidden: false
-

@@ -203,24 +203,34 @@ class AudioRecorder:
         return default_device_id
 
     @staticmethod
-    def get_available_audio_devices():
-        devices = []
-        all_devices = sd.query_devices()
+    def get_available_audio_devices(host_filter: Optional[str] = None):
+        try:
+            all_devices = sd.query_devices()
+            hostapis = sd.query_hostapis()
+        except Exception as e:
+            logging.getLogger(__name__).error(f"Failed to enumerate audio devices: {e}")
+            return []
 
-        default_device = sd.query_devices(kind='input')
-        default_hostapi = default_device['hostapi']
+        devices = []
+        host_filter_lower = host_filter.lower() if host_filter else None
 
         for idx, device in enumerate(all_devices):
-            hostapi_name = sd.query_hostapis(device['hostapi'])['name']
-            if 'WASAPI' not in hostapi_name.upper():
+            if device.get('max_input_channels', 0) <= 0:
                 continue
-            if device['max_input_channels'] > 0:
-                devices.append({
-                    'id': idx,
-                    'name': device['name'],
-                    'input_channels': device['max_input_channels'],
-                    'sample_rate': device['default_samplerate'],
-                    'hostapi': hostapi_name
-                })
+
+            hostapi_index = device['hostapi']
+            hostapi_info = hostapis[hostapi_index]
+            hostapi_name = hostapi_info['name']
+
+            if host_filter_lower and hostapi_name.lower() != host_filter_lower:
+                continue
+
+            devices.append({
+                'id': idx,
+                'name': device['name'],
+                'input_channels': device['max_input_channels'],
+                'sample_rate': device['default_samplerate'],
+                'hostapi': hostapi_name
+            })
 
         return devices

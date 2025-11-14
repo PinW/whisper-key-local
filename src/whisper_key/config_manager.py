@@ -1,7 +1,8 @@
 import os
 import logging
 import shutil
-from typing import Dict, Any
+import platform
+from typing import Dict, Any, Optional
 from io import StringIO
 
 from ruamel.yaml import YAML
@@ -187,6 +188,9 @@ class ConfigManager:
     
     def get_audio_config(self) -> Dict[str, Any]:
         return self.config['audio'].copy()
+
+    def get_audio_host(self) -> Optional[str]:
+        return self.config['audio'].get('host')
     
     def get_clipboard_config(self) -> Dict[str, Any]:
         return self.config['clipboard'].copy()
@@ -245,6 +249,9 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Error saving configuration to {self.user_settings_path}: {e}")
             raise
+    
+    def update_audio_host(self, host_name: Optional[str]):
+        self.update_user_setting('audio', 'host', host_name)
 
     def update_user_setting(self, section: str, key: str, value: Any):
         try:
@@ -338,6 +345,7 @@ class ConfigValidator:
         self._validate_enum('whisper.compute_type', ['int8', 'float16', 'float32'])
         
         self._validate_enum('audio.channels', [1, 2])       
+        self._validate_audio_host()
         self._validate_numeric_range('audio.max_duration', min_val=0, description='max duration')
         
         self._validate_enum('logging.level', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
@@ -385,3 +393,22 @@ class ConfigValidator:
         if conflict_detected:
             self.logger.warning(f"   ✗ Auto-enter disabled: {conflict_detected}")
             self._set_config_value_at_path(self.config, 'hotkey.auto_enter_enabled', False)
+
+    def _validate_audio_host(self):
+        host_path = 'audio.host'
+        host_value = self._get_config_value_at_path(self.config, host_path)
+
+        if host_value is not None and not isinstance(host_value, str):
+            self._set_to_default(host_path, host_value)
+            host_value = self._get_config_value_at_path(self.config, host_path)
+
+        if host_value is None:
+            platform_default = self._get_platform_default_audio_host()
+            if platform_default:
+                self._set_config_value_at_path(self.config, host_path, platform_default)
+
+    def _get_platform_default_audio_host(self) -> Optional[str]:
+        current_platform = platform.system().lower()
+        if current_platform == 'windows':
+            return 'WASAPI'
+        return None

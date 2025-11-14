@@ -99,7 +99,29 @@ class SystemTray:
             auto_paste_enabled = self.config_manager.get_setting('clipboard', 'auto_paste')
             current_model = self.config_manager.get_setting('whisper', 'model_size')
 
-            available_devices = self.state_manager.get_available_audio_devices()
+            available_hosts = self.state_manager.get_available_audio_hosts()
+            current_host = self.state_manager.get_current_audio_host()
+
+            def is_current_host(host_name):
+                return lambda item: current_host == host_name
+
+            def switch_host(host_name):
+                return lambda icon, item: self._select_audio_host(host_name)
+
+            audio_host_items = []
+            if available_hosts:
+                for host in available_hosts:
+                    host_name = host['name']
+                    audio_host_items.append(
+                        pystray.MenuItem(
+                            host_name,
+                            switch_host(host_name),
+                            radio=True,
+                            checked=is_current_host(host_name)
+                        )
+                    )
+
+            available_devices = self.state_manager.get_available_audio_devices(current_host)
             current_device = self.state_manager.get_current_audio_device_id()
 
             def is_current_device(dev_id):
@@ -145,6 +167,10 @@ class SystemTray:
 
             menu_items = [
                 pystray.MenuItem(
+                    "Audio Host",
+                    pystray.Menu(*audio_host_items)
+                ) if audio_host_items else None,
+                pystray.MenuItem(
                     f"Audio Source",
                     pystray.Menu(*audio_device_items)
                 ),
@@ -166,8 +192,8 @@ class SystemTray:
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Exit", self._quit_application_from_tray)
             ])
-            
-            menu = pystray.Menu(*menu_items)
+
+            menu = pystray.Menu(*[item for item in menu_items if item is not None])
 
             return menu 
                 
@@ -198,6 +224,16 @@ class SystemTray:
         except Exception as e:
             self.logger.error(f"Error selecting model {model_size}: {e}")
 
+    def _select_audio_host(self, host_name: str):
+        try:
+            success = self.state_manager.set_audio_host(host_name)
+            if success:
+                self.icon.menu = self._create_menu()
+            else:
+                self.logger.warning(f"Request to change audio host to {host_name} was not accepted")
+        except Exception as e:
+            self.logger.error(f"Error selecting audio host {host_name}: {e}")
+
     def _select_audio_device(self, device_id: int, device_name: str):
         success = self.state_manager.request_audio_device_change(device_id, device_name)
 
@@ -221,6 +257,15 @@ class SystemTray:
             self.icon.menu = self._create_menu()
         except Exception as e:
             self.logger.error(f"Failed to update tray icon: {e}")
+
+    def refresh_menu(self):
+        if not self.icon:
+            return
+
+        try:
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Failed to refresh tray menu: {e}")
     
     def start(self):        
         if not self.available:

@@ -17,7 +17,7 @@ from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
-from .utils import beautify_hotkey, OptionalComponent, get_user_app_data_path
+from .utils import beautify_hotkey, get_user_app_data_path
 
 def is_built_executable():
     return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
@@ -193,8 +193,7 @@ def main():
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager)
-        state_manager.audio_recorder = audio_recorder
-        state_manager.system_tray = OptionalComponent(system_tray)
+        state_manager.attach_components(audio_recorder, system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
         
