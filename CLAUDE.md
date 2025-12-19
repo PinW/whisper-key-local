@@ -2,7 +2,7 @@
 
 @documentation/project-index.md
 
-- Build PyInstaller: `powershell.exe -ExecutionPolicy Bypass -File /home/pin/whisper-key-local/py-build/build-windows.ps1` optional:`-NoZip`
+- Build PyInstaller: `powershell.exe -ExecutionPolicy Bypass -File py-build/build-windows.ps1` optional:`-NoZip`
 - Build PyPI: `powershell.exe -Command "python -m build"`
 - DO NOT TEST! It is IMPOSSIBLE for you to run app from WSL!
 - Ask user to test before committing
