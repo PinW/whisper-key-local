@@ -8,6 +8,6 @@
 - Ask user to test before committing
 - Prefer elegant code that is modular and consistent
 - Use clear variable/function names
-- AVOID COMMENTS IF AT ALL POSSIBLE! DO NOT WRITE DOCSTRINGS!
-- We are in ALPHA, don't bother with backward compatibility or too much testing
+- **AVOID COMMENTS** IF AT ALL POSSIBLE! DO NOT WRITE DOCSTRINGS!
+- **No backward compatibility** - Break old formats freely
 - When I say "to temp": `documentation/temp/`
