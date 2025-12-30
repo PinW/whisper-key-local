@@ -12,13 +12,14 @@
 # =============================================================================
 whisper:
   # Model size - affects accuracy vs speed tradeoff
-  # Options: "tiny", "base", "small", "medium", "large", "tiny.en", "base.en", "small.en", "medium.en"
+  # Options: "tiny", "base", "small", "medium", "large", "large-v3-turbo", "tiny.en", "base.en", "small.en", "medium.en"
   # Multilingual models:
   # - tiny: ~39MB, fastest, good for most use cases
   # - base: ~74MB, better accuracy, still fast
   # - small: ~244MB, high accuracy, slower
   # - medium: ~769MB, very high accuracy, much slower
   # - large: ~1550MB, best accuracy, very slow (not recommended for real-time)
+  # - large-v3-turbo: ~1550MB, near-large accuracy but faster (optimized turbo version)
   # English-only models (more accurate, slightly faster):
   # - tiny.en: 39MB, 
   # - base.en: 74MB, 

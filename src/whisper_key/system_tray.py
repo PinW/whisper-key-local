@@ -111,6 +111,7 @@ class SystemTray:
                 pystray.MenuItem("Small (466MB, accurate)", lambda icon, item: self._select_model("small"), radio=True, checked=lambda item: is_current_model("small"), enabled=model_selection_enabled()),
                 pystray.MenuItem("Medium (1.5GB, very accurate)", lambda icon, item: self._select_model("medium"), radio=True, checked=lambda item: is_current_model("medium"), enabled=model_selection_enabled()),
                 pystray.MenuItem("Large (2.9GB, best accuracy)", lambda icon, item: self._select_model("large"), radio=True, checked=lambda item: is_current_model("large"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Large-V3-Turbo (1.6GB, turbo)", lambda icon, item: self._select_model("large-v3-turbo"), radio=True, checked=lambda item: is_current_model("large-v3-turbo"), enabled=model_selection_enabled()),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Tiny.En (English only)", lambda icon, item: self._select_model("tiny.en"), radio=True, checked=lambda item: is_current_model("tiny.en"), enabled=model_selection_enabled()),
                 pystray.MenuItem("Base.En (English only)", lambda icon, item: self._select_model("base.en"), radio=True, checked=lambda item: is_current_model("base.en"), enabled=model_selection_enabled()),
