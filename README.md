@@ -49,7 +49,7 @@ whisper-key
 
 Clone the repository:
 ```bash
-git clone https://github.com/PinW/whisper-key-local.git
+git clone https://github.com/simon-231/whisper-key-local
 cd whisper-key-local
 ```
 
