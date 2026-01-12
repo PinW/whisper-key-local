@@ -90,7 +90,7 @@ python whisper-key.py
 - Speak into your microphone  
 - Press `Ctrl` to stop recording and transcribe
 - The transcribed text is auto-pasted on your text cursor
-- Alternatively press `Alt` to stop recording, and 
+- Alternatively press `Alt` to stop recording, auto-paste, and also send an ENTER keypress
 - Right click the system tray icon to change models
 
 ### Configuration
