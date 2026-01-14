@@ -32,6 +32,7 @@ a = Analysis(
         'sounddevice', 'numpy.core._methods',
         'faster_whisper', 'ctranslate2',
         'ten_vad',
+        'scipy.signal',
     ],
     hookspath=[],
     hooksconfig={},
