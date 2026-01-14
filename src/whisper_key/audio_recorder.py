@@ -53,20 +53,35 @@ class AudioRecorder:
     def resolve_device(self, device):
         if device == "default" or device is None:
             self.device = None
+            self._resolve_hostapi(None)
         elif isinstance(device, int):
             try:
                 device_info = sd.query_devices(device)
                 if device_info.get('max_input_channels', 0) > 0:
                     self.device = device
+                    self._resolve_hostapi(device_info)
                 else:
                     self.logger.warning(f"Selected device {device} has no input channels; using default input instead")
                     self.device = None
+                    self._resolve_hostapi(None)
             except Exception as e:
                 self.logger.warning(f"Failed to load device {device}: {e}. Falling back to default input")
                 self.device = None
+                self._resolve_hostapi(None)
         else:
             self.logger.warning(f"Invalid device parameter: {device}, using default")
             self.device = None
+            self._resolve_hostapi(None)
+
+    def _resolve_hostapi(self, device_info):
+        try:
+            if device_info is None:
+                device_info = sd.query_devices(kind='input')
+            hostapi_index = device_info['hostapi']
+            self.device_hostapi = sd.query_hostapis(hostapi_index)['name']
+        except Exception as e:
+            self.logger.debug(f"Could not determine host API: {e}")
+            self.device_hostapi = None
 
     def _handle_vad_event(self, event: VadEvent):
         self.on_vad_event(event)
@@ -156,12 +171,17 @@ class AudioRecorder:
 
             blocksize = VAD_CHUNK_SIZE if self.continuous_vad else None
 
+            extra_settings = None
+            if self.device_hostapi and 'wasapi' in self.device_hostapi.lower():
+                extra_settings = sd.WasapiSettings(auto_convert=True)
+
             with sd.InputStream(samplerate=self.sample_rate,
                                 channels=self.channels,
                                 callback=audio_callback,
                                 dtype=self.STREAM_DTYPE,
                                 blocksize=blocksize,
-                                device=self.device):
+                                device=self.device,
+                                extra_settings=extra_settings):
 
                 while self.is_recording:
                     if self._check_max_duration_exceeded():
