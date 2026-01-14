@@ -2,7 +2,6 @@ import os
 import sys
 import importlib.resources
 import tomllib
-from contextlib import contextmanager
 from pathlib import Path
 
 class OptionalComponent:
