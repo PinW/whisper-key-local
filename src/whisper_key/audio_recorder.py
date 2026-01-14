@@ -1,10 +1,12 @@
 import logging
 import threading
 import time
+from math import gcd
 from typing import Optional, Callable
 
 import numpy as np
 import sounddevice as sd
+from scipy.signal import resample_poly
 
 from .voice_activity_detection import VadEvent, VAD_CHUNK_SIZE
 
@@ -79,9 +81,30 @@ class AudioRecorder:
                 device_info = sd.query_devices(kind='input')
             hostapi_index = device_info['hostapi']
             self.device_hostapi = sd.query_hostapis(hostapi_index)['name']
+            self.device_native_rate = int(device_info['default_samplerate'])
         except Exception as e:
             self.logger.debug(f"Could not determine host API: {e}")
             self.device_hostapi = None
+            self.device_native_rate = self.WHISPER_SAMPLE_RATE
+
+    def _needs_resampling(self) -> bool:
+        return self.device_hostapi and 'wasapi' in self.device_hostapi.lower()
+
+    def _get_recording_sample_rate(self) -> int:
+        if self._needs_resampling():
+            return self.device_native_rate
+        return self.WHISPER_SAMPLE_RATE
+
+    def _resample_audio(self, audio: np.ndarray, orig_rate: int, target_rate: int) -> np.ndarray:
+        if orig_rate == target_rate or len(audio) == 0:
+            return audio
+
+        g = gcd(orig_rate, target_rate)
+        up = target_rate // g
+        down = orig_rate // g
+
+        resampled = resample_poly(audio.flatten(), up, down)
+        return resampled.astype(np.float32)
 
     def _handle_vad_event(self, event: VadEvent):
         self.on_vad_event(event)
@@ -143,6 +166,12 @@ class AudioRecorder:
             return None
 
         audio_array = np.concatenate(self.audio_data, axis=0)
+
+        if self._needs_resampling():
+            recording_rate = self._get_recording_sample_rate()
+            self.logger.info(f"Resampling from {recording_rate} Hz to {self.WHISPER_SAMPLE_RATE} Hz")
+            audio_array = self._resample_audio(audio_array, recording_rate, self.WHISPER_SAMPLE_RATE)
+
         duration = self.get_audio_duration(audio_array)
         self.logger.info(f"Recorded {duration:.2f} seconds of audio")
         return audio_array
@@ -159,29 +188,36 @@ class AudioRecorder:
     
     def _record_audio(self):
         try:
+            recording_rate = self._get_recording_sample_rate()
+            needs_resampling = self._needs_resampling()
+
+            if needs_resampling:
+                vad_blocksize = int(VAD_CHUNK_SIZE * recording_rate / self.WHISPER_SAMPLE_RATE)
+            else:
+                vad_blocksize = VAD_CHUNK_SIZE
+
             def audio_callback(audio_data, frames, _time, status):
                 if self.is_recording:
                     self.audio_data.append(audio_data.copy())
 
-                    if self.continuous_vad and frames == VAD_CHUNK_SIZE:
-                        self.continuous_vad.process_chunk(audio_data)
+                    if self.continuous_vad and frames == vad_blocksize:
+                        if needs_resampling:
+                            chunk_16k = self._resample_audio(audio_data, recording_rate, self.WHISPER_SAMPLE_RATE)
+                            self.continuous_vad.process_chunk(chunk_16k.reshape(-1, 1))
+                        else:
+                            self.continuous_vad.process_chunk(audio_data)
 
                 if status:
                     self.logger.debug(f"Audio callback status: {status}")
 
-            blocksize = VAD_CHUNK_SIZE if self.continuous_vad else None
+            blocksize = vad_blocksize if self.continuous_vad else None
 
-            extra_settings = None
-            if self.device_hostapi and 'wasapi' in self.device_hostapi.lower():
-                extra_settings = sd.WasapiSettings(auto_convert=True)
-
-            with sd.InputStream(samplerate=self.sample_rate,
+            with sd.InputStream(samplerate=recording_rate,
                                 channels=self.channels,
                                 callback=audio_callback,
                                 dtype=self.STREAM_DTYPE,
                                 blocksize=blocksize,
-                                device=self.device,
-                                extra_settings=extra_settings):
+                                device=self.device):
 
                 while self.is_recording:
                     if self._check_max_duration_exceeded():
