@@ -395,7 +395,8 @@ class StateManager:
             print(f"✅ Successfully switched audio device to: {device_name}")
 
         except Exception as e:
-            self.logger.error(f"❌ Failed to change audio device: {e}")
+            self.logger.error(f"Failed to change audio device: {e}")
+            print(f"❌ Failed to switch audio device: {e}")
 
     def _initialize_audio_host(self):
         try:
