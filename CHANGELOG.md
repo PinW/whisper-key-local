@@ -2,6 +2,18 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.4.0] - 2026-01-14
+
+### Added
+- Audio source selection from system tray menu (WASAPI devices)
+- WASAPI loopback support with bundled custom PortAudio DLL for recording system audio
+- Version display in startup message
+
+### Fixed
+- WASAPI devices that don't support 16kHz now work via automatic resampling
+- WASAPI stream reopen race condition with OS-level cleanup delay
+- User feedback when audio device switch fails
+
 ## [0.3.0] - 2025-08-19
 
 ### Added
