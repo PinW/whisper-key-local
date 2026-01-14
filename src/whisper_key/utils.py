@@ -1,6 +1,7 @@
 import os
 import sys
 import importlib.resources
+import tomllib
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -48,20 +49,17 @@ def resolve_asset_path(relative_path: str) -> str:
     return str(Path(__file__).parent / relative_path) # Development
 
 def get_version():
-    # pip
-    try:
-        import importlib.metadata
-        return importlib.metadata.version("whisper-key-local")
-    except Exception:
-        pass
-
-    # PyInstaller
-    version_file = resolve_asset_path("assets/version.txt")
-    try:
+    if getattr(sys, 'frozen', False): # PyInstaller
+        version_file = resolve_asset_path("assets/version.txt")
         with open(version_file, 'r') as f:
             return f.read().strip()
-    except FileNotFoundError:
-        pass
 
-    # Dev
-    return "dev"
+    if is_installed_package(): # pip
+        import importlib.metadata
+        return importlib.metadata.version("whisper-key-local")
+
+    # Development
+    pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
+    with open(pyproject_path, 'rb') as f:
+        data = tomllib.load(f)
+        return f"{data['project']['version']}-dev"
