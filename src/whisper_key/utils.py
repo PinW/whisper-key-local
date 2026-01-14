@@ -47,6 +47,13 @@ def resolve_asset_path(relative_path: str) -> str:
     
     return str(Path(__file__).parent / relative_path) # Development
 
+def add_portaudio_dll_to_search_path():
+    if sys.platform != 'win32':
+        return
+    assets_dir = Path(resolve_asset_path('assets'))
+    if assets_dir.exists():
+        os.environ['PATH'] = str(assets_dir) + os.pathsep + os.environ.get('PATH', '')
+
 def get_version():
     if getattr(sys, 'frozen', False): # PyInstaller
         version_file = resolve_asset_path("assets/version.txt")

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+from .utils import add_portaudio_dll_to_search_path
+add_portaudio_dll_to_search_path()
+
 import logging
 import os
 import signal
