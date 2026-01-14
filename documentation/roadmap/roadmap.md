@@ -48,6 +48,7 @@
 - As a *user* I want **meeting mode** so I can transcribe an entire meeting in real-time
 
 ### Technical
+- As a *developer*, I want **WASAPI supprot without scipy** so that the package is smaller and more efficient (maybe wait for sounddevice to support latest PortAudio DLL so auto-convert can be used in addition to WASAPI Loopback)
 - As a *developer*, I want **end-to-end tests** so that I can refactor with confidence
 
 ### Cross-Platform
