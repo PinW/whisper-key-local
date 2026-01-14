@@ -122,4 +122,4 @@ models/
 user-testing/
 
 # Build configuration (user-specific paths)
-py-build/build-config.json
+py-build/build-config.jsonsrc/whisper_key/assets/version.txt

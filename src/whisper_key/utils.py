@@ -46,3 +46,11 @@ def resolve_asset_path(relative_path: str) -> str:
         return str(files / relative_path)
     
     return str(Path(__file__).parent / relative_path) # Development
+
+def get_version():
+    version_file = resolve_asset_path("assets/version.txt")
+    try:
+        with open(version_file, 'r') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return "dev"

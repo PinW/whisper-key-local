@@ -40,6 +40,11 @@ function Get-ProjectVersion {
 $AppVersion = Get-ProjectVersion $ProjectRoot
 Write-Host "Using version from pyproject.toml: $AppVersion" -ForegroundColor Cyan
 
+# Write version file for runtime access (no BOM)
+$VersionFile = Join-Path $ProjectRoot "src\whisper_key\assets\version.txt"
+[System.IO.File]::WriteAllText($VersionFile, $AppVersion)
+Write-Host "Version file written: $VersionFile" -ForegroundColor Gray
+
 # Configuration - Check for build config file
 $ConfigFile = Join-Path $PSScriptRoot "build-config.json"
 if (Test-Path $ConfigFile) {

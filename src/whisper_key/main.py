@@ -17,7 +17,7 @@ from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
-from .utils import beautify_hotkey, get_user_app_data_path
+from .utils import beautify_hotkey, get_user_app_data_path, get_version
 
 def is_built_executable():
     return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
@@ -149,7 +149,7 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
 def main():   
     mutex_handle = guard_against_multiple_instances()
     
-    print("Starting Whisper Key... Local Speech-to-Text App...")
+    print(f"Starting Whisper Key [{get_version()}]... Local Speech-to-Text App...")
     
     shutdown_event = threading.Event()
     setup_signal_handlers(shutdown_event)
