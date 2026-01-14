@@ -15,6 +15,7 @@ class AudioRecorder:
     THREAD_JOIN_TIMEOUT = 2.0
     RECORDING_SLEEP_INTERVAL = 100
     STREAM_DTYPE = np.float32
+    STREAM_CLOSE_TIMEOUT = 2.0
        
     def __init__(self,
                  on_vad_event: Callable[[VadEvent], None],
@@ -35,6 +36,7 @@ class AudioRecorder:
         self.recording_thread = None
         self.recording_start_time = None
         self.logger = logging.getLogger(__name__)
+        self._stream_closed_event = threading.Event()
 
         self.vad_manager = vad_manager
         self.on_vad_event = on_vad_event
@@ -112,6 +114,11 @@ class AudioRecorder:
     def _wait_for_thread_finish(self):
         if self.recording_thread:
             self.recording_thread.join(timeout=self.THREAD_JOIN_TIMEOUT)
+            if self.recording_thread.is_alive():
+                self.logger.warning("Recording thread did not exit within timeout")
+
+        if not self._stream_closed_event.wait(timeout=self.STREAM_CLOSE_TIMEOUT):
+            self.logger.warning("Audio stream did not report closed within timeout")
     
     def _test_audio_source(self):
         try:
@@ -134,6 +141,7 @@ class AudioRecorder:
             self.is_recording = True
             self.audio_data = []
             self.recording_start_time = time.time()
+            self._stream_closed_event.clear()
 
             if self.continuous_vad:
                 self.continuous_vad.reset()
@@ -228,6 +236,8 @@ class AudioRecorder:
         except Exception as e:
             self.logger.error(f"Error during audio recording: {e}")
             self.is_recording = False
+        finally:
+            self._stream_closed_event.set()
     
     def _check_max_duration_exceeded(self) -> bool:
         if self.max_duration > 0 and self.recording_start_time:
