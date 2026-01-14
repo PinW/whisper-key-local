@@ -1,7 +1,7 @@
 import os
 import sys
 import importlib.resources
-from contextlib import contextmanager
+import tomllib
 from pathlib import Path
 
 class OptionalComponent:
@@ -46,3 +46,26 @@ def resolve_asset_path(relative_path: str) -> str:
         return str(files / relative_path)
     
     return str(Path(__file__).parent / relative_path) # Development
+
+def add_portaudio_dll_to_search_path():
+    if sys.platform != 'win32':
+        return
+    assets_dir = Path(resolve_asset_path('assets'))
+    if assets_dir.exists():
+        os.environ['PATH'] = str(assets_dir) + os.pathsep + os.environ.get('PATH', '')
+
+def get_version():
+    if getattr(sys, 'frozen', False): # PyInstaller
+        version_file = resolve_asset_path("assets/version.txt")
+        with open(version_file, 'r') as f:
+            return f.read().strip()
+
+    if is_installed_package(): # pip
+        import importlib.metadata
+        return importlib.metadata.version("whisper-key-local")
+
+    # Development
+    pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
+    with open(pyproject_path, 'rb') as f:
+        data = tomllib.load(f)
+        return f"{data['project']['version']}-dev"

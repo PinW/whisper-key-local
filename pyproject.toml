@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "whisper-key-local"
-version = "0.3.2"
+version = "0.4.0"
 description = "Local faster-whisper speech-to-text app with global hotkeys for Windows"
 readme = "README.md"
 authors = [
@@ -14,6 +14,7 @@ requires-python = ">=3.11"
 dependencies = [
     "faster-whisper>=1.1.1",
     "numpy>=1.24.0",
+    "scipy>=1.11.0",
     "sounddevice>=0.4.6",
     "global-hotkeys>=0.1.7; platform_system=='Windows'",
     "pyperclip>=1.8.2",

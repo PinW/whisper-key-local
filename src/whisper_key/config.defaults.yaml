@@ -104,20 +104,33 @@ vad:
 # =============================================================================
 audio:
   # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
-  
+
+  # Audio host API selection
+  # null = let Whisper Key choose the best option (WASAPI on Windows, first available elsewhere)
+  # e.g., "WASAPI", "MME", "DirectSound", "Core Audio"
+  host: null
+
   # Audio channels
   # 1 = mono (recommended for speech)
   # 2 = stereo
   channels: 1
-  
+
   # Recording format
   # Options: "float32", "int16", "int24", "int32"
   # float32 recommended for best quality
   dtype: float32
-  
+
   # Maximum recording duration (seconds)
   # Set to 0 for unlimited recording
   max_duration: 900
+
+  # Audio input device selection
+  # "default" = Use system default microphone (default behavior)
+  # <device_id> = Specific device ID number (set automatically when changed via system tray)
+  #
+  # Note: Device IDs are assigned by the operating system and may change if devices
+  # are plugged/unplugged. Use system tray to select device - it will save the ID here.
+  input_device: "default"
 
 # =============================================================================
 # CLIPBOARD BEHAVIOR
@@ -194,4 +207,3 @@ console:
   # Start with console hidden to system tray
   # Note: This setting is ignored in CLI mode
   start_hidden: false
-

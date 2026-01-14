@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+from .utils import add_portaudio_dll_to_search_path
+add_portaudio_dll_to_search_path()
+
 import logging
 import os
 import signal
@@ -17,7 +20,7 @@ from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
-from .utils import beautify_hotkey, OptionalComponent, get_user_app_data_path
+from .utils import beautify_hotkey, get_user_app_data_path, get_version
 
 def is_built_executable():
     return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
@@ -65,7 +68,8 @@ def setup_audio_recorder(audio_config, state_manager, vad_manager):
         max_duration=audio_config['max_duration'],
         on_max_duration_reached=state_manager.handle_max_recording_duration_reached,
         on_vad_event=state_manager.handle_vad_event,
-        vad_manager=vad_manager
+        vad_manager=vad_manager,
+        device=audio_config['input_device']
     )
 
 def setup_vad(vad_config):
@@ -148,7 +152,7 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
 def main():   
     mutex_handle = guard_against_multiple_instances()
     
-    print("Starting Whisper Key... Local Speech-to-Text App...")
+    print(f"Starting Whisper Key [{get_version()}]... Local Speech-to-Text App...")
     
     shutdown_event = threading.Event()
     setup_signal_handlers(shutdown_event)
@@ -192,8 +196,7 @@ def main():
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager)
-        state_manager.audio_recorder = audio_recorder
-        state_manager.system_tray = OptionalComponent(system_tray)
+        state_manager.attach_components(audio_recorder, system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
         

@@ -36,12 +36,13 @@ jobs:
           
           # Direct prompt for automated review (no @claude mention needed)
           direct_prompt: |
-            Please review this pull request and provide feedback/advice on:
+            Review this pull request and provide feedback/advice on:
             - Code quality and best practices
             - Potential bugs or issues
             - Performance considerations
             - Security concerns
             
+            Keep feedback within PR scope
             DHH > defensive programming
 
             Audience: beginner coder
