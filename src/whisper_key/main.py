@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import importlib.metadata
 import logging
 import os
 import signal
@@ -150,8 +149,7 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
 def main():   
     mutex_handle = guard_against_multiple_instances()
     
-    version = importlib.metadata.version("whisper-key-local")
-    print(f"Starting Whisper Key [{version}]... Local Speech-to-Text App...")
+    print("Starting Whisper Key... Local Speech-to-Text App...")
     
     shutdown_event = threading.Event()
     setup_signal_handlers(shutdown_event)
