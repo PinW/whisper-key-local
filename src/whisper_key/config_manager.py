@@ -217,25 +217,25 @@ class ConfigManager:
         yaml = YAML()
         yaml.preserve_quotes = True
         yaml.indent(mapping=2, sequence=4, offset=2)
-        
+
         temp_output = StringIO()
         yaml.dump(config_data, temp_output)
         lines = temp_output.getvalue().split('\n')
-        
-        # Find end of header - first blank line is the cutoff
-        data_start = 0
-        for i, line in enumerate(lines):
-            if not line.strip():  # Empty line found
-                data_start = i
-                break
-        
-        user_config = []
-        user_config.append("# =============================================================================")
-        user_config.append("# WHISPER KEY - PERSONAL CONFIGURATION")
-        user_config.append("# =============================================================================")
-        user_config.extend(lines[data_start:])
-        
-        return '\n'.join(user_config)
+
+        filtered_lines = []
+        for line in lines:
+            if '# ====' in line:
+                continue
+            if line.strip().startswith('# ') and line.strip()[2:].replace(' ', '').isupper():
+                continue
+            filtered_lines.append(line)
+
+        header = ["# ============================================================================="]
+        header.append("# WHISPER KEY - PERSONAL CONFIGURATION")
+        header.append("# =============================================================================")
+        header.append("")
+
+        return '\n'.join(header + filtered_lines)
 
     def save_config_to_user_settings_file(self):
         try:

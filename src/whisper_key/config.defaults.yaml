@@ -7,10 +7,8 @@
 # Personal settings are stored at:
 # %APPDATA%\Roaming\whisperkey\user_settings.yaml
 
-# =============================================================================
-# WHISPER AI MODEL SETTINGS
-# =============================================================================
-whisper:
+whisper: # Whisper AI Model Settings
+
   # Model size - affects accuracy vs speed tradeoff
   # Options: "tiny", "base", "small", "medium", "large", "large-v3-turbo", "tiny.en", "base.en", "small.en", "medium.en", "distil-large-v3.5"
   # Multilingual models:
@@ -50,7 +48,8 @@ whisper:
   beam_size: 5  # Higher = more accurate but slower (1-10)
 
   # Available models (set enabled: false to hide from menu)
-  # HuggingFace models are cached at: ~/.cache/huggingface/hub
+  # To add custom models (CTranslate2 format), add entry with source (HuggingFace or local path)
+  # Example: my-model: {source: "username/repo-ct2", label: "My Model", group: custom}
   models:
     # Official whisper models
     tiny:
@@ -100,24 +99,8 @@ whisper:
       label: "Distil-Large-V3.5 (English)"
       group: custom
 
-    # Custom models (must be CTranslate2 format)
-    #
-    # huggingface-model:
-    #   source: huggingface-username/whisper-model-ct2
-    #   label: "HuggingFace Model"
-    #   group: custom
-    #
-    # local-model:
-    #   source: C:\Models\whisper-custom-ct2
-    #   label: "Local Whisper Model"
-    #   group: custom
-    #
-    # Note: Local paths must point folder containing model.bin
+hotkey: # Hotkey Configuration
 
-# =============================================================================
-# HOTKEY CONFIGURATION
-# =============================================================================
-hotkey:
   # Key combination to start/stop recording
   # Format: modifier+modifier+key (use lowercase)
   # Common modifiers: ctrl, shift, alt, win
@@ -147,10 +130,8 @@ hotkey:
   # Examples: "esc", "ctrl+c", "shift+esc" 
   cancel_combination: esc
 
-# =============================================================================
-# VOICE ACTIVITY DETECTION (VAD) SETTINGS
-# =============================================================================
-vad:
+vad: # Voice Activity Detection (VAD)
+
   # Voice Activity Detection (VAD) Pre-check
   # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
   # NOTE: This is separate from faster-whisper's built-in VAD
@@ -167,10 +148,8 @@ vad:
   vad_realtime_enabled: true  # Enables continuous silence detection and automatic recording stop
   vad_silence_timeout_seconds: 30.0  # Auto-stop recording after this many seconds of silence
 
-# =============================================================================
-# AUDIO RECORDING SETTINGS
-# =============================================================================
-audio:
+audio: # Audio Recording Settings
+
   # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
 
   # Audio host API selection
@@ -200,10 +179,8 @@ audio:
   # are plugged/unplugged. Use system tray to select device - it will save the ID here.
   input_device: "default"
 
-# =============================================================================
-# CLIPBOARD BEHAVIOR
-# =============================================================================
-clipboard:
+clipboard: # Clipboard Behavior
+
   # Automatically paste after transcription
   # true = paste immediately to active window
   # false = only copy to clipboard (paste manually with Ctrl+V)
@@ -218,10 +195,8 @@ clipboard:
   # Small delay ensures operations complete reliably
   key_simulation_delay: 0.05
 
-# =============================================================================
-# LOGGING CONFIGURATION
-# =============================================================================
-logging:
+logging: # Logging Configuration
+
   # Log level - how much detail to log
   # Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
   # - DEBUG: Very detailed (for troubleshooting)
@@ -241,10 +216,8 @@ logging:
     level: WARNING  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
 
 
-# =============================================================================
-# AUDIO FEEDBACK SETTINGS
-# =============================================================================
-audio_feedback:
+audio_feedback: # Audio Feedback Settings
+
   # Enable/disable audio feedback sounds
   # true = play sounds when recording starts/stops
   # false = silent operation
@@ -256,10 +229,8 @@ audio_feedback:
   stop_sound: assets/sounds/record_stop.wav
   cancel_sound: assets/sounds/record_cancel.wav
 
-# =============================================================================
-# SYSTEM TRAY SETTINGS
-# =============================================================================
-system_tray:
+system_tray: # System Tray Settings
+
   # Enable/disable system tray icon
   # true = show icon in system tray with status and menu
   # false = run without system tray (console mode only)
@@ -268,10 +239,8 @@ system_tray:
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
 
-# =============================================================================
-# CONSOLE VISIBILITY SETTINGS
-# =============================================================================
-console:
+console: # Console Visibility Settings
+
   # Start with console hidden to system tray
   # Note: This setting is ignored in CLI mode
   start_hidden: false
