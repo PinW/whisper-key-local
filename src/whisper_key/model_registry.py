@@ -39,7 +39,7 @@ class ModelRegistry:
     def is_model_cached(self, key: str) -> bool:
         model = self.get_model(key)
         if model and model.is_local_path:
-            return True
+            return os.path.exists(os.path.join(model.source, 'model.bin'))
         cache_folder = self.get_cache_folder(key)
         if not cache_folder:
             return False

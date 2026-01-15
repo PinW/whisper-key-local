@@ -101,14 +101,18 @@ whisper:
       group: custom
 
     # Custom models (must be CTranslate2 format)
+    #
     # huggingface-model:
     #   source: huggingface-username/whisper-model-ct2
     #   label: "HuggingFace Model"
     #   group: custom
+    #
     # local-model:
     #   source: C:\Models\whisper-custom-ct2
     #   label: "Local Whisper Model"
     #   group: custom
+    #
+    # Note: Local paths must point folder containing model.bin
 
 # =============================================================================
 # HOTKEY CONFIGURATION
