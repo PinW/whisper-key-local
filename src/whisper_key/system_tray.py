@@ -135,7 +135,7 @@ class SystemTray:
             is_model_loading = app_state.get('model_loading', False)
 
             auto_paste_enabled = self.config_manager.get_setting('clipboard', 'auto_paste')
-            current_model = self.config_manager.get_setting('whisper', 'model_size')
+            current_model = self.config_manager.get_setting('whisper', 'model')
 
             available_hosts = self.state_manager.get_available_audio_hosts()
             current_host = self.state_manager.get_current_audio_host()
@@ -232,18 +232,18 @@ class SystemTray:
         self.state_manager.update_transcription_mode(auto_paste)
         self.icon.menu = self._create_menu()
 
-    def _select_model(self, model_size: str):
+    def _select_model(self, model_key: str):
         try:
-            success = self.state_manager.request_model_change(model_size)
+            success = self.state_manager.request_model_change(model_key)
 
             if success:
-                self.config_manager.update_user_setting('whisper', 'model_size', model_size)
+                self.config_manager.update_user_setting('whisper', 'model', model_key)
                 self.icon.menu = self._create_menu()
             else:
-                self.logger.warning(f"Request to change model to {model_size} was not accepted")
+                self.logger.warning(f"Request to change model to {model_key} was not accepted")
 
         except Exception as e:
-            self.logger.error(f"Error selecting model {model_size}: {e}")
+            self.logger.error(f"Error selecting model {model_key}: {e}")
 
     def _select_audio_host(self, host_name: str):
         try:

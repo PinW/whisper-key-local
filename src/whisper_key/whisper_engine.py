@@ -9,7 +9,7 @@ from faster_whisper import WhisperModel
 
 class WhisperEngine:
     def __init__(self,
-                 model_size: str = "tiny",
+                 model_key: str = "tiny",
                  device: str = "cpu",
                  compute_type: str = "int8",
                  language: str = None,
@@ -17,7 +17,7 @@ class WhisperEngine:
                  vad_manager = None,
                  model_registry = None):
 
-        self.model_size = model_size
+        self.model_key = model_key
         self.device = device
         self.compute_type = compute_type
         self.language = None if language == 'auto' else language
@@ -40,20 +40,20 @@ class WhisperEngine:
 
     def _is_model_cached(self, model_key: str = None) -> bool:
         if model_key is None:
-            model_key = self.model_size
+            model_key = self.model_key
         if self.registry:
             return self.registry.is_model_cached(model_key)
         return False
 
     def _load_model(self):
         try:
-            print(f"🧠 Loading Whisper AI model [{self.model_size}]...")
+            print(f"🧠 Loading Whisper AI model [{self.model_key}]...")
 
             was_cached = self._is_model_cached()
             if not was_cached:
                 print("Downloading model, this may take a few minutes....")
 
-            model_source = self._get_model_source(self.model_size)
+            model_source = self._get_model_source(self.model_key)
             self.model = WhisperModel(
                 model_source,
                 device=self.device,
@@ -63,7 +63,7 @@ class WhisperEngine:
             if not was_cached:
                 print("\n")  # Workaround for download status bar misplacement
 
-            print(f"   ✓ Whisper model [{self.model_size}] ready!")
+            print(f"   ✓ Whisper model [{self.model_key}] ready!")
 
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")
@@ -77,7 +77,7 @@ class WhisperEngine:
                 if progress_callback:
                     progress_callback("Checking model cache...")
 
-                old_model_size = self.model_size
+                old_model_key = self.model_key
                 was_cached = self._is_model_cached(new_model_key)
 
                 if progress_callback:
@@ -96,14 +96,14 @@ class WhisperEngine:
                 )
 
                 self.model = new_model
-                self.model_size = new_model_key
+                self.model_key = new_model_key
                 self.logger.info(f"Whisper model [{new_model_key}] loaded successfully (async)")
 
                 if progress_callback:
                     progress_callback("Model ready!")
 
             except Exception as e:
-                self.model_size = old_model_size
+                self.model_key = old_model_key
                 self.logger.error(f"Failed to load Whisper model async: {e}")
                 if progress_callback:
                     progress_callback(f"Failed to load model: {e}")
@@ -186,13 +186,13 @@ class WhisperEngine:
     
     
     def change_model(self,
-                     new_model_size: str,
+                     new_model_key: str,
                      progress_callback: Optional[Callable[[str], None]] = None):
         
-        if new_model_size == self.model_size:
+        if new_model_key == self.model_key:
             if progress_callback:
                 progress_callback("Model already loaded")
             return
         
-        self._load_model_async(new_model_size, progress_callback)
+        self._load_model_async(new_model_key, progress_callback)
     

@@ -85,7 +85,7 @@ def setup_vad(vad_config):
 
 def setup_whisper_engine(whisper_config, vad_manager, model_registry):
     return WhisperEngine(
-        model_size=whisper_config['model_size'],
+        model_key=whisper_config['model'],
         device=whisper_config['device'],
         compute_type=whisper_config['compute_type'],
         language=whisper_config['language'],

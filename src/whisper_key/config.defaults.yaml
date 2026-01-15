@@ -27,7 +27,7 @@ whisper:
   # - medium.en: ~1.5GB
   # Distilled models (optimized for speed, English-focused):
   # - distil-large-v3.5: ~1.5GB, fastest large-class model
-  model_size: base
+  model: tiny
   
   # Processing device - where the AI runs
   # Options: "cpu", "cuda" (for NVIDIA GPUs)

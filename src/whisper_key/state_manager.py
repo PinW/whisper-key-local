@@ -226,10 +226,10 @@ class StateManager:
             else:
                 return "idle"
     
-    def request_model_change(self, new_model_size: str) -> bool:
+    def request_model_change(self, new_model_key: str) -> bool:
         current_state = self.get_current_state()
         
-        if new_model_size == self.whisper_engine.model_size:
+        if new_model_key == self.whisper_engine.model_key:
             return True
         
         if current_state == "model_loading":
@@ -237,18 +237,18 @@ class StateManager:
             return False
         
         if current_state == "recording":
-            print(f"🎤 Cancelling recording to switch to {new_model_size} model...")
+            print(f"🎤 Cancelling recording to switch to {new_model_key} model...")
             self.cancel_active_recording()
-            self._execute_model_change(new_model_size)
+            self._execute_model_change(new_model_key)
             return True
         
         if current_state == "processing":
-            print(f"⏳ Queueing model change to {new_model_size} until transcription completes...")
-            self._pending_model_change = new_model_size
+            print(f"⏳ Queueing model change to {new_model_key} until transcription completes...")
+            self._pending_model_change = new_model_key
             return True
         
         if current_state == "idle":
-            self._execute_model_change(new_model_size)
+            self._execute_model_change(new_model_key)
             return True
         
         self.logger.warning(f"Unexpected state for model change: {current_state}")
@@ -261,10 +261,10 @@ class StateManager:
     def show_console(self):
         self.console_manager.show_console()
 
-    def _execute_model_change(self, new_model_size: str):
+    def _execute_model_change(self, new_model_key: str):
         def progress_callback(message: str):
             if "ready" in message.lower() or "already loaded" in message.lower():
-                print(f"✅ Successfully switched to {new_model_size} model")
+                print(f"✅ Successfully switched to {new_model_key} model")
                 self.set_model_loading(False)
             elif "failed" in message.lower():
                 print(f"❌ Failed to change model: {message}")
@@ -275,9 +275,9 @@ class StateManager:
         
         try:
             self.set_model_loading(True)
-            print(f"🔄 Switching to {new_model_size} model...")
+            print(f"🔄 Switching to {new_model_key} model...")
             
-            self.whisper_engine.change_model(new_model_size, progress_callback)
+            self.whisper_engine.change_model(new_model_key, progress_callback)
             
         except Exception as e:
             self.logger.error(f"Failed to initiate model change: {e}")
