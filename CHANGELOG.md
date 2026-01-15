@@ -2,6 +2,29 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.5.0] - 2026-01-15
+
+### Added
+- **Custom local model support** - Load any Whisper model from a local folder or HuggingFace path (#10)
+- **New models**: large-v3-turbo and distil-large-v3.5
+- **View Log** shortcut in system tray menu (#9)
+- **Advanced Settings** shortcut in system tray menu
+
+### Changed
+- Config key renamed from `whisper.model_size` to `whisper.model`
+- Model menu in system tray now built dynamically with grouped separators
+- Updated model download sizes to reflect actual faster-whisper downloads
+
+### Fixed
+- Cache detection for non-Systran models (e.g., large-v3-turbo showed "Downloading..." when already cached)
+- Config section headers duplicating on save
+
+### Dependencies
+- **faster-whisper**: `>=1.1.1` → `>=1.2.1`
+  Required for distil-large-v3.5 support
+- **ctranslate2**: Added explicit `>=4.6.3` requirement
+  May fix GPU crashes on systems without cuDNN installed (#15)
+
 ## [0.4.0] - 2026-01-14
 
 ### Added
