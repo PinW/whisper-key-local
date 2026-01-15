@@ -11,4 +11,5 @@ allowed-tools: Bash(git describe:*), Bash(git tag:*), Bash(gh release:*), Bash(g
 6. Create GitHub release: `gh release create [VERSION] --title "[VERSION]"" --notes "[VERSION CHANGELOG]"`
 7. Re-build for PyInstaller: `powershell.exe -ExecutionPolicy Bypass -File /home/pin/whisper-key-local/py-build/build-windows.ps1`
 8. Upload built zip to release: `gh release upload [VERSION] [PATH_TO_ZIP]`
-9. Re-build and upload to PyPI: `powershell.exe -Command "python -m build && twine upload dist/*"`
+9. Build for PyPI: `powershell.exe -Command "cd [WSL_PROJECT_PATH]; python -m build"`
+10. Upload to PyPI: `powershell.exe -Command "twine upload [WSL_PROJECT_PATH]\\dist\\*"`
