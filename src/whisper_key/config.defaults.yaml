@@ -49,12 +49,66 @@ whisper:
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
 
-  # Model cache folder overrides (for non-Systran models)
-  # Maps model short names to their HuggingFace cache folder names
-  model_cache_overrides:
-    large: models--Systran--faster-whisper-large-v3
-    large-v3-turbo: models--mobiuslabsgmbh--faster-whisper-large-v3-turbo
-    distil-large-v3.5: models--distil-whisper--distil-large-v3.5-ct2
+  # Available models (set enabled: false to hide from menu)
+  # HuggingFace models are cached at: ~/.cache/huggingface/hub
+  models:
+    # Official whisper models
+    tiny:
+      label: "Tiny (76MB, fastest)"
+      group: official
+      enabled: true
+    base:
+      label: "Base (145MB, balanced)"
+      group: official
+      enabled: true
+    small:
+      label: "Small (484MB, accurate)"
+      group: official
+      enabled: true
+    medium:
+      label: "Medium (1.5GB, very accurate)"
+      group: official
+      enabled: true
+    large: # Uses the large-v3 version
+      label: "Large (3.1GB, best accuracy)"
+      group: official
+      enabled: true
+    large-v3-turbo: # 8x faster and only slightly less accurate (transcription optimized)
+      label: "Large-V3-Turbo (1.6GB, newest)"
+      group: official
+      enabled: true
+
+    # Models with native faster-whisper support
+    tiny.en:
+      label: "Tiny.En (English)"
+      group: custom
+      enabled: true
+    base.en:
+      label: "Base.En (English)"
+      group: custom
+      enabled: true
+    small.en:
+      label: "Small.En (English)"
+      group: custom
+      enabled: true
+    medium.en:
+      label: "Medium.En (English)"
+      group: custom
+      enabled: true
+    distil-large-v3.5: # About 1.5x faster than large-v3-turbo
+      source: distil-whisper/distil-large-v3.5-ct2
+      label: "Distil-Large-V3.5 (English)"
+      group: custom
+
+    # Custom models (must be CTranslate2 format)
+    # huggingface-model:
+    #   source: huggingface-username/whisper-model-ct2
+    #   label: "HuggingFace Model"
+    #   group: custom
+    # local-model:
+    #   source: C:\Models\whisper-custom-ct2
+    #   label: "Local Whisper Model"
+    #   group: custom
 
 # =============================================================================
 # HOTKEY CONFIGURATION
