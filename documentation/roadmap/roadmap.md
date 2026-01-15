@@ -16,7 +16,6 @@
 ## Backlog
 
 ### User Requests
-- As a *user*, I want to **load custom local models** so I can use specialized or fine-tuned models ([#10](https://github.com/PinW/whisper-key-local/issues/10))
 - As a *user*, I want a **shortcut to access the log file in the systray menu** so I can quickly troubleshoot issues ([#9](https://github.com/PinW/whisper-key-local/issues/9))
 
 ### Transcription History
