@@ -2,6 +2,7 @@
 @completed.md
 
 ## Next
+- As a *user* I want **support for more hotkeys** (F13-F24, Insert) so I can use StreamDeck or AutoHotkey triggers (#14)
 - As a *user* I want **lock output to window/field** so I don't need to click back into Claude Code terminal before start record
 - As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
 - As a *user*, I want to choose different **languages for transcription** so that I can get a free/passive accuracy boost
