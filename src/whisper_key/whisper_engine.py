@@ -47,7 +47,7 @@ class WhisperEngine:
 
     def _load_model(self):
         try:
-            print(f"Loading Whisper AI model [{self.model_size}]...")
+            print(f"🧠 Loading Whisper AI model [{self.model_size}]...")
 
             was_cached = self._is_model_cached()
             if not was_cached:
@@ -61,9 +61,9 @@ class WhisperEngine:
             )
 
             if not was_cached:
-                print("\n")
+                print("\n")  # Workaround for download status bar misplacement
 
-            print(f"   Whisper model [{self.model_size}] ready!")
+            print(f"   ✓ Whisper model [{self.model_size}] ready!")
 
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")
