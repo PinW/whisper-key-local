@@ -160,7 +160,7 @@ class StateManager:
 
             if pending_model:
                 self.logger.info(f"Executing pending model change to: {pending_model}")
-                print(f"🔄 Processing complete, now switching to {pending_model} model...")
+                print(f"🔄 Processing complete, now switching to [{pending_model}] model...")
                 self._execute_model_change(pending_model)
                 self._pending_model_change = None
 
@@ -237,13 +237,13 @@ class StateManager:
             return False
         
         if current_state == "recording":
-            print(f"🎤 Cancelling recording to switch to {new_model_key} model...")
+            print(f"🎤 Cancelling recording to switch to [{new_model_key}] model...")
             self.cancel_active_recording()
             self._execute_model_change(new_model_key)
             return True
         
         if current_state == "processing":
-            print(f"⏳ Queueing model change to {new_model_key} until transcription completes...")
+            print(f"⏳ Queueing model change to [{new_model_key}] until transcription completes...")
             self._pending_model_change = new_model_key
             return True
         
@@ -264,7 +264,7 @@ class StateManager:
     def _execute_model_change(self, new_model_key: str):
         def progress_callback(message: str):
             if "ready" in message.lower() or "already loaded" in message.lower():
-                print(f"✅ Successfully switched to {new_model_key} model")
+                print(f"✅ Successfully switched to [{new_model_key}] model")
                 self.set_model_loading(False)
             elif "failed" in message.lower():
                 print(f"❌ Failed to change model: {message}")
@@ -275,7 +275,7 @@ class StateManager:
         
         try:
             self.set_model_loading(True)
-            print(f"🔄 Switching to {new_model_key} model...")
+            print(f"🔄 Switching to [{new_model_key}] model...")
             
             self.whisper_engine.change_model(new_model_key, progress_callback)
             
