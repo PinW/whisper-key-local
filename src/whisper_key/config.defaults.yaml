@@ -50,6 +50,7 @@ whisper:
   # Model cache folder overrides (for non-Systran models)
   # Maps model short names to their HuggingFace cache folder names
   model_cache_overrides:
+    large: models--Systran--faster-whisper-large-v3
     large-v3-turbo: models--mobiuslabsgmbh--faster-whisper-large-v3-turbo
 
 # =============================================================================
