@@ -187,6 +187,9 @@ class SystemTray:
             model_sub_menu_items = self._build_model_menu_items(current_model, is_model_loading)
 
             menu_items = [
+                pystray.MenuItem("View Log", self._view_log_file),
+                pystray.MenuItem("Advanced Settings", self._open_config_file),
+                pystray.Menu.SEPARATOR,
                 pystray.MenuItem(
                     "Audio Host",
                     pystray.Menu(*audio_host_items)
@@ -227,6 +230,20 @@ class SystemTray:
 
     def _show_console(self, icon=None, item=None):
         self.state_manager.show_console()
+
+    def _view_log_file(self, icon=None, item=None):
+        try:
+            log_path = self.config_manager.get_log_file_path()
+            os.startfile(log_path)
+        except Exception as e:
+            self.logger.error(f"Failed to open log file: {e}")
+
+    def _open_config_file(self, icon=None, item=None):
+        try:
+            config_path = self.config_manager.user_settings_path
+            os.startfile(config_path)
+        except Exception as e:
+            self.logger.error(f"Failed to open config file: {e}")
 
     def _set_transcription_mode(self, auto_paste: bool):        
         self.state_manager.update_transcription_mode(auto_paste)
