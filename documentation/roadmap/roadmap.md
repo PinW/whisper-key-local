@@ -15,9 +15,6 @@
 
 ## Backlog
 
-### User Requests
-- As a *user*, I want a **shortcut to access the log file in the systray menu** so I can quickly troubleshoot issues ([#9](https://github.com/PinW/whisper-key-local/issues/9))
-
 ### Transcription History
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
 
