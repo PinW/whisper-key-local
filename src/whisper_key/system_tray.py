@@ -105,7 +105,7 @@ class SystemTray:
         def make_is_current(model_key):
             return lambda item: model_key == current_model
 
-        def model_selection_enabled():
+        def model_selection_enabled(item):
             return not is_model_loading
 
         first_group = True
