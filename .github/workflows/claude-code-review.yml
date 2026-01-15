@@ -2,7 +2,7 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, labeled, unlabeled]
+    types: [opened]
     paths:
       - "src/**/*.py"
       - "*.py"
@@ -10,7 +10,7 @@ on:
 
 jobs:
   claude-review:
-    if: ${{ !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'skip-review') && !contains(github.event.pull_request.labels.*.name, 'skip-further-reviews') }}
+    if: ${{ !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'skip-review') }}
     
     runs-on: ubuntu-latest
     permissions:
