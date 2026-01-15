@@ -163,7 +163,8 @@ class SystemTray:
                 pystray.MenuItem("Tiny.En (English only)", lambda icon, item: self._select_model("tiny.en"), radio=True, checked=lambda item: is_current_model("tiny.en"), enabled=model_selection_enabled()),
                 pystray.MenuItem("Base.En (English only)", lambda icon, item: self._select_model("base.en"), radio=True, checked=lambda item: is_current_model("base.en"), enabled=model_selection_enabled()),
                 pystray.MenuItem("Small.En (English only)", lambda icon, item: self._select_model("small.en"), radio=True, checked=lambda item: is_current_model("small.en"), enabled=model_selection_enabled()),
-                pystray.MenuItem("Medium.En (English only)", lambda icon, item: self._select_model("medium.en"), radio=True, checked=lambda item: is_current_model("medium.en"), enabled=model_selection_enabled())
+                pystray.MenuItem("Medium.En (English only)", lambda icon, item: self._select_model("medium.en"), radio=True, checked=lambda item: is_current_model("medium.en"), enabled=model_selection_enabled()),
+                pystray.MenuItem("Distil-Large-V3.5 (English only)", lambda icon, item: self._select_model("distil-large-v3.5"), radio=True, checked=lambda item: is_current_model("distil-large-v3.5"), enabled=model_selection_enabled())
             ]
 
             menu_items = [

@@ -12,7 +12,7 @@
 # =============================================================================
 whisper:
   # Model size - affects accuracy vs speed tradeoff
-  # Options: "tiny", "base", "small", "medium", "large", "large-v3-turbo", "tiny.en", "base.en", "small.en", "medium.en"
+  # Options: "tiny", "base", "small", "medium", "large", "large-v3-turbo", "tiny.en", "base.en", "small.en", "medium.en", "distil-large-v3.5"
   # Multilingual models:
   # - tiny: ~76MB, fastest, good for most use cases
   # - base: ~145MB, better accuracy, still fast
@@ -25,6 +25,8 @@ whisper:
   # - base.en: ~145MB
   # - small.en: ~484MB
   # - medium.en: ~1.5GB
+  # Distilled models (optimized for speed, English-focused):
+  # - distil-large-v3.5: ~1.5GB, fastest large-class model
   model_size: base
   
   # Processing device - where the AI runs
@@ -52,6 +54,7 @@ whisper:
   model_cache_overrides:
     large: models--Systran--faster-whisper-large-v3
     large-v3-turbo: models--mobiuslabsgmbh--faster-whisper-large-v3-turbo
+    distil-large-v3.5: models--distil-whisper--distil-large-v3.5-ct2
 
 # =============================================================================
 # HOTKEY CONFIGURATION
