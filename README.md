@@ -2,6 +2,8 @@
 
 Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is.
 
+Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
+
 ## 🎯 Features
 
 - **Global Hotkey**: Press `Ctrl+Win` to start recording, `Ctrl` to stop
