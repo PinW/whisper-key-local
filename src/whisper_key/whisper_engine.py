@@ -9,7 +9,7 @@ from faster_whisper import WhisperModel
 from .utils import OptionalComponent
 
 class WhisperEngine:
-    MODEL_CACHE_PREFIX = "models--Systran--faster-whisper-"  # file prefix for hugging-face model
+    MODEL_CACHE_PREFIX = "models--Systran--faster-whisper-"
 
     def __init__(self,
                  model_size: str = "tiny",
@@ -17,8 +17,9 @@ class WhisperEngine:
                  compute_type: str = "int8",
                  language: str = None,
                  beam_size: int = 5,
-                 vad_manager = None):
-        
+                 vad_manager = None,
+                 model_cache_overrides: dict = None):
+
         self.model_size = model_size
         self.device = device
         self.compute_type = compute_type
@@ -26,6 +27,7 @@ class WhisperEngine:
         self.beam_size = beam_size
         self.model = None
         self.logger = logging.getLogger(__name__)
+        self.model_cache_overrides = model_cache_overrides or {}
 
         self._loading_thread = None
         self._progress_callback = None
@@ -43,11 +45,16 @@ class WhisperEngine:
         cache_dir = os.path.join(userprofile, '.cache', 'huggingface', 'hub')
         return cache_dir
     
+    def _get_model_cache_folder(self, model_size):
+        if model_size in self.model_cache_overrides:
+            return self.model_cache_overrides[model_size]
+        return f"{self.MODEL_CACHE_PREFIX}{model_size}"
+
     def _is_model_cached(self, model_size=None):
         if model_size is None:
             model_size = self.model_size
         cache_dir = self._get_cache_directory()
-        model_folder = f"{self.MODEL_CACHE_PREFIX}{model_size}"
+        model_folder = self._get_model_cache_folder(model_size)
         return os.path.exists(os.path.join(cache_dir, model_folder))
     
     def _load_model(self):

@@ -47,6 +47,11 @@ whisper:
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
 
+  # Model cache folder overrides (for non-Systran models)
+  # Maps model short names to their HuggingFace cache folder names
+  model_cache_overrides:
+    large-v3-turbo: models--mobiuslabsgmbh--faster-whisper-large-v3-turbo
+
 # =============================================================================
 # HOTKEY CONFIGURATION
 # =============================================================================

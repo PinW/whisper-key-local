@@ -89,7 +89,8 @@ def setup_whisper_engine(whisper_config, vad_manager):
         compute_type=whisper_config['compute_type'],
         language=whisper_config['language'],
         beam_size=whisper_config['beam_size'],
-        vad_manager=vad_manager
+        vad_manager=vad_manager,
+        model_cache_overrides=whisper_config.get('model_cache_overrides', {})
     )
 
 def setup_clipboard_manager(clipboard_config):
