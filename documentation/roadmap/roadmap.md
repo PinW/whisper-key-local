@@ -6,6 +6,7 @@
 - As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
 - As a *user*, I want to choose different **languages for transcription** so that I can get a free/passive accuracy boost
 - As a *user*, I want to add **custom words** so rare words that I say often are translated accurately
+- As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 
 ### Cross-Platform
 - As a *mac user*, I want to use this app on **macOS**
