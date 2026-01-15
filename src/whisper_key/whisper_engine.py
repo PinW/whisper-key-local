@@ -1,111 +1,109 @@
 import logging
-import os
 import time
 import threading
 from typing import Optional, Callable
 
 import numpy as np
 from faster_whisper import WhisperModel
-from .utils import OptionalComponent
+
 
 class WhisperEngine:
-    MODEL_CACHE_PREFIX = "models--Systran--faster-whisper-"  # file prefix for hugging-face model
-
     def __init__(self,
-                 model_size: str = "tiny",
+                 model_key: str = "tiny",
                  device: str = "cpu",
                  compute_type: str = "int8",
                  language: str = None,
                  beam_size: int = 5,
-                 vad_manager = None):
-        
-        self.model_size = model_size
+                 vad_manager = None,
+                 model_registry = None):
+
+        self.model_key = model_key
         self.device = device
         self.compute_type = compute_type
         self.language = None if language == 'auto' else language
         self.beam_size = beam_size
         self.model = None
         self.logger = logging.getLogger(__name__)
+        self.registry = model_registry
 
         self._loading_thread = None
         self._progress_callback = None
 
         self.vad_manager = vad_manager
-        
+
         self._load_model()
     
-    def _get_cache_directory(self):
-        userprofile = os.getenv('USERPROFILE')
-        if not userprofile:
-            home = os.path.expanduser('~')
-            userprofile = home
-        
-        cache_dir = os.path.join(userprofile, '.cache', 'huggingface', 'hub')
-        return cache_dir
-    
-    def _is_model_cached(self, model_size=None):
-        if model_size is None:
-            model_size = self.model_size
-        cache_dir = self._get_cache_directory()
-        model_folder = f"{self.MODEL_CACHE_PREFIX}{model_size}"
-        return os.path.exists(os.path.join(cache_dir, model_folder))
-    
+    def _get_model_source(self, model_key: str) -> str:
+        if self.registry:
+            return self.registry.get_source(model_key)
+        return model_key
+
+    def _is_model_cached(self, model_key: str = None) -> bool:
+        if model_key is None:
+            model_key = self.model_key
+        if self.registry:
+            return self.registry.is_model_cached(model_key)
+        return False
+
     def _load_model(self):
         try:
-            print(f"🧠 Loading Whisper AI model [{self.model_size}]...")
-            
+            print(f"🧠 Loading Whisper AI model [{self.model_key}]...")
+
             was_cached = self._is_model_cached()
             if not was_cached:
                 print("Downloading model, this may take a few minutes....")
-            
+
+            model_source = self._get_model_source(self.model_key)
             self.model = WhisperModel(
-                self.model_size,
+                model_source,
                 device=self.device,
                 compute_type=self.compute_type
             )
-            
-            if not was_cached:
-                print("\n") # Workaround for download status bar misplacement
 
-            print(f"   ✓ Whisper model [{self.model_size}] ready!")
-            
+            if not was_cached:
+                print("\n")  # Workaround for download status bar misplacement
+
+            print(f"   ✓ Whisper model [{self.model_key}] ready!")
+
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")
             raise
     
     def _load_model_async(self,
-                          new_model_size: str,
+                          new_model_key: str,
                           progress_callback: Optional[Callable[[str], None]] = None):
         def _background_loader():
-            try:             
+            try:
                 if progress_callback:
                     progress_callback("Checking model cache...")
-                
-                old_model_size = self.model_size
-                was_cached = self._is_model_cached(new_model_size)
-                
+
+                old_model_key = self.model_key
+                was_cached = self._is_model_cached(new_model_key)
+
                 if progress_callback:
                     if was_cached:
                         progress_callback("Loading cached model...")
                     else:
                         progress_callback("Downloading model...")
-                               
-                self.logger.info(f"Loading Whisper model: {new_model_size} (async)")
 
+                self.logger.info(f"Loading Whisper model: {new_model_key} (async)")
+
+                model_source = self._get_model_source(new_model_key)
                 new_model = WhisperModel(
-                    new_model_size,
+                    model_source,
                     device=self.device,
                     compute_type=self.compute_type
                 )
-                
+
                 self.model = new_model
-                self.logger.info(f"Whisper model [{new_model_size}] loaded successfully (async)")
-                
+                self.model_key = new_model_key
+                self.logger.info(f"Whisper model [{new_model_key}] loaded successfully (async)")
+
                 if progress_callback:
                     progress_callback("Model ready!")
-                
+
             except Exception as e:
-                self.model_size = old_model_size
+                self.model_key = old_model_key
                 self.logger.error(f"Failed to load Whisper model async: {e}")
                 if progress_callback:
                     progress_callback(f"Failed to load model: {e}")
@@ -113,7 +111,7 @@ class WhisperEngine:
             finally:
                 self._loading_thread = None
                 self._progress_callback = None
-        
+
         if self._loading_thread and self._loading_thread.is_alive():
             self.logger.warning("Model loading already in progress, ignoring new request")
             return
@@ -188,13 +186,13 @@ class WhisperEngine:
     
     
     def change_model(self,
-                     new_model_size: str,
+                     new_model_key: str,
                      progress_callback: Optional[Callable[[str], None]] = None):
         
-        if new_model_size == self.model_size:
+        if new_model_key == self.model_key:
             if progress_callback:
                 progress_callback("Model already loaded")
             return
         
-        self._load_model_async(new_model_size, progress_callback)
+        self._load_model_async(new_model_key, progress_callback)
     

@@ -20,6 +20,7 @@
 - As a *user*, I want to **hide the console window** so the app runs cleanly in the background ([#8](https://github.com/PinW/whisper-key-local/issues/8))
 - As a *user*, I want to **select audio source** so I can transcribe from different microphones or system audio ([#12](https://github.com/PinW/whisper-key-local/issues/12))
 - As a *developer*, I want to **WASAPI loopback supported out of the box** so I can implement features like meeting transcription based on audio outputs
+- As a *user*, I want to **load custom local models** so I can use specialized or fine-tuned models ([#10](https://github.com/PinW/whisper-key-local/issues/10))
 
 ## Resolved Bugs
 

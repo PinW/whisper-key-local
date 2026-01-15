@@ -7,25 +7,11 @@
 # Personal settings are stored at:
 # %APPDATA%\Roaming\whisperkey\user_settings.yaml
 
-# =============================================================================
-# WHISPER AI MODEL SETTINGS
-# =============================================================================
-whisper:
-  # Model size - affects accuracy vs speed tradeoff
-  # Options: "tiny", "base", "small", "medium", "large", "large-v3-turbo", "tiny.en", "base.en", "small.en", "medium.en"
-  # Multilingual models:
-  # - tiny: ~76MB, fastest, good for most use cases
-  # - base: ~145MB, better accuracy, still fast
-  # - small: ~484MB, high accuracy, slower
-  # - medium: ~1.5GB, very high accuracy, much slower
-  # - large: ~3.1GB, best accuracy, very slow (not recommended for real-time)
-  # - large-v3-turbo: ~1.6GB, optimized for transcription, similar accuracy
-  # English-only models (same size, more accurate for English):
-  # - tiny.en: ~76MB
-  # - base.en: ~145MB
-  # - small.en: ~484MB
-  # - medium.en: ~1.5GB
-  model_size: base
+whisper: # Whisper AI Model Settings
+
+  # Model selection
+  # See "models" below for more information
+  model: tiny
   
   # Processing device - where the AI runs
   # Options: "cpu", "cuda" (for NVIDIA GPUs)
@@ -47,10 +33,60 @@ whisper:
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
 
-# =============================================================================
-# HOTKEY CONFIGURATION
-# =============================================================================
-hotkey:
+  # Available models (set enabled: false to hide from menu)
+  # To add custom models (CTranslate2 format), add entry with source (HuggingFace or local path)
+  # Example: my-model: {source: "username/repo-ct2", label: "My Model", group: custom}
+  models:
+    # Official whisper models
+    tiny:
+      label: "Tiny (76MB, fastest)"
+      group: official
+      enabled: true
+    base:
+      label: "Base (145MB, balanced)"
+      group: official
+      enabled: true
+    small:
+      label: "Small (484MB, accurate)"
+      group: official
+      enabled: true
+    medium:
+      label: "Medium (1.5GB, very accurate)"
+      group: official
+      enabled: true
+    large: # Uses the large-v3 version
+      label: "Large (3.1GB, best accuracy)"
+      group: official
+      enabled: true
+    large-v3-turbo: # 8x faster and only slightly less accurate (transcription optimized)
+      label: "Large-V3-Turbo (1.6GB, newest)"
+      group: official
+      enabled: true
+
+    # Models with native faster-whisper support
+    tiny.en:
+      label: "Tiny.En (English)"
+      group: custom
+      enabled: true
+    base.en:
+      label: "Base.En (English)"
+      group: custom
+      enabled: true
+    small.en:
+      label: "Small.En (English)"
+      group: custom
+      enabled: true
+    medium.en:
+      label: "Medium.En (English)"
+      group: custom
+      enabled: true
+    distil-large-v3.5: # About 1.5x faster than large-v3-turbo
+      source: distil-whisper/distil-large-v3.5-ct2
+      label: "Distil-Large-V3.5 (English)"
+      group: custom
+
+hotkey: # Hotkey Configuration
+
   # Key combination to start/stop recording
   # Format: modifier+modifier+key (use lowercase)
   # Common modifiers: ctrl, shift, alt, win
@@ -80,10 +116,8 @@ hotkey:
   # Examples: "esc", "ctrl+c", "shift+esc" 
   cancel_combination: esc
 
-# =============================================================================
-# VOICE ACTIVITY DETECTION (VAD) SETTINGS
-# =============================================================================
-vad:
+vad: # Voice Activity Detection (VAD)
+
   # Voice Activity Detection (VAD) Pre-check
   # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
   # NOTE: This is separate from faster-whisper's built-in VAD
@@ -100,10 +134,8 @@ vad:
   vad_realtime_enabled: true  # Enables continuous silence detection and automatic recording stop
   vad_silence_timeout_seconds: 30.0  # Auto-stop recording after this many seconds of silence
 
-# =============================================================================
-# AUDIO RECORDING SETTINGS
-# =============================================================================
-audio:
+audio: # Audio Recording Settings
+
   # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
 
   # Audio host API selection
@@ -133,10 +165,8 @@ audio:
   # are plugged/unplugged. Use system tray to select device - it will save the ID here.
   input_device: "default"
 
-# =============================================================================
-# CLIPBOARD BEHAVIOR
-# =============================================================================
-clipboard:
+clipboard: # Clipboard Behavior
+
   # Automatically paste after transcription
   # true = paste immediately to active window
   # false = only copy to clipboard (paste manually with Ctrl+V)
@@ -151,10 +181,8 @@ clipboard:
   # Small delay ensures operations complete reliably
   key_simulation_delay: 0.05
 
-# =============================================================================
-# LOGGING CONFIGURATION
-# =============================================================================
-logging:
+logging: # Logging Configuration
+
   # Log level - how much detail to log
   # Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
   # - DEBUG: Very detailed (for troubleshooting)
@@ -174,10 +202,8 @@ logging:
     level: WARNING  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
 
 
-# =============================================================================
-# AUDIO FEEDBACK SETTINGS
-# =============================================================================
-audio_feedback:
+audio_feedback: # Audio Feedback Settings
+
   # Enable/disable audio feedback sounds
   # true = play sounds when recording starts/stops
   # false = silent operation
@@ -189,10 +215,8 @@ audio_feedback:
   stop_sound: assets/sounds/record_stop.wav
   cancel_sound: assets/sounds/record_cancel.wav
 
-# =============================================================================
-# SYSTEM TRAY SETTINGS
-# =============================================================================
-system_tray:
+system_tray: # System Tray Settings
+
   # Enable/disable system tray icon
   # true = show icon in system tray with status and menu
   # false = run without system tray (console mode only)
@@ -201,10 +225,8 @@ system_tray:
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
 
-# =============================================================================
-# CONSOLE VISIBILITY SETTINGS
-# =============================================================================
-console:
+console: # Console Visibility Settings
+
   # Start with console hidden to system tray
   # Note: This setting is ignored in CLI mode
   start_hidden: false

@@ -20,6 +20,7 @@ from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
+from .model_registry import ModelRegistry
 from .utils import beautify_hotkey, get_user_app_data_path, get_version
 
 def is_built_executable():
@@ -82,14 +83,15 @@ def setup_vad(vad_config):
         vad_silence_timeout_seconds=vad_config['vad_silence_timeout_seconds']
     )
 
-def setup_whisper_engine(whisper_config, vad_manager):
+def setup_whisper_engine(whisper_config, vad_manager, model_registry):
     return WhisperEngine(
-        model_size=whisper_config['model_size'],
+        model_key=whisper_config['model'],
         device=whisper_config['device'],
         compute_type=whisper_config['compute_type'],
         language=whisper_config['language'],
         beam_size=whisper_config['beam_size'],
-        vad_manager=vad_manager
+        vad_manager=vad_manager,
+        model_registry=model_registry
     )
 
 def setup_clipboard_manager(clipboard_config):
@@ -113,11 +115,12 @@ def setup_console_manager(console_config, is_executable_mode):
         is_executable_mode=is_executable_mode
     )
 
-def setup_system_tray(tray_config, config_manager, state_manager=None):
+def setup_system_tray(tray_config, config_manager, state_manager, model_registry):
     return SystemTray(
         state_manager=state_manager,
         tray_config=tray_config,
-        config_manager=config_manager
+        config_manager=config_manager,
+        model_registry=model_registry
     )
 
 def setup_signal_handlers(shutdown_event):
@@ -179,8 +182,9 @@ def main():
         is_executable = is_built_executable()
         console_manager = setup_console_manager(console_config, is_executable)
 
+        model_registry = ModelRegistry(whisper_config.get('models', {}))
         vad_manager = setup_vad(vad_config)
-        whisper_engine = setup_whisper_engine(whisper_config, vad_manager)
+        whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry)
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
@@ -195,7 +199,7 @@ def main():
             vad_manager=vad_manager
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager)
-        system_tray = setup_system_tray(tray_config, config_manager, state_manager)
+        system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
