@@ -18,6 +18,8 @@
 - As a *tester*, I want **PyPI** so I can easily install the app
 - As a *user* I want **auto-stop recording** so I won't record to the limit when I accidentally turn it on or forget it is on
 - As a *user*, I want to **hide the console window** so the app runs cleanly in the background ([#8](https://github.com/PinW/whisper-key-local/issues/8))
+- As a *user*, I want to **select audio source** so I can transcribe from different microphones or system audio ([#12](https://github.com/PinW/whisper-key-local/issues/12))
+- As a *developer*, I want to **WASAPI loopback supported out of the box** so I can implement features like meeting transcription based on audio outputs
 
 ## Resolved Bugs
 

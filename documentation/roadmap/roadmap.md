@@ -2,12 +2,10 @@
 @completed.md
 
 ## Next
-- As a *user*, I want to **select audio source** so I can transcribe from different microphones or system audio ([#12](https://github.com/PinW/whisper-key-local/issues/12))
 - As a *user* I want **lock output to window/field** so I don't need to click back into Claude Code terminal before start record
 - As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
 - As a *user*, I want to choose different **languages for transcription** so that I can get a free/passive accuracy boost
 - As a *user*, I want to add **custom words** so rare words that I say often are translated accurately
-- As a *developer*, I want to **WASAPI loopback supported out of the date** so I can implement features like meeting transcription based on audio outputs
 
 ### Cross-Platform
 - As a *mac user*, I want to use this app on **macOS**
