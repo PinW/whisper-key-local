@@ -340,7 +340,7 @@ class ConfigValidator:
         self.default_config = default_config
         
         self._validate_enum('whisper.model_size', 
-                            ['tiny', 'base', 'small', 'medium', 'large', 'tiny.en', 'base.en', 'small.en', 'medium.en'])
+                            ['tiny', 'base', 'small', 'medium', 'large', 'large-v3-turbo', 'tiny.en', 'base.en', 'small.en', 'medium.en'])
         self._validate_enum('whisper.device', ['cpu', 'cuda'])
         self._validate_enum('whisper.compute_type', ['int8', 'float16', 'float32'])
         
