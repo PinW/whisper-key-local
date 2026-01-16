@@ -1,6 +1,6 @@
 ---
 description: Release the latest git tagged version
-allowed-tools: Bash(git describe:*), Bash(git tag:*), Bash(gh release:*), Bash(gh:*)
+allowed-tools: Bash(git *), Bash(gh *)
 ---
 
 1. Get the two latest git tags: !`git tag --sort=-v:refname | head -2`
