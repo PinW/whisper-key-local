@@ -129,7 +129,10 @@ class HotkeyListener:
         self.modifier_key_released = True
         
     def _extract_first_modifier(self, hotkey_str: str) -> str:
-        return hotkey_str.lower().split('+')[0].strip()
+        parts = hotkey_str.lower().split('+')
+        if len(parts) > 1:
+            return parts[0].strip()
+        return None
     
     def start_listening(self):
         if self.is_listening:
