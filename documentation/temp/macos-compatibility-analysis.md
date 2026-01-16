@@ -1,95 +1,78 @@
 # macOS Compatibility Analysis
 
-## Overview
+## Windows-Only Components
 
-Analysis of what would be required to make whisper-key-local runnable on macOS, examining Windows-specific dependencies and their cross-platform alternatives.
+| File | Windows APIs | macOS Alternative |
+|------|--------------|-------------------|
+| `audio_feedback.py` | `winsound` | `playsound` or `pygame.mixer` |
+| `clipboard_manager.py` | `win32gui`, `pyautogui` | `pynput`, `AppKit` |
+| `hotkey_listener.py` | `global-hotkeys` | `pynput.keyboard.GlobalHotKeys` |
+| `instance_manager.py` | `win32event`, `win32api` | `fcntl` file locking |
+| `console_manager.py` | `win32console`, `win32gui`, `win32con` | Not needed (macOS has no console hide) |
 
-**★ Key Insight:** Your codebase shows excellent architectural foresight - you already have platform-specific dependencies in pyproject.toml with conditions like `platform_system=='Windows'`. This suggests the foundation for cross-platform support was already considered.
+## Cross-Platform Components (No Changes Needed)
 
-## Current Windows Dependencies
+- `state_manager.py` - Pure Python orchestration
+- `audio_recorder.py` - Uses `sounddevice` (cross-platform)
+- `whisper_engine.py` - Uses `faster-whisper` (cross-platform)
+- `model_registry.py` - Pure Python
+- `voice_activity_detection.py` - Uses `ten-vad` + numpy (cross-platform)
+- `config_manager.py` - Uses `ruamel.yaml` (cross-platform)
+- `system_tray.py` - Uses `pystray` (already cross-platform)
+- `utils.py` - Pure Python
 
-I've identified **5 core components** that rely on Windows-specific libraries:
+## Difficulty Rating
 
-| Component | Windows Library | Usage | Complexity |
-|-----------|----------------|--------|------------|
-| **Audio Feedback** | `winsound` | Playing notification sounds | 🟢 Low |
-| **Clipboard Operations** | `pywin32` + `pyautogui` | Window handles, auto-paste | 🟡 Medium |
-| **Hotkey Detection** | `global-hotkeys` | Global hotkey monitoring | 🔴 High |
-| **Instance Management** | `win32api` + `win32event` | Single instance enforcement | 🟢 Low |
-| **System Tray** | `pystray` + `Pillow` | Cross-platform (already works!) | ✅ Done |
+| Component | Effort | Risk |
+|-----------|--------|------|
+| Audio feedback | Low | None |
+| Instance manager | Low | Minor (cleanup on crash) |
+| Console manager | None | Skip entirely on macOS |
+| Clipboard/paste | Medium | macOS accessibility permissions |
+| **Hotkey listener** | **High** | **Primary blocker** |
 
-## Required macOS Alternatives
+## Hotkey Challenge
 
-### 1. Audio Feedback (`audio_feedback.py:4`)
-- **Replace:** `winsound` 
-- **With:** `playsound` or `pygame.mixer` for cross-platform audio
-- **Challenge:** Thread management for async playback
+The `global-hotkeys` library is Windows-only. Alternatives:
 
-### 2. Clipboard Operations (`clipboard_manager.py:6,7`)
-- **Replace:** `win32gui.GetForegroundWindow()` 
-- **With:** `AppKit.NSWorkspace.sharedWorkspace().frontmostApplication()` 
-- **Replace:** `pyautogui` key simulation
-- **With:** `pynput.keyboard` for cross-platform key simulation
-- **Challenge:** macOS accessibility permissions for automation
+- **`pynput`**: Cross-platform but requires macOS accessibility permissions and has reliability issues with some system hotkeys
+- **`keyboard`**: Requires root on Linux, untested on macOS
+- API differences: callback patterns, key naming conventions all differ
 
-### 3. Hotkey Detection (`hotkey_listener.py:3`)
-- **Replace:** `global-hotkeys` library
-- **With:** `pynput.keyboard.GlobalHotKeys` or `keyboard` library
-- **Challenge:** This is the **biggest blocker** - global hotkey libraries have different APIs and reliability varies significantly on macOS
+## pyproject.toml Already Has Platform Conditions
 
-### 4. Instance Management (`instance_manager.py:5,6`)
-- **Replace:** `win32event.CreateMutex()` 
-- **With:** File-based locking using `fcntl` or `psutil` process checking
-- **Challenge:** Race conditions and cleanup on crash
-
-## Technical Implementation Strategy
-
-**★ Key Insight:** The cleanest approach would be a **platform abstraction layer** - create interface classes that switch implementations based on `platform.system()`. This maintains your existing API while allowing platform-specific implementations underneath.
-
-### Phase 1: Quick Wins (1-2 days)
-```python
-# Add to pyproject.toml dependencies:
-"playsound>=1.3.0; platform_system=='Darwin'",
-"pynput>=1.7.6; platform_system=='Darwin'", 
-"psutil>=5.9.0; platform_system=='Darwin'",
+```toml
+"global-hotkeys>=0.1.7; platform_system=='Windows'",
+"pywin32>=306; platform_system=='Windows'",
+"pyautogui>=0.9.54; platform_system=='Windows'",
 ```
 
-### Phase 2: Platform Abstraction (3-5 days)
-- Create `platform_audio.py`, `platform_clipboard.py`, `platform_instance.py`
-- Each module detects platform and imports appropriate implementation
-- Minimal changes to existing component interfaces
+Add for macOS:
+```toml
+"pynput>=1.7.6; platform_system=='Darwin'",
+"playsound>=1.3.0; platform_system=='Darwin'",
+```
 
-### Phase 3: macOS-Specific Challenges (5-10 days)
-- **Hotkey detection:** Test multiple libraries (`pynput`, `keyboard`, `pystray` global shortcuts)
-- **Accessibility permissions:** Handle macOS security prompts gracefully
-- **App bundling:** Research `py2app` vs PyInstaller for macOS .app creation
+## Implementation Approach
 
-## Biggest Risk: Global Hotkeys
+Create platform abstraction modules that detect OS and load appropriate implementation:
 
-The `global-hotkeys` library you're using is Windows-focused. macOS alternatives have **significant differences**:
+```
+src/whisper_key/
+├── platform/
+│   ├── __init__.py          # Platform detection
+│   ├── audio_playback.py    # winsound vs playsound
+│   ├── hotkeys.py           # global-hotkeys vs pynput
+│   ├── instance_lock.py     # mutex vs fcntl
+│   └── clipboard.py         # win32gui vs AppKit
+```
 
-- **API differences:** Different callback patterns, key naming conventions
-- **Permission requirements:** macOS requires explicit accessibility permissions
-- **Reliability issues:** Some libraries don't work well with system hotkeys on macOS
-- **Testing complexity:** Hard to test without physical macOS machine
+## Recommended Order
 
-## Estimated Effort
+1. **Audio feedback** - Easiest, validates abstraction pattern
+2. **Instance manager** - Simple, low risk
+3. **Clipboard operations** - Medium complexity
+4. **Hotkey listener** - Most complex, save for last
 
-- **Minimum viable port:** 1-2 weeks (basic functionality, rough edges)
-- **Production-ready port:** 3-4 weeks (polished UX, proper error handling)
-- **Ongoing maintenance:** Platform-specific bugs and testing overhead
-
-## Recommendation
-
-**Start with audio feedback replacement** as a proof-of-concept since it's the easiest component to make cross-platform. This would validate your platform abstraction approach before tackling the more complex hotkey system.
-
-## Analysis Date
-Generated: 2025-08-27
-
-## Source Files Analyzed
-- `/home/pin/whisper-key-local/pyproject.toml` - Dependencies and platform conditions
-- `/home/pin/whisper-key-local/src/whisper_key/audio_feedback.py` - winsound usage
-- `/home/pin/whisper-key-local/src/whisper_key/clipboard_manager.py` - pywin32 + pyautogui usage
-- `/home/pin/whisper-key-local/src/whisper_key/instance_manager.py` - win32api + win32event usage
-- `/home/pin/whisper-key-local/src/whisper_key/hotkey_listener.py` - global-hotkeys usage
-- `/home/pin/whisper-key-local/src/whisper_key/system_tray.py` - Already cross-platform
+---
+*Updated: 2026-01-16*
