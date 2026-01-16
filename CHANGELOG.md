@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.5.2] - 2026-01-16
+
+### Fixed
+- Single-key hotkeys (e.g., F13) causing "hotkey already registered" error when `stop_with_modifier_enabled` was true (#14)
+
 ## [0.5.1] - 2026-01-16
 
 ### Fixed
