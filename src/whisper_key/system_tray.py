@@ -233,6 +233,7 @@ class SystemTray:
 
     def _view_log_file(self, icon=None, item=None):
         try:
+            print("⚙️ Opening log file...")
             log_path = self.config_manager.get_log_file_path()
             os.startfile(log_path)
         except Exception as e:
@@ -240,6 +241,7 @@ class SystemTray:
 
     def _open_config_file(self, icon=None, item=None):
         try:
+            print("⚙️ Opening settings...")
             config_path = self.config_manager.user_settings_path
             os.startfile(config_path)
         except Exception as e:
