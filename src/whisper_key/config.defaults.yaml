@@ -171,12 +171,20 @@ clipboard: # Clipboard Behavior
   # true = paste immediately to active window
   # false = only copy to clipboard (paste manually with Ctrl+V)
   auto_paste: true
-  
+
+  # Key combination to simulate paste
+  # Format: modifier+key (use lowercase)
+  # Examples:
+  #   - "ctrl+v"         (standard paste)
+  #   - "ctrl+shift+v"   (plain text paste in some apps)
+  #   - "shift+insert"   (terminal paste)
+  paste_hotkey: ctrl+v
+
   # Preserve existing clipboard content when pasting
   # true = save current clipboard, paste transcription, then restore original clipboard
   # false = replace clipboard with transcription (default behavior)
   preserve_clipboard: true
-  
+
   # Delay for key simulation operations (seconds)
   # Small delay ensures operations complete reliably
   key_simulation_delay: 0.05

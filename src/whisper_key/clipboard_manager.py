@@ -6,14 +6,18 @@ import pyperclip
 import win32gui
 import pyautogui
 
+from .utils import parse_hotkey
+
 pyautogui.FAILSAFE = True  # Enable "move mouse to corner to abort automation"
 
-class ClipboardManager:    
-    def __init__(self, key_simulation_delay, auto_paste, preserve_clipboard):
+class ClipboardManager:
+    def __init__(self, key_simulation_delay, auto_paste, preserve_clipboard, paste_hotkey):
         self.logger = logging.getLogger(__name__)
         self.key_simulation_delay = key_simulation_delay
         self.auto_paste = auto_paste
         self.preserve_clipboard = preserve_clipboard
+        self.paste_hotkey = paste_hotkey
+        self.paste_keys = parse_hotkey(paste_hotkey)
         self._configure_pyautogui_timing()
         self._test_clipboard_access()
         self._print_status()
@@ -31,11 +35,11 @@ class ClipboardManager:
             raise
     
     def _print_status(self):
+        hotkey_display = self.paste_hotkey.upper()
         if self.auto_paste:
-            method_name = "key simulation (CTRL+V)"
-            print(f"   ✓ Auto-paste is ENABLED using {method_name}")
+            print(f"   ✓ Auto-paste is ENABLED using key simulation ({hotkey_display})")
         else:
-            print("   ✗ Auto-paste is DISABLED - paste manually with Ctrl+V")
+            print(f"   ✗ Auto-paste is DISABLED - paste manually with {hotkey_display}")
     
     def copy_text(self, text: str) -> bool:
         if not text:
@@ -106,7 +110,7 @@ class ClipboardManager:
             if not self.copy_text(text):
                 return False
                       
-            pyautogui.hotkey('ctrl', 'v')
+            pyautogui.hotkey(*self.paste_keys)
 
             print(f"   ✓ Auto-pasted via key simulation")
 

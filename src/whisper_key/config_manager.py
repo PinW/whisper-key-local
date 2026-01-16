@@ -356,6 +356,7 @@ class ConfigValidator:
         self._validate_boolean('clipboard.auto_paste')
         self._validate_boolean('clipboard.preserve_clipboard')
         self._validate_numeric_range('clipboard.key_simulation_delay', min_val=0, description='key simulation delay')
+        self._validate_hotkey_string('clipboard.paste_hotkey')
         
         self._validate_boolean('hotkey.stop_with_modifier_enabled')
         self._validate_boolean('hotkey.auto_enter_enabled')

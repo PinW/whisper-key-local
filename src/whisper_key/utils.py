@@ -20,8 +20,13 @@ class OptionalComponent:
 def beautify_hotkey(hotkey_string: str) -> str:
     if not hotkey_string:
         return ""
-    
+
     return hotkey_string.replace('+', '+').upper()
+
+def parse_hotkey(hotkey_string: str) -> list:
+    if not hotkey_string:
+        return []
+    return hotkey_string.lower().split('+')
 
 def is_installed_package():
     # Check if running from an installed package

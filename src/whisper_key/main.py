@@ -98,7 +98,8 @@ def setup_clipboard_manager(clipboard_config):
     return ClipboardManager(
         key_simulation_delay=clipboard_config['key_simulation_delay'],
         auto_paste=clipboard_config['auto_paste'],
-        preserve_clipboard=clipboard_config['preserve_clipboard']
+        preserve_clipboard=clipboard_config['preserve_clipboard'],
+        paste_hotkey=clipboard_config['paste_hotkey']
     )
 
 def setup_audio_feedback(audio_feedback_config):
