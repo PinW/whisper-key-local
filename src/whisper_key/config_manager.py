@@ -226,20 +226,25 @@ class ConfigManager:
         yaml.dump(config_data, temp_output)
         lines = temp_output.getvalue().split('\n')
 
-        filtered_lines = []
-        for line in lines:
-            if '# ====' in line:
-                continue
-            if line.strip().startswith('# ') and line.strip()[2:].replace(' ', '').isupper():
-                continue
-            filtered_lines.append(line)
+        content_start = 0
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped and not stripped.startswith('#'):
+                content_start = i
+                break
 
-        header = ["# ============================================================================="]
-        header.append("# WHISPER KEY - PERSONAL CONFIGURATION")
-        header.append("# =============================================================================")
-        header.append("")
+        content_lines = lines[content_start:]
 
-        return '\n'.join(header + filtered_lines)
+        header = [
+            "# =============================================================================",
+            "# WHISPER KEY - PERSONAL CONFIGURATION",
+            "# =============================================================================",
+            "# Edit this file to customize your settings",
+            "# Save and restart Whisper Key for changes to take effect",
+            ""
+        ]
+
+        return '\n'.join(header + content_lines)
 
     def save_config_to_user_settings_file(self):
         try:
