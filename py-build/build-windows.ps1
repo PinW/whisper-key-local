@@ -92,8 +92,7 @@ if (-not (Test-Path $VenvPath)) {
     }
     
     Write-Host "Installing project dependencies..." -ForegroundColor Yellow
-    $RequirementsFile = Join-Path $ProjectRoot "requirements.txt"
-    & $VenvPip install -r $RequirementsFile
+    & $VenvPip install $ProjectRoot
     if ($LASTEXITCODE -ne 0) { 
         Write-Host "Failed to install dependencies" -ForegroundColor Red
         exit 1 
