@@ -99,7 +99,7 @@ if (-not (Test-Path $VenvPath)) {
     }
 
     Write-Host "Installing TEN VAD..." -ForegroundColor Yellow
-    & $VenvPip install "W:\ten-vad"
+    & $VenvPip install "git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX"
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Failed to install TEN VAD" -ForegroundColor Red
         exit 1
