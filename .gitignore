@@ -124,3 +124,6 @@ user-testing/
 # Build configuration (user-specific paths)
 py-build/build-config.json
 src/whisper_key/assets/version.txt
+
+# Temporary documentation
+documentation/temp/
