@@ -3,6 +3,7 @@
 from .utils import add_portaudio_dll_to_search_path
 add_portaudio_dll_to_search_path()
 
+import argparse
 import logging
 import os
 import signal
@@ -155,10 +156,16 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
     if state_manager:
         state_manager.shutdown()
 
-def main():   
-    mutex_handle = guard_against_multiple_instances()
-    
-    print(f"Starting Whisper Key [{get_version()}]... Local Speech-to-Text App...")
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--test', action='store_true', help='Run as separate test instance')
+    args = parser.parse_args()
+
+    instance_name = "WhisperKeyLocal_test" if args.test else "WhisperKeyLocal"
+    mutex_handle = guard_against_multiple_instances(instance_name)
+
+    mode_label = " [TEST]" if args.test else ""
+    print(f"Starting Whisper Key [{get_version()}]{mode_label}... Local Speech-to-Text App...")
     
     shutdown_event = threading.Event()
     setup_signal_handlers(shutdown_event)
