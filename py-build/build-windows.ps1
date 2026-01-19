@@ -93,11 +93,18 @@ if (-not (Test-Path $VenvPath)) {
     
     Write-Host "Installing project dependencies..." -ForegroundColor Yellow
     & $VenvPip install $ProjectRoot
-    if ($LASTEXITCODE -ne 0) { 
+    if ($LASTEXITCODE -ne 0) {
         Write-Host "Failed to install dependencies" -ForegroundColor Red
-        exit 1 
+        exit 1
     }
-    
+
+    Write-Host "Installing TEN VAD..." -ForegroundColor Yellow
+    & $VenvPip install "git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to install TEN VAD" -ForegroundColor Red
+        exit 1
+    }
+
     Write-Host "Installing PyInstaller..." -ForegroundColor Yellow
     & $VenvPip install pyinstaller
     if ($LASTEXITCODE -ne 0) { 
