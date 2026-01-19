@@ -44,6 +44,10 @@ a = Analysis(
     noarchive=False,
 )
 
+# Exclude bundled MSVC runtime - use system version instead
+# ctranslate2 4.6.3+ compiled with VS 2022 requires newer MSVCP140.dll than PyInstaller bundles
+a.binaries = [b for b in a.binaries if b[0].lower() != 'msvcp140.dll']
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
 exe = EXE(
