@@ -9,6 +9,8 @@ import signal
 import sys
 import threading
 
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
@@ -207,7 +209,7 @@ def main():
         
         system_tray.start()
 
-        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.")
+        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
 
         while not shutdown_event.wait(timeout=0.1):
