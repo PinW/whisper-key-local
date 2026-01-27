@@ -1,5 +1,7 @@
 *Learning project for beginner coder: explain concepts in conversation (not in comments)*
 
+https://github.com/PinW/whisper-key-local
+
 @documentation/project-index.md
 
 - Test app startup: `/test-from-wsl` (launch only, no interaction)
