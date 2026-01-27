@@ -272,8 +272,6 @@ class ConfigManager:
                     self.config[section][key] = value
                     self.save_config_to_user_settings_file()
 
-                    print(f"⚙️ Updated {section} setting")
-                
                     self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
             else:
                 self.logger.error(f"Setting {section}:{key} does not exist")
