@@ -1,3 +1,7 @@
+---
+description: Execute an implementation plan (use "l" for latest plan)
+---
+
 PLAN: $ARGUMENTS
 
 If PLAN is file reference
