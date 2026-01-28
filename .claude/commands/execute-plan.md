@@ -10,6 +10,8 @@ If PLAN is file reference
 If PLAN is "l"
 - Implement plan with the latest timestamp in `documentation/implementation-plans`
 
-Think hard
+ultrathink
+
+Commit often - after each logical chunk of work
 
 @documentation/plan-execution.md
