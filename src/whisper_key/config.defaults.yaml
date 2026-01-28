@@ -90,6 +90,27 @@ whisper: # Whisper AI Model Settings
       label: "Distil-Large-V3.5 (English)"
       group: custom
 
+streaming: # Real-time STT (Experimental)
+
+  # Real-time streaming speech recognition using sherpa-onnx
+  streaming_enabled: false
+
+  # Streaming model type
+  streaming_model: standard
+
+  # Available streaming models (sherpa-onnx format)
+  # source: HuggingFace repository name
+  # files: model component filenames within the repository
+  models:
+    standard:
+      source: csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17
+      label: "Standard Zipformer (int8)"
+      files:
+        encoder: encoder-epoch-99-avg-1.int8.onnx
+        decoder: decoder-epoch-99-avg-1.int8.onnx
+        joiner: joiner-epoch-99-avg-1.int8.onnx
+        tokens: tokens.txt
+
 hotkey: # Hotkey Configuration
 
   # Key combination to start/stop recording
@@ -243,12 +264,3 @@ console: # Console Visibility Settings
   # Start with console hidden to system tray
   # Note: This setting is ignored in CLI mode
   start_hidden: false
-
-streaming: # Real-time STT (Experimental)
-
-  # Real-time streaming speech recognition using sherpa-onnx
-  streaming_enabled: false
-
-  # Streaming model type
-  # Options: "standard" (default int8 Zipformer model)
-  streaming_model: standard

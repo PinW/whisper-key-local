@@ -1,59 +1,25 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy.io.wavfile
 import soxr
 
+if TYPE_CHECKING:
+    from .model_registry import ModelRegistry
+
 SHERPA_SAMPLE_RATE = 16000
-
-MODELS = {
-    "standard": {
-        "repo": "models--csukuangfj--sherpa-onnx-streaming-zipformer-en-20M-2023-02-17",
-        "encoder": "encoder-epoch-99-avg-1.int8.onnx",
-        "decoder": "decoder-epoch-99-avg-1.int8.onnx",
-        "joiner": "joiner-epoch-99-avg-1.int8.onnx",
-        "tokens": "tokens.txt",
-    },
-}
-
-
-def get_hf_cache_path():
-    userprofile = os.environ.get('USERPROFILE')
-    if not userprofile:
-        userprofile = os.path.expanduser('~')
-    return os.path.join(userprofile, '.cache', 'huggingface', 'hub')
-
-
-def get_model_path(model_type="standard"):
-    model_info = MODELS.get(model_type)
-    if not model_info:
-        return None
-
-    cache_base = get_hf_cache_path()
-    model_dir = os.path.join(cache_base, model_info["repo"])
-
-    if not os.path.exists(model_dir):
-        return None
-
-    snapshots_dir = os.path.join(model_dir, 'snapshots')
-    if not os.path.exists(snapshots_dir):
-        return None
-
-    snapshots = os.listdir(snapshots_dir)
-    if not snapshots:
-        return None
-
-    return os.path.join(snapshots_dir, snapshots[0]), model_info
 
 
 class StreamingRecognizer:
-    def __init__(self, model_type: str = "standard", recording_rate: int = 16000):
+    def __init__(self, model_type: str = "standard", recording_rate: int = 16000,
+                 model_registry: "ModelRegistry" = None):
         self.logger = logging.getLogger(__name__)
         self.model_type = model_type
         self.recording_rate = recording_rate
+        self.model_registry = model_registry
         self.recognizer = None
         self.stream = None
 
@@ -64,17 +30,21 @@ class StreamingRecognizer:
             self.logger.warning("sherpa-onnx not installed, streaming recognition unavailable")
             return False
 
-        result = get_model_path(self.model_type)
-        if not result:
-            self.logger.warning(f"Streaming model '{self.model_type}' not found in HuggingFace cache")
+        if not self.model_registry:
+            self.logger.warning("No model registry provided for streaming recognizer")
             return False
 
-        model_path, model_info = result
+        result = self.model_registry.get_streaming_model_path(self.model_type)
+        if not result:
+            self.logger.warning(f"Streaming model '{self.model_type}' not available")
+            return False
 
-        encoder = os.path.join(model_path, model_info["encoder"])
-        decoder = os.path.join(model_path, model_info["decoder"])
-        joiner = os.path.join(model_path, model_info["joiner"])
-        tokens = os.path.join(model_path, model_info["tokens"])
+        model_path, files = result
+
+        encoder = os.path.join(model_path, files["encoder"])
+        decoder = os.path.join(model_path, files["decoder"])
+        joiner = os.path.join(model_path, files["joiner"])
+        tokens = os.path.join(model_path, files["tokens"])
 
         for name, f in [("encoder", encoder), ("decoder", decoder), ("joiner", joiner), ("tokens", tokens)]:
             if not os.path.exists(f):

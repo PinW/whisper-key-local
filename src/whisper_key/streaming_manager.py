@@ -1,8 +1,11 @@
 import logging
 import threading
-from typing import Optional, Callable
+from typing import TYPE_CHECKING, Optional, Callable
 
 from .streaming_recognizer import StreamingRecognizer
+
+if TYPE_CHECKING:
+    from .model_registry import ModelRegistry
 
 
 class ContinuousStreamingRecognizer:
@@ -51,9 +54,11 @@ class ContinuousStreamingRecognizer:
 class StreamingManager:
     def __init__(self,
                  streaming_enabled: bool = False,
-                 streaming_model: str = "standard"):
+                 streaming_model: str = "standard",
+                 model_registry: "ModelRegistry" = None):
         self.streaming_enabled = streaming_enabled
         self.streaming_model = streaming_model
+        self.model_registry = model_registry
         self.recognizer: Optional[StreamingRecognizer] = None
         self._model_loaded = False
         self.logger = logging.getLogger(__name__)
@@ -69,7 +74,10 @@ class StreamingManager:
         if self._model_loaded:
             return True
 
-        self.recognizer = StreamingRecognizer(model_type=self.streaming_model)
+        self.recognizer = StreamingRecognizer(
+            model_type=self.streaming_model,
+            model_registry=self.model_registry
+        )
         success = self.recognizer.load_model()
 
         if success:

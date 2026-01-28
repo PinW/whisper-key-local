@@ -89,10 +89,11 @@ def setup_vad(vad_config):
         vad_silence_timeout_seconds=vad_config['vad_silence_timeout_seconds']
     )
 
-def setup_streaming(streaming_config):
+def setup_streaming(streaming_config, model_registry):
     return StreamingManager(
         streaming_enabled=streaming_config.get('streaming_enabled', False),
-        streaming_model=streaming_config.get('streaming_model', 'standard')
+        streaming_model=streaming_config.get('streaming_model', 'standard'),
+        model_registry=model_registry
     )
 
 def setup_whisper_engine(whisper_config, vad_manager, model_registry):
@@ -202,9 +203,12 @@ def main():
         is_executable = is_built_executable()
         console_manager = setup_console_manager(console_config, is_executable)
 
-        model_registry = ModelRegistry(whisper_config.get('models', {}))
+        model_registry = ModelRegistry(
+            whisper_models_config=whisper_config.get('models', {}),
+            streaming_models_config=streaming_config.get('models', {})
+        )
         vad_manager = setup_vad(vad_config)
-        streaming_manager = setup_streaming(streaming_config)
+        streaming_manager = setup_streaming(streaming_config, model_registry)
         whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry)
         streaming_manager.initialize()
         clipboard_manager = setup_clipboard_manager(clipboard_config)
