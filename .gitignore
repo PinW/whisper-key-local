@@ -112,9 +112,6 @@ dmypy.json
 *.swo
 *~
 
-# Whisper models cache
-models/
-
 # Application logs
 *.log
 
