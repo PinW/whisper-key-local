@@ -58,10 +58,14 @@ class StreamingManager:
         self._model_loaded = False
         self.logger = logging.getLogger(__name__)
 
-    def load_model(self) -> bool:
+    def initialize(self) -> None:
         if not self.streaming_enabled:
-            return False
+            return
 
+        if self._load_model():
+            print("   ✓ Real-time speech recognition enabled...")
+
+    def _load_model(self) -> bool:
         if self._model_loaded:
             return True
 

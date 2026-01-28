@@ -90,17 +90,10 @@ def setup_vad(vad_config):
     )
 
 def setup_streaming(streaming_config):
-    streaming_manager = StreamingManager(
+    return StreamingManager(
         streaming_enabled=streaming_config.get('streaming_enabled', False),
         streaming_model=streaming_config.get('streaming_model', 'standard')
     )
-    if streaming_manager.streaming_enabled:
-        print("   Loading streaming STT model...", end=" ", flush=True)
-        if streaming_manager.load_model():
-            print("ready")
-        else:
-            print("unavailable")
-    return streaming_manager
 
 def setup_whisper_engine(whisper_config, vad_manager, model_registry):
     return WhisperEngine(
@@ -213,6 +206,7 @@ def main():
         vad_manager = setup_vad(vad_config)
         streaming_manager = setup_streaming(streaming_config)
         whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry)
+        streaming_manager.initialize()
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
