@@ -77,9 +77,24 @@ As a **User** I want **real-time transcription display while recording** so I ca
 - [x] Test if hotkey workflow naturally avoids clipping (delay before speaking)
   - ⚠️ Clipping occurs only on FIRST hotkey activation after app start
   - ⚠️ Subsequent activations work correctly (no clipping)
-  - ⚠️ Tried reset() after model load - did not help
-- [ ] TODO: Try pre-roll buffer approach or feed brief audio during init
-- [ ] Document as known limitation for now
+  - ⚠️ Clipping is NOT related to timing - waiting 3s before speaking still clips
+
+**Attempts that FAILED:**
+- ❌ reset() immediately after model load
+- ❌ Feeding silence/zeros before speech, then reset
+- ❌ Feeding 200ms ambient mic audio, then reset
+- ❌ Skip reset() on first recording only
+- ❌ Feed 1s of zeros at model load (no reset) - prime the stream
+- ❌ Warmup with beep sound in throwaway stream, then create fresh stream
+
+**Root cause hypothesis (from Codex research):**
+- Zipformer uses chunk-based processing with left-context (chunk-16-left-128)
+- reset() clears NN state but may not fully reinitialize frontend caches
+- After first utterance, some caches/normalization are implicitly warmed
+
+**Next to try:**
+- [ ] Pre-recorded SPEECH audio file for warmup (not beeps/silence)
+- [ ] Document as known limitation if speech warmup also fails
 
 ## Implementation Details
 

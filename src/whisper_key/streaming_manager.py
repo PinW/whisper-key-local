@@ -70,6 +70,7 @@ class StreamingManager:
 
         if success:
             self._model_loaded = True
+            self.recognizer.warmup()
             self.logger.info("Streaming STT model loaded successfully")
         else:
             self.recognizer = None

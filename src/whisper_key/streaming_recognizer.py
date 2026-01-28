@@ -1,8 +1,10 @@
 import logging
 import os
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
+import scipy.io.wavfile
 import soxr
 
 SHERPA_SAMPLE_RATE = 16000
@@ -97,6 +99,43 @@ class StreamingRecognizer:
 
         self.stream = self.recognizer.create_stream()
         self.logger.info(f"Streaming recognizer loaded: {self.model_type}")
+        return True
+
+    def warmup(self) -> bool:
+        if not self.is_loaded():
+            return False
+
+        assets_dir = Path(__file__).parent / "assets" / "sounds"
+        warmup_file = assets_dir / "streaming-recognizer-warmup.wav"
+
+        if not warmup_file.exists():
+            self.logger.warning(f"Warmup audio file not found: {warmup_file}")
+            return False
+
+        sample_rate, audio = scipy.io.wavfile.read(warmup_file)
+
+        if audio.ndim > 1:
+            audio = audio.mean(axis=1)
+
+        audio = audio.astype(np.float32) / 32768.0
+        max_val = np.abs(audio).max()
+        if max_val > 0:
+            audio = audio * (0.8 / max_val)
+
+        if sample_rate != SHERPA_SAMPLE_RATE:
+            audio = soxr.resample(audio, sample_rate, SHERPA_SAMPLE_RATE).astype(np.float32)
+
+        chunk_size = 1600
+        for i in range(0, len(audio), chunk_size):
+            self.stream.accept_waveform(SHERPA_SAMPLE_RATE, audio[i:i + chunk_size])
+            while self.recognizer.is_ready(self.stream):
+                self.recognizer.decode_stream(self.stream)
+
+        result = self.recognizer.get_result(self.stream).strip()
+        self.logger.info(f"Warmup complete, recognized: '{result}'")
+        self.recognizer.reset(self.stream)
+
+        self.recognizer.reset(self.stream)
         return True
 
     def is_loaded(self) -> bool:
