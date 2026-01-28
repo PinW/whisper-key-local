@@ -101,6 +101,7 @@ class StreamingRecognizer:
         self.logger.info(f"Streaming recognizer loaded: {self.model_type}")
         return True
 
+    # Warmup required to work-around clipping of first speech detected
     def warmup(self) -> bool:
         if not self.is_loaded():
             return False
