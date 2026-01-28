@@ -244,10 +244,9 @@ console: # Console Visibility Settings
   # Note: This setting is ignored in CLI mode
   start_hidden: false
 
-streaming: # Streaming STT Settings (Experimental)
+streaming: # Real-time STT (Experimental)
 
   # Real-time streaming speech recognition using sherpa-onnx
-  # Shows transcription as you speak, separate from final Whisper transcription
   streaming_enabled: false
 
   # Streaming model type
