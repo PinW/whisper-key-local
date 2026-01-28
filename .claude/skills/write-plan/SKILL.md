@@ -6,4 +6,4 @@ Create implementation plan for: $ARGUMENTS
 
 ultrathink
 
-@documentation/plan-writing.md
+@plan-writing.md
