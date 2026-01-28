@@ -398,6 +398,8 @@ class StateManager:
             max_duration = self.audio_recorder.max_duration
             on_max_duration = self.audio_recorder.on_max_duration_reached
             vad_manager = self.audio_recorder.vad_manager
+            streaming_manager = self.audio_recorder.streaming_manager
+            on_streaming_result = self.audio_recorder.on_streaming_result
 
             new_recorder = AudioRecorder(
                 on_vad_event=self.handle_vad_event,
@@ -406,6 +408,8 @@ class StateManager:
                 max_duration=max_duration,
                 on_max_duration_reached=on_max_duration,
                 vad_manager=vad_manager,
+                streaming_manager=streaming_manager,
+                on_streaming_result=on_streaming_result,
                 device=device_id if device_id != -1 else None
             )
 
