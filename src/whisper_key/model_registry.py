@@ -9,21 +9,22 @@ class ModelRegistry:
     DEFAULT_CACHE_PREFIX = "models--Systran--faster-whisper-"
 
     def __init__(self, whisper_models_config: dict = None, streaming_models_config: dict = None):
-        self.models = {}
+        self.whisper_models = {}
+        self.streaming_models = {}
         self.logger = logging.getLogger(__name__)
 
         if whisper_models_config:
             for key, config in whisper_models_config.items():
                 if isinstance(config, dict):
-                    self.models[key] = ModelDefinition(key, config, model_type="whisper")
+                    self.whisper_models[key] = ModelDefinition(key, config, model_type="whisper")
 
         if streaming_models_config:
             for key, config in streaming_models_config.items():
                 if isinstance(config, dict):
-                    self.models[key] = ModelDefinition(key, config, model_type="streaming")
+                    self.streaming_models[key] = ModelDefinition(key, config, model_type="streaming")
 
     def get_model(self, key: str):
-        return self.models.get(key)
+        return self.whisper_models.get(key)
 
     def get_source(self, key: str) -> str:
         model = self.get_model(key)
@@ -36,7 +37,7 @@ class ModelRegistry:
         return model.cache_folder
 
     def get_models_by_group(self, group: str) -> list:
-        return [m for m in self.models.values() if m.group == group and m.enabled]
+        return [m for m in self.whisper_models.values() if m.group == group and m.enabled]
 
     def get_groups_ordered(self) -> list:
         return ["official", "custom"]
@@ -49,8 +50,6 @@ class ModelRegistry:
 
     def is_model_cached(self, key: str) -> bool:
         model = self.get_model(key)
-        if model and model.model_type == "streaming":
-            return self._is_streaming_model_cached(key)
         if model and model.is_local_path:
             return os.path.exists(os.path.join(model.source, 'model.bin'))
         cache_folder = self.get_cache_folder(key)
@@ -59,7 +58,7 @@ class ModelRegistry:
         return os.path.exists(os.path.join(self.get_hf_cache_path(), cache_folder))
 
     def _is_streaming_model_cached(self, key: str) -> bool:
-        model = self.get_model(key)
+        model = self.streaming_models.get(key)
         if not model or not model.files:
             return False
 
@@ -73,7 +72,7 @@ class ModelRegistry:
         return True
 
     def _get_streaming_snapshot_path(self, key: str) -> Optional[str]:
-        model = self.get_model(key)
+        model = self.streaming_models.get(key)
         if not model:
             return None
 
@@ -90,8 +89,8 @@ class ModelRegistry:
         return os.path.join(snapshots_dir, snapshots[0])
 
     def get_streaming_model_path(self, key: str) -> Optional[tuple]:
-        model = self.get_model(key)
-        if not model or model.model_type != "streaming":
+        model = self.streaming_models.get(key)
+        if not model:
             return None
 
         if not self._is_streaming_model_cached(key):
@@ -105,8 +104,8 @@ class ModelRegistry:
         return snapshot_path, model.files
 
     def download_streaming_model(self, key: str) -> bool:
-        model = self.get_model(key)
-        if not model or model.model_type != "streaming":
+        model = self.streaming_models.get(key)
+        if not model:
             return False
 
         try:

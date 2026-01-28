@@ -68,7 +68,7 @@ class StreamingManager:
             return
 
         if self._load_model():
-            print("   ✓ Real-time speech recognition enabled...")
+            print(f"   ✓ Real-time speech recognition [{self.streaming_model}] enabled...")
 
     def _load_model(self) -> bool:
         if self._model_loaded:
