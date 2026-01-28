@@ -107,8 +107,6 @@ class StreamingRecognizer:
         result = self.recognizer.get_result(self.stream).strip()
         self.logger.info(f"Warmup complete, recognized: '{result}'")
         self.recognizer.reset(self.stream)
-
-        self.recognizer.reset(self.stream)
         return True
 
     def is_loaded(self) -> bool:
