@@ -69,15 +69,18 @@ As a **User** I want **real-time transcription display while recording** so I ca
 
 ### Phase 6: Main Integration
 - [x] Create `StreamingManager` in `main.py` setup
-  - ✅ Added `setup_streaming()` function that loads model at startup
+  - ✅ Added `setup_streaming()` function (consistent with other setup functions)
+  - ✅ Model loading handled by `StreamingManager.initialize()` method
+  - ✅ Streaming model loads after main Whisper model, before AudioRecorder
   - ✅ Pass `streaming_manager` to `AudioRecorder` setup function
   - ✅ Wire `handle_streaming_result` callback through `StateManager`
 
-### Phase 7: First-Utterance Clipping Investigation
-- [x] Test if hotkey workflow naturally avoids clipping (delay before speaking)
-  - ⚠️ Clipping occurs only on FIRST hotkey activation after app start
-  - ⚠️ Subsequent activations work correctly (no clipping)
-  - ⚠️ Clipping is NOT related to timing - waiting 3s before speaking still clips
+### Phase 7: First-Utterance Clipping Fix
+- [x] Investigate and fix first-utterance clipping issue
+  - ✅ Root cause: Zipformer left-context caches not properly initialized until first real speech
+  - ✅ Solution: Warmup with pre-recorded speech audio at model load time
+  - ✅ Added `warmup()` method to `StreamingRecognizer` with bundled speech sample
+  - ✅ Warmup called automatically during `StreamingManager.initialize()`
 
 **Attempts that FAILED:**
 - ❌ reset() immediately after model load
@@ -87,14 +90,9 @@ As a **User** I want **real-time transcription display while recording** so I ca
 - ❌ Feed 1s of zeros at model load (no reset) - prime the stream
 - ❌ Warmup with beep sound in throwaway stream, then create fresh stream
 
-**Root cause hypothesis (from Codex research):**
-- Zipformer uses chunk-based processing with left-context (chunk-16-left-128)
-- reset() clears NN state but may not fully reinitialize frontend caches
-- After first utterance, some caches/normalization are implicitly warmed
-
-**Next to try:**
-- [ ] Pre-recorded SPEECH audio file for warmup (not beeps/silence)
-- [ ] Document as known limitation if speech warmup also fails
+**Solution that WORKED:**
+- ✅ Pre-recorded SPEECH audio file for warmup (not beeps/silence)
+- Speech audio properly initializes Zipformer's chunk-based left-context caches
 
 ## Implementation Details
 
@@ -160,28 +158,29 @@ streaming:
   streaming_model: standard
 ```
 
-## Files to Modify
+## Files Modified
 
 | File | Changes |
 |------|---------|
-| `src/whisper_key/streaming_recognizer.py` | **NEW** - StreamingRecognizer class |
-| `src/whisper_key/streaming_manager.py` | **NEW** - StreamingManager factory class |
+| `src/whisper_key/streaming_recognizer.py` | **NEW** - StreamingRecognizer class with warmup() method |
+| `src/whisper_key/streaming_manager.py` | **NEW** - StreamingManager with initialize() method |
 | `src/whisper_key/audio_recorder.py` | Add streaming integration to callback |
 | `src/whisper_key/state_manager.py` | Add streaming result callback handler |
 | `src/whisper_key/main.py` | Create and wire StreamingManager |
 | `src/whisper_key/config.defaults.yaml` | Add streaming section |
 | `src/whisper_key/config_manager.py` | Add streaming config getter |
+| `src/whisper_key/assets/streaming-recognizer-warmup.wav` | **NEW** - Speech sample for warmup |
 
 ## Success Criteria
 
-- [ ] When `streaming_enabled: true`, partial transcription appears during recording
-- [ ] Text updates in-place as user speaks (no scrolling spam)
-- [ ] Endpoint detection shows finalized segments
-- [ ] Existing Whisper batch transcription still works unchanged
-- [ ] Graceful fallback if sherpa-onnx not installed
-- [ ] No noticeable impact on recording quality or CPU usage
-- [ ] Model loads during app startup (not on first recording)
-- [ ] First-utterance clipping tested and either mitigated or documented as known limitation
+- [x] When `streaming_enabled: true`, partial transcription appears during recording
+- [x] Text updates in-place as user speaks (no scrolling spam)
+- [x] Endpoint detection shows finalized segments
+- [x] Existing Whisper batch transcription still works unchanged
+- [x] Graceful fallback if sherpa-onnx not installed
+- [x] No noticeable impact on recording quality or CPU usage
+- [x] Model loads during app startup (not on first recording)
+- [x] First-utterance clipping fixed with speech warmup at model load
 
 ## Out of Scope (Future Work)
 
