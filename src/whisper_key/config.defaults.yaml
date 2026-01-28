@@ -243,3 +243,13 @@ console: # Console Visibility Settings
   # Start with console hidden to system tray
   # Note: This setting is ignored in CLI mode
   start_hidden: false
+
+streaming: # Streaming STT Settings (Experimental)
+
+  # Real-time streaming speech recognition using sherpa-onnx
+  # Shows transcription as you speak, separate from final Whisper transcription
+  streaming_enabled: false
+
+  # Streaming model type
+  # Options: "standard" (default int8 Zipformer model)
+  streaming_model: standard

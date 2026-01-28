@@ -31,52 +31,55 @@ As a **User** I want **real-time transcription display while recording** so I ca
 ## Implementation Plan
 
 ### Phase 1: StreamingRecognizer Component
-- [ ] Create `streaming_recognizer.py` with `StreamingRecognizer` class
-- [ ] Implement model loading with HuggingFace cache path detection
-- [ ] Add `process_chunk(audio_chunk)` method for callback integration
-- [ ] Add `get_partial_result()` and `is_endpoint()` methods
-- [ ] Add `reset()` method for new utterance after endpoint
-- [ ] Handle resampling internally (native rate → 16kHz via soxr)
+- [x] Create `streaming_recognizer.py` with `StreamingRecognizer` class
+  - ✅ Created `src/whisper_key/streaming_recognizer.py`
+  - ✅ Implemented model loading with HuggingFace cache path detection
+  - ✅ Added `process_chunk(audio_chunk)` method with internal resampling via soxr
+  - ✅ Added `get_partial_result()` and `is_endpoint()` methods
+  - ✅ Added `reset()` method for new utterance after endpoint
+  - ✅ Added `is_loaded()` check and `set_recording_rate()` helper
 
 ### Phase 2: StreamingManager Orchestration
-- [ ] Create `StreamingManager` class (similar pattern to `VadManager`)
-- [ ] Add config flag `streaming_enabled` (default: false for now)
-- [ ] Implement `create_continuous_recognizer()` factory method
-- [ ] Add result callback for partial/final text delivery
-- [ ] Handle model availability check (graceful degradation if unavailable)
+- [x] Create `StreamingManager` class (similar pattern to `VadManager`)
+  - ✅ Created `src/whisper_key/streaming_manager.py`
+  - ✅ Added config flags `streaming_enabled` and `streaming_model`
+  - ✅ Implemented `create_continuous_recognizer()` factory method
+  - ✅ Added `ContinuousStreamingRecognizer` with result callback for partial/final text
+  - ✅ Added `is_available()` check for graceful degradation
 
 ### Phase 3: Audio Recorder Integration
-- [ ] Add `streaming_manager` parameter to `AudioRecorder.__init__()`
-- [ ] Create continuous recognizer in `_setup_continuous_streaming()`
-- [ ] Feed audio chunks in `audio_callback()` alongside VAD processing
-- [ ] Reset streaming recognizer in `start_recording()` (like VAD reset)
+- [x] Add `streaming_manager` parameter to `AudioRecorder.__init__()`
+  - ✅ Added `streaming_manager` and `on_streaming_result` callback parameters
+  - ✅ Created `_setup_continuous_streaming()` method with recording rate configuration
+  - ✅ Feed audio chunks in `audio_callback()` alongside VAD processing
+  - ✅ Reset streaming recognizer in `start_recording()` (like VAD reset)
 
 ### Phase 4: Real-Time Display
-- [ ] Add streaming result callback to `StateManager`
-- [ ] Print partial results with carriage return (`\r`) for in-place update
-- [ ] Print final results (on endpoint) with newline
-- [ ] Clear streaming display when recording stops
+- [x] Add streaming result callback to `StateManager`
+  - ✅ Added `handle_streaming_result(text, is_final)` method
+  - ✅ Print partial results with carriage return for in-place update
+  - ✅ Print final results (on endpoint) with newline
+  - ✅ Added `_clear_streaming_display()` and called on recording stop/cancel/vad-timeout
 
 ### Phase 5: Configuration
-- [ ] Add `streaming:` section to `config.defaults.yaml`
-- [ ] Add `streaming_enabled: false` setting
-- [ ] Add `streaming_model: "standard"` setting (for future model selection)
-- [ ] Add config getter in `ConfigManager`
+- [x] Add `streaming:` section to `config.defaults.yaml`
+  - ✅ Added `streaming_enabled: false` setting
+  - ✅ Added `streaming_model: standard` setting
+  - ✅ Added `get_streaming_config()` method in `ConfigManager`
 
 ### Phase 6: Main Integration
-- [ ] Create `StreamingManager` in `main.py` setup
-- [ ] Pass to `AudioRecorder` setup function
-- [ ] Wire streaming callback through `StateManager`
+- [x] Create `StreamingManager` in `main.py` setup
+  - ✅ Added `setup_streaming()` function that loads model at startup
+  - ✅ Pass `streaming_manager` to `AudioRecorder` setup function
+  - ✅ Wire `handle_streaming_result` callback through `StateManager`
 
 ### Phase 7: First-Utterance Clipping Investigation
-- [ ] Test if hotkey workflow naturally avoids clipping (delay before speaking)
-- [ ] If clipping occurs, try pre-roll buffer approach:
-  - Keep rolling 200-500ms audio buffer before recording "starts"
-  - Feed pre-roll to streaming recognizer when recording begins
-- [ ] If pre-roll doesn't help, try warmup approach:
-  - Feed brief real audio (not silence) during model init
-  - Or accept minor clipping as known limitation
-- [ ] Document findings and chosen mitigation
+- [x] Test if hotkey workflow naturally avoids clipping (delay before speaking)
+  - ⚠️ Clipping occurs only on FIRST hotkey activation after app start
+  - ⚠️ Subsequent activations work correctly (no clipping)
+  - ⚠️ Tried reset() after model load - did not help
+- [ ] TODO: Try pre-roll buffer approach or feed brief audio during init
+- [ ] Document as known limitation for now
 
 ## Implementation Details
 

@@ -210,6 +210,9 @@ class ConfigManager:
     def get_console_config(self) -> Dict[str, Any]:
         return self.config.get('console', {}).copy()
 
+    def get_streaming_config(self) -> Dict[str, Any]:
+        return self.config.get('streaming', {}).copy()
+
     def get_log_file_path(self) -> str:
         log_filename = self.config['logging']['file']['filename']
         return os.path.join(get_user_app_data_path(), log_filename)

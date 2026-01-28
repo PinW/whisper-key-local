@@ -24,6 +24,7 @@ from .audio_feedback import AudioFeedback
 from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
 from .model_registry import ModelRegistry
+from .streaming_manager import StreamingManager
 from .utils import beautify_hotkey, get_user_app_data_path, get_version
 
 def is_built_executable():
@@ -65,7 +66,7 @@ def setup_exception_handler():
     
     sys.excepthook = exception_handler
 
-def setup_audio_recorder(audio_config, state_manager, vad_manager):
+def setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager):
     return AudioRecorder(
         channels=audio_config['channels'],
         dtype=audio_config['dtype'],
@@ -73,6 +74,8 @@ def setup_audio_recorder(audio_config, state_manager, vad_manager):
         on_max_duration_reached=state_manager.handle_max_recording_duration_reached,
         on_vad_event=state_manager.handle_vad_event,
         vad_manager=vad_manager,
+        streaming_manager=streaming_manager,
+        on_streaming_result=state_manager.handle_streaming_result,
         device=audio_config['input_device']
     )
 
@@ -85,6 +88,19 @@ def setup_vad(vad_config):
         vad_min_speech_duration=vad_config['vad_min_speech_duration'],
         vad_silence_timeout_seconds=vad_config['vad_silence_timeout_seconds']
     )
+
+def setup_streaming(streaming_config):
+    streaming_manager = StreamingManager(
+        streaming_enabled=streaming_config.get('streaming_enabled', False),
+        streaming_model=streaming_config.get('streaming_model', 'standard')
+    )
+    if streaming_manager.streaming_enabled:
+        print("   Loading streaming STT model...", end=" ", flush=True)
+        if streaming_manager.load_model():
+            print("ready")
+        else:
+            print("unavailable")
+    return streaming_manager
 
 def setup_whisper_engine(whisper_config, vad_manager, model_registry):
     return WhisperEngine(
@@ -188,12 +204,14 @@ def main():
         audio_feedback_config = config_manager.get_audio_feedback_config()
         vad_config = config_manager.get_vad_config()
         console_config = config_manager.get_console_config()
+        streaming_config = config_manager.get_streaming_config()
 
         is_executable = is_built_executable()
         console_manager = setup_console_manager(console_config, is_executable)
 
         model_registry = ModelRegistry(whisper_config.get('models', {}))
         vad_manager = setup_vad(vad_config)
+        streaming_manager = setup_streaming(streaming_config)
         whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry)
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
@@ -208,7 +226,7 @@ def main():
             audio_feedback=audio_feedback,
             vad_manager=vad_manager
         )
-        audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager)
+        audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
         

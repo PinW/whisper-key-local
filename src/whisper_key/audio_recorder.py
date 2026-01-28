@@ -23,6 +23,8 @@ class AudioRecorder:
                  max_duration: int = 30,
                  on_max_duration_reached: callable = None,
                  vad_manager = None,
+                 streaming_manager = None,
+                 on_streaming_result: Callable[[str, bool], None] = None,
                  device = None):
 
         self.sample_rate = self.WHISPER_SAMPLE_RATE
@@ -40,8 +42,13 @@ class AudioRecorder:
         self.on_vad_event = on_vad_event
         self.continuous_vad = self._setup_continuous_vad_monitoring()
 
+        self.streaming_manager = streaming_manager
+        self.on_streaming_result = on_streaming_result
+
         self.resolve_device(device)
         self._test_audio_source()
+
+        self.continuous_streaming = self._setup_continuous_streaming()
 
     def _setup_continuous_vad_monitoring(self):
         if self.vad_manager.is_available():
@@ -51,6 +58,21 @@ class AudioRecorder:
             return continuous_vad
         else:
             return None
+
+    def _setup_continuous_streaming(self):
+        if self.streaming_manager and self.streaming_manager.is_available():
+            continuous_streaming = self.streaming_manager.create_continuous_recognizer(
+                result_callback=self._handle_streaming_result
+            )
+            recording_rate = self._get_recording_sample_rate()
+            continuous_streaming.set_recording_rate(recording_rate)
+            return continuous_streaming
+        else:
+            return None
+
+    def _handle_streaming_result(self, text: str, is_final: bool):
+        if self.on_streaming_result:
+            self.on_streaming_result(text, is_final)
 
     def resolve_device(self, device):
         if device == "default" or device is None:
@@ -134,6 +156,9 @@ class AudioRecorder:
             if self.continuous_vad:
                 self.continuous_vad.reset()
 
+            if self.continuous_streaming:
+                self.continuous_streaming.reset()
+
             self.recording_thread = threading.Thread(target=self._record_audio)
             self.recording_thread.daemon = True  # Thread will close when main program closes
             self.recording_thread.start()
@@ -202,6 +227,9 @@ class AudioRecorder:
                             self.continuous_vad.process_chunk(chunk_16k.reshape(-1, 1))
                         else:
                             self.continuous_vad.process_chunk(audio_data)
+
+                    if self.continuous_streaming:
+                        self.continuous_streaming.process_chunk(audio_data)
 
                 if status:
                     self.logger.debug(f"Audio callback status: {status}")
