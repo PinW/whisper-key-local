@@ -16,6 +16,7 @@ dependencies = [
     "ctranslate2>=4.6.3",
     "numpy>=1.24.0",
     "soxr>=0.3.0",
+    "sherpa-onnx>=1.11.3",
     "sounddevice>=0.4.6",
     "global-hotkeys>=0.1.7; platform_system=='Windows'",
     "pyperclip>=1.8.2",

@@ -1,10 +1,10 @@
 import logging
 import os
+import wave
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy.io.wavfile
 import soxr
 
 if TYPE_CHECKING:
@@ -83,12 +83,14 @@ class StreamingRecognizer:
             self.logger.warning(f"Warmup audio file not found: {warmup_file}")
             return False
 
-        sample_rate, audio = scipy.io.wavfile.read(warmup_file)
+        with wave.open(str(warmup_file), 'rb') as wf:
+            sample_rate = wf.getframerate()
+            n_channels = wf.getnchannels()
+            frames = wf.readframes(wf.getnframes())
 
-        if audio.ndim > 1:
-            audio = audio.mean(axis=1)
-
-        audio = audio.astype(np.float32) / 32768.0
+        audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
+        if n_channels > 1:
+            audio = audio.reshape(-1, n_channels).mean(axis=1)
         max_val = np.abs(audio).max()
         if max_val > 0:
             audio = audio * (0.8 / max_val)
