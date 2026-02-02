@@ -25,6 +25,7 @@ dependencies = [
     "pystray>=0.19.5",
     "Pillow>=10.0.0",
     "hf-xet>=1.1.5",
+    "playsound3>=2.0",
     # Note: ten-vad git dependency handled separately
 ]
 

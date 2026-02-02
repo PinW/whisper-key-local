@@ -1,7 +1,8 @@
 import logging
 import os
 import threading
-import winsound
+
+from playsound3 import playsound
 
 from .utils import resolve_asset_path
 
@@ -32,16 +33,13 @@ class AudioFeedback:
             self.logger.warning(f"Cancel sound file not found: {self.cancel_sound_path}")
     
     def _play_sound_file_async(self, file_path: str):
-        def play_sound():
+        def play():
             try:
-                # SND_FILENAME = play from file, SND_ASYNC = don't block
-                winsound.PlaySound(file_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
-                
+                playsound(file_path, block=False)
             except Exception as e:
                 self.logger.warning(f"Failed to play sound file {file_path}: {e}")
-        
-        sound_thread = threading.Thread(target=play_sound, daemon=True)
-        sound_thread.start()
+
+        threading.Thread(target=play, daemon=True).start()
     
     def play_start_sound(self):
         if self.enabled:

@@ -12,15 +12,18 @@ As a *developer* I want **audio feedback to work on both Windows and macOS** so 
 ## Implementation Plan
 
 ### Step 1: Add playsound3 dependency
-- [ ] Add `playsound3>=2.0` to pyproject.toml dependencies (no platform marker - use on both)
+- [x] Add `playsound3>=2.0` to pyproject.toml dependencies (no platform marker - use on both)
+  - ✅ Added to dependencies list
 
 ### Step 2: Replace winsound with playsound3
-- [ ] Remove `import winsound`
-- [ ] Add `from playsound3 import playsound`
-- [ ] Update `_play_sound_file_async()` to use playsound3
+- [x] Remove `import winsound`
+- [x] Add `from playsound3 import playsound`
+- [x] Update `_play_sound_file_async()` to use playsound3
+  - ✅ Replaced winsound.PlaySound with playsound(path, block=False)
 
 ### Step 3: Test on Windows
-- [ ] Run `/test-from-wsl` to verify app starts
+- [x] Run `/test-from-wsl` to verify app starts
+  - ✅ App starts successfully: "Application ready!"
 - [ ] Manual test: verify start/stop/cancel sounds play correctly
 
 ## Implementation Details
@@ -56,7 +59,7 @@ def _play_sound_file_async(self, file_path: str):
 
 ## Success Criteria
 
-- [ ] App starts without import errors on Windows
+- [x] App starts without import errors on Windows
 - [ ] Start sound plays when recording begins
 - [ ] Stop sound plays when recording ends
 - [ ] Cancel sound plays when recording is cancelled
