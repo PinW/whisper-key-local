@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 import sys
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
 FILES_TO_SYMLINK = [
     ".claude/settings.local.json",
-    "py-build/build-config.json",
+]
+
+FILES_TO_COPY = [
+    "py-build/build-config.json",  # Windows PowerShell can't follow Linux symlinks
 ]
 
 def main():
@@ -56,6 +60,22 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         os.symlink(source, target)
         print(f"Created symlink: {target} -> {source}")
+
+    for rel_path in FILES_TO_COPY:
+        source = main_repo / rel_path
+        target = worktree / rel_path
+
+        if not source.exists():
+            print(f"Warning: Source file not found: {source}")
+            continue
+
+        if target.exists():
+            print(f"Skipping (already exists): {target}")
+            continue
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        print(f"Copied: {source} -> {target}")
 
 if __name__ == "__main__":
     main()
