@@ -1,8 +1,20 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+_warned = False
+
 def set_delay(delay: float):
-    raise NotImplementedError("macOS keyboard not implemented")
+    pass
 
 def send_hotkey(*keys: str):
-    raise NotImplementedError("macOS keyboard not implemented")
+    global _warned
+    if not _warned:
+        logger.warning("Keyboard simulation not yet implemented on macOS - paste will not work")
+        _warned = True
 
 def send_key(key: str):
-    raise NotImplementedError("macOS keyboard not implemented")
+    global _warned
+    if not _warned:
+        logger.warning("Keyboard simulation not yet implemented on macOS - paste will not work")
+        _warned = True

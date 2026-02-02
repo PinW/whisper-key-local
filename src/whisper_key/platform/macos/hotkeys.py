@@ -1,8 +1,12 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 def register(bindings: list):
-    raise NotImplementedError("macOS hotkeys not implemented")
+    logger.warning("Hotkeys not yet implemented on macOS - running without hotkey support")
 
 def start():
-    raise NotImplementedError("macOS hotkeys not implemented")
+    pass
 
 def stop():
-    raise NotImplementedError("macOS hotkeys not implemented")
+    pass

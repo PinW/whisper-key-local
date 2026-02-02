@@ -43,10 +43,16 @@ class SystemTray:
             self._load_icons_to_cache()
     
     def _check_tray_availability(self) -> bool:
-        if not self.tray_config['enabled']:
+        from .platform import IS_MACOS
+
+        if IS_MACOS:
+            self.logger.warning("   ✗ System tray disabled on macOS (not yet supported)")
+            self.available = False
+
+        elif not self.tray_config['enabled']:
             self.logger.warning("   ✗ System tray disabled in configuration")
             self.available = False
-            
+
         elif not TRAY_AVAILABLE:
             self.logger.warning("   ✗ System tray not available - pystray or Pillow not installed")
             self.available = False
