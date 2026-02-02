@@ -36,19 +36,26 @@ As a *user* I want **global hotkeys to work on macOS** so I can use whisper-key 
 - [ ] Verify callback fires correctly
 - [ ] **Manual test:** hotkey_listener works with new macOS backend
 
-### Phase 5: String Parsing (hotkey format conversion)
+### Phase 5: Accessibility Permissions Handling
+- [ ] Research how QuickMacHotKey handles missing permissions
+- [ ] Detect when Accessibility/Input Monitoring permission is missing
+- [ ] Show clear user message when permission denied (not silent failure)
+- [ ] Optionally: prompt user to open System Preferences > Privacy > Accessibility
+- [ ] **Manual test:** run without permissions granted, verify clear error message
+
+### Phase 6: String Parsing (hotkey format conversion)
 - [ ] Map config strings ("ctrl+shift+space") to QuickMacHotKey format
 - [ ] Handle modifier keys: ctrl, shift, cmd/command, alt/option
 - [ ] Handle common keys: space, enter, escape, letters, numbers
 - [ ] Test: various hotkey string formats parse correctly
 
-### Phase 6: Full App Test
+### Phase 7: Full App Test
 - [ ] Run whisper-key app on macOS
 - [ ] Verify tray icon appears
 - [ ] Verify hotkey triggers recording
 - [ ] Document any remaining issues
 
-### Phase 7: Update pyproject.toml
+### Phase 8: Update pyproject.toml
 - [ ] Add `quickmachotkey` (macOS-only marker)
 - [ ] Add `pyobjc-framework-Quartz` (macOS-only marker)
 - [ ] Add `pyobjc-framework-ApplicationServices` (macOS-only marker)
@@ -117,4 +124,5 @@ Need to verify this works in Phase 3.
 - [ ] Standalone hotkey test registers and fires callback
 - [ ] Tray icon and hotkeys work together
 - [ ] HotkeyListener class works with macOS backend
+- [ ] Missing Accessibility permission shows clear error (not silent failure)
 - [ ] App starts and responds to hotkeys on macOS
