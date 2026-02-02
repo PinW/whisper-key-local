@@ -430,4 +430,44 @@ dependencies = [
 
 ---
 
+## Implementation Notes
+
+### Hotkey String Parsing
+
+Current code uses string format like `"ctrl+shift+space"` parsed by `utils.parse_hotkey()`.
+
+QuickMacHotKey uses a different format - virtual key codes and modifier masks:
+```python
+@quickHotKey(virtualKey=kVK_Space, modifierMask=mask(controlKey, shiftKey))
+```
+
+**Need to build:** A translation layer that converts config strings → QuickMacHotKey format:
+- `"ctrl"` → `controlKey`
+- `"shift"` → `shiftKey`
+- `"cmd"` → `cmdKey`
+- `"space"` → `kVK_Space` (49)
+- etc.
+
+Check `quickmachotkey.constants` for available key codes.
+
+### NSApplication Event Loop Challenge
+
+QuickMacHotKey needs an NSApplication event loop to receive hotkey events:
+```python
+from AppKit import NSApplication
+NSApplication.sharedApplication().run()  # Blocks forever, processing events
+```
+
+**The problem:** `.run()` blocks the thread. But whisper-key already has its own main loop (pystray system tray, state management, etc.).
+
+**Possible solutions to investigate:**
+1. **pystray might already run NSApplication** - If so, we can piggyback on it. Check pystray's macOS implementation.
+2. **Separate thread** - But NSApplication is picky about threads (usually needs main thread).
+3. **Separate process** - More isolation, but complicates communication with main app.
+4. **Alternative library** - But pynput has broken Ctrl/Alt on macOS.
+
+**This is the highest-risk part of the port** - may require rethinking how the app's main loop works on macOS. Tackle in Sprint 4 after simpler components are working.
+
+---
+
 *Created: 2026-02-02*
