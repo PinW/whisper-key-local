@@ -460,13 +460,39 @@ NSApplication.sharedApplication().run()  # Blocks forever, processing events
 
 **The problem:** `.run()` blocks the thread. But whisper-key already has its own main loop (pystray system tray, state management, etc.).
 
-**Possible solutions to investigate:**
-1. **pystray might already run NSApplication** - If so, we can piggyback on it. Check pystray's macOS implementation.
-2. **Separate thread** - But NSApplication is picky about threads (usually needs main thread).
-3. **Separate process** - More isolation, but complicates communication with main app.
-4. **Alternative library** - But pynput has broken Ctrl/Alt on macOS.
+**Research findings:**
 
-**This is the highest-risk part of the port** - may require rethinking how the app's main loop works on macOS. Tackle in Sprint 4 after simpler components are working.
+1. **pystray DOES use NSApplication on macOS** - Good news, they can share!
+   > "The system tray icon implementation for OSX will fail unless called from the main thread, and it also requires the application runloop to be running."
+
+2. **Both must run on main thread** - This is a hard constraint on macOS (unlike Linux/Windows where pystray can run detached).
+
+3. **Recommended approach - shared NSApplication:**
+   ```python
+   from AppKit import NSApplication
+   from quickmachotkey import quickHotKey
+   import pystray
+
+   # Create shared NSApplication FIRST
+   nsapp = NSApplication.sharedApplication()
+
+   # Register hotkeys (decorator runs at definition time)
+   @quickHotKey(virtualKey=kVK_Space, modifierMask=mask(controlKey, shiftKey))
+   def on_record():
+       # handle hotkey
+       pass
+
+   # pystray uses the same NSApplication
+   icon = pystray.Icon("whisper-key", image, menu=menu)
+   icon.run_detached(darwin_nsapplication=nsapp)
+   ```
+
+4. **Known issues:**
+   - GIL problems reported on M2 Macs (pystray issue #138)
+   - May need queue-based communication between components
+   - Careful exception handling required
+
+**This is still the highest-risk part** - but now we have a concrete approach to try. Tackle in Sprint 4.
 
 ---
 
