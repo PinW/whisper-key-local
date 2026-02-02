@@ -11,7 +11,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 - [ ] **Phase 3:** Implement macOS-specific code behind the abstraction layer
   - [x] ~~**3.1:** Audio feedback (`platform/macos/audio.py` - playsound3)~~ *(already done)*
   - [x] ~~**3.2:** App data path (`utils.py` - use `~/Library/Application Support/`)~~
-  - [ ] **3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)
+  - [x] ~~**3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)~~
   - [ ] **3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
   - [ ] **3.5:** Hotkey detection (`platform/macos/hotkeys.py` - QuickMacHotKey) ⚠️ highest risk
   - [ ] **3.6:** Platform-aware config defaults (cmd vs ctrl)
