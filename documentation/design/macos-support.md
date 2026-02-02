@@ -27,7 +27,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 | Hotkey detection | global-hotkeys | ❌ | Platform abstraction (QuickMacHotKey) |
 | Instance lock | win32event | ❌ | Platform abstraction (fcntl) |
 | Console hide | win32console | ❌ | Skip on macOS (not needed) |
-| PortAudio DLL | bundled DLL | ❌ | Skip on macOS (system provides) |
+| PortAudio DLL | bundled DLL (for WASAPI) | ❌ | Skip on macOS (no WASAPI, sounddevice wheel suffices) |
 
 ---
 
@@ -409,7 +409,6 @@ dependencies = [
 
 1. **NSApplication event loop:** Does pystray already run one? Can we share it with QuickMacHotKey?
 2. **Audio host defaults:** Should macOS default to CoreAudio explicitly?
-3. **Bundled PortAudio:** Does macOS need it, or is system PortAudio sufficient?
 
 ---
 
