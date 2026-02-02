@@ -4,11 +4,11 @@
 
 Add macOS support to whisper-key-local while maintaining Windows functionality.
 
-## Strategy
+## Progress
 
-**Phase 1:** Replace Windows-only libraries with cross-platform alternatives where possible
-**Phase 2:** Create platform abstraction layer for components that need different implementations
-**Phase 3:** Implement macOS-specific code behind the abstraction layer
+- [x] ~~**Phase 1:** Replace Windows-only libraries with cross-platform alternatives where possible~~
+- [x] ~~**Phase 2:** Create platform abstraction layer for components that need different implementations~~
+- [ ] **Phase 3:** Implement macOS-specific code behind the abstraction layer
 
 ---
 
