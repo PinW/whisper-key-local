@@ -22,7 +22,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 | Config | ruamel.yaml | ✅ Already cross-platform | - |
 | System tray | pystray | ✅ Already cross-platform | - |
 | Clipboard read/write | pyperclip | ✅ Already cross-platform | - |
-| Audio feedback | winsound | ❌ | playsound or platform abstraction |
+| Audio feedback | winsound | ❌ | playsound3 |
 | Key simulation | pyautogui | ❌ | Platform abstraction (Quartz CGEvent) |
 | Hotkey detection | global-hotkeys | ❌ | Platform abstraction (QuickMacHotKey) |
 | Instance lock | win32event | ❌ | Platform abstraction (fcntl) |
@@ -37,23 +37,13 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 
 **Current:** `winsound.PlaySound()` (Windows-only)
 
-**Options:**
-- `playsound` - simple, cross-platform
-- `pygame.mixer` - heavier dependency
-- Platform abstraction with native APIs
-
-**Recommendation:** Try `playsound` first. If issues, fall back to platform abstraction.
+**Recommendation:** Use `playsound3` - actively maintained fork with macOS fixes.
 
 ```python
-# Simple replacement attempt
-try:
-    from playsound import playsound
-    def play_sound(path):
-        playsound(path, block=False)
-except ImportError:
-    import winsound
-    def play_sound(path):
-        winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+from playsound3 import playsound
+
+def play_sound(path):
+    playsound(path, block=False)
 ```
 
 **Files affected:** `audio_feedback.py`
@@ -273,7 +263,7 @@ class InstanceLock:
 
 ```python
 # platform/audio_feedback_macos.py
-from playsound import playsound as _playsound
+from playsound3 import playsound as _playsound
 import threading
 
 def play_sound(path: str, blocking: bool = False):
@@ -335,7 +325,7 @@ dependencies = [
     "quickmachotkey>=0.1.0; platform_system=='Darwin'",
     "pyobjc-framework-Quartz>=10.0; platform_system=='Darwin'",
     "pyobjc-framework-ApplicationServices>=10.0; platform_system=='Darwin'",
-    "playsound>=1.3.0; platform_system=='Darwin'",
+    "playsound3>=2.0; platform_system=='Darwin'",
 ]
 ```
 
@@ -350,7 +340,7 @@ dependencies = [
 4. Test Windows still works
 
 ### Sprint 2: Audio & Instance Lock
-5. Implement `audio_feedback_macos.py` (playsound)
+5. Implement `audio_feedback_macos.py` (playsound3)
 6. Implement `instance_lock_macos.py` (fcntl)
 7. Update `audio_feedback.py` and `instance_manager.py` to use abstractions
 8. Test on macOS
@@ -382,7 +372,7 @@ dependencies = [
 |------|--------|------------|
 | QuickMacHotKey requires NSApplication event loop | High | May need to restructure main loop, or run in separate process |
 | Accessibility permissions on macOS | Medium | Clear user messaging, auto-open System Preferences |
-| playsound reliability | Low | Fall back to PyObjC NSSound if issues |
+| playsound3 reliability | Low | Fall back to PyObjC NSSound if issues |
 | Different hotkey naming (Cmd vs Ctrl) | Low | Config migration, clear documentation |
 
 ---

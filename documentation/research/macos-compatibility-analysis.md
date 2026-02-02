@@ -4,7 +4,7 @@
 
 | File | Windows APIs | macOS Alternative |
 |------|--------------|-------------------|
-| `audio_feedback.py` | `winsound` | `playsound` or `pygame.mixer` |
+| `audio_feedback.py` | `winsound` | `playsound3` |
 | `clipboard_manager.py` | `win32gui`, `pyautogui` | `pynput`, `AppKit` |
 | `hotkey_listener.py` | `global-hotkeys` | `pynput.keyboard.GlobalHotKeys` |
 | `instance_manager.py` | `win32event`, `win32api` | `fcntl` file locking |
@@ -54,7 +54,7 @@ Add for macOS:
 ```toml
 "quickmachotkey>=0.1.0; platform_system=='Darwin'",
 "pyobjc-framework-ApplicationServices>=10.0; platform_system=='Darwin'",
-"playsound>=1.3.0; platform_system=='Darwin'",
+"playsound3>=2.0; platform_system=='Darwin'",
 ```
 
 ## Implementation Approach
@@ -65,7 +65,7 @@ Create platform abstraction modules that detect OS and load appropriate implemen
 src/whisper_key/
 ├── platform/
 │   ├── __init__.py          # Platform detection
-│   ├── audio_playback.py    # winsound vs playsound
+│   ├── audio_playback.py    # winsound vs playsound3
 │   ├── hotkeys.py           # global-hotkeys vs QuickMacHotKey
 │   ├── instance_lock.py     # mutex vs fcntl
 │   └── clipboard.py         # win32gui vs AppKit
