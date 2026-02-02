@@ -33,10 +33,14 @@ def is_installed_package():
     return 'site-packages' in __file__
 
 def get_user_app_data_path():
-    appdata = os.getenv('APPDATA')
-    whisperkey_dir = os.path.join(appdata, 'whisperkey')
-    os.makedirs(whisperkey_dir, exist_ok=True)
-    return whisperkey_dir
+    from .platform import paths
+    whisperkey_dir = paths.get_app_data_path()
+    whisperkey_dir.mkdir(parents=True, exist_ok=True)
+    return str(whisperkey_dir)
+
+def open_file(path):
+    from .platform import paths
+    paths.open_file(path)
 
 def resolve_asset_path(relative_path: str) -> str:
     

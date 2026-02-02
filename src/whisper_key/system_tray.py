@@ -5,7 +5,7 @@ import signal
 from typing import Optional, TYPE_CHECKING
 from pathlib import Path
 
-from .utils import resolve_asset_path
+from .utils import resolve_asset_path, open_file
 
 try:
     import pystray
@@ -235,7 +235,7 @@ class SystemTray:
         try:
             print("⚙️ Opening log file...")
             log_path = self.config_manager.get_log_file_path()
-            os.startfile(log_path)
+            open_file(log_path)
         except Exception as e:
             self.logger.error(f"Failed to open log file: {e}")
 
@@ -243,7 +243,7 @@ class SystemTray:
         try:
             print("⚙️ Opening settings...")
             config_path = self.config_manager.user_settings_path
-            os.startfile(config_path)
+            open_file(config_path)
         except Exception as e:
             self.logger.error(f"Failed to open config file: {e}")
 

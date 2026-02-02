@@ -35,27 +35,27 @@ On macOS this raises `AttributeError: module 'os' has no attribute 'startfile'`.
 ## Implementation Plan
 
 ### Step 1: Create platform/windows/paths.py
-- [ ] Create `platform/windows/paths.py`
-- [ ] Implement `get_app_data_path()` using `%APPDATA%`
-- [ ] Implement `open_file()` using `os.startfile()`
+- [x] Create `platform/windows/paths.py`
+- [x] Implement `get_app_data_path()` using `%APPDATA%`
+- [x] Implement `open_file()` using `os.startfile()`
 
 ### Step 2: Create platform/macos/paths.py
-- [ ] Create `platform/macos/paths.py`
-- [ ] Implement `get_app_data_path()` using `~/Library/Application Support/`
-- [ ] Implement `open_file()` using `subprocess.run(['open', path])`
+- [x] Create `platform/macos/paths.py`
+- [x] Implement `get_app_data_path()` using `~/Library/Application Support/`
+- [x] Implement `open_file()` using `subprocess.run(['open', path])`
 
 ### Step 3: Update platform routers
-- [ ] Add `paths` import to `platform/windows/__init__.py`
-- [ ] Add `paths` import to `platform/macos/__init__.py`
-- [ ] Add `paths` import to `platform/__init__.py`
+- [x] Add `paths` import to `platform/windows/__init__.py`
+- [x] Add `paths` import to `platform/macos/__init__.py`
+- [x] Add `paths` import to `platform/__init__.py`
 
 ### Step 4: Update utils.py
-- [ ] Import `paths` from `.platform`
-- [ ] Simplify `get_user_app_data_path()` to use `paths.get_app_data_path()`
-- [ ] Add `open_file()` wrapper that calls `paths.open_file()`
+- [x] Import `paths` from `.platform`
+- [x] Simplify `get_user_app_data_path()` to use `paths.get_app_data_path()`
+- [x] Add `open_file()` wrapper that calls `paths.open_file()`
 
 ### Step 5: Update system_tray.py
-- [ ] Replace `os.startfile()` with `utils.open_file()`
+- [x] Replace `os.startfile()` with `utils.open_file()`
 
 ### Step 6: Test on macOS
 - [ ] **Manual test:** Run app, verify config created in correct location
