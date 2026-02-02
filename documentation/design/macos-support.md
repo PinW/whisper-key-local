@@ -17,6 +17,87 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [ ] **3.6:** Platform-aware config defaults (cmd vs ctrl)
   - [ ] **3.7:** Skip console manager on macOS
 - [x] ~~**Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies~~
+- [ ] **Phase 5:** Resolve macOS main thread / event loop architecture
+
+---
+
+## Phase 5: macOS Main Thread Architecture
+
+### The Problem
+
+On macOS, both pystray (system tray) and QuickMacHotKey require the **NSApplication event loop running on the main thread**. This is a hard constraint of Apple's Cocoa framework.
+
+Current Windows architecture:
+```
+Main thread:     while shutdown_event.wait() → handles signals
+Daemon thread:   pystray icon.run() → handles tray
+Other threads:   hotkeys, audio, etc.
+```
+
+This doesn't work on macOS because:
+1. `icon.run()` uses NSApplication internally
+2. NSApplication **must** run on main thread
+3. Running it in a daemon thread causes: no tray icon, Dock icon appears, app hangs, Ctrl+C doesn't work
+
+### Research Findings
+
+**pystray documentation states:**
+> "The system tray icon implementation for OSX will fail unless called from the main thread, and it also requires the application runloop to be running."
+
+**Key constraints:**
+- pystray needs NSApplication on main thread
+- QuickMacHotKey needs NSApplication on main thread
+- Both can share the same NSApplication instance
+- `nsapp.run()` blocks forever (it's an event loop)
+
+**Known issues:**
+- GIL problems reported on M1/M2/M3 Macs (pystray issue #138)
+- May need queue-based communication between components
+
+### Possible Solutions
+
+**Option A: Platform-specific main loop**
+```python
+if IS_MACOS:
+    # Main thread runs NSApplication event loop
+    icon.run_detached(darwin_nsapplication=nsapp)
+    nsapp.run()  # blocks
+else:
+    # Windows: current approach
+    icon.run() in daemon thread
+    while shutdown_event.wait(): pass
+```
+
+**Option B: Use RUMPS instead of pystray on macOS**
+- RUMPS is macOS-native menu bar library
+- Handles LSUIElement (no Dock icon) automatically
+- Different API, would need platform-specific tray code
+
+**Option C: Disable system tray on macOS**
+- Simplest, but loses functionality
+- Could use terminal-only mode
+
+### Additional macOS Considerations
+
+**Dock icon:** By default, any NSApplication shows in Dock. To hide:
+- Set `LSUIElement=True` in Info.plist (for bundled apps)
+- Or programmatically: `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
+
+**Signal handling:** With NSApplication owning main thread, need to ensure Ctrl+C still works for graceful shutdown.
+
+### Open Questions
+
+1. Can we restructure main.py to have platform-specific main loops cleanly?
+2. How do hotkey callbacks interact with the NSApplication event loop?
+3. What's the best way to communicate between the event loop and worker threads?
+4. Should we consider RUMPS for a cleaner macOS experience?
+
+### References
+
+- [pystray FAQ](https://pystray.readthedocs.io/en/latest/faq.html)
+- [pystray Issue #138 - GIL on M2](https://github.com/moses-palmer/pystray/issues/138)
+- [QuickMacHotKey](https://github.com/glyph/QuickMacHotKey)
+- [RUMPS](https://github.com/jaredks/rumps)
 
 ---
 
