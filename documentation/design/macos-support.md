@@ -10,11 +10,12 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 - [x] ~~**Phase 2:** Create platform abstraction layer for components that need different implementations~~
 - [ ] **Phase 3:** Implement macOS-specific code behind the abstraction layer
   - [x] ~~**3.1:** Audio feedback (`platform/macos/audio.py` - playsound3)~~ *(already done)*
-  - [ ] **3.2:** Instance lock (`platform/macos/instance_lock.py` - fcntl)
-  - [ ] **3.3:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
-  - [ ] **3.4:** Hotkey detection (`platform/macos/hotkeys.py` - QuickMacHotKey) ⚠️ highest risk
-  - [ ] **3.5:** Platform-aware config defaults (cmd vs ctrl)
-  - [ ] **3.6:** Skip console manager on macOS
+  - [ ] **3.2:** App data path (`utils.py` - use `~/Library/Application Support/`)
+  - [ ] **3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)
+  - [ ] **3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
+  - [ ] **3.5:** Hotkey detection (`platform/macos/hotkeys.py` - QuickMacHotKey) ⚠️ highest risk
+  - [ ] **3.6:** Platform-aware config defaults (cmd vs ctrl)
+  - [ ] **3.7:** Skip console manager on macOS
 - [ ] **Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies
 
 ---
@@ -36,6 +37,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 | Console hide | win32console | ❌ | Skip on macOS (not needed) |
 | PortAudio DLL | bundled DLL (for WASAPI) | ❌ | Skip on macOS (no WASAPI, sounddevice wheel suffices) |
 | Window detection | win32gui | ❌ | Remove (dead code, not used) |
+| App data path | `%APPDATA%` env var | ❌ | `~/Library/Application Support/` on macOS |
 
 ---
 
