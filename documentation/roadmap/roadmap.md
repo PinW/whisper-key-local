@@ -57,3 +57,8 @@
 
 ### Developer Use Cases
 - As a *developer* I want **project file context** so I can reference files in voice and tag them in chats hands free
+
+### Discord Integration
+- As a *user* I want to **transcribe and post commands to CLI agent at home** so I can control my home server remotely via Discord
+- As a *user* I want a **Discord bot for voice commands** so I can trigger actions remotely with my voice
+- As a *user* I want to **listen for commands from multiple users** so a shared server can accept voice input from authorized people
