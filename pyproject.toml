@@ -26,7 +26,11 @@ dependencies = [
     "Pillow>=10.0.0",
     "hf-xet>=1.1.5",
     "playsound3>=2.0",
-    # Note: ten-vad git dependency handled separately
+    "ten-vad>=1.0.6",
+
+    # macOS-only
+    "quickmachotkey; sys_platform=='darwin'",
+    "pyobjc-framework-Quartz; sys_platform=='darwin'",
 ]
 
 [project.scripts]

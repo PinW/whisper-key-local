@@ -16,7 +16,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [ ] **3.5:** Hotkey detection (`platform/macos/hotkeys.py` - QuickMacHotKey) ⚠️ highest risk
   - [ ] **3.6:** Platform-aware config defaults (cmd vs ctrl)
   - [ ] **3.7:** Skip console manager on macOS
-- [ ] **Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies
+- [x] ~~**Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies~~
 
 ---
 

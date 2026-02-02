@@ -56,9 +56,9 @@ As a *user* I want **global hotkeys to work on macOS** so I can use whisper-key 
 - [ ] Document any remaining issues
 
 ### Phase 8: Update pyproject.toml
-- [ ] Add `quickmachotkey` (macOS-only marker)
-- [ ] Add `pyobjc-framework-Quartz` (macOS-only marker)
-- [ ] Add `pyobjc-framework-ApplicationServices` (macOS-only marker)
+- [x] Add `quickmachotkey` (macOS-only marker)
+- [x] Add `pyobjc-framework-Quartz` (macOS-only marker)
+- [ ] ~~Add `pyobjc-framework-ApplicationServices` (macOS-only marker)~~ *(not needed)*
 - [ ] Verify `pip install` works on both platforms
 
 ## Implementation Details
