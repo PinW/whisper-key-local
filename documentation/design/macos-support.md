@@ -54,28 +54,35 @@ This doesn't work on macOS because:
 - GIL problems reported on M1/M2/M3 Macs (pystray issue #138)
 - May need queue-based communication between components
 
-### Possible Solutions
+### Preferred Solution: Use `run_detached()` on Both Platforms
 
-**Option A: Platform-specific main loop**
+The cleanest approach is to use `icon.run_detached()` on both platforms, eliminating the daemon thread:
+
 ```python
+# system_tray.py - start() method
+icon.run_detached()  # Non-blocking on both platforms
+
+# main.py - after all setup
 if IS_MACOS:
-    # Main thread runs NSApplication event loop
-    icon.run_detached(darwin_nsapplication=nsapp)
-    nsapp.run()  # blocks
+    from AppKit import NSApplication
+    nsapp = NSApplication.sharedApplication()
+    nsapp.run()  # macOS: main thread runs event loop
 else:
-    # Windows: current approach
-    icon.run() in daemon thread
-    while shutdown_event.wait(): pass
+    while not shutdown_event.wait(timeout=0.1):
+        pass  # Windows: main thread waits for shutdown
 ```
 
-**Option B: Use RUMPS instead of pystray on macOS**
-- RUMPS is macOS-native menu bar library
-- Handles LSUIElement (no Dock icon) automatically
-- Different API, would need platform-specific tray code
+**Why this works:**
+- `run_detached()` on Windows: Internally spawns a thread to handle win32 message pump
+- `run_detached()` on macOS: Sets up tray, but needs `nsapp.run()` to process events
+- No manual daemon thread needed on either platform
+- Cleaner than current approach
 
-**Option C: Disable system tray on macOS**
-- Simplest, but loses functionality
-- Could use terminal-only mode
+**Implementation steps:**
+1. Remove daemon thread from `system_tray.py`
+2. Use `icon.run_detached()` instead of `icon.run()`
+3. Add platform-specific main loop in `main.py`
+4. On macOS, run `nsapp.run()` after all setup complete
 
 ### Additional macOS Considerations
 
@@ -85,12 +92,10 @@ else:
 
 **Signal handling:** With NSApplication owning main thread, need to ensure Ctrl+C still works for graceful shutdown.
 
-### Open Questions
+### Remaining Questions
 
-1. Can we restructure main.py to have platform-specific main loops cleanly?
-2. How do hotkey callbacks interact with the NSApplication event loop?
-3. What's the best way to communicate between the event loop and worker threads?
-4. Should we consider RUMPS for a cleaner macOS experience?
+1. How do hotkey callbacks interact with the NSApplication event loop?
+2. Queue-based communication for tray updates from background threads?
 
 ### References
 
