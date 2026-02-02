@@ -79,9 +79,27 @@ Write-Host "Distribution Directory: $DistDir" -ForegroundColor Gray
 # Uncomment the next line to test path detection without running build
 # exit 0
 
+# Helper function to get hash of dependencies from pyproject.toml
+function Get-DependenciesHash {
+    param($ProjectRoot)
+    $PyProjectFile = Join-Path $ProjectRoot "pyproject.toml"
+    $Content = Get-Content $PyProjectFile -Raw
+
+    # Extract dependencies section
+    if ($Content -match 'dependencies\s*=\s*\[([\s\S]*?)\]') {
+        $DepsSection = $Matches[1]
+        # Create hash of the dependencies content
+        $Stream = [System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($DepsSection))
+        $Hash = Get-FileHash -InputStream $Stream -Algorithm SHA256
+        return $Hash.Hash
+    }
+    return $null
+}
+
 # Setup virtual environment (reuse if exists)
 $VenvPython = Join-Path $VenvPath "Scripts\python.exe"
 $VenvPip = Join-Path $VenvPath "Scripts\pip.exe"
+$DepsHashFile = Join-Path $VenvPath ".deps-hash"
 
 if (-not (Test-Path $VenvPath)) {
     Write-Host "Creating virtual environment..." -ForegroundColor Yellow
@@ -92,21 +110,48 @@ if (-not (Test-Path $VenvPath)) {
     }
     
     Write-Host "Installing project dependencies..." -ForegroundColor Yellow
-    $RequirementsFile = Join-Path $ProjectRoot "requirements.txt"
-    & $VenvPip install -r $RequirementsFile
-    if ($LASTEXITCODE -ne 0) { 
+    & $VenvPip install $ProjectRoot
+    if ($LASTEXITCODE -ne 0) {
         Write-Host "Failed to install dependencies" -ForegroundColor Red
-        exit 1 
+        exit 1
     }
-    
+
+    Write-Host "Installing TEN VAD..." -ForegroundColor Yellow
+    & $VenvPip install "git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to install TEN VAD" -ForegroundColor Red
+        exit 1
+    }
+
     Write-Host "Installing PyInstaller..." -ForegroundColor Yellow
     & $VenvPip install pyinstaller
-    if ($LASTEXITCODE -ne 0) { 
+    if ($LASTEXITCODE -ne 0) {
         Write-Host "Failed to install PyInstaller" -ForegroundColor Red
-        exit 1 
+        exit 1
+    }
+
+    # Save dependencies hash
+    $CurrentHash = Get-DependenciesHash $ProjectRoot
+    if ($CurrentHash) {
+        $CurrentHash | Out-File -FilePath $DepsHashFile -NoNewline
     }
 } else {
     Write-Host "Reusing existing virtual environment..." -ForegroundColor Green
+
+    # Check if dependencies have changed
+    $CurrentHash = Get-DependenciesHash $ProjectRoot
+    $StoredHash = if (Test-Path $DepsHashFile) { Get-Content $DepsHashFile -Raw } else { $null }
+
+    if ($CurrentHash -ne $StoredHash) {
+        Write-Host "Dependencies changed - syncing venv..." -ForegroundColor Yellow
+        & $VenvPip install $ProjectRoot
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to sync dependencies" -ForegroundColor Red
+            exit 1
+        }
+        $CurrentHash | Out-File -FilePath $DepsHashFile -NoNewline
+        Write-Host "Dependencies synced successfully" -ForegroundColor Green
+    }
 }
 
 # Clean previous build

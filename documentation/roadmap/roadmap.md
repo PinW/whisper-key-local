@@ -32,14 +32,11 @@
 
 ### GUI
 - As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
-- As a *user*, I want a **GUI interface** so that I can change settings without editing files:
-- Settings
-    - Hotkey management
-    - Model management
-        - progress bar for downloading
-    - Paste mode
-        - Preserve clipboard as sub-option (auto-paste only)
-    - Language
+- As a *user*, I want a **GUI interface** so that I can change settings without editing files
+
+### CLI
+- As a *user*, I want a **terminal UI** so I can control the app without leaving the command line
+
 ### Real-Time Transcription
 - As a *user* I want **meeting mode** so I can transcribe an entire meeting in real-time
 

@@ -1,13 +1,13 @@
 *Learning project for beginner coder: explain concepts in conversation (not in comments)*
 
+https://github.com/PinW/whisper-key-local
+
 @documentation/project-index.md
 
-- Build PyInstaller: `powershell.exe -ExecutionPolicy Bypass -File py-build/build-windows.ps1` optional:`-NoZip` (use for testing)
-- Build PyPI: `powershell.exe -Command "python -m build"`
-- DO NOT TEST! It is IMPOSSIBLE for you to run app from WSL!
-- Ask user to test before committing
+- Test app startup: `/test-from-wsl` (launch only, no interaction)
+- Ask user for real test before committing
 - Prefer elegant code that is modular and consistent
-- Use clear variable/function names
+- Use explicit variable/function names
 - **AVOID COMMENTS** IF AT ALL POSSIBLE! DO NOT WRITE DOCSTRINGS!
 - **No backward compatibility** - Break old formats freely
 - When I say "to temp": `documentation/temp/`

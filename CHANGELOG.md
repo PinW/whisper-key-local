@@ -2,6 +2,18 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.5.3] - 2026-01-19
+
+### Fixed
+- PyInstaller crash with ctranslate2 4.6.3 due to bundled MSVCP140.dll version mismatch
+
+### Changed
+- Replaced scipy with soxr for audio resampling (smaller bundle size)
+
+### Dependencies
+- **scipy**: Removed - no longer required
+- **soxr**: Added `>=0.5.0` for high-quality audio resampling
+
 ## [0.5.2] - 2026-01-16
 
 ### Fixed

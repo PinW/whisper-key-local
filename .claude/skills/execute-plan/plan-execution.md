@@ -1,5 +1,3 @@
-Execute the attached implementation plan as written, prioritize correctness over speed
-
 ## Execution Instructions
 - Create todo list reflecting the tasks in current phase
 - Always update progress in the plan file after completing a task

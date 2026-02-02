@@ -1,12 +1,11 @@
 import logging
 import threading
 import time
-from math import gcd
 from typing import Optional, Callable
 
 import numpy as np
 import sounddevice as sd
-from scipy.signal import resample_poly
+import soxr
 
 from .voice_activity_detection import VadEvent, VAD_CHUNK_SIZE
 
@@ -99,13 +98,7 @@ class AudioRecorder:
     def _resample_audio(self, audio: np.ndarray, orig_rate: int, target_rate: int) -> np.ndarray:
         if orig_rate == target_rate or len(audio) == 0:
             return audio
-
-        g = gcd(orig_rate, target_rate)
-        up = target_rate // g
-        down = orig_rate // g
-
-        resampled = resample_poly(audio.flatten(), up, down)
-        return resampled.astype(np.float32)
+        return soxr.resample(audio.flatten(), orig_rate, target_rate).astype(np.float32)
 
     def _handle_vad_event(self, event: VadEvent):
         self.on_vad_event(event)
