@@ -61,52 +61,84 @@ Test these components on macOS to confirm they work:
 
 ## Phase 2: Platform Abstraction Layer
 
-Create `src/whisper_key/platform/` module structure:
+### 2.1 Folder Structure
 
 ```
-src/whisper_key/platform/
-├── __init__.py              # Platform detection, exports
-├── audio_feedback.py        # Sound playback abstraction
-├── keyboard.py              # Key simulation abstraction
-├── hotkeys.py               # Hotkey detection abstraction
-├── instance_lock.py         # Single-instance enforcement
-└── console.py               # Console visibility (Windows-only)
+src/whisper_key/
+├── platform/
+│   ├── __init__.py          # Platform detection, routes to correct folder
+│   ├── macos/
+│   │   ├── __init__.py
+│   │   ├── audio.py         # playsound3
+│   │   ├── keyboard.py      # Quartz CGEvent
+│   │   ├── hotkeys.py       # QuickMacHotKey
+│   │   └── instance_lock.py # fcntl
+│   └── windows/
+│       ├── __init__.py
+│       ├── audio.py         # winsound
+│       ├── keyboard.py      # pyautogui
+│       ├── hotkeys.py       # global-hotkeys
+│       ├── instance_lock.py # win32event
+│       └── console.py       # win32console (Windows-only)
+├── audio_feedback.py        # Uses platform.audio
+├── clipboard_manager.py     # Uses platform.keyboard
+├── hotkey_listener.py       # Uses platform.hotkeys
+└── instance_manager.py      # Uses platform.instance_lock
 ```
 
-### 2.1 Platform Detection
+### 2.2 Platform Router
 
 ```python
 # platform/__init__.py
-import platform
+import platform as _platform
 
-SYSTEM = platform.system()
-IS_WINDOWS = SYSTEM == "Windows"
-IS_MACOS = SYSTEM == "Darwin"
+PLATFORM = 'macos' if _platform.system() == 'Darwin' else 'windows'
+IS_MACOS = PLATFORM == 'macos'
+IS_WINDOWS = PLATFORM == 'windows'
 
-# Conditional imports
+# Explicit imports from correct platform subfolder
 if IS_MACOS:
-    from .keyboard_macos import send_hotkey, send_key
-    from .hotkeys_macos import HotkeyListener
-    from .instance_lock_macos import InstanceLock
-    from .audio_feedback_macos import play_sound
+    from .macos import audio, keyboard, hotkeys, instance_lock
 else:
-    from .keyboard_windows import send_hotkey, send_key
-    from .hotkeys_windows import HotkeyListener
-    from .instance_lock_windows import InstanceLock
-    from .audio_feedback_windows import play_sound
+    from .windows import audio, keyboard, hotkeys, instance_lock
 ```
 
-### 2.2 Interface Contracts
+### 2.3 Usage in Components
 
-Each platform module pair must implement the same interface:
+```python
+# audio_feedback.py
+from .platform import audio
+
+class AudioFeedback:
+    def play_start_sound(self):
+        audio.play_sound(self.start_sound_path)
+```
+
+```python
+# clipboard_manager.py
+from .platform import keyboard
+
+class ClipboardManager:
+    def auto_paste(self):
+        keyboard.send_hotkey('cmd', 'v')  # or 'ctrl', 'v' on Windows
+```
+
+### 2.4 Interface Contracts
+
+Each platform folder must have modules with matching interfaces:
+
+**audio.py:**
+```python
+def play_sound(path: str, blocking: bool = False) -> None: ...
+```
 
 **keyboard.py:**
 ```python
 def send_hotkey(*keys: str) -> None:
-    """Send key combination. Example: send_hotkey('cmd', 'v')"""
+    """Example: send_hotkey('cmd', 'v')"""
 
 def send_key(key: str) -> None:
-    """Send single key. Example: send_key('enter')"""
+    """Example: send_key('enter')"""
 ```
 
 **hotkeys.py:**
@@ -124,11 +156,6 @@ class InstanceLock:
     def release(self) -> None: ...
 ```
 
-**audio_feedback.py:**
-```python
-def play_sound(path: str, blocking: bool = False) -> None: ...
-```
-
 ---
 
 ## Phase 3: macOS Implementations
@@ -138,7 +165,7 @@ def play_sound(path: str, blocking: bool = False) -> None: ...
 **Dependency:** `pyobjc-framework-Quartz`
 
 ```python
-# platform/keyboard_macos.py
+# platform/macos/keyboard.py
 from Quartz import CGEventCreateKeyboardEvent, CGEventPost, kCGSessionEventTap
 import time
 
@@ -196,7 +223,7 @@ def send_key(key):
 **Dependency:** `quickmachotkey`
 
 ```python
-# platform/hotkeys_macos.py
+# platform/macos/hotkeys.py
 from quickmachotkey import quickHotKey, mask
 from quickmachotkey.constants import kVK_Space, controlKey, shiftKey
 from AppKit import NSApplication
@@ -232,7 +259,7 @@ class HotkeyListener:
 ### 3.3 Instance Lock (fcntl)
 
 ```python
-# platform/instance_lock_macos.py
+# platform/macos/instance_lock.py
 import fcntl
 import os
 from pathlib import Path
@@ -262,7 +289,7 @@ class InstanceLock:
 ### 3.4 Audio Feedback
 
 ```python
-# platform/audio_feedback_macos.py
+# platform/macos/audio.py
 from playsound3 import playsound as _playsound
 import threading
 
@@ -334,27 +361,27 @@ dependencies = [
 ## Implementation Order
 
 ### Sprint 1: Foundation
-1. Create `platform/` directory structure
-2. Implement platform detection in `__init__.py`
-3. Move Windows code into `*_windows.py` modules (no behavior change)
+1. Create `platform/` folder with `__init__.py`, `macos/`, `windows/` subfolders
+2. Move Windows code into `platform/windows/` modules (no behavior change)
+3. Update existing components to import from `platform`
 4. Test Windows still works
 
 ### Sprint 2: Audio & Instance Lock
-5. Implement `audio_feedback_macos.py` (playsound3)
-6. Implement `instance_lock_macos.py` (fcntl)
-7. Update `audio_feedback.py` and `instance_manager.py` to use abstractions
+5. Implement `platform/macos/audio.py` (playsound3)
+6. Implement `platform/macos/instance_lock.py` (fcntl)
+7. Update `audio_feedback.py` and `instance_manager.py` to use platform imports
 8. Test on macOS
 
 ### Sprint 3: Keyboard Simulation
-9. Implement `keyboard_macos.py` (Quartz CGEvent)
-10. Implement `keyboard_windows.py` (pyautogui wrapper)
-11. Update `clipboard_manager.py` to use abstraction
+9. Implement `platform/macos/keyboard.py` (Quartz CGEvent)
+10. Implement `platform/windows/keyboard.py` (pyautogui wrapper)
+11. Update `clipboard_manager.py` to use `platform.keyboard`
 12. Test paste workflow on both platforms
 
 ### Sprint 4: Hotkey Detection
-13. Implement `hotkeys_macos.py` (QuickMacHotKey)
-14. Implement `hotkeys_windows.py` (global-hotkeys wrapper)
-15. Update `hotkey_listener.py` to use abstraction
+13. Implement `platform/macos/hotkeys.py` (QuickMacHotKey)
+14. Implement `platform/windows/hotkeys.py` (global-hotkeys wrapper)
+15. Update `hotkey_listener.py` to use `platform.hotkeys`
 16. Handle NSApplication event loop integration
 17. Test hotkey detection on both platforms
 

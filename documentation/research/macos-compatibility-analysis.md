@@ -59,16 +59,22 @@ Add for macOS:
 
 ## Implementation Approach
 
-Create platform abstraction modules that detect OS and load appropriate implementation:
+Platform-specific code in `platform/` folder, with `__init__.py` routing to the correct subfolder:
 
 ```
 src/whisper_key/
-├── platform/
-│   ├── __init__.py          # Platform detection
-│   ├── audio_playback.py    # winsound vs playsound3
-│   ├── hotkeys.py           # global-hotkeys vs QuickMacHotKey
-│   ├── instance_lock.py     # mutex vs fcntl
-│   └── clipboard.py         # win32gui vs AppKit
+└── platform/
+    ├── __init__.py          # Detects OS, imports from correct subfolder
+    ├── macos/
+    │   ├── audio.py         # playsound3
+    │   ├── keyboard.py      # Quartz CGEvent
+    │   ├── hotkeys.py       # QuickMacHotKey
+    │   └── instance_lock.py # fcntl
+    └── windows/
+        ├── audio.py         # winsound
+        ├── keyboard.py      # pyautogui
+        ├── hotkeys.py       # global-hotkeys
+        └── instance_lock.py # win32event
 ```
 
 ## Recommended Order
