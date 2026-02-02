@@ -9,6 +9,12 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 - [x] ~~**Phase 1:** Replace Windows-only libraries with cross-platform alternatives where possible~~
 - [x] ~~**Phase 2:** Create platform abstraction layer for components that need different implementations~~
 - [ ] **Phase 3:** Implement macOS-specific code behind the abstraction layer
+  - [x] ~~**3.1:** Audio feedback (`platform/macos/audio.py` - playsound3)~~ *(already done)*
+  - [ ] **3.2:** Instance lock (`platform/macos/instance_lock.py` - fcntl)
+  - [ ] **3.3:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
+  - [ ] **3.4:** Hotkey detection (`platform/macos/hotkeys.py` - QuickMacHotKey) ⚠️ highest risk
+  - [ ] **3.5:** Platform-aware config defaults (cmd vs ctrl)
+  - [ ] **3.6:** Skip console manager on macOS
 
 ---
 
@@ -22,7 +28,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 | Config | ruamel.yaml | ✅ Already cross-platform | - |
 | System tray | pystray | ✅ Already cross-platform | - |
 | Clipboard read/write | pyperclip | ✅ Already cross-platform | - |
-| Audio feedback | winsound | ❌ | playsound3 |
+| Audio feedback | winsound | ✅ playsound3 | - |
 | Key simulation | pyautogui | ❌ | Platform abstraction (Quartz CGEvent) |
 | Hotkey detection | global-hotkeys | ❌ | Platform abstraction (QuickMacHotKey) |
 | Instance lock | win32event | ❌ | Platform abstraction (fcntl) |
@@ -32,26 +38,12 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 
 ---
 
-## Phase 1: Cross-Platform Foundations
+## Phase 1: Cross-Platform Foundations *(Complete)*
 
-### 1.1 Audio Feedback
+Replaced `winsound` with `playsound3` for audio feedback.
 
-**Current:** `winsound.PlaySound()` (Windows-only)
+### Verify Cross-Platform Components (on macOS)
 
-**Recommendation:** Use `playsound3` - actively maintained fork with macOS fixes.
-
-```python
-from playsound3 import playsound
-
-def play_sound(path):
-    playsound(path, block=False)
-```
-
-**Files affected:** `audio_feedback.py`
-
-### 1.2 Verify Cross-Platform Components
-
-Test these components on macOS to confirm they work:
 - [ ] `sounddevice` audio recording
 - [ ] `faster-whisper` transcription
 - [ ] `ten-vad` voice activity detection
@@ -287,20 +279,6 @@ class InstanceLock:
             self._lock_path.unlink(missing_ok=True)
 ```
 
-### 3.4 Audio Feedback
-
-```python
-# platform/macos/audio.py
-from playsound3 import playsound as _playsound
-import threading
-
-def play_sound(path: str, blocking: bool = False):
-    if blocking:
-        _playsound(path)
-    else:
-        threading.Thread(target=_playsound, args=(path,), daemon=True).start()
-```
-
 ---
 
 ## Configuration Changes
@@ -313,20 +291,35 @@ def play_sound(path: str, blocking: bool = False):
 | `record_hotkey` | `ctrl+shift+space` | `cmd+shift+space` |
 | `cancel_hotkey` | `escape` | `escape` |
 
-**Approach:** Platform-aware defaults in `config_manager.py`:
+### Implementation Requirements
 
+**1. Platform detection global** - Use existing `IS_MACOS` from `platform/__init__.py`:
 ```python
-def _get_platform_defaults(self):
-    if platform.system() == "Darwin":
-        return {
+from whisper_key.platform import IS_MACOS
+```
+
+**2. Update `config.defaults.yaml`** - Current defaults file only has Windows values. Options:
+- **Option A:** Keep single defaults file, override in code (simpler)
+- **Option B:** Have `config.defaults.yaml` + `config.defaults.macos.yaml` (more explicit)
+
+**3. Modify `config_manager.py`** - Apply platform-specific defaults:
+```python
+from .platform import IS_MACOS
+
+def _get_default_value(self, key):
+    # Platform-specific overrides
+    if IS_MACOS:
+        macos_defaults = {
             'paste_hotkey': 'cmd+v',
             'record_hotkey': 'cmd+shift+space',
         }
-    return {
-        'paste_hotkey': 'ctrl+v',
-        'record_hotkey': 'ctrl+shift+space',
-    }
+        if key in macos_defaults:
+            return macos_defaults[key]
+    # Fall back to config.defaults.yaml
+    return self._defaults.get(key)
 ```
+
+**4. Config file format stays the same** - Users can still override with `ctrl` or `cmd` as they prefer. The platform detection only affects what happens when no config file exists yet.
 
 ---
 
@@ -336,24 +329,24 @@ def _get_platform_defaults(self):
 
 ```toml
 dependencies = [
-    # Existing cross-platform
+    # Cross-platform
     "faster-whisper>=1.2.1",
     "sounddevice>=0.4.6",
     "pyperclip>=1.8.2",
     "ruamel.yaml>=0.18.14",
     "pystray>=0.19.5",
     "Pillow>=10.0.0",
+    "playsound3>=2.3.0",  # replaced winsound
 
     # Windows-only
-    "global-hotkeys>=0.1.7; platform_system=='Windows'",
-    "pywin32>=306; platform_system=='Windows'",
-    "pyautogui>=0.9.54; platform_system=='Windows'",
+    "global-hotkeys>=0.1.7; sys_platform=='win32'",
+    "pywin32>=306; sys_platform=='win32'",
+    "pyautogui>=0.9.54; sys_platform=='win32'",
 
     # macOS-only
-    "quickmachotkey>=0.1.0; platform_system=='Darwin'",
-    "pyobjc-framework-Quartz>=10.0; platform_system=='Darwin'",
-    "pyobjc-framework-ApplicationServices>=10.0; platform_system=='Darwin'",
-    "playsound3>=2.0; platform_system=='Darwin'",
+    "quickmachotkey>=0.1.0; sys_platform=='darwin'",
+    "pyobjc-framework-Quartz>=10.0; sys_platform=='darwin'",
+    "pyobjc-framework-ApplicationServices>=10.0; sys_platform=='darwin'",
 ]
 ```
 
@@ -367,10 +360,10 @@ dependencies = [
 3. Update existing components to import from `platform`
 4. Test Windows still works
 
-### Sprint 2: Audio & Instance Lock
-5. Implement `platform/macos/audio.py` (playsound3)
+### Sprint 2: Instance Lock
+5. ~~Implement `platform/macos/audio.py` (playsound3)~~ *(done)*
 6. Implement `platform/macos/instance_lock.py` (fcntl)
-7. Update `audio_feedback.py` and `instance_manager.py` to use platform imports
+7. Update `instance_manager.py` to use platform imports
 8. Test on macOS
 
 ### Sprint 3: Keyboard Simulation
@@ -400,8 +393,7 @@ dependencies = [
 |------|--------|------------|
 | QuickMacHotKey requires NSApplication event loop | High | May need to restructure main loop, or run in separate process |
 | Accessibility permissions on macOS | Medium | Clear user messaging, auto-open System Preferences |
-| playsound3 reliability | Low | Fall back to PyObjC NSSound if issues |
-| Different hotkey naming (Cmd vs Ctrl) | Low | Config migration, clear documentation |
+| Different hotkey naming (Cmd vs Ctrl) | Low | Platform-aware defaults, users can override |
 
 ---
 
@@ -426,7 +418,6 @@ dependencies = [
 ## Open Questions
 
 1. **NSApplication event loop:** Does pystray already run one? Can we share it with QuickMacHotKey?
-2. **Audio host defaults:** Should macOS default to CoreAudio explicitly?
 
 ---
 
