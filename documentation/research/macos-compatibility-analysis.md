@@ -9,6 +9,7 @@
 | `hotkey_listener.py` | `global-hotkeys` | `pynput.keyboard.GlobalHotKeys` |
 | `instance_manager.py` | `win32event`, `win32api` | `fcntl` file locking |
 | `console_manager.py` | `win32console`, `win32gui`, `win32con` | Not needed (macOS has no console hide) |
+| `utils.py` | Bundled `portaudio.dll` path | Not needed (macOS uses system PortAudio) |
 
 ## Cross-Platform Components (No Changes Needed)
 
@@ -19,7 +20,8 @@
 - `voice_activity_detection.py` - Uses `ten-vad` + numpy (cross-platform)
 - `config_manager.py` - Uses `ruamel.yaml` (cross-platform)
 - `system_tray.py` - Uses `pystray` (already cross-platform)
-- `utils.py` - Pure Python
+
+**Note:** `state_manager.py` and `config_manager.py` have WASAPI audio host defaults but already guard with platform checks (return `None` on non-Windows).
 
 ## Difficulty Rating
 
@@ -33,11 +35,12 @@
 
 ## Hotkey Challenge
 
-The `global-hotkeys` library is Windows-only. Alternatives:
+The `global-hotkeys` library is Windows-only. See `macos-hotkey-research.md` for detailed analysis.
 
-- **`pynput`**: Cross-platform but requires macOS accessibility permissions and has reliability issues with some system hotkeys
-- **`keyboard`**: Requires root on Linux, untested on macOS
-- API differences: callback patterns, key naming conventions all differ
+**Recommendation:** Use `QuickMacHotKey` on macOS (native Carbon API)
+- All modifier keys work (Ctrl, Alt/Option, Cmd, Shift)
+- `pynput` has broken Ctrl/Alt modifiers on macOS - not viable
+- Requires macOS accessibility permissions
 
 ## pyproject.toml Already Has Platform Conditions
 
@@ -49,7 +52,8 @@ The `global-hotkeys` library is Windows-only. Alternatives:
 
 Add for macOS:
 ```toml
-"pynput>=1.7.6; platform_system=='Darwin'",
+"quickmachotkey>=0.1.0; platform_system=='Darwin'",
+"pyobjc-framework-ApplicationServices>=10.0; platform_system=='Darwin'",
 "playsound>=1.3.0; platform_system=='Darwin'",
 ```
 
@@ -62,7 +66,7 @@ src/whisper_key/
 ├── platform/
 │   ├── __init__.py          # Platform detection
 │   ├── audio_playback.py    # winsound vs playsound
-│   ├── hotkeys.py           # global-hotkeys vs pynput
+│   ├── hotkeys.py           # global-hotkeys vs QuickMacHotKey
 │   ├── instance_lock.py     # mutex vs fcntl
 │   └── clipboard.py         # win32gui vs AppKit
 ```
@@ -75,4 +79,4 @@ src/whisper_key/
 4. **Hotkey listener** - Most complex, save for last
 
 ---
-*Updated: 2026-01-16*
+*Updated: 2026-02-02*
