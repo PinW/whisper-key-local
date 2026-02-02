@@ -35,11 +35,6 @@ Install the application globally:
 pipx install whisper-key-local
 ```
 
-Add VAD support (prevents silence hallucinations):
-```bash
-pipx inject whisper-key-local git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
-```
-
 Run from anywhere:
 ```bash
 whisper-key
@@ -58,11 +53,6 @@ cd whisper-key-local
 Install the dependencies:
 ```bash
 pip install -e .
-```
-
-Add VAD support (prevents silence hallucinations):
-```bash
-pip install git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
 ```
 
 Run the application:
