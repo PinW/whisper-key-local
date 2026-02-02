@@ -15,6 +15,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [ ] **3.4:** Hotkey detection (`platform/macos/hotkeys.py` - QuickMacHotKey) ⚠️ highest risk
   - [ ] **3.5:** Platform-aware config defaults (cmd vs ctrl)
   - [ ] **3.6:** Skip console manager on macOS
+- [ ] **Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies
 
 ---
 
@@ -323,9 +324,29 @@ def _get_default_value(self, key):
 
 ---
 
-## Dependencies
+## Phase 4: Platform Markers in pyproject.toml
 
-### pyproject.toml Updates
+### How Platform Markers Work
+
+Python's PEP 508 allows conditional dependencies using **environment markers**. The syntax uses a semicolon followed by a condition:
+
+```toml
+"pywin32>=306; sys_platform=='win32'"    # Only on Windows
+"pyobjc>=10.0; sys_platform=='darwin'"   # Only on macOS
+```
+
+When a user runs `pip install whisper-key` or `pipx install whisper-key`:
+- Windows users get `pywin32`, `global-hotkeys`, `pyautogui`
+- macOS users get `pyobjc-framework-Quartz`, `quickmachotkey`
+- Neither platform downloads the other's dependencies
+
+### Common Markers
+
+| Marker | Windows | macOS | Linux |
+|--------|---------|-------|-------|
+| `sys_platform` | `'win32'` | `'darwin'` | `'linux'` |
+
+### Updated pyproject.toml
 
 ```toml
 dependencies = [
@@ -336,7 +357,7 @@ dependencies = [
     "ruamel.yaml>=0.18.14",
     "pystray>=0.19.5",
     "Pillow>=10.0.0",
-    "playsound3>=2.3.0",  # replaced winsound
+    "playsound3>=2.3.0",
 
     # Windows-only
     "global-hotkeys>=0.1.7; sys_platform=='win32'",
@@ -349,6 +370,13 @@ dependencies = [
     "pyobjc-framework-ApplicationServices>=10.0; sys_platform=='darwin'",
 ]
 ```
+
+### Implementation Notes
+
+1. **Both pip and pipx support markers** - They evaluate conditions at install time
+2. **Use `sys_platform`** - More common than `platform_system` in the wild
+3. **Test on both platforms** - CI should verify installation works on Windows and macOS
+4. **Real-world examples** - PyInstaller, playsound3, and many others use this pattern
 
 ---
 
