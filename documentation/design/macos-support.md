@@ -28,6 +28,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 | Instance lock | win32event | ❌ | Platform abstraction (fcntl) |
 | Console hide | win32console | ❌ | Skip on macOS (not needed) |
 | PortAudio DLL | bundled DLL (for WASAPI) | ❌ | Skip on macOS (no WASAPI, sounddevice wheel suffices) |
+| Window detection | win32gui | ❌ | Remove (dead code, not used) |
 
 ---
 

@@ -3,7 +3,6 @@ import time
 from typing import Optional
 
 import pyperclip
-import win32gui
 import pyautogui
 
 from .utils import parse_hotkey
@@ -87,19 +86,6 @@ class ClipboardManager:
         except Exception as e:
             self.logger.error(f"Failed to clear clipboard: {e}")
             return False
-    
-    def get_active_window_handle(self) -> Optional[int]:
-        try:
-            hwnd = win32gui.GetForegroundWindow()
-            if hwnd:
-                window_title = win32gui.GetWindowText(hwnd)
-                self.logger.info(f"Active window: '{window_title}' (handle: {hwnd})")
-                return hwnd
-            else:
-                return None
-        except Exception as e:
-            self.logger.error(f"Failed to get active window handle: {e}")
-            return None       
     
     def execute_auto_paste(self, text: str, preserve_clipboard: bool) -> bool:              
         try:
