@@ -1,6 +1,6 @@
-# macOS App Data Path Implementation
+# macOS Paths and File Operations
 
-As a *user* I want **config and log files stored in the correct location on macOS** so the app follows platform conventions.
+As a *user* I want **config and log files stored in the correct location on macOS** and **tray menu file operations to work** so the app follows platform conventions.
 
 ## Current State
 
@@ -16,6 +16,15 @@ def get_user_app_data_path():
 
 On macOS, `APPDATA` is undefined → crash on startup before anything else runs.
 
+`system_tray.py` uses `os.startfile()` which is Windows-only:
+
+```python
+os.startfile(log_path)    # Windows-only!
+os.startfile(config_path) # Windows-only!
+```
+
+On macOS this raises `AttributeError: module 'os' has no attribute 'startfile'`.
+
 ## Platform Conventions
 
 | Platform | Standard Location | Example |
@@ -25,47 +34,121 @@ On macOS, `APPDATA` is undefined → crash on startup before anything else runs.
 
 ## Implementation Plan
 
-### Step 1: Update get_user_app_data_path()
-- [ ] Import platform detection from `whisper_key.platform`
-- [ ] Return `~/Library/Application Support/whisperkey` on macOS
-- [ ] Keep `%APPDATA%\whisperkey` on Windows
-- [ ] Ensure directory is created if it doesn't exist
+### Step 1: Create platform/windows/paths.py
+- [ ] Create `platform/windows/paths.py`
+- [ ] Implement `get_app_data_path()` using `%APPDATA%`
+- [ ] Implement `open_file()` using `os.startfile()`
 
-### Step 2: Test on macOS
+### Step 2: Create platform/macos/paths.py
+- [ ] Create `platform/macos/paths.py`
+- [ ] Implement `get_app_data_path()` using `~/Library/Application Support/`
+- [ ] Implement `open_file()` using `subprocess.run(['open', path])`
+
+### Step 3: Update platform routers
+- [ ] Add `paths` import to `platform/windows/__init__.py`
+- [ ] Add `paths` import to `platform/macos/__init__.py`
+- [ ] Add `paths` import to `platform/__init__.py`
+
+### Step 4: Update utils.py
+- [ ] Import `paths` from `.platform`
+- [ ] Simplify `get_user_app_data_path()` to use `paths.get_app_data_path()`
+- [ ] Add `open_file()` wrapper that calls `paths.open_file()`
+
+### Step 5: Update system_tray.py
+- [ ] Replace `os.startfile()` with `utils.open_file()`
+
+### Step 6: Test on macOS
 - [ ] **Manual test:** Run app, verify config created in correct location
 - [ ] Verify log file created in correct location
+- [ ] Verify "View Log" and "Advanced Settings" menu items work
 
 ## Implementation Details
 
+### platform/windows/paths.py
+
 ```python
-# utils.py
 import os
 from pathlib import Path
 
-def get_user_app_data_path():
-    import platform
+def get_app_data_path():
+    return Path(os.getenv('APPDATA')) / 'whisperkey'
 
-    if platform.system() == 'Darwin':  # macOS
-        base = Path.home() / 'Library' / 'Application Support'
-    else:  # Windows
-        base = Path(os.getenv('APPDATA'))
-
-    whisperkey_dir = base / 'whisperkey'
-    whisperkey_dir.mkdir(parents=True, exist_ok=True)
-    return str(whisperkey_dir)
+def open_file(path):
+    os.startfile(path)
 ```
 
-**Note:** Using `platform.system()` directly here instead of importing from `whisper_key.platform` to avoid circular import issues (utils.py is imported early).
+### platform/macos/paths.py
+
+```python
+import subprocess
+from pathlib import Path
+
+def get_app_data_path():
+    return Path.home() / 'Library' / 'Application Support' / 'whisperkey'
+
+def open_file(path):
+    subprocess.run(['open', str(path)])
+```
+
+### platform/__init__.py (updated)
+
+```python
+if IS_MACOS:
+    from .macos import instance_lock, console, keyboard, hotkeys, paths
+else:
+    from .windows import instance_lock, console, keyboard, hotkeys, paths
+```
+
+### utils.py (updated)
+
+```python
+from .platform import paths
+
+def get_user_app_data_path():
+    whisperkey_dir = paths.get_app_data_path()
+    whisperkey_dir.mkdir(parents=True, exist_ok=True)
+    return str(whisperkey_dir)
+
+def open_file(path):
+    paths.open_file(path)
+```
+
+### system_tray.py (updated)
+
+```python
+from .utils import open_file
+
+def _view_log_file(self, icon=None, item=None):
+    log_path = self.config_manager.get_log_file_path()
+    open_file(log_path)
+
+def _open_config_file(self, icon=None, item=None):
+    config_path = self.config_manager.user_settings_path
+    open_file(config_path)
+```
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `platform/windows/paths.py` | Windows app data path |
+| `platform/macos/paths.py` | macOS app data path |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/whisper_key/utils.py` | Update `get_user_app_data_path()` for cross-platform |
+| `platform/windows/__init__.py` | Add `paths` import |
+| `platform/macos/__init__.py` | Add `paths` import |
+| `platform/__init__.py` | Add `paths` to imports |
+| `utils.py` | Add `get_user_app_data_path()` and `open_file()` using platform.paths |
+| `system_tray.py` | Replace `os.startfile()` with `utils.open_file()` |
 
 ## Success Criteria
 
 - [ ] App starts on macOS without path-related crash
 - [ ] Config file created at `~/Library/Application Support/whisperkey/user_settings.yaml`
 - [ ] Log file created at `~/Library/Application Support/whisperkey/whisper-key.log`
+- [ ] Tray menu "View Log" opens log file on macOS
+- [ ] Tray menu "Advanced Settings" opens config file on macOS
 - [ ] Windows behavior unchanged
