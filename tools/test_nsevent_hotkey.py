@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Standalone test script for NSEvent-based hotkey detection on macOS.
+Test script for NSEvent-based hotkey detection on macOS.
+Tests the real app's hotkey configuration.
 
-Run this directly on macOS to test hotkey detection before integrating with the app.
 Requires Accessibility permissions in System Settings > Privacy & Security > Accessibility.
 
 Usage:
@@ -28,47 +28,58 @@ app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
 sys.path.insert(0, 'src')
 from whisper_key.platform.macos import hotkeys
 
-def on_ctrl_option_press():
-    print("\n✓ CTRL+OPTION pressed!")
+def on_recording_press():
+    print("\n✓ RECORDING HOTKEY pressed (ctrl+option)")
 
-def on_ctrl_option_release():
-    print("✓ CTRL+OPTION released!")
+def on_recording_release():
+    print("✓ RECORDING HOTKEY released")
 
 def on_fn_ctrl_press():
-    print("\n✓ FN+CTRL pressed!")
+    print("\n✓ FN+CTRL pressed (alternative recording hotkey)")
 
 def on_fn_ctrl_release():
-    print("✓ FN+CTRL released!")
+    print("✓ FN+CTRL released")
+
+def on_option_press():
+    print("\n✓ OPTION pressed (auto-enter)")
+
+def on_option_release():
+    print("✓ OPTION released")
+
+def on_ctrl_press():
+    print("\n✓ CTRL pressed (stop-modifier)")
+
+def on_ctrl_release():
+    print("✓ CTRL released")
 
 def on_escape_press():
-    print("\n✓ ESCAPE pressed!")
-
-def on_ctrl_option_space_press():
-    print("\n✓ CTRL+OPTION+SPACE pressed!")
+    print("\n✓ ESCAPE pressed (cancel)")
 
 running = True
 
 def main():
     global running
-    print("=" * 50)
-    print("NSEvent Hotkey Test")
-    print("=" * 50)
+    print("=" * 60)
+    print("NSEvent Hotkey Test - Real App Configuration")
+    print("=" * 60)
     print()
     print("Testing the following hotkeys:")
-    print("  - Ctrl+Option (modifier-only, with release)")
-    print("  - Fn+Ctrl (modifier-only, with release)")
-    print("  - Escape (single key, no modifiers)")
-    print("  - Ctrl+Option+Space (traditional - should NOT trigger Ctrl+Option)")
+    print("  - Ctrl+Option  : Toggle recording (modifier-only)")
+    print("  - Fn+Ctrl      : Alternative recording (modifier-only)")
+    print("  - Option       : Auto-enter stop (modifier-only)")
+    print("  - Ctrl         : Stop-modifier (modifier-only)")
+    print("  - Escape       : Cancel recording (traditional)")
     print()
     print("Press Ctrl+C to exit")
-    print("=" * 50)
+    print("=" * 60)
     print()
 
     bindings = [
-        ["control + option", on_ctrl_option_press, on_ctrl_option_release, False],
+        ["control + option", on_recording_press, on_recording_release, False],
         ["fn + control", on_fn_ctrl_press, on_fn_ctrl_release, False],
+        ["option", on_option_press, on_option_release, False],
+        ["control", on_ctrl_press, on_ctrl_release, False],
         ["escape", on_escape_press, None, False],
-        ["control + option + space", on_ctrl_option_space_press, None, False],
     ]
 
     hotkeys.register(bindings)

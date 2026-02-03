@@ -1,239 +1,88 @@
 # NSEvent Hotkey Implementation for macOS
 
-As a *mac user* I want **global hotkeys using NSEvent monitoring** so hotkeys work reliably and can support Fn key in the future.
+As a *mac user* I want **global hotkeys using NSEvent monitoring** so hotkeys work reliably and can support Fn key.
 
-## Why NSEvent Instead of QuickMacHotKey
+## Status: Implementation Complete, Testing In Progress
 
-- **Simpler integration** - Pure Python/PyObjC, no decorator magic, no C callbacks
-- **Fn key ready** - Can detect Fn modifier when we add support later
-- **Same API surface** - Can implement same `register()`, `start()`, `stop()` interface
-- **No external dependency** - Uses PyObjC we already have
-- **Modifier-only support** - Can detect `ctrl+cmd` without a regular key via `NSFlagsChanged`
+## Real App Hotkey Configuration
 
-## Current State
+| Hotkey | Type | Purpose |
+|--------|------|---------|
+| `ctrl+option` or `fn+ctrl` | modifier-only | Toggle recording |
+| `option` | modifier-only | Auto-enter (stop + enter) |
+| `ctrl` | modifier-only | Stop-modifier (stop recording) |
+| `esc` | traditional (keycode only) | Cancel recording |
 
-- `platform/macos/hotkeys.py` is a stub (logs warning, does nothing)
-- `hotkey_listener.py` expects `register(bindings)`, `start()`, `stop()`
-- NSApplication event loop already running in `platform/macos/app.py`
-- Binding format from `hotkey_listener.py` is list of tuples: `[hotkey_string, press_cb, release_cb, flag]`
+**No conflicts exist** - no traditional hotkey shares modifiers with a modifier-only hotkey.
 
-## Implementation Plan
+## Implementation
 
-### Phase 1: Core Event Monitoring ✅
+### Core Design
 
-- [x] Monitor BOTH `NSKeyDownMask` AND `NSFlagsChangedMask` events
-- [x] Implement `ModifierStateTracker` class to track previous vs current modifier flags
-- [x] Detect modifier transitions: `pressed = (new_flags & ~old_flags)`, `released = (old_flags & ~new_flags)`
-- [x] Implement `register(bindings)` that parses and stores hotkey configs
-- [x] Implement `start()` that creates the monitor
-- [x] Implement `stop()` that removes the monitor
-- [ ] Test with hardcoded modifier-only hotkey (ctrl+cmd)
+1. **NSEvent global monitor** - monitors `NSKeyDownMask` and `NSFlagsChangedMask`
+2. **ModifierStateTracker** - tracks modifier transitions (press/release)
+3. **Two event handlers:**
+   - `_handle_flags_changed` → modifier-only hotkeys (ctrl+option, option, ctrl)
+   - `_handle_key_down` → traditional hotkeys (esc)
 
-### Phase 2: Hotkey Matching ✅
+### Modifier-Only Hotkeys
 
-- [x] Categorize bindings: modifier-only (`keycode=None`) vs traditional (`keycode=int`)
-- [x] For `NSFlagsChanged` events: match modifier-only hotkeys when exact modifiers become active
-- [x] For `NSKeyDown` events: match traditional hotkeys when keycode + modifiers match
-- [x] Fire press callback on match
-- [x] Fire release callback when any required modifier is released
+Fire immediately when exact modifiers match. Release callback fires when any required modifier is released.
 
-### Phase 3: Key String Parsing ✅
-
-- [x] Parse hotkey strings like "ctrl+option" into `(modifier_mask, keycode)`
-- [x] Map modifier names to flag constants (use modern names):
-  - `ctrl`/`control` → `NSEventModifierFlagControl`
-  - `cmd`/`command` → `NSEventModifierFlagCommand`
-  - `option`/`alt` → `NSEventModifierFlagOption`
-  - `shift` → `NSEventModifierFlagShift`
-- [x] Map key names to virtual key codes (space=49, escape=53, etc.)
-- [x] Handle alias: `win` → ignore on macOS (Windows-only)
-- [ ] Test with config-based hotkey strings
-
-### Phase 4: Integration with HotkeyListener ✅
-
-- [x] Match binding format: `[hotkey_string, press_cb, release_cb, flag]` (list, not dict!)
-- [ ] Verify `hotkey_listener.py` works with new macOS backend
-- [ ] Test press callback fires correctly
-- [ ] Test release callback fires for stop-with-modifier feature
-- [ ] Full app test on macOS
-
-### Phase 5: Fn Key Support (Future)
-
-- [ ] Add `fn` to modifier parsing
-- [ ] Map to `NSEventModifierFlagFunction`
-- [ ] Update config defaults to use `fn+control`
-- [ ] Test Fn key detection
-
-## Implementation Details
-
-### Modifier Flag Constants (Modern Names)
-
-```python
-from AppKit import NSEvent
-
-MODIFIER_FLAGS = {
-    'ctrl': NSEvent.NSEventModifierFlagControl,
-    'control': NSEvent.NSEventModifierFlagControl,
-    'cmd': NSEvent.NSEventModifierFlagCommand,
-    'command': NSEvent.NSEventModifierFlagCommand,
-    'option': NSEvent.NSEventModifierFlagOption,
-    'alt': NSEvent.NSEventModifierFlagOption,
-    'shift': NSEvent.NSEventModifierFlagShift,
-    # Future: 'fn': NSEvent.NSEventModifierFlagFunction,
-}
-
-# Mask to isolate modifier flags from other event flags
-MODIFIER_MASK = (
-    NSEvent.NSEventModifierFlagControl |
-    NSEvent.NSEventModifierFlagCommand |
-    NSEvent.NSEventModifierFlagOption |
-    NSEvent.NSEventModifierFlagShift
-)
+```
+Press ctrl → flags = ctrl (no match for ctrl+option)
+Press option → flags = ctrl+option (MATCH! fire press callback, mark active)
+Release option → flags = ctrl (required modifier released, fire release callback)
 ```
 
-### Modifier State Tracker
+### Traditional Hotkeys
 
-```python
-class ModifierStateTracker:
-    def __init__(self):
-        self.previous_flags = 0
+Fire when keycode AND modifiers match exactly.
 
-    def update(self, new_flags):
-        new_flags = new_flags & MODIFIER_MASK
-        old_flags = self.previous_flags
-
-        pressed = new_flags & ~old_flags    # Bits that turned ON
-        released = old_flags & ~new_flags   # Bits that turned OFF
-
-        self.previous_flags = new_flags
-        return old_flags, new_flags, pressed, released
+```
+Press esc → keycode=53, flags=0 (MATCH if binding has modifiers=0)
 ```
 
-### Core Implementation Sketch
+## Known Issues
 
-```python
-from AppKit import NSEvent
+### Issue 1: ESC Key Not Detected
 
-_monitor = None
-_bindings = []  # List of ParsedBinding objects
-_state = ModifierStateTracker()
+**Symptom:** Pressing escape produces no debug output at all - the NSKeyDown event isn't reaching our handler.
 
-def register(bindings):
-    global _bindings
-    _bindings = [_parse_binding(b) for b in bindings]
+**Possible causes:**
+1. System captures escape before global monitor sees it
+2. Touch Bar escape key behaves differently
+3. Some apps/modes intercept escape globally
 
-def start():
-    global _monitor
-    mask = NSEvent.NSKeyDownMask | NSEvent.NSFlagsChangedMask
-    _monitor = NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(
-        mask,
-        _handle_event
-    )
-    if _monitor is None:
-        logger.error("Failed to create event monitor - check Accessibility permissions")
+**Investigation needed:**
+- Test with physical escape key vs Touch Bar
+- Test with Terminal in foreground vs other apps
+- Check if `addLocalMonitorForEventsMatchingMask` receives it (would confirm global vs local issue)
 
-def stop():
-    global _monitor
-    if _monitor:
-        NSEvent.removeMonitor_(_monitor)
-        _monitor = None
+**Workaround:** Use alternative cancel hotkey if needed (e.g., `ctrl+.`)
 
-def _handle_event(event):
-    event_type = event.type()
+### Issue 2: Modifier-Only vs Traditional Override
 
-    if event_type == NSEvent.NSFlagsChanged:
-        _handle_flags_changed(event)
-    elif event_type == NSEvent.NSKeyDown:
-        _handle_key_down(event)
+**Symptom:** `ctrl+option` fires before user can press space for `ctrl+option+space`.
 
-def _handle_flags_changed(event):
-    old_flags, new_flags, pressed, released = _state.update(event.modifierFlags())
+**Resolution:** Not a problem in real app - no such conflict exists. The test script tests a scenario not used in production.
 
-    # Check modifier-only bindings
-    for binding in _bindings:
-        if binding.keycode is not None:
-            continue  # Not a modifier-only binding
+If future need arises, implement "pending" mechanism:
+1. On modifier match, set pending instead of firing
+2. On key down, check traditional bindings first
+3. On modifier release or non-matching key, fire pending
 
-        # Press: exact modifiers just became active
-        if new_flags == binding.modifiers and old_flags != binding.modifiers:
-            binding.press_callback()
-            binding.is_active = True
-
-        # Release: was active, now a required modifier was released
-        elif binding.is_active and (released & binding.modifiers):
-            if binding.release_callback:
-                binding.release_callback()
-            binding.is_active = False
-
-def _handle_key_down(event):
-    current_flags = event.modifierFlags() & MODIFIER_MASK
-    key_code = event.keyCode()
-
-    for binding in _bindings:
-        if binding.keycode is None:
-            continue  # Modifier-only, handled by flags_changed
-
-        if key_code == binding.keycode and current_flags == binding.modifiers:
-            binding.press_callback()
-```
-
-### Binding Format (from hotkey_listener.py)
-
-**Actual format is a list of lists (not dicts!):**
-```python
-[
-    ["control + command", on_press, on_release, False],
-    ["escape", on_cancel, None, False],
-    ...
-]
-```
-
-### Parsed Binding Structure
-
-```python
-@dataclass
-class ParsedBinding:
-    original: str
-    modifiers: int        # Combined modifier flags
-    keycode: int | None   # None for modifier-only hotkeys
-    press_callback: Callable
-    release_callback: Callable | None
-    is_active: bool = False
-```
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `platform/macos/hotkeys.py` | Full implementation |
-
-## Files to Create
+## Files
 
 | File | Purpose |
 |------|---------|
+| `platform/macos/hotkeys.py` | NSEvent-based implementation |
 | `tools/test_nsevent_hotkey.py` | Standalone test script |
 
-## Success Criteria
+## Testing Checklist
 
-- [ ] Standalone test detects ctrl+cmd press (modifier-only)
-- [ ] Standalone test detects ctrl+option+space (traditional)
-- [ ] Release callback fires when modifier released
-- [ ] App starts and hotkey triggers recording on macOS
-- [ ] Stop-with-modifier works (release detection)
-- [ ] Cancel hotkey (esc) works
-
-## Risks
-
-| Risk | Mitigation |
-|------|------------|
-| Accessibility permissions denied | Check if monitor is None, log clear error message |
-| Binding format mismatch | Use list format, not dict (verified from hotkey_listener.py:64-68) |
-| Outdated constant names | Use modern `NSEventModifierFlag*` names, not deprecated `NS*KeyMask` |
-| Modifier event timing | State tracker ensures we detect exact transition moments |
-
-## Notes
-
-- NSEvent monitoring requires Accessibility permissions
-- Monitor returns `None` if permissions denied - must handle gracefully
-- Main thread not required for `addGlobalMonitorForEventsMatchingMask_handler_`
-- CGEventTap is fallback if NSEvent proves unreliable in testing
+- [x] Fn+Ctrl detected (modifier-only)
+- [x] Ctrl+Option detected (modifier-only)
+- [x] Release callback fires when modifier released
+- [ ] ESC detected (needs investigation)
+- [ ] Full app test on macOS
