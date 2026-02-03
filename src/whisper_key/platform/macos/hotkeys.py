@@ -17,13 +17,16 @@ MODIFIER_FLAGS = {
     'option': 1 << 19,
     'alt': 1 << 19,
     'shift': 1 << 17,
+    'fn': 1 << 23,
+    'function': 1 << 23,
 }
 
-MODIFIER_MASK = (1 << 18) | (1 << 20) | (1 << 19) | (1 << 17)
+MODIFIER_MASK = (1 << 18) | (1 << 20) | (1 << 19) | (1 << 17) | (1 << 23)
 
 KEY_CODES = {
     'space': 49,
     'escape': 53,
+    'esc': 53,
     'enter': 36,
     'return': 36,
     'tab': 48,
@@ -48,6 +51,7 @@ class ParsedBinding:
     press_callback: Callable
     release_callback: Callable | None
     is_active: bool = field(default=False)
+    is_pending: bool = field(default=False)
 
 
 class ModifierStateTracker:
@@ -107,6 +111,32 @@ def _parse_binding(binding: list) -> ParsedBinding:
     )
 
 
+def _has_traditional_binding_with_modifiers(modifiers: int) -> bool:
+    for binding in _bindings:
+        if binding.keycode is not None and binding.modifiers == modifiers:
+            return True
+    return False
+
+
+def _fire_pending_modifier_bindings():
+    for binding in _bindings:
+        if binding.is_pending:
+            logger.debug(f"Firing pending modifier-only hotkey: {binding.original}")
+            binding.is_pending = False
+            binding.is_active = True
+            try:
+                binding.press_callback()
+            except Exception as e:
+                logger.error(f"Error in press callback for {binding.original}: {e}")
+
+
+def _cancel_pending_modifier_bindings_with_modifiers(modifiers: int):
+    for binding in _bindings:
+        if binding.is_pending and binding.modifiers == modifiers:
+            logger.debug(f"Cancelling pending modifier-only hotkey (traditional binding fired): {binding.original}")
+            binding.is_pending = False
+
+
 def _handle_flags_changed(event):
     old_flags, new_flags, pressed, released = _state.update(event.modifierFlags())
 
@@ -115,14 +145,26 @@ def _handle_flags_changed(event):
             continue
 
         if new_flags == binding.modifiers and old_flags != binding.modifiers:
-            logger.debug(f"Modifier-only hotkey pressed: {binding.original}")
-            try:
-                binding.press_callback()
-            except Exception as e:
-                logger.error(f"Error in press callback for {binding.original}: {e}")
-            binding.is_active = True
+            if _has_traditional_binding_with_modifiers(binding.modifiers):
+                logger.debug(f"Modifier-only hotkey pending (waiting for potential key): {binding.original}")
+                binding.is_pending = True
+            else:
+                logger.debug(f"Modifier-only hotkey pressed: {binding.original}")
+                binding.is_active = True
+                try:
+                    binding.press_callback()
+                except Exception as e:
+                    logger.error(f"Error in press callback for {binding.original}: {e}")
 
-        elif binding.is_active and (released & binding.modifiers):
+        elif (binding.is_active or binding.is_pending) and (released & binding.modifiers):
+            if binding.is_pending:
+                logger.debug(f"Firing pending modifier-only hotkey on release: {binding.original}")
+                binding.is_pending = False
+                try:
+                    binding.press_callback()
+                except Exception as e:
+                    logger.error(f"Error in press callback for {binding.original}: {e}")
+
             logger.debug(f"Modifier-only hotkey released: {binding.original}")
             if binding.release_callback:
                 try:
@@ -131,21 +173,30 @@ def _handle_flags_changed(event):
                     logger.error(f"Error in release callback for {binding.original}: {e}")
             binding.is_active = False
 
+        elif new_flags != binding.modifiers and binding.is_pending:
+            _fire_pending_modifier_bindings()
+
 
 def _handle_key_down(event):
     current_flags = event.modifierFlags() & MODIFIER_MASK
     key_code = event.keyCode()
+
+    logger.debug(f"KeyDown: keycode={key_code}, flags={current_flags:#x}")
 
     for binding in _bindings:
         if binding.keycode is None:
             continue
 
         if key_code == binding.keycode and current_flags == binding.modifiers:
+            _cancel_pending_modifier_bindings_with_modifiers(binding.modifiers)
             logger.debug(f"Traditional hotkey pressed: {binding.original}")
             try:
                 binding.press_callback()
             except Exception as e:
                 logger.error(f"Error in press callback for {binding.original}: {e}")
+            return
+
+    _fire_pending_modifier_bindings()
 
 
 def _handle_event(event):
@@ -188,3 +239,4 @@ def stop():
 
     for binding in _bindings:
         binding.is_active = False
+        binding.is_pending = False

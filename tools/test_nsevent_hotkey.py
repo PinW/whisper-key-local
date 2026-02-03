@@ -31,11 +31,11 @@ def on_ctrl_option_press():
 def on_ctrl_option_release():
     print("✓ CTRL+OPTION released!")
 
-def on_ctrl_cmd_press():
-    print("\n✓ CTRL+CMD pressed!")
+def on_fn_ctrl_press():
+    print("\n✓ FN+CTRL pressed!")
 
-def on_ctrl_cmd_release():
-    print("✓ CTRL+CMD released!")
+def on_fn_ctrl_release():
+    print("✓ FN+CTRL released!")
 
 def on_escape_press():
     print("\n✓ ESCAPE pressed!")
@@ -53,9 +53,9 @@ def main():
     print()
     print("Testing the following hotkeys:")
     print("  - Ctrl+Option (modifier-only, with release)")
-    print("  - Ctrl+Cmd (modifier-only, with release)")
-    print("  - Escape (single key)")
-    print("  - Ctrl+Option+Space (traditional)")
+    print("  - Fn+Ctrl (modifier-only, with release)")
+    print("  - Escape (single key, no modifiers)")
+    print("  - Ctrl+Option+Space (traditional - should NOT trigger Ctrl+Option)")
     print()
     print("Press Ctrl+C to exit")
     print("=" * 50)
@@ -63,7 +63,7 @@ def main():
 
     bindings = [
         ["control + option", on_ctrl_option_press, on_ctrl_option_release, False],
-        ["control + command", on_ctrl_cmd_press, on_ctrl_cmd_release, False],
+        ["fn + control", on_fn_ctrl_press, on_fn_ctrl_release, False],
         ["escape", on_escape_press, None, False],
         ["control + option + space", on_ctrl_option_space_press, None, False],
     ]
