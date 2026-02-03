@@ -1,9 +1,16 @@
 from AppKit import NSApplication, NSApplicationActivationPolicyAccessory, NSEventMaskAny, NSDefaultRunLoopMode
-from Foundation import NSDate
+from Foundation import NSDate, NSObject
+
+class AppDelegate(NSObject):
+    def applicationSupportsSecureRestorableState_(self, app):
+        return True
 
 def setup():
     app = NSApplication.sharedApplication()
     app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
+    delegate = AppDelegate.alloc().init()
+    app.setDelegate_(delegate)
+    app._delegate_ref = delegate
 
 def run_event_loop(shutdown_event):
     app = NSApplication.sharedApplication()
