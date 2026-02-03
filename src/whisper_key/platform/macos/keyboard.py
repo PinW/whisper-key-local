@@ -4,6 +4,8 @@ import time
 logger = logging.getLogger(__name__)
 
 _delay = 0.0
+_permission_checked = False
+_permission_granted = False
 
 try:
     from Quartz import (
@@ -16,10 +18,26 @@ try:
         kCGEventFlagMaskShift,
         kCGEventFlagMaskAlternate,
     )
+    from ApplicationServices import AXIsProcessTrustedWithOptions
     _quartz_available = True
 except ImportError:
     _quartz_available = False
     logger.warning("Quartz not available - keyboard simulation disabled")
+
+
+def _check_accessibility_permission():
+    global _permission_checked, _permission_granted
+    if _permission_checked:
+        return _permission_granted
+
+    _permission_checked = True
+    options = {'AXTrustedCheckOptionPrompt': True}
+    _permission_granted = AXIsProcessTrustedWithOptions(options)
+
+    if not _permission_granted:
+        logger.warning("Accessibility permission not granted - enable it for your terminal app in System Settings → Privacy & Security → Accessibility")
+
+    return _permission_granted
 
 
 KEY_CODES = {
@@ -57,6 +75,9 @@ def send_key(key: str):
         logger.warning("Cannot send key - Quartz not available")
         return
 
+    if not _check_accessibility_permission():
+        return
+
     key_lower = key.lower()
     key_code = KEY_CODES.get(key_lower)
     if key_code is None:
@@ -78,6 +99,9 @@ def send_key(key: str):
 def send_hotkey(*keys: str):
     if not _quartz_available:
         logger.warning("Cannot send hotkey - Quartz not available")
+        return
+
+    if not _check_accessibility_permission():
         return
 
     modifiers = [k for k in keys if k.lower() in MODIFIER_FLAGS]
