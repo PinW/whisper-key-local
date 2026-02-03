@@ -13,7 +13,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**3.2:** App data path (`utils.py` - use `~/Library/Application Support/`)~~
   - [x] ~~**3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)~~
   - [ ] **3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
-  - [ ] **3.5:** Hotkey detection (`platform/macos/hotkeys.py` - QuickMacHotKey) ⚠️ highest risk
+  - [ ] **3.5:** Hotkey detection (`platform/macos/hotkeys.py` - NSEvent) ⚠️ implementation complete, needs testing
   - [x] ~~**3.6:** Platform-aware config defaults (inline syntax in YAML)~~
   - [ ] **3.7:** Skip console manager on macOS
 - [x] ~~**Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies~~
@@ -78,7 +78,7 @@ src/whisper_key/platform/
 │   ├── app.py           # NSApplication setup + event loop
 │   ├── audio.py         # playsound3
 │   ├── keyboard.py      # Quartz CGEvent (not yet implemented)
-│   ├── hotkeys.py       # QuickMacHotKey (not yet implemented)
+│   ├── hotkeys.py       # NSEvent global monitoring
 │   └── instance_lock.py # fcntl
 └── windows/
     ├── app.py           # Simple shutdown_event.wait() loop
@@ -106,10 +106,10 @@ src/whisper_key/platform/
 | Component | Dependency | Status |
 |-----------|------------|--------|
 | Key simulation | `pyobjc-framework-Quartz` (CGEvent) | Not started |
-| Hotkey detection | `quickmachotkey` | Not started ⚠️ critical |
+| Hotkey detection | `pyobjc-framework-AppKit` (NSEvent) | Implementation complete, needs testing |
 | Instance lock | `fcntl` | ✅ Complete |
 
-**Note:** Hotkey detection requires NSApplication event loop integration - may need architectural adjustments. See Phase 5 implementation for event loop pattern.
+**Note:** Hotkey detection uses NSEvent global monitoring. Requires Accessibility permissions.
 
 ---
 
@@ -139,16 +139,9 @@ Resolution happens in `config_manager.py` after config merge, before validation.
 - macOS modifier key names: `control`, `option`, `cmd`, `shift` (fn key is NOT supported - excluded from public Hot Key API)
 - Hotkey display formatting needs improvement for macOS - consider using symbols (⌘, ⌃, ⌥, ⇧) or proper names
 
-**Open Decision: NSEvent vs CGEventTap**
+**Decision: NSEvent with ModifierStateTracker** ✅
 
-Two implementation approaches under consideration (see `implementation-plans/2026-02-03-nsevent-hotkey-implementation.md` and `2026-02-03-1554-macos-cgeventtap-hotkeys.md`):
-
-| Approach | Pros | Cons |
-|----------|------|------|
-| **NSEvent** | Simpler (~150 lines), pure PyObjC, no C callbacks | Needs `NSFlagsChanged` for modifier-only hotkeys, release detection requires state tracking |
-| **CGEventTap** | Better modifier-only support, reliable release detection via `kCGEventFlagsChanged` | More complex (~300 lines), run loop integration, timeout handling needed |
-
-Codex recommendation: Start with NSEvent + `NSFlagsChanged` + state tracking. Fall back to CGEventTap if testing reveals reliability issues. Decision pending real-world macOS testing.
+Implemented NSEvent-based hotkey detection with `NSFlagsChanged` + state tracking for modifier-only hotkeys. See `implementation-plans/2026-02-03-nsevent-hotkey-implementation.md` for details. CGEventTap remains as fallback if testing reveals reliability issues.
 
 ---
 
@@ -173,7 +166,7 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| QuickMacHotKey requires NSApplication event loop | High | May need to restructure main loop, or run in separate process |
+| NSEvent monitor returns None if Accessibility denied | High | Log clear error message, prompt user to enable permissions |
 | Accessibility permissions on macOS | Medium | Clear user messaging, auto-open System Preferences |
 | Different hotkey naming (Cmd vs Ctrl) | Low | Platform-aware defaults, users can override |
 

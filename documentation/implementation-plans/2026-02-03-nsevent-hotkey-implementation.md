@@ -19,39 +19,39 @@ As a *mac user* I want **global hotkeys using NSEvent monitoring** so hotkeys wo
 
 ## Implementation Plan
 
-### Phase 1: Core Event Monitoring
+### Phase 1: Core Event Monitoring ✅
 
-- [ ] Monitor BOTH `NSKeyDownMask` AND `NSFlagsChangedMask` events
-- [ ] Implement `ModifierStateTracker` class to track previous vs current modifier flags
-- [ ] Detect modifier transitions: `pressed = (new_flags & ~old_flags)`, `released = (old_flags & ~new_flags)`
-- [ ] Implement `register(bindings)` that parses and stores hotkey configs
-- [ ] Implement `start()` that creates the monitor
-- [ ] Implement `stop()` that removes the monitor
+- [x] Monitor BOTH `NSKeyDownMask` AND `NSFlagsChangedMask` events
+- [x] Implement `ModifierStateTracker` class to track previous vs current modifier flags
+- [x] Detect modifier transitions: `pressed = (new_flags & ~old_flags)`, `released = (old_flags & ~new_flags)`
+- [x] Implement `register(bindings)` that parses and stores hotkey configs
+- [x] Implement `start()` that creates the monitor
+- [x] Implement `stop()` that removes the monitor
 - [ ] Test with hardcoded modifier-only hotkey (ctrl+cmd)
 
-### Phase 2: Hotkey Matching
+### Phase 2: Hotkey Matching ✅
 
-- [ ] Categorize bindings: modifier-only (`keycode=None`) vs traditional (`keycode=int`)
-- [ ] For `NSFlagsChanged` events: match modifier-only hotkeys when exact modifiers become active
-- [ ] For `NSKeyDown` events: match traditional hotkeys when keycode + modifiers match
-- [ ] Fire press callback on match
-- [ ] Fire release callback when any required modifier is released
+- [x] Categorize bindings: modifier-only (`keycode=None`) vs traditional (`keycode=int`)
+- [x] For `NSFlagsChanged` events: match modifier-only hotkeys when exact modifiers become active
+- [x] For `NSKeyDown` events: match traditional hotkeys when keycode + modifiers match
+- [x] Fire press callback on match
+- [x] Fire release callback when any required modifier is released
 
-### Phase 3: Key String Parsing
+### Phase 3: Key String Parsing ✅
 
-- [ ] Parse hotkey strings like "ctrl+option" into `(modifier_mask, keycode)`
-- [ ] Map modifier names to flag constants (use modern names):
+- [x] Parse hotkey strings like "ctrl+option" into `(modifier_mask, keycode)`
+- [x] Map modifier names to flag constants (use modern names):
   - `ctrl`/`control` → `NSEventModifierFlagControl`
   - `cmd`/`command` → `NSEventModifierFlagCommand`
   - `option`/`alt` → `NSEventModifierFlagOption`
   - `shift` → `NSEventModifierFlagShift`
-- [ ] Map key names to virtual key codes (space=49, escape=53, etc.)
-- [ ] Handle alias: `win` → ignore on macOS (Windows-only)
+- [x] Map key names to virtual key codes (space=49, escape=53, etc.)
+- [x] Handle alias: `win` → ignore on macOS (Windows-only)
 - [ ] Test with config-based hotkey strings
 
-### Phase 4: Integration with HotkeyListener
+### Phase 4: Integration with HotkeyListener ✅
 
-- [ ] Match binding format: `[hotkey_string, press_cb, release_cb, flag]` (list, not dict!)
+- [x] Match binding format: `[hotkey_string, press_cb, release_cb, flag]` (list, not dict!)
 - [ ] Verify `hotkey_listener.py` works with new macOS backend
 - [ ] Test press callback fires correctly
 - [ ] Test release callback fires for stop-with-modifier feature
