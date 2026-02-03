@@ -41,11 +41,7 @@ def handle_missing_permission(config_manager) -> bool:
 
     app_name = _get_terminal_app_name()
 
-    message = f"""\
-⚠️  Auto-paste requires Accessibility permission
-
-Your terminal app needs permission to simulate the Cmd+V keyboard shortcut.
-Without it, transcribed text will be copied to clipboard only (manual paste)."""
+    message = f"⚠️  Auto-paste requires Accessibility permission [Cmd+V simulation]"
 
     options = [
         f"Grant accessibility permission to {app_name}",
@@ -64,7 +60,7 @@ Without it, transcribed text will be copied to clipboard only (manual paste)."""
     elif choice == 1:
         config_manager.update_user_setting('clipboard', 'auto_paste', False)
         print()
-        print("Auto-paste disabled. Text will be copied to clipboard.")
+        print("Auto-paste disabled. You can re-enable it via the system tray menu.")
         print()
         return True
 
