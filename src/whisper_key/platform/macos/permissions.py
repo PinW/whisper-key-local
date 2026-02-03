@@ -98,8 +98,6 @@ def handle_missing_permission(config_manager) -> bool:
     elif choice == 1:
         config_manager.update_user_setting('clipboard', 'auto_paste', False)
         print()
-        print("Auto-paste disabled. You can re-enable it via the system tray menu.")
-        print()
         return True
 
     else:

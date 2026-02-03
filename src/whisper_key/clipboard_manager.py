@@ -37,6 +37,7 @@ class ClipboardManager:
             print(f"   ✓ Auto-paste is ENABLED using key simulation ({hotkey_display})")
         else:
             print(f"   ✗ Auto-paste is DISABLED - paste manually with {hotkey_display}")
+            print(f"     Enable auto-paste via system tray menu")
 
     def copy_text(self, text: str) -> bool:
         if not text:
