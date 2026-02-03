@@ -1,5 +1,6 @@
 import logging
 import os
+import signal
 import sys
 
 logger = logging.getLogger(__name__)
@@ -93,7 +94,7 @@ def handle_missing_permission(config_manager) -> bool:
         print()
         print("Exiting Whisper Key... please restart after permission is granted")
         print()
-        sys.exit(0)
+        os.kill(os.getpid(), signal.SIGINT)
 
     elif choice == 1:
         config_manager.update_user_setting('clipboard', 'auto_paste', False)
@@ -102,4 +103,4 @@ def handle_missing_permission(config_manager) -> bool:
 
     else:
         print()
-        sys.exit(0)
+        os.kill(os.getpid(), signal.SIGINT)
