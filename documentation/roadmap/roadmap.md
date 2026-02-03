@@ -1,6 +1,9 @@
 # Windows Whisper Speech-to-Text App - Roadmap
 @completed.md
 
+## Bugs
+- **Ctrl+C doesn't work during HuggingFace download** - shutdown signal not caught while model is downloading
+
 ## Next
 - As a *user* I want **support for more hotkeys** (F13-F24, Insert) so I can use StreamDeck or AutoHotkey triggers (#14)
 - As a *user* I want **lock output to window/field** so I don't need to click back into Claude Code terminal before start record
@@ -37,6 +40,7 @@
 - As a *user*, I want a **terminal status bar** so I can see app state, model, and recording status at a glance
 - As a *user*, I want **terminal colors and styling** so the CLI feels modern like coding tools (Claude Code, lazygit)
 - As a *user*, I want **terminal settings control** so I can change settings interactively without editing YAML
+- As a *user*, I want a **cleaner model download display** so I see progress without HuggingFace cluttering the terminal
 
 ### Desktop App
 - As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
