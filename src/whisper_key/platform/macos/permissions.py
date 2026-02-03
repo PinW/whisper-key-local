@@ -41,17 +41,19 @@ def handle_missing_permission(config_manager) -> bool:
 
     app_name = _get_terminal_app_name()
 
-    message = "  🔐 Auto-paste requires permission to simulate [Cmd+V] keypress..."
-
+    BOLD = "\033[1m"
+    CYAN = "\033[36m"
     DIM = "\033[2m"
     RESET = "\033[0m"
+
+    styled_message = f"  {BOLD}{CYAN}🔐 Auto-paste requires permission to simulate [Cmd+V] keypress...{RESET}"
 
     options = [
         f"Grant accessibility permission to {app_name}\n      {DIM}Automatically paste at cursor, with option to auto-send with ENTER{RESET}",
         f"Disable auto-paste\n      {DIM}Transcribe to clipboard, then manually paste{RESET}"
     ]
 
-    choice = prompt_choice(message, options)
+    choice = prompt_choice(styled_message, options)
 
     if choice == 0:
         request_accessibility_permission()
