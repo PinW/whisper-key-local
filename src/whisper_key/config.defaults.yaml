@@ -103,7 +103,7 @@ hotkey: # Hotkey Configuration
   #   - "ctrl+alt+r"
   #   - "win+v"
   #   - "ctrl+shift+f12"
-  recording_hotkey: ctrl+win | macos: fn+control
+  recording_hotkey: "ctrl+win | macos: fn+control"
 
   # Stop recording with just the first modifier key
   # If enabled, stops recording with first modifier of the main hotkey
@@ -117,7 +117,7 @@ hotkey: # Hotkey Configuration
   auto_enter_enabled: true
 
   # Key combination for auto-ENTER function
-  auto_enter_combination: alt | macos: option
+  auto_enter_combination: "alt | macos: option"
   
   # Key combination to cancel recording
   # Format: modifier+modifier+key (use lowercase) or single key
@@ -186,7 +186,7 @@ clipboard: # Clipboard Behavior
   #   - "ctrl+v"         (standard paste)
   #   - "ctrl+shift+v"   (plain text paste in some apps)
   #   - "shift+insert"   (terminal paste)
-  paste_hotkey: ctrl+v | macos: cmd+v
+  paste_hotkey: "ctrl+v | macos: cmd+v"
 
   # Preserve existing clipboard content when pasting
   # true = save current clipboard, paste transcription, then restore original clipboard
