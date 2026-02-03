@@ -69,8 +69,10 @@ def handle_missing_permission(config_manager) -> bool:
     print(line())
     print(line(opt2_main))
     print(f"{CYAN}  │{RESET} {DIM}{pad(opt2_desc)}{RESET} {CYAN}│{RESET}")
+    print(line())
+    print(f"{CYAN}  │{RESET} {pad('Press a number to choose:')} {CYAN}│{RESET}")
     print(f"{CYAN}  └{'─' * (width + 2)}┘{RESET}")
-    print("  Press a number to choose: ", end="", flush=True)
+    print()
 
     while True:
         ch = getch()
