@@ -92,7 +92,7 @@ def handle_missing_permission(config_manager) -> bool:
     if choice == 0:
         request_accessibility_permission()
         print()
-        print("Exiting Whisper Key... please restart after permission is granted")
+        print("Please restart Whisper Key after permission is granted... exiting")
         print()
         os.kill(os.getpid(), signal.SIGINT)
 
