@@ -227,8 +227,10 @@ def main():
         print("Press Ctrl+C to quit.")
 
         if IS_MACOS:
-            from AppKit import NSApplication
-            NSApplication.sharedApplication().run()
+            from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
+            app = NSApplication.sharedApplication()
+            app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
+            app.run()
         else:
             while not shutdown_event.wait(timeout=0.1):
                 pass

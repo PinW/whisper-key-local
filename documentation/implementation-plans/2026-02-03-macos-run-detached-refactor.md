@@ -67,8 +67,8 @@ system_tray.py:
 
 ### Phase 5: Hide Dock icon
 
-- [ ] Research: `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
-- [ ] Add code to hide Dock icon on macOS (menu bar apps shouldn't show in Dock)
+- [x] Research: `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
+- [x] Add code to hide Dock icon on macOS (menu bar apps shouldn't show in Dock)
 - [ ] **Manual test:** no Dock icon, only menu bar icon
 
 ### Phase 6: Fix Ctrl+C shutdown
