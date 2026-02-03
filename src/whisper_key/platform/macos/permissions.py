@@ -49,7 +49,7 @@ def handle_missing_permission(config_manager) -> bool:
     styled_message = f"  {BOLD}{CYAN}🔐 Auto-paste requires permission to simulate [Cmd+V] keypress...{RESET}"
 
     options = [
-        f"Grant accessibility permission to {app_name}\n      {DIM}Automatically paste at cursor, with option to auto-send with ENTER{RESET}",
+        f"Grant accessibility permission to {app_name}\n      {DIM}Transcribe directly to cursor, with option to auto-send{RESET}",
         f"Disable auto-paste\n      {DIM}Transcribe to clipboard, then manually paste{RESET}"
     ]
 
@@ -58,7 +58,7 @@ def handle_missing_permission(config_manager) -> bool:
     if choice == 0:
         request_accessibility_permission()
         print()
-        print("Exiting Whisper Key... please restart after permission granted.")
+        print("Exiting Whisper Key... please restart after permission is granted")
         print()
         sys.exit(0)
 
