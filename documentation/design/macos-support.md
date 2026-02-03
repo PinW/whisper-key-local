@@ -14,7 +14,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)~~
   - [ ] **3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
   - [ ] **3.5:** Hotkey detection (`platform/macos/hotkeys.py` - QuickMacHotKey) ⚠️ highest risk
-  - [ ] **3.6:** Platform-aware config defaults (cmd vs ctrl)
+  - [x] ~~**3.6:** Platform-aware config defaults (inline syntax in YAML)~~
   - [ ] **3.7:** Skip console manager on macOS
 - [x] ~~**Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies~~
 - [x] ~~**Phase 5:** Resolve macOS main thread / event loop architecture~~
@@ -113,17 +113,29 @@ src/whisper_key/platform/
 
 ---
 
-## Configuration Changes
+## Configuration Changes ✅ Complete
+
+### Inline Platform Syntax
+
+Platform-specific defaults use inline syntax in `config.defaults.yaml`:
+```yaml
+recording_hotkey: ctrl+win | macos: fn+control
+paste_hotkey: ctrl+v | macos: cmd+v
+auto_enter_combination: alt | macos: option
+```
+
+Resolution happens in `config_manager.py` after config merge, before validation.
 
 ### Default Hotkeys
 
 | Setting | Windows | macOS |
 |---------|---------|-------|
+| `recording_hotkey` | `ctrl+win` | `fn+control` |
 | `paste_hotkey` | `ctrl+v` | `cmd+v` |
-| `record_hotkey` | `ctrl+shift+space` | `cmd+shift+space` |
-| `cancel_hotkey` | `escape` | `escape` |
+| `auto_enter_combination` | `alt` | `option` |
+| `cancel_combination` | `esc` | `esc` |
 
-Platform-specific defaults will be applied in `config_manager.py` using `IS_MACOS` detection. Users can still override in their config file.
+**Note:** macOS modifier key names (`fn`, `control`, `option`, `cmd`) need to be confirmed during hotkey detection implementation (Phase 3.5). Update `config.defaults.yaml` if the hotkey library uses different key codes.
 
 ---
 
@@ -137,7 +149,6 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| **High** | Platform config defaults (3.6) | cmd vs ctrl - do before hotkeys |
 | **Critical** | Hotkey detection (3.5) | Blocks all recording functionality |
 | High | Key simulation (3.4) | Needed for auto-paste |
 | Low | Console manager skip (3.7) | Cosmetic |
