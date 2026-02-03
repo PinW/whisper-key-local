@@ -38,58 +38,29 @@ def request_accessibility_permission():
 
 
 def handle_missing_permission(config_manager) -> bool:
-    from ...terminal_ui import getch
+    from ...terminal_ui import prompt_choice_boxed
 
     app_name = _get_terminal_app_name()
 
-    CYAN = "\x1b[36m"
-    BOLD_CYAN = "\x1b[1;36m"
-    DIM = "\x1b[2m"
-    RESET = "\x1b[0m"
-
     title = "Auto-paste requires permission to simulate [Cmd+V] keypress..."
-    opt1_main = f"[1] Grant accessibility permission to {app_name}"
-    opt1_desc = "    Transcribe directly to cursor, with option to auto-send"
-    opt2_main = "[2] Disable auto-paste"
-    opt2_desc = "    Transcribe to clipboard, then manually paste"
+    options = [
+        (f"Grant accessibility permission to {app_name}", "Transcribe directly to cursor, with option to auto-send"),
+        ("Disable auto-paste", "Transcribe to clipboard, then manually paste"),
+    ]
 
-    width = max(len(title), len(opt1_main), len(opt1_desc), len(opt2_main), len(opt2_desc)) + 2
+    choice = prompt_choice_boxed(title, options)
 
-    def pad(text):
-        return text + ' ' * (width - len(text))
-
-    def line(text=""):
-        return f"{CYAN}  │{RESET} {pad(text)} {CYAN}│{RESET}"
-
-    print()
-    print(f"{CYAN}  ┌{'─' * (width + 2)}┐{RESET}")
-    print(f"{CYAN}  │{RESET} {BOLD_CYAN}{pad(title)}{RESET} {CYAN}│{RESET}")
-    print(line())
-    print(line(opt1_main))
-    print(f"{CYAN}  │{RESET} {DIM}{pad(opt1_desc)}{RESET} {CYAN}│{RESET}")
-    print(line())
-    print(line(opt2_main))
-    print(f"{CYAN}  │{RESET} {DIM}{pad(opt2_desc)}{RESET} {CYAN}│{RESET}")
-    print(f"{CYAN}  └{'─' * (width + 2)}┘{RESET}")
-    print()
-    print("  Press a number to choose: ", end="", flush=True)
-
-    while True:
-        ch = getch()
-        if ch == '1':
-            print(ch)
-            config_manager.update_user_setting('clipboard', 'auto_paste', True)
-            request_accessibility_permission()
-            print()
-            print("Please restart Whisper Key after permission is granted")
-            os.kill(os.getpid(), signal.SIGINT)
-            return False
-        elif ch == '2':
-            print(ch)
-            config_manager.update_user_setting('clipboard', 'auto_paste', False)
-            print()
-            return True
-        elif ch in ('\x03', '\x04'):
-            print()
-            os.kill(os.getpid(), signal.SIGINT)
-            return False
+    if choice == 1:
+        config_manager.update_user_setting('clipboard', 'auto_paste', True)
+        request_accessibility_permission()
+        print()
+        print("Please restart Whisper Key after permission is granted")
+        os.kill(os.getpid(), signal.SIGINT)
+        return False
+    elif choice == 2:
+        config_manager.update_user_setting('clipboard', 'auto_paste', False)
+        print()
+        return True
+    else:
+        os.kill(os.getpid(), signal.SIGINT)
+        return False
