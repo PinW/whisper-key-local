@@ -220,16 +220,18 @@ def main():
         state_manager.attach_components(audio_recorder, system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
-        
+
+        if IS_MACOS:
+            from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
+            app = NSApplication.sharedApplication()
+            app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
+
         system_tray.start()
 
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
 
         if IS_MACOS:
-            from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
-            app = NSApplication.sharedApplication()
-            app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
             app.run()
         else:
             while not shutdown_event.wait(timeout=0.1):
