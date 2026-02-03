@@ -12,7 +12,7 @@
 ### Cross-Platform
 - As a *mac user*, I want to use this app on **macOS**
     - ~~As a *mac user*, I want **Fn key as modifier** so I can use the ergonomic bottom-left corner for recording~~ ✅
-    - As a *developer*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys like ESC
+    - As a *developer*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys (ESC, cmd+.)
     - As a *developer*, I want **removed window handle** so there's one less Windows dependency
 
 ## Backlog

@@ -123,8 +123,8 @@ hotkey: # Hotkey Configuration
   # Key combination to cancel recording
   # Format: modifier+modifier+key (use lowercase) or single key
   # Examples: "esc", "ctrl+c", "shift+esc"
-  # Note: ESC and cmd+. are system-reserved on macOS and cannot be detected
-  cancel_combination: "esc | macos: ctrl+."
+  # Note: On macOS, ESC and cmd+. are system-reserved and cannot be detected via NSEvent
+  cancel_combination: "esc | macos: shift"
 
 vad: # Voice Activity Detection (VAD)
 
