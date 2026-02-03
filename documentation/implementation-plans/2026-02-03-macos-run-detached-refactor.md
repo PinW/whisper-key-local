@@ -147,12 +147,18 @@ def setup_signal_handlers(shutdown_event):
 
 ## Success Criteria
 
-- [ ] Windows: app starts, tray works, Ctrl+C shuts down (no regression)
+- [x] Windows: app starts, tray works, Ctrl+C shuts down (no regression)
 - [ ] macOS: app starts without errors
 - [ ] macOS: tray icon appears in menu bar (not Dock)
 - [ ] macOS: tray menu works (View Log, Exit, etc.)
 - [ ] macOS: Ctrl+C gracefully shuts down app
 - [ ] macOS: tray icon reflects state changes
+
+## Status
+
+**Phases 1-3: COMPLETE** - Code implemented and tested on Windows.
+
+**Phases 4-5: PENDING** - Requires macOS hardware for testing.
 
 ## Risks
 
