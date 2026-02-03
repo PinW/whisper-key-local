@@ -19,35 +19,11 @@ def getch():
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
     except Exception:
-        return input()[0] if input() else ''
+        line = input()
+        return line[0] if line else '\n'
 
 
-def prompt_choice(message: str, options: list[str]) -> int:
-    print()
-    print(message)
-    print()
-    for i, option in enumerate(options, 1):
-        print(f"  [{i}] {option}")
-        print()
-    print("Press a number to choose: ", end="", flush=True)
-
-    valid_choices = {str(i): i - 1 for i in range(1, len(options) + 1)}
-
-    while True:
-        try:
-            ch = getch()
-            if ch in valid_choices:
-                print(ch)
-                return valid_choices[ch]
-            if ch in ('\x03', '\x04'):
-                print()
-                return -1
-        except (KeyboardInterrupt, EOFError):
-            print()
-            return -1
-
-
-def prompt_choice_boxed(title: str, options: list[tuple[str, str]]) -> int:
+def prompt_choice(title: str, options: list[tuple[str, str]]) -> int:
     all_texts = [title]
     for main_text, desc in options:
         all_texts.append(main_text)

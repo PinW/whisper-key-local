@@ -97,13 +97,19 @@ When user enables auto-paste via menu:
   - ✅ Check in main.py after clipboard_manager created
 - [x] Add runtime permission check when toggling auto-paste
   - ✅ Check in system_tray.py `_set_transcription_mode()`
-- [ ] Test flow on macOS
+- [x] Test flow on macOS
+  - ✅ Manual testing complete
 
 ## Files Changed
 
 - `src/whisper_key/terminal_ui.py` (new)
 - `src/whisper_key/platform/macos/permissions.py` (new)
+- `src/whisper_key/platform/macos/keycodes.py` (new - shared key codes)
+- `src/whisper_key/platform/windows/permissions.py` (new - stub)
 - `src/whisper_key/platform/macos/keyboard.py` (modify)
+- `src/whisper_key/platform/macos/hotkeys.py` (modify - use shared keycodes)
 - `src/whisper_key/platform/macos/__init__.py` (export permissions)
-- `src/whisper_key/main.py` or `state_manager.py` (startup check)
+- `src/whisper_key/platform/windows/__init__.py` (export permissions)
+- `src/whisper_key/platform/__init__.py` (export permissions)
+- `src/whisper_key/main.py` (startup check)
 - `src/whisper_key/system_tray.py` (toggle check)

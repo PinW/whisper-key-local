@@ -38,7 +38,7 @@ def request_accessibility_permission():
 
 
 def handle_missing_permission(config_manager) -> bool:
-    from ...terminal_ui import prompt_choice_boxed
+    from ...terminal_ui import prompt_choice
 
     app_name = _get_terminal_app_name()
 
@@ -48,7 +48,7 @@ def handle_missing_permission(config_manager) -> bool:
         ("Disable auto-paste", "Transcribe to clipboard, then manually paste"),
     ]
 
-    choice = prompt_choice_boxed(title, options)
+    choice = prompt_choice(title, options)
 
     if choice == 1:
         config_manager.update_user_setting('clipboard', 'auto_paste', True)
