@@ -41,7 +41,7 @@ def handle_missing_permission(config_manager) -> bool:
 
     app_name = _get_terminal_app_name()
 
-    message = f"⚠️  Auto-paste requires Accessibility permission [Cmd+V simulation]"
+    message = f"  🔐 Auto-paste requires Accessibility permission [Cmd+V simulation]"
 
     options = [
         f"Grant accessibility permission to {app_name}",
