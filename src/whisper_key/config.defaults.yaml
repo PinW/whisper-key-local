@@ -99,7 +99,7 @@ hotkey: # Hotkey Configuration
   # macOS modifiers: cmd, ctrl, shift, option, fn
   # Examples:
   #   - "ctrl+win"      (Windows default)
-  #   - "ctrl+option"   (macOS default)
+  #   - "fn+ctrl"       (macOS default)
   #   - "ctrl+alt+r"
   #   - "win+v"
   #   - "ctrl+shift+f12"

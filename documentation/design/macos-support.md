@@ -13,7 +13,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**3.2:** App data path (`utils.py` - use `~/Library/Application Support/`)~~
   - [x] ~~**3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)~~
   - [ ] **3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
-  - [ ] **3.5:** Hotkey detection (`platform/macos/hotkeys.py` - NSEvent) ⚠️ implementation complete, needs testing
+  - [x] ~~**3.5:** Hotkey detection (`platform/macos/hotkeys.py` - NSEvent)~~ ⚠️ needs real-device testing
   - [x] ~~**3.6:** Platform-aware config defaults (inline syntax in YAML)~~
   - [ ] **3.7:** Skip console manager on macOS
 - [x] ~~**Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies~~
@@ -32,7 +32,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 
 ## Phase 5: macOS Main Thread Architecture ✅ Complete
 
-**Problem:** macOS requires NSApplication event loop on main thread for both pystray and QuickMacHotKey.
+**Problem:** macOS requires NSApplication event loop on main thread for pystray and NSEvent monitoring.
 
 **Solution:** Use `run_detached()` + event polling loop in `platform/macos/app.py`.
 
@@ -52,7 +52,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 | Clipboard read/write | pyperclip | ✅ Already cross-platform | - |
 | Audio feedback | winsound | ✅ playsound3 | - |
 | Key simulation | pyautogui | ❌ | Platform abstraction (Quartz CGEvent) |
-| Hotkey detection | global-hotkeys | ❌ | Platform abstraction (QuickMacHotKey) |
+| Hotkey detection | global-hotkeys | ❌ | Platform abstraction (NSEvent) |
 | Instance lock | win32event | ❌ | Platform abstraction (fcntl) |
 | Console hide | win32console | ❌ | Skip on macOS (not needed) |
 | PortAudio DLL | bundled DLL (for WASAPI) | ❌ | Skip on macOS (no WASAPI, sounddevice wheel suffices) |
@@ -106,10 +106,10 @@ src/whisper_key/platform/
 | Component | Dependency | Status |
 |-----------|------------|--------|
 | Key simulation | `pyobjc-framework-Quartz` (CGEvent) | Not started |
-| Hotkey detection | `pyobjc-framework-AppKit` (NSEvent) | Implementation complete, needs testing |
+| Hotkey detection | `pyobjc-framework-AppKit` (NSEvent) | ✅ Complete (needs real-device testing) |
 | Instance lock | `fcntl` | ✅ Complete |
 
-**Note:** Hotkey detection uses NSEvent global monitoring. Requires Accessibility permissions.
+**Note:** Hotkey detection uses NSEvent global monitoring with `NSFlagsChanged` for modifier-only hotkeys and `keyDown` for traditional hotkeys. Requires Accessibility permissions. Fn key support via `NSEventModifierFlagFunction`.
 
 ---
 
@@ -130,18 +130,19 @@ Resolution happens in `config_manager.py` after config merge, before validation.
 
 | Setting | Windows | macOS |
 |---------|---------|-------|
-| `recording_hotkey` | `ctrl+win` | `ctrl+option` |
+| `recording_hotkey` | `ctrl+win` | `fn+control` |
 | `paste_hotkey` | `ctrl+v` | `cmd+v` |
 | `auto_enter_combination` | `alt` | `option` |
 | `cancel_combination` | `esc` | `esc` |
 
 **Notes for Phase 3.5 (Hotkey Detection):**
-- macOS modifier key names: `control`, `option`, `cmd`, `shift` (fn key is NOT supported - excluded from public Hot Key API)
+- macOS modifier key names: `control`, `option`, `cmd`, `shift`, `fn`
+- Fn key supported via `NSEvent.modifierFlags` with `NSEventModifierFlagFunction` (bit 23)
 - Hotkey display formatting needs improvement for macOS - consider using symbols (⌘, ⌃, ⌥, ⇧) or proper names
 
 **Decision: NSEvent with ModifierStateTracker** ✅
 
-Implemented NSEvent-based hotkey detection with `NSFlagsChanged` + state tracking for modifier-only hotkeys. See `implementation-plans/2026-02-03-nsevent-hotkey-implementation.md` for details. CGEventTap remains as fallback if testing reveals reliability issues.
+Implemented NSEvent-based hotkey detection with `NSFlagsChanged` + state tracking for modifier-only hotkeys. See `implementation-plans/2026-02-03-nsevent-hotkey-implementation.md` for details.
 
 ---
 
@@ -155,7 +156,7 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| **Critical** | Hotkey detection (3.5) | Blocks all recording functionality |
+| **Critical** | Real-device hotkey testing | Verify NSEvent implementation on actual macOS hardware |
 | High | Key simulation (3.4) | Needed for auto-paste |
 | Low | Console manager skip (3.7) | Cosmetic |
 | Low | Menu bar icons (Phase 6) | Cosmetic |
@@ -172,4 +173,4 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 ---
 
-*Created: 2026-02-02*
+*Created: 2026-02-02 | Updated: 2026-02-03*
