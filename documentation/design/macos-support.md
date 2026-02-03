@@ -8,14 +8,15 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 
 - [x] ~~**Phase 1:** Replace Windows-only libraries with cross-platform alternatives where possible~~
 - [x] ~~**Phase 2:** Create platform abstraction layer for components that need different implementations~~
-- [ ] **Phase 3:** Implement macOS-specific code behind the abstraction layer
-  - [x] ~~**3.1:** Audio feedback (`platform/macos/audio.py` - playsound3)~~ *(already done)*
-  - [x] ~~**3.2:** App data path (`utils.py` - use `~/Library/Application Support/`)~~
+- [x] ~~**Phase 3:** Implement macOS-specific code behind the abstraction layer~~
+  - [x] ~~**3.1:** Audio feedback (`audio_feedback.py` - playsound3, cross-platform)~~
+  - [x] ~~**3.2:** App data path (`platform/macos/paths.py` - `~/Library/Application Support/`)~~
   - [x] ~~**3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)~~
   - [x] ~~**3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)~~
   - [x] ~~**3.5:** Hotkey detection (`platform/macos/hotkeys.py` - NSEvent)~~
   - [x] ~~**3.6:** Platform-aware config defaults (inline syntax in YAML)~~
-  - [ ] **3.7:** Skip console manager on macOS
+  - [x] ~~**3.7:** Console manager (`platform/macos/console.py` - no-op stub)~~
+  - [x] ~~**3.8:** Accessibility permission UX (`platform/macos/permissions.py`)~~
 - [x] ~~**Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies~~
 - [x] ~~**Phase 5:** Resolve macOS main thread / event loop architecture~~
   - [x] ~~**5.1:** Refactor to use `run_detached()` on both platforms~~
@@ -78,17 +79,21 @@ src/whisper_key/platform/
 ├── __init__.py          # Platform detection (IS_MACOS, IS_WINDOWS), routes imports
 ├── macos/
 │   ├── app.py           # NSApplication setup + event loop
-│   ├── audio.py         # playsound3
-│   ├── keyboard.py      # Quartz CGEvent (not yet implemented)
+│   ├── console.py       # No-op stub
 │   ├── hotkeys.py       # NSEvent global monitoring
-│   └── instance_lock.py # fcntl
+│   ├── instance_lock.py # fcntl
+│   ├── keyboard.py      # Quartz CGEvent
+│   ├── keycodes.py      # Mac virtual key codes
+│   ├── paths.py         # ~/Library/Application Support/
+│   └── permissions.py   # Accessibility permission check/prompt
 └── windows/
     ├── app.py           # Simple shutdown_event.wait() loop
-    ├── audio.py         # winsound
-    ├── keyboard.py      # pyautogui
+    ├── console.py       # win32console
     ├── hotkeys.py       # global-hotkeys
     ├── instance_lock.py # win32event
-    └── console.py       # win32console
+    ├── keyboard.py      # pyautogui
+    ├── paths.py         # %APPDATA%
+    └── permissions.py   # No-op (Windows doesn't need accessibility permission)
 ```
 
 ### Interface Contracts
@@ -96,20 +101,24 @@ src/whisper_key/platform/
 | Module | Interface |
 |--------|-----------|
 | `app.py` | `setup()`, `run_event_loop(shutdown_event)` |
-| `audio.py` | `play_sound(path, blocking=False)` |
 | `keyboard.py` | `send_hotkey(*keys)`, `send_key(key)` |
 | `hotkeys.py` | `HotkeyListener` class with `register()`, `start()`, `stop()` |
 | `instance_lock.py` | `InstanceLock` class with `acquire()`, `release()` |
+| `console.py` | `ConsoleManager` class with `show_console()`, `hide_console()` |
+| `paths.py` | `get_app_data_dir()` |
+| `permissions.py` | `check_accessibility_permission()`, `handle_missing_permission()` |
 
 ---
 
-## Phase 3: macOS Implementations
+## Phase 3: macOS Implementations ✅ Complete
 
 | Component | Dependency | Status |
 |-----------|------------|--------|
 | Key simulation | `pyobjc-framework-Quartz` (CGEvent) | ✅ Complete |
 | Hotkey detection | `pyobjc-framework-AppKit` (NSEvent) | ✅ Complete |
-| Instance lock | `fcntl` | ✅ Complete |
+| Instance lock | `fcntl` (stdlib) | ✅ Complete |
+| Console manager | N/A (no-op stub) | ✅ Complete |
+| Accessibility UX | `pyobjc-framework-ApplicationServices` | ✅ Complete |
 
 ---
 
@@ -136,32 +145,25 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| Medium | Accessibility permission UX | Prompt user when permission missing |
-| Low | Console manager skip (3.7) | Cosmetic |
 | Low | Menu bar icons (Phase 6) | Cosmetic |
 | Low | Update README & project index (Phase 6) | Documentation |
 
 ---
 
-## Accessibility Permission UX (Future Improvement)
+## Accessibility Permission UX ✅ Complete
 
-**Problem:** macOS requires Accessibility permission for keyboard simulation. Without it, `CGEventPost` silently fails - no error, no paste. Users see transcription complete but nothing happens.
+**Problem:** macOS requires Accessibility permission for keyboard simulation. Without it, `CGEventPost` silently fails - no error, no paste.
 
-**Solution:** Use `AXIsProcessTrustedWithOptions` to detect and prompt.
+**Solution:** Platform abstraction in `platform/*/permissions.py` with user-friendly terminal prompt.
 
-```python
-from ApplicationServices import AXIsProcessTrustedWithOptions
+**Implementation:**
+- `check_accessibility_permission()` - Check if permission granted
+- `request_accessibility_permission()` - Show system permission dialog
+- `handle_missing_permission()` - Terminal UI with two options:
+  1. Grant permission (opens System Settings, prompts restart)
+  2. Disable auto-paste (transcribe to clipboard only)
 
-def check_accessibility_permission():
-    options = {'AXTrustedCheckOptionPrompt': True}
-    return AXIsProcessTrustedWithOptions(options)
-```
-
-When permission is missing, this shows a system alert explaining the app needs Accessibility access and offers to open System Settings. The user must manually toggle permission there (Apple requires explicit opt-in for this sensitive permission).
-
-**Trigger points to consider:**
-- On first auto-paste attempt
-- At app startup (if auto-paste enabled in config)
+**Trigger:** At app startup when auto-paste is enabled but permission not granted.
 
 ---
 
@@ -169,8 +171,8 @@ When permission is missing, this shows a system alert explaining the app needs A
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Accessibility permissions on macOS | Medium | Use `AXIsProcessTrustedWithOptions` to prompt user |
+| Accessibility permissions on macOS | Medium | ✅ Handled via `platform/macos/permissions.py` |
 
 ---
 
-*Created: 2026-02-02 | Updated: 2026-02-03 | Key simulation complete*
+*Created: 2026-02-02 | Updated: 2026-02-03 | Phase 3 complete, Accessibility UX done*
