@@ -41,7 +41,7 @@ def handle_missing_permission(config_manager) -> bool:
 
     app_name = _get_terminal_app_name()
 
-    message = f"  🔐 Auto-paste requires Accessibility permission [Cmd+V simulation]"
+    message = "  🔐 Auto-paste requires permission to simulate [Cmd+V]..."
 
     options = [
         f"Grant accessibility permission to {app_name}",
@@ -65,4 +65,5 @@ def handle_missing_permission(config_manager) -> bool:
         return True
 
     else:
-        return True
+        print()
+        sys.exit(0)
