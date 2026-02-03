@@ -137,9 +137,9 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Priority | Task | Notes |
 |----------|------|-------|
+| **High** | Platform config defaults (3.6) | cmd vs ctrl - do before hotkeys |
 | **Critical** | Hotkey detection (3.5) | Blocks all recording functionality |
 | High | Key simulation (3.4) | Needed for auto-paste |
-| Medium | Platform config defaults (3.6) | cmd vs ctrl |
 | Low | Console manager skip (3.7) | Cosmetic |
 | Low | Menu bar icons (Phase 6) | Cosmetic |
 
