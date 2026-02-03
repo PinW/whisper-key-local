@@ -163,11 +163,22 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
     if state_manager:
         state_manager.shutdown()
 
-def main():
+def setup_macos_menu_bar_mode():
     if IS_MACOS:
         from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
         app = NSApplication.sharedApplication()
         app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
+
+def run_event_loop(shutdown_event):
+    if IS_MACOS:
+        from AppKit import NSApplication
+        NSApplication.sharedApplication().run()
+    else:
+        while not shutdown_event.wait(timeout=0.1):
+            pass
+
+def main():
+    setup_macos_menu_bar_mode()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='Run as separate test instance')
@@ -231,12 +242,7 @@ def main():
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
 
-        if IS_MACOS:
-            from AppKit import NSApplication
-            NSApplication.sharedApplication().run()
-        else:
-            while not shutdown_event.wait(timeout=0.1):
-                pass
+        run_event_loop(shutdown_event)
             
     except KeyboardInterrupt:
         logger.info("Application shutting down...")
