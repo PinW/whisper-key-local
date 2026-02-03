@@ -33,6 +33,7 @@
 
 ### Packaging & Updates
 - As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
+  - As a *developer*, I want **pyapp** so I can avoid PyInstaller's fragile build process and hidden import headaches
 - As a *user*, I want **automatic updates** to get new features
 
 ### CLI
