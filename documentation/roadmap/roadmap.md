@@ -11,7 +11,8 @@
 
 ### Cross-Platform
 - As a *mac user*, I want to use this app on **macOS**
-    - As a *mac user*, I want 
+    - As a *mac user*, I want **Fn key as hotkey modifier** so I can use the most ergonomic key position (bottom-left corner) for recording
+    - As a *developer*, I want **custom CGEvent tap for Fn detection** so macOS can use Fn as a modifier (excluded from public Hot Key API)
     - As a *developer*, I want **removed window handle support** so I'll have one less Windows-dependant dependancy
 
 ## Backlog

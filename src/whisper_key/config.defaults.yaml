@@ -98,12 +98,13 @@ hotkey: # Hotkey Configuration
   # Windows modifiers: ctrl, shift, alt, win
   # macOS modifiers: cmd, ctrl, shift, option, fn
   # Examples:
-  #   - "ctrl+win"     (Windows default)
-  #   - "fn+control"   (macOS default)
+  #   - "ctrl+win"      (Windows default)
+  #   - "ctrl+option"   (macOS default)
   #   - "ctrl+alt+r"
   #   - "win+v"
   #   - "ctrl+shift+f12"
-  recording_hotkey: "ctrl+win | macos: fn+control"
+  # Note: fn key is not supported on macOS (excluded from public Hot Key API)
+  recording_hotkey: "ctrl+win | macos: ctrl+option"
 
   # Stop recording with just the first modifier key
   # If enabled, stops recording with first modifier of the main hotkey

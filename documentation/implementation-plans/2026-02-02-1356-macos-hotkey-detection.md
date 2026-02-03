@@ -4,7 +4,7 @@ As a *user* I want **global hotkeys to work on macOS** so I can use whisper-key 
 
 ## Prerequisites
 
-**This plan assumes the `run_detached()` refactor is complete** - i.e., NSApplication is running on the main thread. See: `2026-02-03-macos-run-detached-refactor.md`
+- [x] ~~`run_detached()` refactor complete~~ - NSApplication runs on main thread via `platform/macos/app.py`. See: `2026-02-03-macos-run-detached-refactor.md`
 
 ## Current State
 
@@ -17,9 +17,9 @@ As a *user* I want **global hotkeys to work on macOS** so I can use whisper-key 
 
 ### Phase 1: Verify QuickMacHotKey Works
 
-- [ ] Create standalone test script `tools/test_macos_hotkey.py`
-- [ ] Register one hardcoded hotkey (ctrl+shift+space)
-- [ ] Print message when pressed
+- [x] ~~Create standalone test script `tools/test_macos_hotkey.py`~~
+- [x] ~~Register one hardcoded hotkey (ctrl+shift+space)~~
+- [x] ~~Print message when pressed~~
 - [ ] **Manual test:** install `quickmachotkey` on macOS, run script, verify hotkey fires
 
 ### Phase 2: Combined Tray + Hotkey Test

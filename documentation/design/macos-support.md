@@ -130,14 +130,14 @@ Resolution happens in `config_manager.py` after config merge, before validation.
 
 | Setting | Windows | macOS |
 |---------|---------|-------|
-| `recording_hotkey` | `ctrl+win` | `fn+control` |
+| `recording_hotkey` | `ctrl+win` | `ctrl+option` |
 | `paste_hotkey` | `ctrl+v` | `cmd+v` |
 | `auto_enter_combination` | `alt` | `option` |
 | `cancel_combination` | `esc` | `esc` |
 
 **Notes for Phase 3.5 (Hotkey Detection):**
-- macOS modifier key names (`fn`, `control`, `option`, `cmd`) need to be confirmed - update `config.defaults.yaml` if the hotkey library uses different key codes
-- Hotkey display formatting needs improvement for macOS (e.g., "FN+CONTROL" vs nicer Windows display) - consider using symbols (⌘, ⌃, ⌥, ⇧) or proper names
+- macOS modifier key names: `control`, `option`, `cmd`, `shift` (fn key is NOT supported - excluded from public Hot Key API)
+- Hotkey display formatting needs improvement for macOS - consider using symbols (⌘, ⌃, ⌥, ⇧) or proper names
 
 ---
 
