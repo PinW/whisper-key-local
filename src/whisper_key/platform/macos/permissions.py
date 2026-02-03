@@ -41,32 +41,34 @@ def handle_missing_permission(config_manager) -> bool:
 
     app_name = _get_terminal_app_name()
 
-    BOLD_CYAN = "\x1b[1;36m"
+    CYAN = "\x1b[36m"
     DIM = "\x1b[2m"
     RESET = "\x1b[0m"
 
     title = "Auto-paste requires permission to simulate [Cmd+V] keypress..."
     opt1_main = f"[1] Grant accessibility permission to {app_name}"
-    opt1_desc = "Transcribe directly to cursor, with option to auto-send"
+    opt1_desc = "    Transcribe directly to cursor, with option to auto-send"
     opt2_main = "[2] Disable auto-paste"
-    opt2_desc = "Transcribe to clipboard, then manually paste"
+    opt2_desc = "    Transcribe to clipboard, then manually paste"
 
-    width = max(len(title), len(opt1_main), len(opt1_desc), len(opt2_main), len(opt2_desc)) + 4
+    width = max(len(title), len(opt1_main), len(opt1_desc), len(opt2_main), len(opt2_desc)) + 2
 
     def pad(text):
         return text + ' ' * (width - len(text))
 
+    def line(text=""):
+        return f"{CYAN}  │{RESET} {pad(text)} {CYAN}│{RESET}"
+
     print()
-    print(f"{BOLD_CYAN}  ┌{'─' * width}┐")
-    print(f"  │ {pad(title)} │")
-    print(f"  │ {' ' * width} │")
-    print(f"  │ {pad(opt1_main)} │")
-    print(f"  │ {RESET}{DIM}   {pad(opt1_desc)}{RESET}{BOLD_CYAN} │")
-    print(f"  │ {' ' * width} │")
-    print(f"  │ {pad(opt2_main)} │")
-    print(f"  │ {RESET}{DIM}   {pad(opt2_desc)}{RESET}{BOLD_CYAN} │")
-    print(f"  └{'─' * width}┘{RESET}")
-    print()
+    print(f"{CYAN}  ┌{'─' * (width + 2)}┐{RESET}")
+    print(line(title))
+    print(line())
+    print(line(opt1_main))
+    print(f"{CYAN}  │{RESET} {DIM}{pad(opt1_desc)}{RESET} {CYAN}│{RESET}")
+    print(line())
+    print(line(opt2_main))
+    print(f"{CYAN}  │{RESET} {DIM}{pad(opt2_desc)}{RESET} {CYAN}│{RESET}")
+    print(f"{CYAN}  └{'─' * (width + 2)}┘{RESET}")
     print("  Press a number to choose: ", end="", flush=True)
 
     while True:
