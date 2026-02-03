@@ -12,7 +12,7 @@ import threading
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-from .platform import IS_MACOS
+from .platform import app
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
@@ -146,43 +146,18 @@ def setup_hotkey_listener(hotkey_config, state_manager):
     )
 
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
-    # Stop hotkey listener first to prevent new events during shutdown
     try:
         if hotkey_listener and hotkey_listener.is_active():
             logger.info("Stopping hotkey listener...")
             hotkey_listener.stop_listening()
     except Exception as ex:
         logger.error(f"Error stopping hotkey listener: {ex}")
-    
+
     if state_manager:
         state_manager.shutdown()
 
-def set_macos_no_dock_mode():
-    if IS_MACOS:
-        from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
-        app = NSApplication.sharedApplication()
-        app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
-
-def run_event_loop(shutdown_event):
-    if IS_MACOS:
-        from AppKit import NSApplication, NSEventMaskAny, NSDefaultRunLoopMode
-        from Foundation import NSDate
-        app = NSApplication.sharedApplication()
-        while not shutdown_event.is_set():
-            event = app.nextEventMatchingMask_untilDate_inMode_dequeue_(
-                NSEventMaskAny,
-                NSDate.dateWithTimeIntervalSinceNow_(0.1),
-                NSDefaultRunLoopMode,
-                True
-            )
-            if event:
-                app.sendEvent_(event)
-    else:
-        while not shutdown_event.wait(timeout=0.1):
-            pass
-
 def main():
-    set_macos_no_dock_mode()
+    app.setup()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='Run as separate test instance')
@@ -246,7 +221,7 @@ def main():
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
 
-        run_event_loop(shutdown_event)
+        app.run_event_loop(shutdown_event)
             
     except KeyboardInterrupt:
         logger.info("Application shutting down...")
