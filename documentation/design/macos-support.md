@@ -139,6 +139,17 @@ Resolution happens in `config_manager.py` after config merge, before validation.
 - macOS modifier key names: `control`, `option`, `cmd`, `shift` (fn key is NOT supported - excluded from public Hot Key API)
 - Hotkey display formatting needs improvement for macOS - consider using symbols (⌘, ⌃, ⌥, ⇧) or proper names
 
+**Open Decision: NSEvent vs CGEventTap**
+
+Two implementation approaches under consideration (see `implementation-plans/2026-02-03-nsevent-hotkey-implementation.md` and `2026-02-03-1554-macos-cgeventtap-hotkeys.md`):
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **NSEvent** | Simpler (~150 lines), pure PyObjC, no C callbacks | Needs `NSFlagsChanged` for modifier-only hotkeys, release detection requires state tracking |
+| **CGEventTap** | Better modifier-only support, reliable release detection via `kCGEventFlagsChanged` | More complex (~300 lines), run loop integration, timeout handling needed |
+
+Codex recommendation: Start with NSEvent + `NSFlagsChanged` + state tracking. Fall back to CGEventTap if testing reveals reliability issues. Decision pending real-world macOS testing.
+
 ---
 
 ## Phase 4: Platform Markers in pyproject.toml ✅ Complete
