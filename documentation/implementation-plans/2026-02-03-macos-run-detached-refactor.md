@@ -56,7 +56,7 @@ system_tray.py:
 - [x] On macOS, `nsapp.run()` blocks forever - need way to stop it
 - [x] Wire up signal handler to call `nsapp.stop()` or `nsapp.terminate_(None)`
 - [x] Ensure Ctrl+C still triggers graceful shutdown
-- [ ] **Manual test on macOS:** verify Ctrl+C stops the app
+- [x] **Manual test on macOS:** verify Ctrl+C stops the app
 
 ### Phase 4: macOS system tray verification
 
@@ -73,10 +73,10 @@ system_tray.py:
 
 ### Phase 6: Fix Ctrl+C shutdown
 
-- [ ] Investigate why Ctrl+C shows `^C` but doesn't quit
-- [ ] Note: app DOES quit after a tray action is triggered (signal received but not processed)
-- [ ] Likely need to post an event to wake NSApplication run loop
-- [ ] **Manual test:** Ctrl+C immediately shuts down app
+- [x] Investigate why Ctrl+C shows `^C` but doesn't quit
+- [x] Solution: Use event polling loop instead of blocking `nsapp.run()`
+- [x] Refactor into `platform/*/app.py` for clean abstraction
+- [x] **Manual test:** Ctrl+C immediately shuts down app
 
 ### Phase 7: Suppress secure coding warning (optional)
 
@@ -110,7 +110,7 @@ def start(self):
     return True
 ```
 
-### main.py - main loop
+### main.py - main loop (refactored to platform abstraction)
 
 **Before:**
 ```python
@@ -120,36 +120,17 @@ while not shutdown_event.wait(timeout=0.1):
 
 **After:**
 ```python
-from .platform import IS_MACOS
+from .platform import app
 
-if IS_MACOS:
-    from AppKit import NSApplication
-    nsapp = NSApplication.sharedApplication()
-    nsapp.run()  # Blocks, processes Cocoa events
-else:
-    while not shutdown_event.wait(timeout=0.1):
-        pass
+def main():
+    app.setup()  # Platform-specific init (e.g., hide Dock on macOS)
+    # ... component setup ...
+    app.run_event_loop(shutdown_event)  # Platform-specific event loop
 ```
 
-### main.py - signal handler (macOS)
-
-Need to stop NSApplication when signal received:
-```python
-def setup_signal_handlers(shutdown_event):
-    def signal_handler(signum, frame):
-        shutdown_event.set()
-        # On macOS, also stop the NSApplication run loop
-        try:
-            from .platform import IS_MACOS
-            if IS_MACOS:
-                from AppKit import NSApplication
-                NSApplication.sharedApplication().stop_(None)
-        except Exception:
-            pass
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-```
+Platform implementations in `platform/*/app.py`:
+- **macOS:** Polls NSApplication events with 0.1s timeout, checks shutdown_event each iteration
+- **Windows:** Simple `shutdown_event.wait(timeout=0.1)` loop
 
 ## Files to Modify
 
@@ -164,18 +145,14 @@ def setup_signal_handlers(shutdown_event):
 - [x] macOS: app starts without errors
 - [x] macOS: tray icon appears in menu bar (not Dock)
 - [x] macOS: tray menu works (View Log, Exit, etc.)
-- [ ] macOS: Ctrl+C gracefully shuts down app
+- [x] macOS: Ctrl+C gracefully shuts down app
 - [ ] macOS: tray icon reflects state changes *(requires hotkeys)*
 
 ## Status
 
-**Phases 1-3: COMPLETE** - Code implemented and tested on Windows.
+**Phases 1-6: COMPLETE** - System tray and Ctrl+C working on both platforms.
 
-**Phase 4: COMPLETE** - System tray works on macOS.
-
-**Phase 5: COMPLETE** - Dock icon hidden.
-
-**Phases 6-7: PENDING** - Ctrl+C fix and warning suppression.
+**Phase 7: OPTIONAL** - Suppress secure coding warning (cosmetic only).
 
 ## macOS Testing Findings (2026-02-03)
 
@@ -186,16 +163,12 @@ def setup_signal_handlers(shutdown_event):
 
 ### Issues Found
 
-**Issue 1: Ctrl+C doesn't quit immediately**
-- Pressing Ctrl+C shows `^C` in terminal but app continues running
-- However, if a tray menu action is triggered after Ctrl+C, app shuts down correctly
-- Diagnosis: Signal is received and `shutdown_event.set()` + `nsapp.stop_()` are called, but NSApplication run loop doesn't wake up until an event arrives
-- Fix: Need to post a dummy event to wake the run loop after calling `stop_()`
+**Issue 1: Ctrl+C doesn't quit immediately** ✅ RESOLVED
+- Problem: `nsapp.run()` blocks forever, signal handler can't wake it
+- Solution: Use event polling loop with `nextEventMatchingMask_untilDate_inMode_dequeue_()` and 0.1s timeout, checking `shutdown_event` each iteration
 
-**Issue 2: Python rocket icon in Dock**
-- App shows Python icon in Dock while running
-- Should be menu bar only (LSUIElement-style app)
-- Fix: Call `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
+**Issue 2: Python rocket icon in Dock** ✅ RESOLVED
+- Fixed with `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)` in `platform/macos/app.py`
 
 **Issue 3: Secure coding warning on startup**
 ```
