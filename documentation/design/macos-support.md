@@ -23,6 +23,10 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**5.3:** Fix Ctrl+C shutdown (event polling in `platform/macos/app.py`)~~
   - [x] ~~**5.4:** Hide Dock icon (`setActivationPolicy_`)~~
   - [x] ~~**5.5:** Suppress secure coding warning (`AppDelegate`)~~
+- [ ] **Phase 6:** macOS menu bar icon polish
+  - [ ] **6.1:** Design proper template icons for macOS menu bar (monochrome, @2x variants)
+  - [ ] **6.2:** Support dark/light mode (template images auto-adapt)
+  - [ ] **6.3:** Correct sizing for Retina displays
 
 ---
 
