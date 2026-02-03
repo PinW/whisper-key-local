@@ -66,12 +66,14 @@ def send_key(key: str):
     logger.debug(f"Sending key: {key} (code: {hex(key_code)})")
 
     event = CGEventCreateKeyboardEvent(None, key_code, True)
+    CGEventSetFlags(event, 0)
     CGEventPost(kCGHIDEventTap, event)
 
     if _delay > 0:
         time.sleep(_delay)
 
     event = CGEventCreateKeyboardEvent(None, key_code, False)
+    CGEventSetFlags(event, 0)
     CGEventPost(kCGHIDEventTap, event)
 
 
