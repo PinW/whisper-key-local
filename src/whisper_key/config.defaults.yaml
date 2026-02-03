@@ -103,7 +103,6 @@ hotkey: # Hotkey Configuration
   #   - "ctrl+alt+r"
   #   - "win+v"
   #   - "ctrl+shift+f12"
-  # Note: fn key IS supported on macOS via NSEvent monitoring
   recording_hotkey: "ctrl+win | macos: fn+ctrl"
 
   # Stop recording with just the first modifier key
@@ -123,8 +122,8 @@ hotkey: # Hotkey Configuration
   # Key combination to cancel recording
   # Format: modifier+modifier+key (use lowercase) or single key
   # Examples: "esc", "ctrl+c", "shift+esc"
-  # Note: On macOS, ESC and cmd+<key> combos are system-reserved; cmd alone works
-  cancel_combination: "esc | macos: cmd"
+  # Note: On macOS, ESC is system-reserved
+  cancel_combination: "esc | macos: shift"
 
 vad: # Voice Activity Detection (VAD)
 
