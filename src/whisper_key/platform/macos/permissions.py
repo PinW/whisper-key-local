@@ -45,7 +45,11 @@ def handle_missing_permission(config_manager) -> bool:
     DIM = "\x1b[2m"
     RESET = "\x1b[0m"
 
-    styled_message = f"  {BOLD_CYAN}🔐 Auto-paste requires permission to simulate [Cmd+V] keypress...{RESET}"
+    title = "Auto-paste requires permission to simulate [Cmd+V] keypress..."
+    box_width = len(title) + 4
+    styled_message = f"""{BOLD_CYAN}  ┌{'─' * box_width}┐
+  │  {title}  │
+  └{'─' * box_width}┘{RESET}"""
 
     options = [
         f"Grant accessibility permission to {app_name}\n      {DIM}Transcribe directly to cursor, with option to auto-send{RESET}",
