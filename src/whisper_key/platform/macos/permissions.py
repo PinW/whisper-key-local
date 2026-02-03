@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 logger = logging.getLogger(__name__)
@@ -9,6 +10,17 @@ try:
 except ImportError:
     _appservices_available = False
     logger.warning("ApplicationServices not available - permission checks disabled")
+
+
+def _get_terminal_app_name() -> str:
+    term_program = os.environ.get('TERM_PROGRAM', '')
+    if 'iTerm' in term_program:
+        return 'iTerm'
+    elif term_program == 'Apple_Terminal':
+        return 'Terminal'
+    elif term_program:
+        return term_program.replace('.app', '')
+    return 'your terminal app'
 
 
 def check_accessibility_permission() -> bool:
@@ -27,15 +39,17 @@ def request_accessibility_permission():
 def handle_missing_permission(config_manager) -> bool:
     from ...terminal_ui import prompt_choice
 
-    message = """\
+    app_name = _get_terminal_app_name()
+
+    message = f"""\
 ⚠️  Auto-paste requires Accessibility permission
 
 Your terminal app needs permission to simulate the Cmd+V keyboard shortcut.
 Without it, transcribed text will be copied to clipboard only (manual paste)."""
 
     options = [
-        "Grant permission (opens Settings, then app closes - restart after)",
-        "Disable auto-paste (clipboard only, saves to config)"
+        f"Grant accessibility permission to {app_name}",
+        "Disable auto-paste (transcribe to clipboard, then manually paste)"
     ]
 
     choice = prompt_choice(message, options)
@@ -43,8 +57,7 @@ Without it, transcribed text will be copied to clipboard only (manual paste)."""
     if choice == 0:
         request_accessibility_permission()
         print()
-        print("Opening System Settings...")
-        print("Grant Accessibility permission to your terminal app, then restart.")
+        print("Exiting Whisper Key... please restart after permission granted.")
         print()
         sys.exit(0)
 
