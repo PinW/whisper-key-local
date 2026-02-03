@@ -102,9 +102,19 @@ Without this permission, `CGEventPost` will silently fail (no error, but no key 
 
 ## Steps
 
-1. Replace stub implementation in `platform/macos/keyboard.py`
-2. Add logging for debugging
-3. Test on macOS with Accessibility permission granted
+- [x] Replace stub implementation in `platform/macos/keyboard.py`
+  - ✅ Implemented KEY_CODES mapping for all letters and special keys
+  - ✅ Implemented MODIFIER_FLAGS for cmd, ctrl, shift, option/alt
+  - ✅ Implemented set_delay() with global _delay variable
+  - ✅ Implemented send_key() with key-down/key-up events
+  - ✅ Implemented send_hotkey() with modifier flag support
+  - ✅ Added graceful fallback when Quartz unavailable
+- [x] Add logging for debugging
+  - ✅ Debug logging for delay changes
+  - ✅ Debug logging for key/hotkey sends
+  - ✅ Error logging for unknown keys
+  - ✅ Warning when Quartz not available
+- [ ] Test on macOS with Accessibility permission granted
 
 ## Testing
 
