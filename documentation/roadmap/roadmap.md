@@ -21,6 +21,7 @@
   - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
   - As a *new user* I want **system tray preference** so I can decide whether to show the tray icon or run in background
   - As a *new user* I want **auto-paste preference** so I can choose between direct paste or clipboard-only mode
+  - As a *new user* I want **auto-set key simulation delay based on machine specs** so slower computers don't miss keystrokes during auto-paste
   - As a *new user* I want **onboarding re-run option** so I can reconfigure settings by resetting onboarding_complete
 
 ### Transcription History
