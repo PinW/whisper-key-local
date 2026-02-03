@@ -32,15 +32,12 @@ def _parse_platform_value(value: str) -> str:
 
 
 def _resolve_platform_values(config: Dict[str, Any]) -> Dict[str, Any]:
-    result = {}
     for key, value in config.items():
         if isinstance(value, dict):
-            result[key] = _resolve_platform_values(value)
+            _resolve_platform_values(value)
         elif isinstance(value, str) and ' | macos:' in value:
-            result[key] = _parse_platform_value(value)
-        else:
-            result[key] = value
-    return result
+            config[key] = _parse_platform_value(value)
+    return config
 
 
 class ConfigManager:   
