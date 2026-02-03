@@ -13,7 +13,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**3.2:** App data path (`utils.py` - use `~/Library/Application Support/`)~~
   - [x] ~~**3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)~~
   - [ ] **3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
-  - [x] ~~**3.5:** Hotkey detection (`platform/macos/hotkeys.py` - NSEvent)~~ ⚠️ needs real-device testing
+  - [x] ~~**3.5:** Hotkey detection (`platform/macos/hotkeys.py` - NSEvent)~~
   - [x] ~~**3.6:** Platform-aware config defaults (inline syntax in YAML)~~
   - [ ] **3.7:** Skip console manager on macOS
 - [x] ~~**Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies~~
@@ -23,10 +23,12 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**5.3:** Fix Ctrl+C shutdown (event polling in `platform/macos/app.py`)~~
   - [x] ~~**5.4:** Hide Dock icon (`setActivationPolicy_`)~~
   - [x] ~~**5.5:** Suppress secure coding warning (`AppDelegate`)~~
-- [ ] **Phase 6:** macOS menu bar icon polish
+- [ ] **Phase 6:** macOS polish & documentation
   - [ ] **6.1:** Design proper template icons for macOS menu bar (monochrome, @2x variants)
   - [ ] **6.2:** Support dark/light mode (template images auto-adapt)
   - [ ] **6.3:** Correct sizing for Retina displays
+  - [ ] **6.4:** Update README with macOS support
+  - [ ] **6.5:** Update project index
 
 ---
 
@@ -63,7 +65,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
 
 ## Phase 1: Cross-Platform Foundations ✅ Complete
 
-Replaced `winsound` with `playsound3` for audio feedback. Remaining cross-platform components (`sounddevice`, `faster-whisper`, `ten-vad`, `pyperclip`) require hotkeys to fully test.
+Replaced `winsound` with `playsound3` for audio feedback.
 
 ---
 
@@ -106,43 +108,21 @@ src/whisper_key/platform/
 | Component | Dependency | Status |
 |-----------|------------|--------|
 | Key simulation | `pyobjc-framework-Quartz` (CGEvent) | Not started |
-| Hotkey detection | `pyobjc-framework-AppKit` (NSEvent) | ✅ Complete (needs real-device testing) |
+| Hotkey detection | `pyobjc-framework-AppKit` (NSEvent) | ✅ Complete |
 | Instance lock | `fcntl` | ✅ Complete |
-
-**Note:** Hotkey detection uses NSEvent global monitoring with `NSFlagsChanged` for modifier-only hotkeys and `keyDown` for traditional hotkeys. Requires Accessibility permissions. Fn key support via `NSEventModifierFlagFunction`.
 
 ---
 
 ## Configuration Changes ✅ Complete
 
-### Inline Platform Syntax
-
-Platform-specific defaults use inline syntax in `config.defaults.yaml`:
-```yaml
-recording_hotkey: ctrl+win | macos: fn+control
-paste_hotkey: ctrl+v | macos: cmd+v
-auto_enter_combination: alt | macos: option
-```
-
-Resolution happens in `config_manager.py` after config merge, before validation.
-
-### Default Hotkeys
+Platform-specific defaults use inline syntax in `config.defaults.yaml` (e.g., `ctrl+win | macos: fn+control`). Resolution happens in `config_manager.py`.
 
 | Setting | Windows | macOS |
 |---------|---------|-------|
 | `recording_hotkey` | `ctrl+win` | `fn+control` |
 | `paste_hotkey` | `ctrl+v` | `cmd+v` |
 | `auto_enter_combination` | `alt` | `option` |
-| `cancel_combination` | `esc` | `shift` (ESC is system-reserved) |
-
-**Notes for Phase 3.5 (Hotkey Detection):**
-- macOS modifier key names: `control`, `option`, `cmd`, `shift`, `fn`
-- Fn key supported via `NSEvent.modifierFlags` with `NSEventModifierFlagFunction` (bit 23)
-- Hotkey display formatting needs improvement for macOS - consider using symbols (⌘, ⌃, ⌥, ⇧) or proper names
-
-**Decision: NSEvent with ModifierStateTracker** ✅
-
-Implemented NSEvent-based hotkey detection with `NSFlagsChanged` + state tracking for modifier-only hotkeys. See `implementation-plans/2026-02-03-nsevent-hotkey-implementation.md` for details.
+| `cancel_combination` | `esc` | `shift` |
 
 ---
 
@@ -156,10 +136,10 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| **Critical** | Real-device hotkey testing | Verify NSEvent implementation on actual macOS hardware |
 | High | Key simulation (3.4) | Needed for auto-paste |
 | Low | Console manager skip (3.7) | Cosmetic |
 | Low | Menu bar icons (Phase 6) | Cosmetic |
+| Low | Update README & project index (Phase 6) | Documentation |
 
 ---
 
@@ -167,10 +147,8 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| NSEvent monitor returns None if Accessibility denied | High | Log clear error message, prompt user to enable permissions |
 | Accessibility permissions on macOS | Medium | Clear user messaging, auto-open System Preferences |
-| Different hotkey naming (Cmd vs Ctrl) | Low | Platform-aware defaults, users can override |
 
 ---
 
-*Created: 2026-02-02 | Updated: 2026-02-03*
+*Created: 2026-02-02 | Updated: 2026-02-03 | Hotkey testing passed*

@@ -22,6 +22,7 @@
 - As a *developer*, I want to **WASAPI loopback supported out of the box** so I can implement features like meeting transcription based on audio outputs
 - As a *user*, I want to **load custom local models** so I can use specialized or fine-tuned models ([#10](https://github.com/PinW/whisper-key-local/issues/10))
 - As a *user*, I want **shortcuts to access log and settings** in the systray menu so I can quickly troubleshoot issues ([#9](https://github.com/PinW/whisper-key-local/issues/9))
+- As a *mac user*, I want **Fn key as modifier** so I can use the ergonomic bottom-left corner for recording
 
 ## Resolved Bugs
 

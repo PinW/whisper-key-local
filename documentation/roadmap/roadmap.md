@@ -9,23 +9,15 @@
 - As a *user*, I want to add **custom words** so rare words that I say often are translated accurately
 - As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 
-### Cross-Platform
-- As a *mac user*, I want to use this app on **macOS**
-    - ~~As a *mac user*, I want **Fn key as modifier** so I can use the ergonomic bottom-left corner for recording~~ ✅
-    - As a *developer*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys (ESC, cmd+.)
-    - As a *developer*, I want **removed window handle** so there's one less Windows dependency
-
 ## Backlog
 
 ### Transcription History
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
 
-### VAD & Keyword Controls
-- As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
-
 ### Voice Commands
-- As a *user* I want **voice API** so I can do more than just transcribe voice
+- As a *user* I want **voice commands API** so I can do more than just transcribe voice
 - As a *user* I want **voice commands** so I can quickly activate tasks
+- As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
 
 ### Packaging & Updates
 - As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
@@ -46,6 +38,7 @@
 - As a *developer*, I want **end-to-end tests** so that I can refactor with confidence
 
 ### Cross-Platform
+- As a *developer*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys (ESC, cmd+.)
 - As a phone *user*, I want this app on **mobile**
 
 ### Transcription Quality
