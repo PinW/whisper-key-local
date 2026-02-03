@@ -33,6 +33,7 @@ dependencies = [
 
     # macOS-only
     "pyobjc-framework-Quartz; sys_platform=='darwin'",
+    "pyobjc-framework-ApplicationServices; sys_platform=='darwin'",
 ]
 
 [project.scripts]

@@ -197,13 +197,12 @@ def main():
         model_registry = ModelRegistry(whisper_config.get('models', {}))
         vad_manager = setup_vad(vad_config)
         whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry)
-        clipboard_manager = setup_clipboard_manager(clipboard_config)
-
         if IS_MACOS and clipboard_config['auto_paste']:
             if not permissions.check_accessibility_permission():
                 permissions.handle_missing_permission(config_manager)
-                clipboard_manager.auto_paste = False
+                clipboard_config['auto_paste'] = False
 
+        clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
         state_manager = StateManager(
