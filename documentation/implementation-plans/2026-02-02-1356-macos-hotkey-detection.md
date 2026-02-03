@@ -2,64 +2,69 @@
 
 As a *user* I want **global hotkeys to work on macOS** so I can use whisper-key on my Mac.
 
+## Prerequisites
+
+**This plan assumes the `run_detached()` refactor is complete** - i.e., NSApplication is running on the main thread. See: `2026-02-03-macos-run-detached-refactor.md`
+
 ## Current State
 
-- Platform abstraction layer exists (`platform/macos/hotkeys.py` is a placeholder)
+- Platform abstraction layer exists (`platform/macos/hotkeys.py` is a stub)
 - Windows implementation wraps `global-hotkeys` library
 - `hotkey_listener.py` uses `platform.hotkeys.register()`, `.start()`, `.stop()`
-- Design doc notes NSApplication event loop is required (QuickMacHotKey + pystray may share it)
+- NSApplication event loop handled by main.py (after refactor)
 
 ## Implementation Plan
 
 ### Phase 1: Verify QuickMacHotKey Works
+
 - [ ] Create standalone test script `tools/test_macos_hotkey.py`
 - [ ] Register one hardcoded hotkey (ctrl+shift+space)
 - [ ] Print message when pressed
 - [ ] **Manual test:** install `quickmachotkey` on macOS, run script, verify hotkey fires
 
-### Phase 2: NSApplication Event Loop Investigation
-- [ ] Create test script `tools/test_macos_tray_hotkey.py` using both pystray AND QuickMacHotKey
-- [ ] Determine if they can share NSApplication (design doc suggests yes)
-- [ ] Document findings and approach
+### Phase 2: Combined Tray + Hotkey Test
+
+- [ ] Create test script `tools/test_macos_tray_hotkey.py`
+- [ ] Use `run_detached()` approach with NSApplication on main thread
+- [ ] Register a hotkey and show a tray icon
 - [ ] **Manual test:** both tray icon and hotkey work simultaneously
 
 ### Phase 3: Implement platform/macos/hotkeys.py
+
 - [ ] Implement `register(bindings)` - accepts same format as Windows
-- [ ] Implement `start()` - starts listening (NSApplication coordination)
-- [ ] Implement `stop()` - stops listening
-- [ ] Use hardcoded key mapping initially (defer string parsing)
+- [ ] Implement `start()` - registers hotkeys with QuickMacHotKey
+- [ ] Implement `stop()` - unregisters hotkeys
+- [ ] Use hardcoded key mapping initially (defer full string parsing)
 - [ ] Test: hotkeys module works in isolation
 
-### Phase 4: Integration Test Script
+### Phase 4: Integration Test
+
 - [ ] Create `tools/test_macos_integration.py`
 - [ ] Use `HotkeyListener` class with `platform.hotkeys`
 - [ ] Verify callback fires correctly
 - [ ] **Manual test:** hotkey_listener works with new macOS backend
 
 ### Phase 5: Accessibility Permissions Handling
+
 - [ ] Research how QuickMacHotKey handles missing permissions
-- [ ] Detect when Accessibility/Input Monitoring permission is missing
-- [ ] Show clear user message when permission denied (not silent failure)
-- [ ] Optionally: prompt user to open System Preferences > Privacy > Accessibility
-- [ ] **Manual test:** run without permissions granted, verify clear error message
+- [ ] Detect when Accessibility permission is missing
+- [ ] Show clear user message (not silent failure)
+- [ ] Optionally: prompt user to open System Preferences
+- [ ] **Manual test:** run without permissions, verify clear error message
 
 ### Phase 6: String Parsing (hotkey format conversion)
+
 - [ ] Map config strings ("ctrl+shift+space") to QuickMacHotKey format
 - [ ] Handle modifier keys: ctrl, shift, cmd/command, alt/option
 - [ ] Handle common keys: space, enter, escape, letters, numbers
 - [ ] Test: various hotkey string formats parse correctly
 
 ### Phase 7: Full App Test
+
 - [ ] Run whisper-key app on macOS
 - [ ] Verify tray icon appears
 - [ ] Verify hotkey triggers recording
 - [ ] Document any remaining issues
-
-### Phase 8: Update pyproject.toml
-- [x] Add `quickmachotkey` (macOS-only marker)
-- [x] Add `pyobjc-framework-Quartz` (macOS-only marker)
-- [ ] ~~Add `pyobjc-framework-ApplicationServices` (macOS-only marker)~~ *(not needed)*
-- [ ] Verify `pip install` works on both platforms
 
 ## Implementation Details
 
@@ -88,20 +93,28 @@ def my_callback():
 Key constants are in `quickmachotkey.constants` (e.g., `kVK_Space`, `kVK_Return`).
 Modifier constants: `controlKey`, `shiftKey`, `cmdKey`, `optionKey`.
 
-### NSApplication Coordination
+### Key Code Mapping
 
-pystray on macOS runs `NSApplication.sharedApplication().run()` internally.
-QuickMacHotKey also needs NSApplication running.
-
-Design doc approach:
+Will need to map string names to virtual key codes:
 ```python
-# Both use the same shared NSApplication
-nsapp = NSApplication.sharedApplication()
-# Register hotkeys before starting pystray
-icon.run()  # This runs the event loop
-```
+KEY_CODES = {
+    'space': 49,    # kVK_Space
+    'enter': 36,    # kVK_Return
+    'return': 36,
+    'escape': 53,   # kVK_Escape
+    'a': 0, 'b': 11, 'c': 8, ...
+}
 
-Need to verify this works in Phase 3.
+MODIFIERS = {
+    'ctrl': controlKey,
+    'control': controlKey,
+    'shift': shiftKey,
+    'cmd': cmdKey,
+    'command': cmdKey,
+    'alt': optionKey,
+    'option': optionKey,
+}
+```
 
 ## Files to Create
 
@@ -115,14 +128,18 @@ Need to verify this works in Phase 3.
 
 | File | Changes |
 |------|---------|
-| `pyproject.toml` | Add macOS-only dependencies |
 | `platform/macos/hotkeys.py` | Full implementation |
+
+## Dependencies
+
+Already in pyproject.toml with macOS markers:
+- [x] `quickmachotkey` (macOS-only)
+- [x] `pyobjc-framework-Quartz` (macOS-only)
 
 ## Success Criteria
 
-- [ ] `pip install` works on macOS with all dependencies
 - [ ] Standalone hotkey test registers and fires callback
 - [ ] Tray icon and hotkeys work together
 - [ ] HotkeyListener class works with macOS backend
-- [ ] Missing Accessibility permission shows clear error (not silent failure)
+- [ ] Missing Accessibility permission shows clear error
 - [ ] App starts and responds to hotkeys on macOS
