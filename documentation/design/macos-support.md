@@ -135,7 +135,9 @@ Resolution happens in `config_manager.py` after config merge, before validation.
 | `auto_enter_combination` | `alt` | `option` |
 | `cancel_combination` | `esc` | `esc` |
 
-**Note:** macOS modifier key names (`fn`, `control`, `option`, `cmd`) need to be confirmed during hotkey detection implementation (Phase 3.5). Update `config.defaults.yaml` if the hotkey library uses different key codes.
+**Notes for Phase 3.5 (Hotkey Detection):**
+- macOS modifier key names (`fn`, `control`, `option`, `cmd`) need to be confirmed - update `config.defaults.yaml` if the hotkey library uses different key codes
+- Hotkey display formatting needs improvement for macOS (e.g., "FN+CONTROL" vs nicer Windows display) - consider using symbols (⌘, ⌃, ⌥, ⇧) or proper names
 
 ---
 
