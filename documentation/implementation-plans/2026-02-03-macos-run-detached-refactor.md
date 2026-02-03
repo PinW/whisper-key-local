@@ -69,7 +69,7 @@ system_tray.py:
 
 - [x] Research: `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
 - [x] Add code to hide Dock icon on macOS (menu bar apps shouldn't show in Dock)
-- [ ] **Manual test:** no Dock icon, only menu bar icon
+- [x] **Manual test:** no Dock icon, only menu bar icon
 
 ### Phase 6: Fix Ctrl+C shutdown
 
@@ -161,19 +161,21 @@ def setup_signal_handlers(shutdown_event):
 ## Success Criteria
 
 - [x] Windows: app starts, tray works, Ctrl+C shuts down (no regression)
-- [ ] macOS: app starts without errors
-- [ ] macOS: tray icon appears in menu bar (not Dock)
-- [ ] macOS: tray menu works (View Log, Exit, etc.)
+- [x] macOS: app starts without errors
+- [x] macOS: tray icon appears in menu bar (not Dock)
+- [x] macOS: tray menu works (View Log, Exit, etc.)
 - [ ] macOS: Ctrl+C gracefully shuts down app
-- [ ] macOS: tray icon reflects state changes
+- [ ] macOS: tray icon reflects state changes *(requires hotkeys)*
 
 ## Status
 
 **Phases 1-3: COMPLETE** - Code implemented and tested on Windows.
 
-**Phase 4: TESTED** - System tray works on macOS with issues (see below).
+**Phase 4: COMPLETE** - System tray works on macOS.
 
-**Phases 5-7: PENDING** - Issues to fix.
+**Phase 5: COMPLETE** - Dock icon hidden.
+
+**Phases 6-7: PENDING** - Ctrl+C fix and warning suppression.
 
 ## macOS Testing Findings (2026-02-03)
 
