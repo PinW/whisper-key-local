@@ -42,6 +42,7 @@ def handle_missing_permission(config_manager) -> bool:
     app_name = _get_terminal_app_name()
 
     CYAN = "\x1b[36m"
+    BOLD_CYAN = "\x1b[1;36m"
     DIM = "\x1b[2m"
     RESET = "\x1b[0m"
 
@@ -61,7 +62,7 @@ def handle_missing_permission(config_manager) -> bool:
 
     print()
     print(f"{CYAN}  ┌{'─' * (width + 2)}┐{RESET}")
-    print(line(title))
+    print(f"{CYAN}  │{RESET} {BOLD_CYAN}{pad(title)}{RESET} {CYAN}│{RESET}")
     print(line())
     print(line(opt1_main))
     print(f"{CYAN}  │{RESET} {DIM}{pad(opt1_desc)}{RESET} {CYAN}│{RESET}")
