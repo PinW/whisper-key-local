@@ -22,7 +22,7 @@ def prompt_choice(message: str, options: list[str]) -> int:
     print()
     for i, option in enumerate(options, 1):
         print(f"  [{i}] {option}")
-    print()
+        print()
     print("Press a number to choose: ", end="", flush=True)
 
     valid_choices = {str(i): i - 1 for i in range(1, len(options) + 1)}
