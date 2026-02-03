@@ -21,7 +21,7 @@
   - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
   - As a *new user* I want **system tray preference** so I can decide whether to show the tray icon or run in background
   - As a *new user* I want **auto-paste preference** so I can choose between direct paste or clipboard-only mode
-  - As a *new user* I want **auto-set key simulation delay based on machine specs** so slower computers don't miss keystrokes during auto-paste
+  - As a *new user* I want **auto-set key simulation delay based on machine specs** so slower computers don't miss keystrokes during auto-paste ([#21](https://github.com/PinW/whisper-key-local/issues/21))
   - As a *new user* I want **onboarding re-run option** so I can reconfigure settings by resetting onboarding_complete
 
 ### Transcription History
@@ -54,6 +54,7 @@
 ### Technical
 - As a *developer*, I want **WASAPI supprot without scipy** so that the package is smaller and more efficient (maybe wait for sounddevice to support latest PortAudio DLL so auto-convert can be used in addition to WASAPI Loopback)
 - As a *developer*, I want **end-to-end tests** so that I can refactor with confidence
+- As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 
 ### Cross-Platform
 - As a *developer*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys (ESC, cmd+.)
