@@ -155,18 +155,4 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 ---
 
-## Open Questions
-
-1. ~~**NSApplication event loop:** Does pystray already run one? Can we share it with QuickMacHotKey?~~ ✅ Resolved - see Phase 5 implementation
-
----
-
-## References
-
-- [pystray FAQ](https://pystray.readthedocs.io/en/latest/faq.html)
-- [pystray Issue #138 - GIL on M2](https://github.com/moses-palmer/pystray/issues/138)
-- [QuickMacHotKey](https://github.com/glyph/QuickMacHotKey)
-
----
-
 *Created: 2026-02-02*
