@@ -60,16 +60,29 @@ system_tray.py:
 
 ### Phase 4: macOS system tray verification
 
-- [ ] **Manual test on macOS:** tray icon appears in menu bar
-- [ ] **Manual test on macOS:** tray menu opens and items work
-- [ ] **Manual test on macOS:** tray icon updates state (idle/recording/processing)
-- [ ] Document any issues found
+- [x] **Manual test on macOS:** tray icon appears in menu bar
+- [x] **Manual test on macOS:** tray menu opens and items work
+- [ ] ~~**Manual test on macOS:** tray icon updates state (idle/recording/processing)~~ *(requires hotkeys)*
+- [x] Document any issues found (see below)
 
-### Phase 5: Hide Dock icon (optional polish)
+### Phase 5: Hide Dock icon
 
 - [ ] Research: `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
 - [ ] Add code to hide Dock icon on macOS (menu bar apps shouldn't show in Dock)
 - [ ] **Manual test:** no Dock icon, only menu bar icon
+
+### Phase 6: Fix Ctrl+C shutdown
+
+- [ ] Investigate why Ctrl+C shows `^C` but doesn't quit
+- [ ] Note: app DOES quit after a tray action is triggered (signal received but not processed)
+- [ ] Likely need to post an event to wake NSApplication run loop
+- [ ] **Manual test:** Ctrl+C immediately shuts down app
+
+### Phase 7: Suppress secure coding warning (optional)
+
+- [ ] Research NSApplicationDelegate.applicationSupportsSecureRestorableState
+- [ ] Implement or suppress warning
+- [ ] **Manual test:** no warning on startup
 
 ## Code Changes
 
@@ -158,7 +171,36 @@ def setup_signal_handlers(shutdown_event):
 
 **Phases 1-3: COMPLETE** - Code implemented and tested on Windows.
 
-**Phases 4-5: PENDING** - Requires macOS hardware for testing.
+**Phase 4: TESTED** - System tray works on macOS with issues (see below).
+
+**Phases 5-7: PENDING** - Issues to fix.
+
+## macOS Testing Findings (2026-02-03)
+
+### Working
+- Tray icon appears in menu bar
+- Tray menu opens
+- Menu actions work (View Log, Advanced Settings, audio device selection)
+
+### Issues Found
+
+**Issue 1: Ctrl+C doesn't quit immediately**
+- Pressing Ctrl+C shows `^C` in terminal but app continues running
+- However, if a tray menu action is triggered after Ctrl+C, app shuts down correctly
+- Diagnosis: Signal is received and `shutdown_event.set()` + `nsapp.stop_()` are called, but NSApplication run loop doesn't wake up until an event arrives
+- Fix: Need to post a dummy event to wake the run loop after calling `stop_()`
+
+**Issue 2: Python rocket icon in Dock**
+- App shows Python icon in Dock while running
+- Should be menu bar only (LSUIElement-style app)
+- Fix: Call `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
+
+**Issue 3: Secure coding warning on startup**
+```
+WARNING: Secure coding is automatically enabled for restorable state! However, not on all supported macOS versions of this application. Opt-in to secure coding explicitly by implementing NSApplicationDelegate.applicationSupportsSecureRestorableState:.
+```
+- Cosmetic issue, doesn't affect functionality
+- Fix: Implement NSApplicationDelegate method or suppress
 
 ## Risks
 

@@ -58,9 +58,9 @@ On macOS this raises `AttributeError: module 'os' has no attribute 'startfile'`.
 - [x] Replace `os.startfile()` with `utils.open_file()`
 
 ### Step 6: Test on macOS
-- [ ] **Manual test:** Run app, verify config created in correct location
-- [ ] Verify log file created in correct location
-- [ ] Verify "View Log" and "Advanced Settings" menu items work
+- [x] **Manual test:** Run app, verify config created in correct location
+- [x] Verify log file created in correct location
+- [x] Verify "View Log" and "Advanced Settings" menu items work
 
 ## Implementation Details
 
@@ -146,9 +146,13 @@ def _open_config_file(self, icon=None, item=None):
 
 ## Success Criteria
 
-- [ ] App starts on macOS without path-related crash
-- [ ] Config file created at `~/Library/Application Support/whisperkey/user_settings.yaml`
-- [ ] Log file created at `~/Library/Application Support/whisperkey/whisper-key.log`
-- [ ] Tray menu "View Log" opens log file on macOS
-- [ ] Tray menu "Advanced Settings" opens config file on macOS
-- [ ] Windows behavior unchanged
+- [x] App starts on macOS without path-related crash
+- [x] Config file created at `~/Library/Application Support/whisperkey/user_settings.yaml`
+- [x] Log file created at `~/Library/Application Support/whisperkey/whisper-key.log`
+- [x] Tray menu "View Log" opens log file on macOS
+- [x] Tray menu "Advanced Settings" opens config file on macOS
+- [x] Windows behavior unchanged
+
+## Status
+
+**COMPLETE** - All criteria verified on macOS (2026-02-03).

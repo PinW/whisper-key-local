@@ -18,6 +18,11 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [ ] **3.7:** Skip console manager on macOS
 - [x] ~~**Phase 4:** Update `pyproject.toml` with platform markers for conditional dependencies~~
 - [ ] **Phase 5:** Resolve macOS main thread / event loop architecture
+  - [x] ~~**5.1:** Refactor to use `run_detached()` on both platforms~~
+  - [x] ~~**5.2:** Add NSApplication event loop on main thread for macOS~~
+  - [ ] **5.3:** Fix Ctrl+C shutdown (signal not waking NSApplication)
+  - [ ] **5.4:** Hide Dock icon (setActivationPolicy)
+  - [ ] **5.5:** Suppress secure coding warning (optional)
 
 ---
 
@@ -92,10 +97,22 @@ else:
 
 **Signal handling:** With NSApplication owning main thread, need to ensure Ctrl+C still works for graceful shutdown.
 
+### Implementation Status (2026-02-03)
+
+**Implemented:**
+- `run_detached()` approach working on both Windows and macOS
+- System tray appears in menu bar
+- Tray menu works (View Log, Advanced Settings, audio device selection)
+
+**Issues Found:**
+1. **Ctrl+C doesn't quit immediately** - Signal received (`^C` appears) but NSApplication doesn't wake until a tray action occurs. Need to post a dummy event to wake the run loop.
+2. **Python rocket icon in Dock** - Need `setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
+3. **Secure coding warning** - Cosmetic warning on startup about `NSApplicationDelegate.applicationSupportsSecureRestorableState`
+
 ### Remaining Questions
 
-1. How do hotkey callbacks interact with the NSApplication event loop?
-2. Queue-based communication for tray updates from background threads?
+1. ~~How do hotkey callbacks interact with the NSApplication event loop?~~ *(To be tested with QuickMacHotKey)*
+2. ~~Queue-based communication for tray updates from background threads?~~ *(Working - tray updates from callbacks work)*
 
 ### References
 
@@ -133,11 +150,11 @@ Replaced `winsound` with `playsound3` for audio feedback.
 
 ### Verify Cross-Platform Components (on macOS)
 
-- [ ] `sounddevice` audio recording
-- [ ] `faster-whisper` transcription
-- [ ] `ten-vad` voice activity detection
-- [ ] `pystray` system tray
-- [ ] `pyperclip` clipboard
+- [ ] `sounddevice` audio recording *(requires hotkeys to test)*
+- [ ] `faster-whisper` transcription *(requires hotkeys to test)*
+- [ ] `ten-vad` voice activity detection *(requires hotkeys to test)*
+- [x] `pystray` system tray *(working with run_detached + NSApplication)*
+- [ ] `pyperclip` clipboard *(requires hotkeys to test)*
 
 ---
 
