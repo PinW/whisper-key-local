@@ -28,7 +28,75 @@ Uses the `terminal_ui.prompt_choice()` system (already built for permissions pro
 
 Config: `whisper.model`
 
-### 2. Audio Device Confirmation
+### 2. Processing Device (CPU vs GPU)
+
+Detect NVIDIA GPU availability first, then present options:
+
+**If NVIDIA GPU detected:**
+```
+┌─────────────────────────────────────────────────────────┐
+│ Where should Whisper run?                               │
+│                                                         │
+│ [1] GPU - NVIDIA GeForce RTX 3080 (Recommended)         │
+│     Faster transcription, requires CUDA 12              │
+│ [2] CPU                                                 │
+│     Works everywhere, slower but reliable               │
+└─────────────────────────────────────────────────────────┘
+```
+
+**If no GPU detected:**
+```
+┌─────────────────────────────────────────────────────────┐
+│ No NVIDIA GPU detected. Using CPU for processing.       │
+│                                                         │
+│ Press Enter to continue...                              │
+└─────────────────────────────────────────────────────────┘
+```
+
+Config: `whisper.device` (cpu/cuda), `whisper.compute_type` (auto-set: int8 for CPU, float16 for GPU)
+
+**GPU Detection:**
+```python
+def detect_nvidia_gpu():
+    try:
+        import subprocess
+        result = subprocess.run(
+            ['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip().split('\n')[0]  # First GPU name
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    return None
+```
+
+**CUDA Availability Check:**
+
+If user selects GPU, verify CUDA is usable:
+```python
+def check_cuda_available():
+    try:
+        import torch
+        return torch.cuda.is_available()
+    except ImportError:
+        return False
+```
+
+If CUDA not available after GPU selection, show:
+```
+┌─────────────────────────────────────────────────────────┐
+│ CUDA not ready. GPU detected but CUDA 12 not installed. │
+│                                                         │
+│ To use GPU acceleration:                                │
+│   winget install Nvidia.CUDA --version 12.9             │
+│                                                         │
+│ [1] Continue with CPU for now                           │
+│ [2] Exit and install CUDA first                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 3. Audio Device Confirmation
 
 List available input devices, highlight the current default:
 
@@ -44,7 +112,7 @@ List available input devices, highlight the current default:
 
 Config: `audio.input_device` (store device name, not index)
 
-### 3. System Tray
+### 4. System Tray
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -59,7 +127,7 @@ Config: `audio.input_device` (store device name, not index)
 
 Config: `system_tray.enabled`
 
-### 4. Auto-Paste (last, may require restart on macOS)
+### 5. Auto-Paste (last, may require restart on macOS)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -79,7 +147,7 @@ On macOS, if user selects Yes:
 - If not granted, show existing permission prompt (from `permissions.py`)
 - Prompt restart if permission was just requested
 
-### 5. Completion
+### 6. Completion
 
 ```
 Setup complete! Starting Whisper Key...
@@ -131,6 +199,8 @@ main.py
   └── if not config.onboarding_complete:
         └── onboarding.run(config_manager)
               ├── prompt model selection → save
+              ├── detect GPU → prompt device selection → save
+              │     └── if GPU selected: verify CUDA → fallback to CPU if needed
               ├── prompt audio device → save
               ├── prompt system tray → save
               ├── prompt auto-paste → save
@@ -144,6 +214,8 @@ main.py
 - **Ctrl+C during onboarding**: Exit cleanly, don't save partial config
 - **No audio devices**: Show error, suggest checking hardware
 - **macOS permission denied**: Handled by existing `permissions.py` flow
+- **GPU detected but CUDA missing**: Offer fallback to CPU with install instructions
+- **nvidia-smi not in PATH**: Treat as no GPU detected, default to CPU
 
 ## Future Enhancements
 
