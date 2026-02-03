@@ -41,12 +41,11 @@ def handle_missing_permission(config_manager) -> bool:
 
     app_name = _get_terminal_app_name()
 
-    BOLD = "\033[1m"
-    CYAN = "\033[36m"
-    DIM = "\033[2m"
-    RESET = "\033[0m"
+    BOLD_CYAN = "\x1b[1;36m"
+    DIM = "\x1b[2m"
+    RESET = "\x1b[0m"
 
-    styled_message = f"  {BOLD}{CYAN}🔐 Auto-paste requires permission to simulate [Cmd+V] keypress...{RESET}"
+    styled_message = f"  {BOLD_CYAN}🔐 Auto-paste requires permission to simulate [Cmd+V] keypress...{RESET}"
 
     options = [
         f"Grant accessibility permission to {app_name}\n      {DIM}Transcribe directly to cursor, with option to auto-send{RESET}",
