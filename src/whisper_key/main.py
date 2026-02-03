@@ -218,7 +218,7 @@ def main():
 
         system_tray.start()
 
-        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.", flush=True)  # flush so headless agent can detect startup success
+        print(f"🚀 Application ready! Press [{beautify_hotkey(hotkey_config['recording_hotkey'])}] to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
 
         app.run_event_loop(shutdown_event)
