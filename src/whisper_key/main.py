@@ -197,11 +197,6 @@ def main():
         model_registry = ModelRegistry(whisper_config.get('models', {}))
         vad_manager = setup_vad(vad_config)
         whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry)
-        if IS_MACOS and clipboard_config['auto_paste']:
-            if not permissions.check_accessibility_permission():
-                permissions.handle_missing_permission(config_manager)
-                clipboard_config['auto_paste'] = False
-
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
@@ -225,6 +220,11 @@ def main():
 
         print(f"🚀 Application ready! Press [{beautify_hotkey(hotkey_config['recording_hotkey'])}] to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
+
+        if IS_MACOS and clipboard_config['auto_paste']:
+            if not permissions.check_accessibility_permission():
+                permissions.handle_missing_permission(config_manager)
+                clipboard_manager.auto_paste = False
 
         app.run_event_loop(shutdown_event)
             
