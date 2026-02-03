@@ -78,6 +78,7 @@ def handle_missing_permission(config_manager) -> bool:
         ch = getch()
         if ch == '1':
             print(ch)
+            config_manager.update_user_setting('clipboard', 'auto_paste', True)
             request_accessibility_permission()
             print()
             print("Please restart Whisper Key after permission is granted")
