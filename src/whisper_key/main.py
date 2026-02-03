@@ -131,12 +131,6 @@ def setup_system_tray(tray_config, config_manager, state_manager, model_registry
 def setup_signal_handlers(shutdown_event):
     def signal_handler(signum, frame):
         shutdown_event.set()
-        if IS_MACOS:
-            try:
-                from AppKit import NSApplication
-                NSApplication.sharedApplication().stop_(None)
-            except Exception:
-                pass
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
@@ -171,8 +165,18 @@ def set_macos_no_dock_mode():
 
 def run_event_loop(shutdown_event):
     if IS_MACOS:
-        from AppKit import NSApplication
-        NSApplication.sharedApplication().run()
+        from AppKit import NSApplication, NSEventMaskAny, NSDefaultRunLoopMode
+        from Foundation import NSDate
+        app = NSApplication.sharedApplication()
+        while not shutdown_event.is_set():
+            event = app.nextEventMatchingMask_untilDate_inMode_dequeue_(
+                NSEventMaskAny,
+                NSDate.dateWithTimeIntervalSinceNow_(0.1),
+                NSDefaultRunLoopMode,
+                True
+            )
+            if event:
+                app.sendEvent_(event)
     else:
         while not shutdown_event.wait(timeout=0.1):
             pass
