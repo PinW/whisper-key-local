@@ -12,7 +12,7 @@ import threading
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-from .platform import app
+from .platform import app, IS_MACOS, permissions
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
@@ -198,6 +198,12 @@ def main():
         vad_manager = setup_vad(vad_config)
         whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry)
         clipboard_manager = setup_clipboard_manager(clipboard_config)
+
+        if IS_MACOS and clipboard_config['auto_paste']:
+            if not permissions.check_accessibility_permission():
+                permissions.handle_missing_permission(config_manager)
+                clipboard_manager.auto_paste = False
+
         audio_feedback = setup_audio_feedback(audio_feedback_config)
 
         state_manager = StateManager(

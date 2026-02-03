@@ -85,11 +85,18 @@ When user enables auto-paste via menu:
 
 ## Steps
 
-- [ ] Create `terminal_ui.py` with `prompt_choice()` function
-- [ ] Create `platform/macos/permissions.py` with permission check functions
-- [ ] Update `platform/macos/keyboard.py` to remove permission logic
-- [ ] Add startup permission check in main flow
-- [ ] Add runtime permission check when toggling auto-paste
+- [x] Create `terminal_ui.py` with `prompt_choice()` function
+  - ✅ Cross-platform reusable prompt with numbered options
+- [x] Create `platform/macos/permissions.py` with permission check functions
+  - ✅ `check_accessibility_permission()` - silent check
+  - ✅ `request_accessibility_permission()` - shows system dialog
+  - ✅ `handle_missing_permission()` - terminal prompt with choices
+- [x] Update `platform/macos/keyboard.py` to remove permission logic
+  - ✅ Removed inline permission checking (handled at startup/toggle now)
+- [x] Add startup permission check in main flow
+  - ✅ Check in main.py after clipboard_manager created
+- [x] Add runtime permission check when toggling auto-paste
+  - ✅ Check in system_tray.py `_set_transcription_mode()`
 - [ ] Test flow on macOS
 
 ## Files Changed
