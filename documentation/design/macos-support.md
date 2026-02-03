@@ -133,7 +133,7 @@ Resolution happens in `config_manager.py` after config merge, before validation.
 | `recording_hotkey` | `ctrl+win` | `fn+control` |
 | `paste_hotkey` | `ctrl+v` | `cmd+v` |
 | `auto_enter_combination` | `alt` | `option` |
-| `cancel_combination` | `esc` | `esc` |
+| `cancel_combination` | `esc` | `cmd+.` (ESC not detectable via NSEvent) |
 
 **Notes for Phase 3.5 (Hotkey Detection):**
 - macOS modifier key names: `control`, `option`, `cmd`, `shift`, `fn`
