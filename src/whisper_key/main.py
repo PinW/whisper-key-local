@@ -163,7 +163,7 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
     if state_manager:
         state_manager.shutdown()
 
-def setup_macos_menu_bar_mode():
+def set_macos_no_dock_mode():
     if IS_MACOS:
         from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
         app = NSApplication.sharedApplication()
@@ -178,7 +178,7 @@ def run_event_loop(shutdown_event):
             pass
 
 def main():
-    setup_macos_menu_bar_mode()
+    set_macos_no_dock_mode()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='Run as separate test instance')
