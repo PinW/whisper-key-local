@@ -114,7 +114,8 @@ Without this permission, `CGEventPost` will silently fail (no error, but no key 
   - ✅ Debug logging for key/hotkey sends
   - ✅ Error logging for unknown keys
   - ✅ Warning when Quartz not available
-- [ ] Test on macOS with Accessibility permission granted
+- [x] Test on macOS with Accessibility permission granted
+  - ✅ Verified auto-paste works with Accessibility permission enabled
 
 ## Testing
 
