@@ -78,29 +78,18 @@ def handle_missing_permission(config_manager) -> bool:
         ch = getch()
         if ch == '1':
             print(ch)
-            choice = 0
+            request_accessibility_permission()
+            print()
+            print("Please restart Whisper Key after permission is granted")
+            print()
+            os.kill(os.getpid(), signal.SIGINT)
             break
         elif ch == '2':
             print(ch)
-            choice = 1
-            break
+            config_manager.update_user_setting('clipboard', 'auto_paste', False)
+            print()
+            return True
         elif ch in ('\x03', '\x04'):
             print()
-            choice = -1
+            os.kill(os.getpid(), signal.SIGINT)
             break
-
-    if choice == 0:
-        request_accessibility_permission()
-        print()
-        print("Please restart Whisper Key after permission is granted")
-        print()
-        os.kill(os.getpid(), signal.SIGINT)
-
-    elif choice == 1:
-        config_manager.update_user_setting('clipboard', 'auto_paste', False)
-        print()
-        return True
-
-    else:
-        print()
-        os.kill(os.getpid(), signal.SIGINT)
