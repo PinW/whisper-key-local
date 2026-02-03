@@ -249,7 +249,8 @@ class SystemTray:
     def _set_transcription_mode(self, auto_paste: bool):
         if auto_paste and IS_MACOS and permissions:
             if not permissions.check_accessibility_permission():
-                permissions.handle_missing_permission(self.config_manager)
+                if not permissions.handle_missing_permission(self.config_manager):
+                    return
                 auto_paste = False
 
         self.state_manager.update_transcription_mode(auto_paste)

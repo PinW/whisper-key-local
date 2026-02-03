@@ -83,7 +83,7 @@ def handle_missing_permission(config_manager) -> bool:
             print("Please restart Whisper Key after permission is granted")
             print()
             os.kill(os.getpid(), signal.SIGINT)
-            break
+            return False
         elif ch == '2':
             print(ch)
             config_manager.update_user_setting('clipboard', 'auto_paste', False)
@@ -92,4 +92,4 @@ def handle_missing_permission(config_manager) -> bool:
         elif ch in ('\x03', '\x04'):
             print()
             os.kill(os.getpid(), signal.SIGINT)
-            break
+            return False

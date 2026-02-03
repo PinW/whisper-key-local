@@ -223,7 +223,9 @@ def main():
 
         if IS_MACOS and clipboard_config['auto_paste']:
             if not permissions.check_accessibility_permission():
-                permissions.handle_missing_permission(config_manager)
+                if not permissions.handle_missing_permission(config_manager):
+                    app.run_event_loop(shutdown_event)
+                    return
                 clipboard_manager.auto_paste = False
 
         app.run_event_loop(shutdown_event)
