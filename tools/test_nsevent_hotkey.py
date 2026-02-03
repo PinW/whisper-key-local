@@ -16,10 +16,11 @@ if sys.platform != 'darwin':
     print("This script only works on macOS")
     sys.exit(1)
 
-from AppKit import NSApplication, NSApplicationActivationPolicyProhibited
+from AppKit import NSApplication, NSApplicationActivationPolicyAccessory, NSEventMaskAny, NSDefaultRunLoopMode
+from Foundation import NSDate
 
 app = NSApplication.sharedApplication()
-app.setActivationPolicy_(NSApplicationActivationPolicyProhibited)
+app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
 
 sys.path.insert(0, 'src')
 from whisper_key.platform.macos import hotkeys
@@ -42,7 +43,10 @@ def on_escape_press():
 def on_ctrl_option_space_press():
     print("\n✓ CTRL+OPTION+SPACE pressed!")
 
+running = True
+
 def main():
+    global running
     print("=" * 50)
     print("NSEvent Hotkey Test")
     print("=" * 50)
@@ -71,16 +75,23 @@ def main():
     print()
 
     def signal_handler(sig, frame):
+        global running
         print("\n\nShutting down...")
-        hotkeys.stop()
-        sys.exit(0)
+        running = False
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    from AppKit import NSRunLoop, NSDate
-    run_loop = NSRunLoop.currentRunLoop()
-    while True:
-        run_loop.runMode_beforeDate_("kCFRunLoopDefaultMode", NSDate.dateWithTimeIntervalSinceNow_(0.1))
+    while running:
+        event = app.nextEventMatchingMask_untilDate_inMode_dequeue_(
+            NSEventMaskAny,
+            NSDate.dateWithTimeIntervalSinceNow_(0.1),
+            NSDefaultRunLoopMode,
+            True
+        )
+        if event:
+            app.sendEvent_(event)
+
+    hotkeys.stop()
 
 if __name__ == "__main__":
     main()
