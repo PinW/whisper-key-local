@@ -8,7 +8,7 @@ As a *mac user* I want **global hotkeys using NSEvent monitoring** so hotkeys wo
 
 | Hotkey | Type | Purpose |
 |--------|------|---------|
-| `ctrl+option` or `fn+ctrl` | modifier-only | Toggle recording |
+| `fn+ctrl` (default) | modifier-only | Toggle recording |
 | `option` | modifier-only | Auto-enter (stop + enter) |
 | `ctrl` | modifier-only | Stop-modifier (stop recording) |
 | `esc` | traditional (keycode only) | Cancel recording |

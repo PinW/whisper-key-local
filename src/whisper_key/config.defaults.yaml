@@ -103,8 +103,8 @@ hotkey: # Hotkey Configuration
   #   - "ctrl+alt+r"
   #   - "win+v"
   #   - "ctrl+shift+f12"
-  # Note: fn key is not supported on macOS (excluded from public Hot Key API)
-  recording_hotkey: "ctrl+win | macos: ctrl+option"
+  # Note: fn key IS supported on macOS via NSEvent monitoring
+  recording_hotkey: "ctrl+win | macos: fn+ctrl"
 
   # Stop recording with just the first modifier key
   # If enabled, stops recording with first modifier of the main hotkey
