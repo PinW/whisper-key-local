@@ -78,11 +78,11 @@ system_tray.py:
 - [x] Refactor into `platform/*/app.py` for clean abstraction
 - [x] **Manual test:** Ctrl+C immediately shuts down app
 
-### Phase 7: Suppress secure coding warning (optional)
+### Phase 7: Suppress secure coding warning
 
-- [ ] Research NSApplicationDelegate.applicationSupportsSecureRestorableState
-- [ ] Implement or suppress warning
-- [ ] **Manual test:** no warning on startup
+- [x] Research NSApplicationDelegate.applicationSupportsSecureRestorableState
+- [x] Implement AppDelegate with `applicationSupportsSecureRestorableState_()` returning True
+- [x] **Manual test:** no warning on startup
 
 ## Code Changes
 
@@ -150,9 +150,7 @@ Platform implementations in `platform/*/app.py`:
 
 ## Status
 
-**Phases 1-6: COMPLETE** - System tray and Ctrl+C working on both platforms.
-
-**Phase 7: OPTIONAL** - Suppress secure coding warning (cosmetic only).
+**All phases complete.** System tray fully working on macOS with no warnings.
 
 ## macOS Testing Findings (2026-02-03)
 
@@ -170,12 +168,8 @@ Platform implementations in `platform/*/app.py`:
 **Issue 2: Python rocket icon in Dock** ✅ RESOLVED
 - Fixed with `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)` in `platform/macos/app.py`
 
-**Issue 3: Secure coding warning on startup**
-```
-WARNING: Secure coding is automatically enabled for restorable state! However, not on all supported macOS versions of this application. Opt-in to secure coding explicitly by implementing NSApplicationDelegate.applicationSupportsSecureRestorableState:.
-```
-- Cosmetic issue, doesn't affect functionality
-- Fix: Implement NSApplicationDelegate method or suppress
+**Issue 3: Secure coding warning on startup** ✅ RESOLVED
+- Fixed with `AppDelegate.applicationSupportsSecureRestorableState_()` returning True in `platform/macos/app.py`
 
 ## Risks
 
