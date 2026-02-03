@@ -11,6 +11,9 @@
 
 ## Backlog
 
+### Onboarding
+- As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
+
 ### Transcription History
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
 
