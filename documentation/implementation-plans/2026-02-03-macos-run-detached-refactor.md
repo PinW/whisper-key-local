@@ -35,27 +35,27 @@ system_tray.py:
 
 ### Phase 1: Refactor system_tray.py
 
-- [ ] Remove the daemon thread (`self.thread`)
-- [ ] Change `icon.run()` to `icon.run_detached()`
-- [ ] Remove `_run_tray()` method (no longer needed)
-- [ ] Update `stop()` to work with detached mode
-- [ ] Remove macOS disable check (line 48-49) - enable tray on macOS
-- [ ] **Test on Windows:** verify tray still works with `run_detached()`
+- [x] Remove the daemon thread (`self.thread`)
+- [x] Change `icon.run()` to `icon.run_detached()`
+- [x] Remove `_run_tray()` method (no longer needed)
+- [x] Update `stop()` to work with detached mode
+- [x] Remove macOS disable check (line 48-49) - enable tray on macOS
+- [x] **Test on Windows:** verify tray still works with `run_detached()`
 
 ### Phase 2: Refactor main.py for platform-specific main loop
 
-- [ ] Add platform import: `from .platform import IS_MACOS`
-- [ ] Replace the `while shutdown_event.wait()` loop with platform-specific code:
+- [x] Add platform import: `from .platform import IS_MACOS`
+- [x] Replace the `while shutdown_event.wait()` loop with platform-specific code:
   - macOS: `nsapp.run()`
   - Windows: keep existing wait loop
-- [ ] Import AppKit only on macOS (conditional import)
-- [ ] **Test on Windows:** verify app still starts and shuts down correctly
+- [x] Import AppKit only on macOS (conditional import)
+- [x] **Test on Windows:** verify app still starts and shuts down correctly
 
 ### Phase 3: macOS shutdown handling
 
-- [ ] On macOS, `nsapp.run()` blocks forever - need way to stop it
-- [ ] Wire up signal handler to call `nsapp.stop()` or `nsapp.terminate_(None)`
-- [ ] Ensure Ctrl+C still triggers graceful shutdown
+- [x] On macOS, `nsapp.run()` blocks forever - need way to stop it
+- [x] Wire up signal handler to call `nsapp.stop()` or `nsapp.terminate_(None)`
+- [x] Ensure Ctrl+C still triggers graceful shutdown
 - [ ] **Manual test on macOS:** verify Ctrl+C stops the app
 
 ### Phase 4: macOS system tray verification

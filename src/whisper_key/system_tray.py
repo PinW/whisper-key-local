@@ -1,5 +1,4 @@
 import logging
-import threading
 import os
 import signal
 from typing import Optional, TYPE_CHECKING
@@ -36,20 +35,13 @@ class SystemTray:
         self.icon = None  # pystray object, holds menu, state, etc.
         self.is_running = False
         self.current_state = "idle"
-        self.thread = None
         self.available = True
         
         if self._check_tray_availability():
             self._load_icons_to_cache()
     
     def _check_tray_availability(self) -> bool:
-        from .platform import IS_MACOS
-
-        if IS_MACOS:
-            self.logger.warning("   ✗ System tray disabled on macOS (not yet supported)")
-            self.available = False
-
-        elif not self.tray_config['enabled']:
+        if not self.tray_config['enabled']:
             self.logger.warning("   ✗ System tray disabled in configuration")
             self.available = False
 
@@ -313,58 +305,43 @@ class SystemTray:
         except Exception as e:
             self.logger.error(f"Failed to refresh tray menu: {e}")
     
-    def start(self):        
+    def start(self):
         if not self.available:
             return False
-        
+
         if self.is_running:
             self.logger.warning("System tray is already running")
             return True
-        
+
         try:
-            idle_icon = self.icons.get("idle")    
+            idle_icon = self.icons.get("idle")
             menu = self._create_menu()
-            
+
             self.icon = pystray.Icon(
                 name="whisper-key",
                 icon=idle_icon,
                 title="Whisper Key",
                 menu=menu
             )
-            
-            self.thread = threading.Thread(target=self._run_tray, daemon=True)
-            self.thread.start()
-            
+
+            self.icon.run_detached()
+
             self.is_running = True
             print("   ✓ System tray icon is running...")
 
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to start system tray: {e}")
             return False
     
-    def _run_tray(self):
-        try:
-            self.icon.run()  # pystray provided loop method
-        except Exception as e:
-            self.logger.error(f"System tray thread error: {e}")
-        finally:
-            self.is_running = False
-            self.logger.debug("Tray icon thread ended")
-    
     def stop(self):
         if not self.is_running:
             return
-        
+
         try:
             self.icon.stop()
-                
-            # Wait for thread to finish to avoid deadlock
-            if self.thread and self.thread.is_alive() and self.thread != threading.current_thread():
-                self.thread.join(timeout=2.0)
-                
             self.is_running = False
-            
+
         except Exception as e:
             self.logger.error(f"Error stopping system tray: {e}")

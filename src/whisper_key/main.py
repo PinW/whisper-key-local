@@ -12,6 +12,7 @@ import threading
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
+from .platform import IS_MACOS
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
@@ -130,7 +131,13 @@ def setup_system_tray(tray_config, config_manager, state_manager, model_registry
 def setup_signal_handlers(shutdown_event):
     def signal_handler(signum, frame):
         shutdown_event.set()
-    
+        if IS_MACOS:
+            try:
+                from AppKit import NSApplication
+                NSApplication.sharedApplication().stop_(None)
+            except Exception:
+                pass
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
@@ -219,8 +226,12 @@ def main():
         print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
 
-        while not shutdown_event.wait(timeout=0.1):
-            pass
+        if IS_MACOS:
+            from AppKit import NSApplication
+            NSApplication.sharedApplication().run()
+        else:
+            while not shutdown_event.wait(timeout=0.1):
+                pass
             
     except KeyboardInterrupt:
         logger.info("Application shutting down...")
