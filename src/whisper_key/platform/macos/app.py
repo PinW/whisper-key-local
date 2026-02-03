@@ -5,12 +5,14 @@ class AppDelegate(NSObject):
     def applicationSupportsSecureRestorableState_(self, app):
         return True
 
+_delegate = None
+
 def setup():
+    global _delegate
     app = NSApplication.sharedApplication()
     app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
-    delegate = AppDelegate.alloc().init()
-    app.setDelegate_(delegate)
-    app._delegate_ref = delegate
+    _delegate = AppDelegate.alloc().init()
+    app.setDelegate_(_delegate)
 
 def run_event_loop(shutdown_event):
     app = NSApplication.sharedApplication()
