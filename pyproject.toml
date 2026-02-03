@@ -32,7 +32,6 @@ dependencies = [
     "pyautogui>=0.9.54; sys_platform=='win32'",
 
     # macOS-only
-    "quickmachotkey; sys_platform=='darwin'",
     "pyobjc-framework-Quartz; sys_platform=='darwin'",
 ]
 
