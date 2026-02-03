@@ -12,7 +12,7 @@ import threading
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-from .platform import app, IS_MACOS, permissions
+from .platform import app, permissions
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
@@ -221,7 +221,7 @@ def main():
         print(f"🚀 Application ready! Press [{beautify_hotkey(hotkey_config['recording_hotkey'])}] to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
 
-        if IS_MACOS and clipboard_config['auto_paste']:
+        if clipboard_config['auto_paste']:
             if not permissions.check_accessibility_permission():
                 if not permissions.handle_missing_permission(config_manager):
                     app.run_event_loop(shutdown_event)

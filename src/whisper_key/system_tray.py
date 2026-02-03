@@ -5,7 +5,7 @@ from typing import Optional, TYPE_CHECKING
 from pathlib import Path
 
 from .utils import resolve_asset_path, open_file
-from .platform import IS_MACOS, permissions
+from .platform import permissions
 
 try:
     import pystray
@@ -247,7 +247,7 @@ class SystemTray:
             self.logger.error(f"Failed to open config file: {e}")
 
     def _set_transcription_mode(self, auto_paste: bool):
-        if auto_paste and IS_MACOS and permissions:
+        if auto_paste:
             if not permissions.check_accessibility_permission():
                 if not permissions.handle_missing_permission(self.config_manager):
                     return
