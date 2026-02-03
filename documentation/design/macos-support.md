@@ -12,7 +12,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**3.1:** Audio feedback (`platform/macos/audio.py` - playsound3)~~ *(already done)*
   - [x] ~~**3.2:** App data path (`utils.py` - use `~/Library/Application Support/`)~~
   - [x] ~~**3.3:** Instance lock (`platform/macos/instance_lock.py` - fcntl)~~
-  - [ ] **3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)
+  - [x] ~~**3.4:** Key simulation (`platform/macos/keyboard.py` - Quartz CGEvent)~~
   - [x] ~~**3.5:** Hotkey detection (`platform/macos/hotkeys.py` - NSEvent)~~
   - [x] ~~**3.6:** Platform-aware config defaults (inline syntax in YAML)~~
   - [ ] **3.7:** Skip console manager on macOS
@@ -107,7 +107,7 @@ src/whisper_key/platform/
 
 | Component | Dependency | Status |
 |-----------|------------|--------|
-| Key simulation | `pyobjc-framework-Quartz` (CGEvent) | Not started |
+| Key simulation | `pyobjc-framework-Quartz` (CGEvent) | ✅ Complete |
 | Hotkey detection | `pyobjc-framework-AppKit` (NSEvent) | ✅ Complete |
 | Instance lock | `fcntl` | ✅ Complete |
 
@@ -136,10 +136,32 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| High | Key simulation (3.4) | Needed for auto-paste |
+| Medium | Accessibility permission UX | Prompt user when permission missing |
 | Low | Console manager skip (3.7) | Cosmetic |
 | Low | Menu bar icons (Phase 6) | Cosmetic |
 | Low | Update README & project index (Phase 6) | Documentation |
+
+---
+
+## Accessibility Permission UX (Future Improvement)
+
+**Problem:** macOS requires Accessibility permission for keyboard simulation. Without it, `CGEventPost` silently fails - no error, no paste. Users see transcription complete but nothing happens.
+
+**Solution:** Use `AXIsProcessTrustedWithOptions` to detect and prompt.
+
+```python
+from ApplicationServices import AXIsProcessTrustedWithOptions
+
+def check_accessibility_permission():
+    options = {'AXTrustedCheckOptionPrompt': True}
+    return AXIsProcessTrustedWithOptions(options)
+```
+
+When permission is missing, this shows a system alert explaining the app needs Accessibility access and offers to open System Settings. The user must manually toggle permission there (Apple requires explicit opt-in for this sensitive permission).
+
+**Trigger points to consider:**
+- On first auto-paste attempt
+- At app startup (if auto-paste enabled in config)
 
 ---
 
@@ -147,8 +169,8 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Accessibility permissions on macOS | Medium | Clear user messaging, auto-open System Preferences |
+| Accessibility permissions on macOS | Medium | Use `AXIsProcessTrustedWithOptions` to prompt user |
 
 ---
 
-*Created: 2026-02-02 | Updated: 2026-02-03 | Hotkey testing passed*
+*Created: 2026-02-02 | Updated: 2026-02-03 | Key simulation complete*
