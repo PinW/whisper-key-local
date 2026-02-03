@@ -43,9 +43,12 @@ def handle_missing_permission(config_manager) -> bool:
 
     message = "  🔐 Auto-paste requires permission to simulate [Cmd+V] keypress..."
 
+    DIM = "\033[2m"
+    RESET = "\033[0m"
+
     options = [
-        f"Grant accessibility permission to {app_name}\n      Automatically paste at cursor, with option to auto-send with ENTER",
-        "Disable auto-paste\n      Transcribe to clipboard, then manually paste"
+        f"Grant accessibility permission to {app_name}\n      {DIM}Automatically paste at cursor, with option to auto-send with ENTER{RESET}",
+        f"Disable auto-paste\n      {DIM}Transcribe to clipboard, then manually paste{RESET}"
     ]
 
     choice = prompt_choice(message, options)
