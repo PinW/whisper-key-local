@@ -11,6 +11,9 @@ Usage:
 
 import sys
 import signal
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(name)s: %(message)s')
 
 if sys.platform != 'darwin':
     print("This script only works on macOS")
