@@ -37,7 +37,7 @@ def request_accessibility_permission():
 
 
 def handle_missing_permission(config_manager) -> bool:
-    from ...terminal_ui import prompt_choice
+    from ...terminal_ui import getch
 
     app_name = _get_terminal_app_name()
 
@@ -46,17 +46,43 @@ def handle_missing_permission(config_manager) -> bool:
     RESET = "\x1b[0m"
 
     title = "Auto-paste requires permission to simulate [Cmd+V] keypress..."
-    box_width = len(title) + 4
-    styled_message = f"""{BOLD_CYAN}  ┌{'─' * box_width}┐
-  │  {title}  │
-  └{'─' * box_width}┘{RESET}"""
+    opt1_main = f"[1] Grant accessibility permission to {app_name}"
+    opt1_desc = "Transcribe directly to cursor, with option to auto-send"
+    opt2_main = "[2] Disable auto-paste"
+    opt2_desc = "Transcribe to clipboard, then manually paste"
 
-    options = [
-        f"Grant accessibility permission to {app_name}\n      {DIM}Transcribe directly to cursor, with option to auto-send{RESET}",
-        f"Disable auto-paste\n      {DIM}Transcribe to clipboard, then manually paste{RESET}"
-    ]
+    width = max(len(title), len(opt1_main), len(opt1_desc), len(opt2_main), len(opt2_desc)) + 4
 
-    choice = prompt_choice(styled_message, options)
+    def pad(text):
+        return text + ' ' * (width - len(text))
+
+    print()
+    print(f"{BOLD_CYAN}  ┌{'─' * width}┐")
+    print(f"  │ {pad(title)} │")
+    print(f"  │ {' ' * width} │")
+    print(f"  │ {pad(opt1_main)} │")
+    print(f"  │ {RESET}{DIM}   {pad(opt1_desc)}{RESET}{BOLD_CYAN} │")
+    print(f"  │ {' ' * width} │")
+    print(f"  │ {pad(opt2_main)} │")
+    print(f"  │ {RESET}{DIM}   {pad(opt2_desc)}{RESET}{BOLD_CYAN} │")
+    print(f"  └{'─' * width}┘{RESET}")
+    print()
+    print("  Press a number to choose: ", end="", flush=True)
+
+    while True:
+        ch = getch()
+        if ch == '1':
+            print(ch)
+            choice = 0
+            break
+        elif ch == '2':
+            print(ch)
+            choice = 1
+            break
+        elif ch in ('\x03', '\x04'):
+            print()
+            choice = -1
+            break
 
     if choice == 0:
         request_accessibility_permission()

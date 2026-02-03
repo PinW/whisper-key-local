@@ -1,6 +1,6 @@
 import sys
 
-def _getch():
+def getch():
     try:
         import tty
         import termios
@@ -29,7 +29,7 @@ def prompt_choice(message: str, options: list[str]) -> int:
 
     while True:
         try:
-            ch = _getch()
+            ch = getch()
             if ch in valid_choices:
                 print(ch)
                 return valid_choices[ch]
