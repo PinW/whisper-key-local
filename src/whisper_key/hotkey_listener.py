@@ -59,15 +59,14 @@ class HotkeyListener:
 
         self.hotkey_bindings = []
         for config in hotkey_configs:
-            formatted_hotkey = self._convert_hotkey_to_global_hotkeys_format(config['combination'])
-
+            hotkey = config['combination'].lower().strip()
             self.hotkey_bindings.append([
-                                         formatted_hotkey,
-                                         config['callback'],
-                                         config.get('release_callback') or None,
-                                         False])
-
-            self.logger.info(f"Configured {config['name']} hotkey: {config['combination']} -> {formatted_hotkey}")
+                hotkey,
+                config['callback'],
+                config.get('release_callback') or None,
+                False
+            ])
+            self.logger.info(f"Configured {config['name']} hotkey: {hotkey}")
 
         self.logger.info(f"Total hotkeys configured: {len(self.hotkey_bindings)}")
 
@@ -149,29 +148,6 @@ class HotkeyListener:
         except Exception as e:
             self.logger.error(f"Error stopping hotkey listener: {e}")
 
-    def _convert_hotkey_to_global_hotkeys_format(self, hotkey_str: str) -> str:
-
-        key_mapping = {
-            'ctrl': 'control',
-            'shift': 'shift',
-            'alt': 'alt',
-            'win': 'window',
-            'windows': 'window',
-            'cmd': 'window',
-            'super': 'window',
-            'space': 'space',
-            'enter': 'enter',
-            'esc': 'escape'
-        }
-
-        keys = hotkey_str.lower().split('+')
-        converted_keys = []
-
-        for key in keys:
-            key = key.strip()
-            converted_keys.append(key_mapping.get(key, key))
-
-        return ' + '.join(converted_keys)
 
     def change_hotkey_config(self, setting: str, value):
         valid_settings = ['recording_hotkey', 'auto_enter_hotkey', 'auto_enter_enabled', 'stop_with_modifier_enabled', 'cancel_combination']
