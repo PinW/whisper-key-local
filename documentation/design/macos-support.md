@@ -155,24 +155,6 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 ---
 
-## Testing Strategy
-
-### Unit Tests
-- Each platform module tested in isolation
-- Mock platform detection for cross-platform test runs
-
-### Integration Tests
-- Full workflow on Windows VM
-- Full workflow on macOS VM
-- Hotkey detection + transcription + paste cycle
-
-### Manual Testing
-- Various macOS apps (Notes, Terminal, VS Code, browser)
-- Accessibility permission flow
-- System tray behavior
-
----
-
 ## Open Questions
 
 1. ~~**NSApplication event loop:** Does pystray already run one? Can we share it with QuickMacHotKey?~~ ✅ Resolved - see Phase 5 implementation
