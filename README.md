@@ -49,7 +49,7 @@ pip install -e .
 python whisper-key.py
 ```
 
-## 🎮 Basic Usage
+## 🎤 Basic Usage
 
 - Boot the app, the "tiny" model will download and start
 - Press `Ctrl+Win` to start recording
