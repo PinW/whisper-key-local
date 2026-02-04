@@ -57,18 +57,20 @@ python whisper-key.py
 - Alternatively press `Alt` to stop recording, auto-paste, and also send an ENTER keypress
 - Right click the system tray icon to change models
 
-### Configuration
+## ⚙️ Configuration
 
 Settings and log files are stored at:
 - **Windows:** `%APPDATA%\whisperkey\`
 - **macOS:** `~/Library/Application Support/whisperkey/`
 
-Edit `user_settings.yaml` to customize:
+The app creates `user_settings.yaml` in this folder. Edit it to customize:
 - Whisper model size (tiny/base/small/medium/large)
 - Hotkeys
 - Automation (auto-paste, auto-ENTER)
 - Voice activity detection
 - And much more
+
+Delete `user_settings.yaml` and restart to reset to defaults.
 
 ## 📦 Package Dependencies
 
