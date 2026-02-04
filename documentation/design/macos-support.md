@@ -25,11 +25,12 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**5.4:** Hide Dock icon (`setActivationPolicy_`)~~
   - [x] ~~**5.5:** Suppress secure coding warning (`AppDelegate`)~~
 - [ ] **Phase 6:** macOS polish & documentation
-  - [ ] **6.1:** Design proper template icons for macOS menu bar (monochrome, @2x variants)
-  - [ ] **6.2:** Support dark/light mode (template images auto-adapt)
-  - [ ] **6.3:** Correct sizing for Retina displays
-  - [ ] **6.4:** Update README with macOS support
-  - [ ] **6.5:** Update project index
+  - [x] ~~**6.1:** Design proper template icons for macOS menu bar (monochrome, @2x variants)~~
+  - [x] ~~**6.2:** Support dark/light mode (gradient indicator lights for visibility)~~
+  - [x] ~~**6.3:** Correct sizing for Retina displays~~
+  - [x] ~~**6.4:** Fix tray icon not updating during transcription (threaded callbacks)~~
+  - [ ] **6.5:** Update README with macOS support
+  - [ ] **6.6:** Update project index
 
 ---
 
@@ -145,7 +146,6 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| Low | Menu bar icons (Phase 6) | Cosmetic |
 | Low | Update README & project index (Phase 6) | Documentation |
 
 ---
@@ -175,4 +175,4 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 ---
 
-*Created: 2026-02-02 | Updated: 2026-02-03 | Phase 3 complete, Accessibility UX done*
+*Created: 2026-02-02 | Updated: 2026-02-04 | Phase 5 complete, Phase 6 icons done*
