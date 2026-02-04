@@ -38,6 +38,7 @@
 - As a *user*, I want **automatic updates** to get new features
 
 ### CLI
+- As a *user* I want **on-screen hotkey hints** so I can see available controls at a glance like a video game HUD
 - As a *user*, I want a **terminal UI** so I can control the app without leaving the command line
 - As a *user*, I want a **terminal status bar** so I can see app state, model, and recording status at a glance
 - As a *user*, I want **terminal colors and styling** so the CLI feels modern like coding tools (Claude Code, lazygit)
@@ -66,6 +67,7 @@
 - As a *user*, I want to see my **transcription history** so I can search through it
 
 ### Recording
+- As a *user* I want **hotkey-per-audio-source bindings** so I can quickly switch between microphone input and speaker/system audio capture
 - As a *user*, I want **real-time transcription** so that I can get immediate feedback
 
 ### Developer Use Cases
