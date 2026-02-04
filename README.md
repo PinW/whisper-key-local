@@ -68,11 +68,12 @@ Delete this file and restart app to reset to defaults.
 | Option | Default | Notes |
 |--------|---------|-------|
 | **Whisper** |||
-| `whisper.model` | `tiny` | tiny/base/small/medium/large/large-v3-turbo |
+| `whisper.model` | `tiny` | Any model defined in `whisper.models` |
 | `whisper.device` | `cpu` | cpu or cuda (NVIDIA GPU) |
 | `whisper.compute_type` | `int8` | int8/float16/float32 |
 | `whisper.language` | `auto` | auto or language code (en, es, fr, etc.) |
 | `whisper.beam_size` | `5` | Higher = more accurate but slower (1-10) |
+| `whisper.models` | (see config) | Add custom HuggingFace or local models |
 | **Hotkeys** |||
 | `hotkey.recording_hotkey` | `ctrl+win` / `fn+ctrl` | Windows / macOS |
 | `hotkey.stop_with_modifier_enabled` | `true` | Stop with first modifier only |
