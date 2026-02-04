@@ -1,6 +1,6 @@
-# Whisper Key - Local Speech-to-Text for Windows
+# Whisper Key - Local Speech-to-Text
 
-Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is.
+Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is. Now on Windows and macOS!
 
 Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
 
@@ -12,51 +12,60 @@ Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
 - **Offline Capable**: No internet required after models downloaded
 - **Local Processing**: Voice data never leaves your computer
 - **Voice activity detection**: Prevent hallucinations, auto-stop accidental hotkey presses
-- **Configurable**: Customize hotkeys, model, transcription actions, and audio settings
+- **Configurable**: Customize hotkeys, models, and much more
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Windows 10/11
-- Microphone
+| | |
+|--|--|
+| **Windows** | [Portable App](#portable-app-windows) · [pipx](#pipx-windows) · [Development](#development-windows) |
+| **macOS** | [pipx](#pipx-macos) · [Development](#development-macos) |
 
-### Option 1: Download Portable App
+---
+
+### Portable App (Windows)
+
 1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
 2. Extract the zip file
 3. Run `whisper-key.exe`
 
-### Option 2: Install via pipx
-**Prerequisites:**
-- Python 3.8+ installed on Windows
-- pipx installed (`pip install pipx`)
+### pipx (Windows)
 
-Install the application globally:
+Requires Python 3.11-3.13 and [pipx](https://pipx.pypa.io/)
+
 ```bash
 pipx install whisper-key-local
-```
-
-Run from anywhere:
-```bash
 whisper-key
 ```
 
-### Option 3: Development Installation
-**Prerequisites:**
-- Python 3.8+ installed on Windows
+### Development (Windows)
 
-Clone the repository:
+Requires Python 3.11-3.13
+
 ```bash
 git clone https://github.com/PinW/whisper-key-local.git
 cd whisper-key-local
-```
-
-Install the dependencies:
-```bash
 pip install -e .
+python whisper-key.py
 ```
 
-Run the application:
+### pipx (macOS)
+
+Requires Python 3.11-3.13 and [pipx](https://pipx.pypa.io/)
+
 ```bash
+pipx install whisper-key-local
+whisper-key
+```
+
+### Development (macOS)
+
+Requires Python 3.11-3.13
+
+```bash
+git clone https://github.com/PinW/whisper-key-local.git
+cd whisper-key-local
+pip install -e .
 python whisper-key.py
 ```
 
