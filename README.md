@@ -16,9 +16,11 @@ Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
 
 ## 🚀 Quick Start
 
-> **Windows:** [Portable App](#portable-app-windows) · [pipx](#pipx-windows)
-> **macOS:** [pipx](#pipx-macos)
-> **Any:** [Development](#development)
+| OS | Install Options |
+|--|--|
+| **Windows** | [Portable App](#portable-app-windows) &nbsp;·&nbsp; [pipx](#pipx-windows) |
+| **macOS** | [pipx](#pipx-macos) |
+| **Any** | [Development](#development) |
 
 ---
 
