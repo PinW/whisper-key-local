@@ -1,4 +1,4 @@
-# Windows Whisper Speech-to-Text App - Completed Stories
+# Whisper Key - Completed Stories
 
 - As a *user*, I want **audio recording length** so I can get a feel for transcription times
 - As a *user*, I want **distinct cancel sound** so I can immediately tell when I cancelled vs stopped recording

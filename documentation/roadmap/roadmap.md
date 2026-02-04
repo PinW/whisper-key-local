@@ -1,4 +1,4 @@
-# Windows Whisper Speech-to-Text App - Roadmap
+# Whisper Key - Roadmap
 @completed.md
 
 ## Bugs
@@ -10,6 +10,11 @@
 - As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
 - As a *user*, I want to add **custom words** so rare words that I say often are translated accurately
 - As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
+
+## macOS
+- As a *mac user*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys (ESC, cmd+.)
+- As a *mac user*, I want **README updated for macOS** so I know how to install and use on my Mac
+- As a *mac user*, I want **Homebrew formula** so I can install with `brew install whisper-key`
 
 ## Backlog
 
@@ -55,7 +60,6 @@
 - As a *user* I want **meeting mode** so I can transcribe an entire meeting in real-time
 
 ### Cross-Platform
-- As a *developer*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys (ESC, cmd+.)
 - As a phone *user*, I want this app on **mobile**
 
 ### Transcription Quality
