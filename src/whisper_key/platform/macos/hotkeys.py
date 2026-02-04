@@ -1,4 +1,5 @@
 import logging
+import threading
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -104,7 +105,7 @@ def _handle_flags_changed(event):
             logger.debug(f"Modifier-only hotkey pressed: {binding.original}")
             binding.is_active = True
             try:
-                binding.press_callback()
+                threading.Thread(target=binding.press_callback, daemon=True).start()
             except Exception as e:
                 logger.error(f"Error in press callback for {binding.original}: {e}")
 
@@ -113,7 +114,7 @@ def _handle_flags_changed(event):
             binding.is_active = False
             if binding.release_callback:
                 try:
-                    binding.release_callback()
+                    threading.Thread(target=binding.release_callback, daemon=True).start()
                 except Exception as e:
                     logger.error(f"Error in release callback for {binding.original}: {e}")
 
@@ -131,7 +132,7 @@ def _handle_key_down(event):
         if key_code == binding.keycode and current_flags == binding.modifiers:
             logger.debug(f"Traditional hotkey pressed: {binding.original}")
             try:
-                binding.press_callback()
+                threading.Thread(target=binding.press_callback, daemon=True).start()
             except Exception as e:
                 logger.error(f"Error in press callback for {binding.original}: {e}")
             return
