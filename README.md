@@ -49,26 +49,11 @@ pip install -e .
 python whisper-key.py
 ```
 
-## 📦 Package Dependencies
-
-- `faster-whisper` - Fast AI speech recognition
-- `numpy` - Numerical computing support
-- `sounddevice` - Audio recording
-- `global-hotkeys` - System-wide hotkey detection  
-- `pyperclip` - Clipboard operations
-- `ruamel.yaml` - Configuration file parsing (YAML)
-- `pyautogui` - Key simulation for Ctrl+V auto-paste and auto-ENTER
-- `pywin32` - Windows API access for window management
-- `pystray` - System tray integration
-- `Pillow` - Image processing for system tray icons
-- `hf-xet` - Cache management for Hugging Face models
-- `ten-vad` - Voice Activity Detection to prevent silent hallucinations
-
 ## 🎮 Basic Usage
 
 - Boot the app, the "tiny" model will download and start
 - Press `Ctrl+Win` to start recording
-- Speak into your microphone  
+- Speak into your microphone
 - Press `Ctrl` to stop recording and transcribe
 - The transcribed text is auto-pasted on your text cursor
 - Alternatively press `Alt` to stop recording, auto-paste, and also send an ENTER keypress
@@ -81,6 +66,21 @@ The app automatically creates a user settings file in `%APPDATA%\Roaming\whisper
 - Configure automation (auto-paste, auto-ENTER)
 - Voice activity detection
 - And much more
+
+## 📦 Package Dependencies
+
+- `faster-whisper` - Fast AI speech recognition
+- `numpy` - Numerical computing support
+- `sounddevice` - Audio recording
+- `global-hotkeys` - System-wide hotkey detection
+- `pyperclip` - Clipboard operations
+- `ruamel.yaml` - Configuration file parsing (YAML)
+- `pyautogui` - Key simulation for Ctrl+V auto-paste and auto-ENTER
+- `pywin32` - Windows API access for window management
+- `pystray` - System tray integration
+- `Pillow` - Image processing for system tray icons
+- `hf-xet` - Cache management for Hugging Face models
+- `ten-vad` - Voice Activity Detection to prevent silent hallucinations
 
 ## 🔧 Troubleshooting
 
