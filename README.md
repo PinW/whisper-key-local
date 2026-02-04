@@ -16,10 +16,9 @@ Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
 
 ## 🚀 Quick Start
 
-| | |
-|--|--|
-| **Windows** | [Portable App](#portable-app-windows) · [pipx](#pipx-windows) · [Development](#development-windows) |
-| **macOS** | [pipx](#pipx-macos) · [Development](#development-macos) |
+> **Windows:** [Portable App](#portable-app-windows) · [pipx](#pipx-windows)
+> **macOS:** [pipx](#pipx-macos)
+> **Any:** [Development](#development)
 
 ---
 
@@ -38,17 +37,6 @@ pipx install whisper-key-local
 whisper-key
 ```
 
-### Development (Windows)
-
-Requires Python 3.11-3.13
-
-```bash
-git clone https://github.com/PinW/whisper-key-local.git
-cd whisper-key-local
-pip install -e .
-python whisper-key.py
-```
-
 ### pipx (macOS)
 
 Requires Python 3.11-3.13 and [pipx](https://pipx.pypa.io/)
@@ -58,7 +46,7 @@ pipx install whisper-key-local
 whisper-key
 ```
 
-### Development (macOS)
+### Development
 
 Requires Python 3.11-3.13
 
