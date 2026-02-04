@@ -11,9 +11,9 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 - **Auto-Send**: Optionally auto-send your transcription with ENTER
 - **Offline Capable**: No internet required after models downloaded
 - **Local Processing**: Voice data never leaves your computer
-- **Efficient Models**: Choose a small, efficient model for GPU
+- **Efficient Models**: Choose a small, efficient model for CPU
 - **CUDA Support**: Or leverage your nVidia GPU with bigger models
-- **Voice activity detection**: Prevent hallucinations, auto-stop accidental hotkey presses
+- **Voice activity detection**: Auto-cancel after long silences and prevent hallucination
 - **Cross-platform**: Works on Windows and macOS
 - **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
 
