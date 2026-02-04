@@ -1,8 +1,11 @@
 import logging
 import os
+import platform
 import threading
 
 from playsound3 import playsound
+
+SOUND_BACKEND = "winmm" if platform.system() == "Windows" else None
 
 from .utils import resolve_asset_path
 
@@ -35,7 +38,7 @@ class AudioFeedback:
     def _play_sound_file_async(self, file_path: str):
         def play():
             try:
-                playsound(file_path, block=False)
+                playsound(file_path, block=False, backend=SOUND_BACKEND)
             except Exception as e:
                 self.logger.warning(f"Failed to play sound file {file_path}: {e}")
 
