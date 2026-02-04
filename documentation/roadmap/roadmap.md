@@ -12,7 +12,7 @@
 - As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 
 ## macOS
-- As a *mac user*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys (ESC, cmd+.)
+- As a *mac user*, I want **CGEventTap hotkeys** so I can use ESC or Cmd+. to cancel recording
 - As a *mac user*, I want **monochrome menu bar icons** so the app conforms to Apple's template icon guidelines
 
 ## Backlog
