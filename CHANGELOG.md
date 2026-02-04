@@ -2,7 +2,7 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
-## [0.6.0] - 2026-02-04
+## [0.6.1] - 2026-02-04
 
 ### Added
 - **macOS support** - Full platform abstraction layer with native integration for hotkeys (NSEvent), keyboard simulation (Quartz CGEvent), and system tray (#23)
@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - UTF-8 stdout encoding for special characters on Windows
 - Audio feedback sounds going silent after idle periods on Windows (switched to winmm backend)
+- PyPI package missing platform-specific tray icons
+- PyInstaller build: ten_vad path and Windows platform assets
 
 ### Dependencies
 - **ten-vad**: Now `>=1.0.6` (was git-only)
