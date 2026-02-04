@@ -31,9 +31,7 @@ pipx install whisper-key-local
 whisper-key
 ```
 
-### Portable App
-
-Windows only. No Python required.
+### Portable App (Windows only)
 
 1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
 2. Extract and run `whisper-key.exe`
@@ -85,4 +83,8 @@ The app automatically creates a user settings file in `%APPDATA%\Roaming\whisper
 ## 🔧 Troubleshooting
 
 - Check the log file `app.log` for detailed error messages
-- Delete the user settings file in `%APPDATA%/whisperkey/user_settings.yaml` and restart to reset to defaults
+- Delete the user settings file and restart to reset to defaults
+
+Log and settings location:
+- **Windows:** `%APPDATA%\whisperkey\`
+- **macOS:** `~/Library/Application Support/whisperkey/`
