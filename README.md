@@ -13,7 +13,7 @@ Global hotkeys to record speech and transcribe directly to your cursor. **Now on
 - **Local Processing**: Voice data never leaves your computer
 - **Voice activity detection**: Prevent hallucinations, auto-stop accidental hotkey presses
 - **Cross-platform**: Works on Windows and macOS
-- **Configurable**: Customize hotkeys, models, and much more
+- **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
 
 ## 🚀 Quick Start
 
