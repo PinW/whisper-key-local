@@ -43,4 +43,4 @@ whisper-key = "whisper_key.main:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"whisper_key" = ["assets/**/*", "config.defaults.yaml"]
+"whisper_key" = ["assets/**/*", "platform/*/assets/*", "config.defaults.yaml"]
