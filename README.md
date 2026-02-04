@@ -63,6 +63,10 @@ Right-click the system tray / menu bar icon to:
 - **Windows:** `%APPDATA%\whisperkey\`
 - **macOS:** `~/Library/Application Support/whisperkey/`
 
+Transcription models (via HuggingFace) are stored at:
+- **Windows:** `%USERPROFILE%\.cache\huggingface\hub\`
+- **macOS:** `~/.cache/huggingface/hub/`
+
 Edit `user_settings.yaml` to customize:
 - Whisper model size (tiny/base/small/medium/large)
 - Hotkeys
