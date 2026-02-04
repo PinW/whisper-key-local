@@ -2,7 +2,7 @@
 
 Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is.
 
-**Now on Windows and macOS!**
+> **Now on Windows and macOS!**
 
 Questions or ideas? [Discord](https://discord.gg/uZnXV8snhz)
 
