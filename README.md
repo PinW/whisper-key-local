@@ -17,8 +17,8 @@ Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
 ## 🚀 Quick Start
 
 - [pipx](#pipx) (Windows, macOS) — Recommended
-- [Development](#development) (Windows, macOS)
 - [Portable App](#portable-app) (Windows)
+- [Development](#development) (Windows, macOS)
 
 ---
 
@@ -31,6 +31,13 @@ pipx install whisper-key-local
 whisper-key
 ```
 
+### Portable App
+
+Windows only. No Python required.
+
+1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
+2. Extract and run `whisper-key.exe`
+
 ### Development
 
 Requires Python 3.11-3.13
@@ -41,13 +48,6 @@ cd whisper-key-local
 pip install -e .
 python whisper-key.py
 ```
-
-### Portable App
-
-Windows only. No Python required.
-
-1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
-2. Extract and run `whisper-key.exe`
 
 ## 📦 Package Dependencies
 
