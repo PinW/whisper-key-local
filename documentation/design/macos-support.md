@@ -30,7 +30,7 @@ Add macOS support to whisper-key-local while maintaining Windows functionality.
   - [x] ~~**6.3:** Correct sizing for Retina displays~~
   - [x] ~~**6.4:** Fix tray icon not updating during transcription (threaded callbacks)~~
   - [ ] **6.5:** Update README with macOS support
-  - [ ] **6.6:** Update project index
+  - [x] ~~**6.6:** Update project index~~
 
 ---
 
@@ -146,7 +146,7 @@ Platform-conditional dependencies using PEP 508 markers (`sys_platform=='win32'`
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| Low | Update README & project index (Phase 6) | Documentation |
+| Low | Update README (Phase 6.5) | Documentation |
 
 ---
 
