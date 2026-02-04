@@ -72,17 +72,11 @@ The app creates `user_settings.yaml` in this folder. Edit it to customize:
 
 Delete `user_settings.yaml` and restart to reset to defaults.
 
-## 📦 Package Dependencies
+## 📦 Dependencies
 
-- `faster-whisper` - Fast AI speech recognition
-- `numpy` - Numerical computing support
-- `sounddevice` - Audio recording
-- `global-hotkeys` - System-wide hotkey detection
-- `pyperclip` - Clipboard operations
-- `ruamel.yaml` - Configuration file parsing (YAML)
-- `pyautogui` - Key simulation for Ctrl+V auto-paste and auto-ENTER
-- `pywin32` - Windows API access for window management
-- `pystray` - System tray integration
-- `Pillow` - Image processing for system tray icons
-- `hf-xet` - Cache management for Hugging Face models
-- `ten-vad` - Voice Activity Detection to prevent silent hallucinations
+**Cross-platform:**
+`faster-whisper` · `numpy` · `sounddevice` · `soxr` · `pyperclip` · `ruamel.yaml` · `pystray` · `Pillow` · `playsound3` · `ten-vad` · `hf-xet`
+
+**Windows:** `global-hotkeys` · `pywin32` · `pyautogui`
+
+**macOS:** `pyobjc-framework-Quartz` · `pyobjc-framework-ApplicationServices`
