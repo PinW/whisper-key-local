@@ -1,8 +1,8 @@
 # Whisper Key - Local Speech-to-Text
 
-Global hotkeys to record speech and transcribe directly to your cursor. **Now on Windows and macOS!**
+Global hotkeys to record speech and transcribe directly to your cursor. 
 
-> Questions or ideas? [Discord](https://discord.gg/uZnXV8snhz)
+> **Now on Windows and macOS!** Questions or ideas? [Discord](https://discord.gg/uZnXV8snhz)
 
 ## ✨ Features
 
