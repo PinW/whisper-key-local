@@ -1,11 +1,11 @@
 import logging
-import threading
 import os
 import signal
 from typing import Optional, TYPE_CHECKING
 from pathlib import Path
 
-from .utils import resolve_asset_path
+from .utils import open_file
+from .platform import permissions, icons
 
 try:
     import pystray
@@ -36,7 +36,6 @@ class SystemTray:
         self.icon = None  # pystray object, holds menu, state, etc.
         self.is_running = False
         self.current_state = "idle"
-        self.thread = None
         self.available = True
         
         if self._check_tray_availability():
@@ -46,7 +45,7 @@ class SystemTray:
         if not self.tray_config['enabled']:
             self.logger.warning("   ✗ System tray disabled in configuration")
             self.available = False
-            
+
         elif not TRAY_AVAILABLE:
             self.logger.warning("   ✗ System tray not available - pystray or Pillow not installed")
             self.available = False
@@ -55,31 +54,14 @@ class SystemTray:
     
     def _load_icons_to_cache(self):
         try:
-            self.icons = {}
-            
-            icon_files = {
-                "idle": "assets/tray_idle.png",
-                "recording": "assets/tray_recording.png", 
-                "processing": "assets/tray_processing.png"
-            }
-            
-            for state, asset_path in icon_files.items():
-                icon_path = Path(resolve_asset_path(asset_path))
-                
-                try:
-                    if icon_path.exists():
-                        self.icons[state] = Image.open(str(icon_path))
-                    else:
-                        self.icons[state] = self._create_fallback_icon(state)
-                        self.logger.warning(f"Icon file not found, using fallback: {icon_path}")
-                        
-                except Exception as e:
-                    self.logger.error(f"Failed to load icon {icon_path}: {e}")
-                    self.icons[state] = self._create_fallback_icon(state)
-
+            self.icons = icons.get_tray_icons()
         except Exception as e:
-            self.logger.error(f"Failed to load system tray: {e}")
-            self.available = False
+            self.logger.error(f"Failed to load tray icons: {e}")
+            self.icons = {
+                "idle": self._create_fallback_icon("idle"),
+                "recording": self._create_fallback_icon("recording"),
+                "processing": self._create_fallback_icon("processing"),
+            }
         
     def _create_fallback_icon(self, state: str) -> Image.Image:
         colors = {
@@ -235,7 +217,7 @@ class SystemTray:
         try:
             print("⚙️ Opening log file...")
             log_path = self.config_manager.get_log_file_path()
-            os.startfile(log_path)
+            open_file(log_path)
         except Exception as e:
             self.logger.error(f"Failed to open log file: {e}")
 
@@ -243,11 +225,17 @@ class SystemTray:
         try:
             print("⚙️ Opening settings...")
             config_path = self.config_manager.user_settings_path
-            os.startfile(config_path)
+            open_file(config_path)
         except Exception as e:
             self.logger.error(f"Failed to open config file: {e}")
 
-    def _set_transcription_mode(self, auto_paste: bool):        
+    def _set_transcription_mode(self, auto_paste: bool):
+        if auto_paste:
+            if not permissions.check_accessibility_permission():
+                if not permissions.handle_missing_permission(self.config_manager):
+                    return
+                auto_paste = False
+
         self.state_manager.update_transcription_mode(auto_paste)
         self.icon.menu = self._create_menu()
 
@@ -307,58 +295,43 @@ class SystemTray:
         except Exception as e:
             self.logger.error(f"Failed to refresh tray menu: {e}")
     
-    def start(self):        
+    def start(self):
         if not self.available:
             return False
-        
+
         if self.is_running:
             self.logger.warning("System tray is already running")
             return True
-        
+
         try:
-            idle_icon = self.icons.get("idle")    
+            idle_icon = self.icons.get("idle")
             menu = self._create_menu()
-            
+
             self.icon = pystray.Icon(
                 name="whisper-key",
                 icon=idle_icon,
                 title="Whisper Key",
                 menu=menu
             )
-            
-            self.thread = threading.Thread(target=self._run_tray, daemon=True)
-            self.thread.start()
-            
+
+            self.icon.run_detached()
+
             self.is_running = True
             print("   ✓ System tray icon is running...")
 
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to start system tray: {e}")
             return False
     
-    def _run_tray(self):
-        try:
-            self.icon.run()  # pystray provided loop method
-        except Exception as e:
-            self.logger.error(f"System tray thread error: {e}")
-        finally:
-            self.is_running = False
-            self.logger.debug("Tray icon thread ended")
-    
     def stop(self):
         if not self.is_running:
             return
-        
+
         try:
             self.icon.stop()
-                
-            # Wait for thread to finish to avoid deadlock
-            if self.thread and self.thread.is_alive() and self.thread != threading.current_thread():
-                self.thread.join(timeout=2.0)
-                
             self.is_running = False
-            
+
         except Exception as e:
             self.logger.error(f"Error stopping system tray: {e}")

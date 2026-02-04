@@ -127,13 +127,13 @@ class StateManager:
             
             duration = self.audio_recorder.get_audio_duration(audio_data)
             print(f"🎤 Recorded {duration:.1f} seconds! Transcribing...")
-            
+
+            self.system_tray.update_state("processing")
+
             transcribed_text = self.whisper_engine.transcribe_audio(audio_data)
-            
+
             if not transcribed_text:
                 return
-            
-            self.system_tray.update_state("processing")
 
             success = self.clipboard_manager.deliver_transcription(
                 transcribed_text, use_auto_enter

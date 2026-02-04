@@ -1,109 +1,131 @@
-# Whisper Key - Local Speech-to-Text for Windows
+# Whisper Key - Local Speech-to-Text
 
-Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is.
+Global hotkeys to record speech and transcribe directly to your cursor. 
 
-Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
+> **Now on Windows and macOS!** Questions or ideas? [Discord](https://discord.gg/uZnXV8snhz)
 
-## 🎯 Features
+## ✨ Features
 
-- **Global Hotkey**: Press `Ctrl+Win` to start recording, `Ctrl` to stop
-- **Auto-Paste**: Transcription inserted at your cursor via auto-paste
-- **Auto-Send**: Press `Alt` to stop, auto-paste, and auto-send with ENTER keypress
+- **Global Hotkey**: Start recording speech from any app
+- **Auto-Paste**: Transcribe directly to cursor
+- **Auto-Send**: Optionally auto-send your transcription with ENTER
 - **Offline Capable**: No internet required after models downloaded
 - **Local Processing**: Voice data never leaves your computer
-- **Voice activity detection**: Prevent hallucinations, auto-stop accidental hotkey presses
-- **Configurable**: Customize hotkeys, model, transcription actions, and audio settings
+- **Efficient Models**: Choose a small, efficient model for CPU
+- **CUDA Support**: Or leverage your nVidia GPU with bigger models
+- **Voice activity detection**: Auto-cancel after long silences and prevent hallucination
+- **Cross-platform**: Works on Windows and macOS
+- **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Windows 10/11
-- Microphone
+### pipx (Recommended)
 
-### Option 1: Download Portable App
-1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
-2. Extract the zip file
-3. Run `whisper-key.exe`
+Requires Python 3.11-3.13 and [pipx](https://pipx.pypa.io/)
 
-### Option 2: Install via pipx
-**Prerequisites:**
-- Python 3.8+ installed on Windows
-- pipx installed (`pip install pipx`)
-
-Install the application globally:
 ```bash
 pipx install whisper-key-local
-```
-
-Add VAD support (prevents silence hallucinations):
-```bash
-pipx inject whisper-key-local git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
-```
-
-Run from anywhere:
-```bash
 whisper-key
 ```
 
-### Option 3: Development Installation
-**Prerequisites:**
-- Python 3.8+ installed on Windows
+### Portable App (Windows only)
 
-Clone the repository:
+1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
+2. Extract and run `whisper-key.exe`
+
+### Development
+
+Requires Python 3.11-3.13
+
 ```bash
 git clone https://github.com/PinW/whisper-key-local.git
 cd whisper-key-local
-```
-
-Install the dependencies:
-```bash
 pip install -e .
-```
-
-Add VAD support (prevents silence hallucinations):
-```bash
-pip install git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX
-```
-
-Run the application:
-```bash
 python whisper-key.py
 ```
 
-## 📦 Package Dependencies
+## 🎤 Basic Usage
 
-- `faster-whisper` - Fast AI speech recognition
-- `numpy` - Numerical computing support
-- `sounddevice` - Audio recording
-- `global-hotkeys` - System-wide hotkey detection  
-- `pyperclip` - Clipboard operations
-- `ruamel.yaml` - Configuration file parsing (YAML)
-- `pyautogui` - Key simulation for Ctrl+V auto-paste and auto-ENTER
-- `pywin32` - Windows API access for window management
-- `pystray` - System tray integration
-- `Pillow` - Image processing for system tray icons
-- `hf-xet` - Cache management for Hugging Face models
-- `ten-vad` - Voice Activity Detection to prevent silent hallucinations
+| Hotkey | Windows | macOS |
+|--------|---------|-------|
+| Start recording | `Ctrl+Win` | `Fn+Ctrl` |
+| Stop & transcribe | `Ctrl` | `Fn` |
+| Stop & auto-send | `Alt` | `Option` |
+| Cancel recording | `Esc` | `Shift` |
 
-## 🎮 Basic Usage
+Open the system tray / menu bar icon to:
+- Toggle auto-paste vs clipboard-only
+- Change transcription model
+- Select audio device
 
-- Boot the app, the "tiny" model will download and start
-- Press `Ctrl+Win` to start recording
-- Speak into your microphone  
-- Press `Ctrl` to stop recording and transcribe
-- The transcribed text is auto-pasted on your text cursor
-- Alternatively press `Alt` to stop recording, auto-paste, and also send an ENTER keypress
-- Right click the system tray icon to change models
+## ⚙️ Configuration
 
-### Configuration
-The app automatically creates a user settings file in `%APPDATA%\Roaming\whisperkey\user_settings.yaml`, where you can:
-- Change whisper model size (tiny/base/small/medium/large)
-- Hotkeys
-- Configure automation (auto-paste, auto-ENTER)
-- Voice activity detection
-- And much more
+Local settings at:
+- **Windows:** `%APPDATA%\whisperkey\user_settings.yaml`
+- **macOS:** `~/Library/Application Support/whisperkey/user_settings.yaml`
 
-## 🔧 Troubleshooting
+Delete this file and restart app to reset to defaults.
 
-- Check the log file `app.log` for detailed error messages
-- Delete the user settings file in `%APPDATA%/whisperkey/user_settings.yaml` and restart to reset to defaults
+| Option | Default | Notes |
+|--------|---------|-------|
+| **Whisper** |||
+| `whisper.model` | `tiny` | Any model defined in `whisper.models` |
+| `whisper.device` | `cpu` | cpu or cuda (NVIDIA GPU) |
+| `whisper.compute_type` | `int8` | int8/float16/float32 |
+| `whisper.language` | `auto` | auto or language code (en, es, fr, etc.) |
+| `whisper.beam_size` | `5` | Higher = more accurate but slower (1-10) |
+| `whisper.models` | (see config) | Add custom HuggingFace or local models |
+| **Hotkeys** |||
+| `hotkey.recording_hotkey` | `ctrl+win` / `fn+ctrl` | Windows / macOS |
+| `hotkey.stop_with_modifier_enabled` | `true` | Stop with first modifier only |
+| `hotkey.auto_enter_enabled` | `true` | Enable auto-send hotkey |
+| `hotkey.auto_enter_combination` | `alt` / `option` | Stop + paste + Enter |
+| `hotkey.cancel_combination` | `esc` / `shift` | Cancel recording |
+| **Voice Activity Detection** |||
+| `vad.vad_precheck_enabled` | `true` | Prevent hallucinations on silence |
+| `vad.vad_onset_threshold` | `0.7` | Speech detection start (0.0-1.0) |
+| `vad.vad_offset_threshold` | `0.55` | Speech detection end (0.0-1.0) |
+| `vad.vad_min_speech_duration` | `0.1` | Min speech segment (seconds) |
+| `vad.vad_realtime_enabled` | `true` | Auto-stop on silence |
+| `vad.vad_silence_timeout_seconds` | `30.0` | Seconds before auto-stop |
+| **Audio** |||
+| `audio.host` | `null` | Audio API (WASAPI, Core Audio, etc.) |
+| `audio.channels` | `1` | 1 = mono, 2 = stereo |
+| `audio.dtype` | `float32` | float32/int16/int24/int32 |
+| `audio.max_duration` | `900` | Max recording seconds (0 = unlimited) |
+| `audio.input_device` | `default` | Device ID or "default" |
+| **Clipboard** |||
+| `clipboard.auto_paste` | `true` | false = clipboard only |
+| `clipboard.paste_hotkey` | `ctrl+v` / `cmd+v` | Paste key simulation |
+| `clipboard.preserve_clipboard` | `true` | Restore clipboard after paste |
+| `clipboard.key_simulation_delay` | `0.05` | Delay between keystrokes (seconds) |
+| **Logging** |||
+| `logging.level` | `INFO` | DEBUG/INFO/WARNING/ERROR/CRITICAL |
+| `logging.file.enabled` | `true` | Write to app.log |
+| `logging.console.enabled` | `true` | Print to console |
+| `logging.console.level` | `WARNING` | Console verbosity |
+| **Audio Feedback** |||
+| `audio_feedback.enabled` | `true` | Play sounds on record/stop |
+| `audio_feedback.start_sound` | `assets/sounds/...` | Custom sound file path |
+| `audio_feedback.stop_sound` | `assets/sounds/...` | Custom sound file path |
+| `audio_feedback.cancel_sound` | `assets/sounds/...` | Custom sound file path |
+| **System Tray** |||
+| `system_tray.enabled` | `true` | Show tray icon |
+| `system_tray.tooltip` | `Whisper Key` | Hover text |
+| **Console** |||
+| `console.start_hidden` | `false` | Start minimized to tray |
+
+## 📁 Model Cache
+
+Default path for transcription models (via HuggingFace):
+- **Windows:** `%USERPROFILE%\.cache\huggingface\hub\`
+- **macOS:** `~/.cache/huggingface/hub/`
+
+## 📦 Dependencies
+
+**Cross-platform:**
+`faster-whisper` · `numpy` · `sounddevice` · `soxr` · `pyperclip` · `ruamel.yaml` · `pystray` · `Pillow` · `playsound3` · `ten-vad` · `hf-xet`
+
+**Windows:** `global-hotkeys` · `pywin32` · `pyautogui`
+
+**macOS:** `pyobjc-framework-Quartz` · `pyobjc-framework-ApplicationServices`

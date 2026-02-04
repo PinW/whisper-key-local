@@ -12,20 +12,28 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    # Cross-platform
     "faster-whisper>=1.2.1",
     "ctranslate2>=4.6.3",
     "numpy>=1.24.0",
     "soxr>=0.3.0",
     "sounddevice>=0.4.6",
-    "global-hotkeys>=0.1.7; platform_system=='Windows'",
     "pyperclip>=1.8.2",
     "ruamel.yaml>=0.18.14",
-    "pywin32>=306; platform_system=='Windows'",
-    "pyautogui>=0.9.54; platform_system=='Windows'",
     "pystray>=0.19.5",
     "Pillow>=10.0.0",
     "hf-xet>=1.1.5",
-    # Note: ten-vad git dependency handled separately
+    "playsound3>=2.0",
+    "ten-vad>=1.0.6",
+
+    # Windows-only
+    "global-hotkeys>=0.1.7; sys_platform=='win32'",
+    "pywin32>=306; sys_platform=='win32'",
+    "pyautogui>=0.9.54; sys_platform=='win32'",
+
+    # macOS-only
+    "pyobjc-framework-Quartz; sys_platform=='darwin'",
+    "pyobjc-framework-ApplicationServices; sys_platform=='darwin'",
 ]
 
 [project.scripts]

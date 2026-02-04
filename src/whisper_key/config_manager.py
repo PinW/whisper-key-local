@@ -1,26 +1,43 @@
 import os
 import logging
-import shutil
 import platform
+import shutil
 from typing import Dict, Any, Optional
 from io import StringIO
 
 from ruamel.yaml import YAML
 
 from .utils import resolve_asset_path, beautify_hotkey, get_user_app_data_path
+from .platform import IS_MACOS
 
 def deep_merge_config(default_config: Dict[str, Any],
                       user_config: Dict[str, Any]) -> Dict[str, Any]:
-    
+
     result = default_config.copy()
-    
+
     for key, value in user_config.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
             result[key] = deep_merge_config(result[key], value)
         else:
             result[key] = value
-    
+
     return result
+
+
+def _parse_platform_value(value: str) -> str:
+    parts = value.split(' | macos:')
+    default_value = parts[0].strip()
+    macos_value = parts[1].strip() if len(parts) > 1 else default_value
+    return macos_value if IS_MACOS else default_value
+
+
+def _resolve_platform_values(config: Dict[str, Any]) -> Dict[str, Any]:
+    for key, value in config.items():
+        if isinstance(value, dict):
+            _resolve_platform_values(value)
+        elif isinstance(value, str) and ' | macos:' in value:
+            config[key] = _parse_platform_value(value)
+    return config
 
 
 class ConfigManager:   
@@ -109,9 +126,10 @@ class ConfigManager:
                 
                 self._remove_unused_keys_from_user_config(user_config, default_config)
                 merged_config = deep_merge_config(default_config, user_config)
+                resolved_config = _resolve_platform_values(merged_config)
                 self.logger.info(f"Loaded user configuration from {self.config_path}")
-                
-                validated_config = self.validator.fix_config(merged_config, default_config)
+
+                validated_config = self.validator.fix_config(resolved_config, default_config)
                 self.config = validated_config
                 
                 self.save_config_to_user_settings_file()
@@ -125,7 +143,7 @@ class ConfigManager:
                     self.logger.error(f"Error loading user config file: {e}")
                 
         self.logger.info(f"Using default configuration from {self.default_config_path}")
-        return default_config
+        return _resolve_platform_values(default_config)
     
     def _load_default_config(self) -> Dict[str, Any]:
         try:

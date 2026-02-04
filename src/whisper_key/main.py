@@ -12,6 +12,7 @@ import threading
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
+from .platform import app, permissions
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
@@ -130,7 +131,7 @@ def setup_system_tray(tray_config, config_manager, state_manager, model_registry
 def setup_signal_handlers(shutdown_event):
     def signal_handler(signum, frame):
         shutdown_event.set()
-    
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
@@ -145,18 +146,19 @@ def setup_hotkey_listener(hotkey_config, state_manager):
     )
 
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
-    # Stop hotkey listener first to prevent new events during shutdown
     try:
         if hotkey_listener and hotkey_listener.is_active():
             logger.info("Stopping hotkey listener...")
             hotkey_listener.stop_listening()
     except Exception as ex:
         logger.error(f"Error stopping hotkey listener: {ex}")
-    
+
     if state_manager:
         state_manager.shutdown()
 
 def main():
+    app.setup()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='Run as separate test instance')
     args = parser.parse_args()
@@ -213,14 +215,20 @@ def main():
         state_manager.attach_components(audio_recorder, system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
-        
+
         system_tray.start()
 
-        print(f"🚀 Application ready! Press {beautify_hotkey(hotkey_config['recording_hotkey'])} to start recording.", flush=True)  # flush so headless agent can detect startup success
+        print(f"🚀 Application ready! Press [{beautify_hotkey(hotkey_config['recording_hotkey'])}] to start recording.", flush=True)  # flush so headless agent can detect startup success
         print("Press Ctrl+C to quit.")
 
-        while not shutdown_event.wait(timeout=0.1):
-            pass
+        if clipboard_config['auto_paste']:
+            if not permissions.check_accessibility_permission():
+                if not permissions.handle_missing_permission(config_manager):
+                    app.run_event_loop(shutdown_event)
+                    return
+                clipboard_manager.update_auto_paste(False)
+
+        app.run_event_loop(shutdown_event)
             
     except KeyboardInterrupt:
         logger.info("Application shutting down...")
