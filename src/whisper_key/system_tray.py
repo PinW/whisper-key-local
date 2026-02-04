@@ -4,8 +4,8 @@ import signal
 from typing import Optional, TYPE_CHECKING
 from pathlib import Path
 
-from .utils import resolve_asset_path, open_file
-from .platform import permissions
+from .utils import open_file
+from .platform import permissions, icons
 
 try:
     import pystray
@@ -54,31 +54,14 @@ class SystemTray:
     
     def _load_icons_to_cache(self):
         try:
-            self.icons = {}
-            
-            icon_files = {
-                "idle": "assets/tray_idle.png",
-                "recording": "assets/tray_recording.png", 
-                "processing": "assets/tray_processing.png"
-            }
-            
-            for state, asset_path in icon_files.items():
-                icon_path = Path(resolve_asset_path(asset_path))
-                
-                try:
-                    if icon_path.exists():
-                        self.icons[state] = Image.open(str(icon_path))
-                    else:
-                        self.icons[state] = self._create_fallback_icon(state)
-                        self.logger.warning(f"Icon file not found, using fallback: {icon_path}")
-                        
-                except Exception as e:
-                    self.logger.error(f"Failed to load icon {icon_path}: {e}")
-                    self.icons[state] = self._create_fallback_icon(state)
-
+            self.icons = icons.get_tray_icons()
         except Exception as e:
-            self.logger.error(f"Failed to load system tray: {e}")
-            self.available = False
+            self.logger.error(f"Failed to load tray icons: {e}")
+            self.icons = {
+                "idle": self._create_fallback_icon("idle"),
+                "recording": self._create_fallback_icon("recording"),
+                "processing": self._create_fallback_icon("processing"),
+            }
         
     def _create_fallback_icon(self, state: str) -> Image.Image:
         colors = {
