@@ -1,4 +1,4 @@
-# Whisper Key - Roadmap
+# Whisper Key Local - Roadmap
 @completed.md
 
 ## Bugs
@@ -13,8 +13,7 @@
 
 ## macOS
 - As a *mac user*, I want **CGEventTap hotkeys** so macOS can detect system-reserved keys (ESC, cmd+.)
-- As a *mac user*, I want **README updated for macOS** so I know how to install and use on my Mac
-- As a *mac user*, I want **Homebrew formula** so I can install with `brew install whisper-key`
+- As a *mac user*, I want **monochrome menu bar icons** so the app conforms to Apple's template icon guidelines
 
 ## Backlog
 
