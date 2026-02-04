@@ -19,23 +19,26 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 
 ## 🚀 Quick Start
 
-### pipx (Recommended)
+### From PyPI (Recommended)
 
-Requires Python 3.11-3.13 and [pipx](https://pipx.pypa.io/)
+Requires Python 3.11-3.13
 
 ```bash
+# With pipx (isolated environment)
 pipx install whisper-key-local
-whisper-key
+
+# Or with pip (simpler)
+pip install whisper-key-local
 ```
 
-### Portable App (Windows only)
+Then run: `whisper-key`
+
+### Portable App (Windows Only)
 
 1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
 2. Extract and run `whisper-key.exe`
 
-### Development
-
-Requires Python 3.11-3.13
+### From Source
 
 ```bash
 git clone https://github.com/PinW/whisper-key-local.git
