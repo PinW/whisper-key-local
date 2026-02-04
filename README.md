@@ -67,14 +67,25 @@ Transcription models (via HuggingFace) are stored at:
 - **Windows:** `%USERPROFILE%\.cache\huggingface\hub\`
 - **macOS:** `~/.cache/huggingface/hub/`
 
-Edit `user_settings.yaml` to customize:
-- Whisper model size (tiny/base/small/medium/large)
-- Hotkeys
-- Automation (auto-paste, auto-ENTER)
-- Voice activity detection
-- And much more
+Edit `user_settings.yaml` to customize. Delete and restart to reset to defaults.
 
-Delete `user_settings.yaml` and restart to reset to defaults.
+| Option | Default | Notes |
+|--------|---------|-------|
+| `whisper.model` | `tiny` | tiny/base/small/medium/large/large-v3-turbo |
+| `whisper.device` | `cpu` | cpu or cuda (NVIDIA GPU) |
+| `whisper.language` | `auto` | auto or language code (en, es, fr, etc.) |
+| `hotkey.recording_hotkey` | `ctrl+win` / `fn+ctrl` | Windows / macOS |
+| `hotkey.auto_enter_combination` | `alt` / `option` | Stop + paste + Enter |
+| `hotkey.cancel_combination` | `esc` / `shift` | Cancel recording |
+| `vad.vad_precheck_enabled` | `true` | Prevent hallucinations on silence |
+| `vad.vad_realtime_enabled` | `true` | Auto-stop on silence |
+| `vad.vad_silence_timeout_seconds` | `30.0` | Seconds of silence before auto-stop |
+| `audio.max_duration` | `900` | Max recording seconds (0 = unlimited) |
+| `audio.input_device` | `default` | Set via system tray |
+| `clipboard.auto_paste` | `true` | false = clipboard only |
+| `clipboard.preserve_clipboard` | `true` | Restore clipboard after paste |
+| `audio_feedback.enabled` | `true` | Play sounds on record/stop |
+| `logging.level` | `INFO` | DEBUG/INFO/WARNING/ERROR |
 
 ## 📦 Dependencies
 
