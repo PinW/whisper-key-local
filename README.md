@@ -1,6 +1,8 @@
 # Whisper Key - Local Speech-to-Text
 
-Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is. Now on Windows and macOS!
+Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is.
+
+**Now on Windows and macOS!**
 
 Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
 
