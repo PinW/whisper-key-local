@@ -16,13 +16,7 @@ Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
 
 ## 🚀 Quick Start
 
-- [pipx](#pipx) — Recommended
-- [Portable App](#portable-app) — Windows only
-- [Development](#development)
-
----
-
-### pipx
+### pipx (Recommended)
 
 Requires Python 3.11-3.13 and [pipx](https://pipx.pypa.io/)
 
