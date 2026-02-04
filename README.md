@@ -52,9 +52,9 @@ python whisper-key.py
 | Stop & auto-send | `Alt` | `Option` |
 | Cancel recording | `Esc` | `Shift` |
 
-- On first launch, the "tiny" model downloads automatically
-- Transcription is auto-pasted at your cursor
-- Right-click the system tray icon for settings and model selection
+On first launch, the "tiny" model downloads automatically. Transcription is auto-pasted at your cursor.
+
+Right-click the system tray icon to change: auto-paste vs clipboard, transcription model, audio device.
 
 ## ⚙️ Configuration
 
