@@ -52,7 +52,7 @@ python whisper-key.py
 | Stop & auto-send | `Alt` | `Option` |
 | Cancel recording | `Esc` | `Shift` |
 
-Right-click the system tray / menu bar icon to:
+Open the system tray / menu bar icon to:
 - Toggle auto-paste vs clipboard-only
 - Change transcription model
 - Select audio device
