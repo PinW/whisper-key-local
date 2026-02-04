@@ -71,21 +71,51 @@ Edit `user_settings.yaml` to customize. Delete and restart to reset to defaults.
 
 | Option | Default | Notes |
 |--------|---------|-------|
+| **Whisper** |||
 | `whisper.model` | `tiny` | tiny/base/small/medium/large/large-v3-turbo |
 | `whisper.device` | `cpu` | cpu or cuda (NVIDIA GPU) |
+| `whisper.compute_type` | `int8` | int8/float16/float32 |
 | `whisper.language` | `auto` | auto or language code (en, es, fr, etc.) |
+| `whisper.beam_size` | `5` | Higher = more accurate but slower (1-10) |
+| **Hotkeys** |||
 | `hotkey.recording_hotkey` | `ctrl+win` / `fn+ctrl` | Windows / macOS |
+| `hotkey.stop_with_modifier_enabled` | `true` | Stop with first modifier only |
+| `hotkey.auto_enter_enabled` | `true` | Enable auto-send hotkey |
 | `hotkey.auto_enter_combination` | `alt` / `option` | Stop + paste + Enter |
 | `hotkey.cancel_combination` | `esc` / `shift` | Cancel recording |
+| **Voice Activity Detection** |||
 | `vad.vad_precheck_enabled` | `true` | Prevent hallucinations on silence |
+| `vad.vad_onset_threshold` | `0.7` | Speech detection start (0.0-1.0) |
+| `vad.vad_offset_threshold` | `0.55` | Speech detection end (0.0-1.0) |
+| `vad.vad_min_speech_duration` | `0.1` | Min speech segment (seconds) |
 | `vad.vad_realtime_enabled` | `true` | Auto-stop on silence |
-| `vad.vad_silence_timeout_seconds` | `30.0` | Seconds of silence before auto-stop |
+| `vad.vad_silence_timeout_seconds` | `30.0` | Seconds before auto-stop |
+| **Audio** |||
+| `audio.host` | `null` | Audio API (WASAPI, Core Audio, etc.) |
+| `audio.channels` | `1` | 1 = mono, 2 = stereo |
+| `audio.dtype` | `float32` | float32/int16/int24/int32 |
 | `audio.max_duration` | `900` | Max recording seconds (0 = unlimited) |
-| `audio.input_device` | `default` | Set via system tray |
+| `audio.input_device` | `default` | Device ID or "default" |
+| **Clipboard** |||
 | `clipboard.auto_paste` | `true` | false = clipboard only |
+| `clipboard.paste_hotkey` | `ctrl+v` / `cmd+v` | Paste key simulation |
 | `clipboard.preserve_clipboard` | `true` | Restore clipboard after paste |
+| `clipboard.key_simulation_delay` | `0.05` | Delay between keystrokes (seconds) |
+| **Logging** |||
+| `logging.level` | `INFO` | DEBUG/INFO/WARNING/ERROR/CRITICAL |
+| `logging.file.enabled` | `true` | Write to app.log |
+| `logging.console.enabled` | `true` | Print to console |
+| `logging.console.level` | `WARNING` | Console verbosity |
+| **Audio Feedback** |||
 | `audio_feedback.enabled` | `true` | Play sounds on record/stop |
-| `logging.level` | `INFO` | DEBUG/INFO/WARNING/ERROR |
+| `audio_feedback.start_sound` | `assets/sounds/...` | Custom sound file path |
+| `audio_feedback.stop_sound` | `assets/sounds/...` | Custom sound file path |
+| `audio_feedback.cancel_sound` | `assets/sounds/...` | Custom sound file path |
+| **System Tray** |||
+| `system_tray.enabled` | `true` | Show tray icon |
+| `system_tray.tooltip` | `Whisper Key` | Hover text |
+| **Console** |||
+| `console.start_hidden` | `false` | Start minimized to tray |
 
 ## 📦 Dependencies
 
