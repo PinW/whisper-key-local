@@ -59,11 +59,11 @@ Right-click the system tray / menu bar icon to:
 
 ## ⚙️ Configuration
 
-Settings and log files are stored at:
+`user_settings.yaml` and `app.log` are stored at:
 - **Windows:** `%APPDATA%\whisperkey\`
 - **macOS:** `~/Library/Application Support/whisperkey/`
 
-The app creates `user_settings.yaml` in this folder. Edit it to customize:
+Edit `user_settings.yaml` to customize:
 - Whisper model size (tiny/base/small/medium/large)
 - Hotkeys
 - Automation (auto-paste, auto-ENTER)
