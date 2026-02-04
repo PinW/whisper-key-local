@@ -12,9 +12,9 @@ src_path = project_root / "src"
 # Dynamic ten_vad library path detection
 ten_vad_data = []
 for site_dir in site.getsitepackages():
-    ten_vad_candidate = pathlib.Path(site_dir) / 'ten_vad_library'
-    if ten_vad_candidate.exists():
-        ten_vad_data.append((str(ten_vad_candidate), 'ten_vad_library'))
+    ten_vad_lib = pathlib.Path(site_dir) / 'ten_vad' / 'lib'
+    if ten_vad_lib.exists():
+        ten_vad_data.append((str(ten_vad_lib), 'ten_vad/lib'))
         break
 
 a = Analysis(
@@ -24,6 +24,7 @@ a = Analysis(
     datas=[
         (str(project_root / 'src' / 'whisper_key' / 'config.defaults.yaml'), '.'),
         (str(project_root / 'src' / 'whisper_key' / 'assets'), 'assets'),
+        (str(project_root / 'src' / 'whisper_key' / 'platform' / 'windows' / 'assets'), 'src/whisper_key/platform/windows/assets'),
     ] + ten_vad_data,
     hiddenimports=[
         'win32gui', 'win32con', 'win32clipboard', 'win32api',
