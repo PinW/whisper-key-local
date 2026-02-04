@@ -45,13 +45,16 @@ python whisper-key.py
 
 ## 🎤 Basic Usage
 
-- Boot the app, the "tiny" model will download and start
-- Press `Ctrl+Win` to start recording
-- Speak into your microphone
-- Press `Ctrl` to stop recording and transcribe
-- The transcribed text is auto-pasted on your text cursor
-- Alternatively press `Alt` to stop recording, auto-paste, and also send an ENTER keypress
-- Right click the system tray icon to change models
+| Hotkey | Windows | macOS |
+|--------|---------|-------|
+| Start recording | `Ctrl+Win` | `Fn+Ctrl` |
+| Stop & transcribe | `Ctrl` | `Fn` |
+| Stop & auto-send | `Alt` | `Option` |
+| Cancel recording | `Esc` | `Shift` |
+
+- On first launch, the "tiny" model downloads automatically
+- Transcription is auto-pasted at your cursor
+- Right-click the system tray icon for settings and model selection
 
 ## ⚙️ Configuration
 
