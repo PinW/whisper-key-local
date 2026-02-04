@@ -59,11 +59,11 @@ Right-click the system tray / menu bar icon to:
 
 ## ⚙️ Configuration
 
-`user_settings.yaml` and `app.log` are stored at:
-- **Windows:** `%APPDATA%\whisperkey\`
-- **macOS:** `~/Library/Application Support/whisperkey/`
+Local settings at:
+- **Windows:** `%APPDATA%\whisperkey\user_settings.yaml`
+- **macOS:** `~/Library/Application Support/whisperkey/user_settings.yaml`
 
-Edit `user_settings.yaml` to customize. Delete and restart to reset to defaults.
+Delete this file and restart app to reset to defaults.
 
 | Option | Default | Notes |
 |--------|---------|-------|
