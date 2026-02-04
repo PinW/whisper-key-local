@@ -20,6 +20,7 @@
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
   - As a *new user* I want **model selection** so I can choose a Whisper model that balances speed vs accuracy without editing YAML
+  - As a *new user* I want **auto NVIDIA GPU detection** so CUDA mode is enabled automatically when a compatible GPU is available
   - As a *new user* I want **CPU/GPU selection** so I can use my NVIDIA GPU for faster transcription or fall back to CPU
   - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
   - As a *new user* I want **language selection** so I can set my transcription language without editing YAML
@@ -77,6 +78,7 @@
 - As a *developer* I want **project file context** so I can reference files in voice and tag them in chats hands free
 
 ### Agent & API Integration
+- As a *user* I want **server mode** so I can run transcription on one machine and send audio/receive text from other devices on my LAN (centralized processing for multiple users)
 - As a *user* I want **headless/API input mode** so I can receive audio from external sources instead of local microphone
 - As a *user* I want **headless/API output mode** so transcriptions can be sent to external services instead of clipboard
 - As a *user* I want to **send transcriptions to CLI agents** (Claude Code, Codex, etc.) so I can voice-control coding assistants
