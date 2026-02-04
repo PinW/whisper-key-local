@@ -2,6 +2,30 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.6.0] - 2026-02-04
+
+### Added
+- **macOS support** - Full platform abstraction layer with native integration for hotkeys (NSEvent), keyboard simulation (Quartz CGEvent), and system tray (#23)
+  - Fn key modifier support for hotkeys
+  - Accessibility permission prompt for auto-paste
+  - Platform-specific default hotkeys: fn+ctrl (record), shift (cancel), cmd+v (paste)
+- `--test` flag for running a separate test instance alongside the main app
+- CUDA setup instructions in config file comments (cuDNN no longer required)
+
+### Changed
+- Reduced console verbosity by removing config update messages
+- ten-vad is now a standard PyPI dependency (no separate install step needed)
+- Updated README with macOS installation and usage instructions
+
+### Fixed
+- UTF-8 stdout encoding for special characters on Windows
+- Audio feedback sounds going silent after idle periods on Windows (switched to winmm backend)
+
+### Dependencies
+- **ten-vad**: Now `>=1.0.6` (was git-only)
+- **pyobjc-framework-Quartz**: Added for macOS (keyboard simulation)
+- **pyobjc-framework-ApplicationServices**: Added for macOS (Accessibility permissions)
+
 ## [0.5.3] - 2026-01-19
 
 ### Fixed
