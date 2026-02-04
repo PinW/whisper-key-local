@@ -25,6 +25,7 @@
 - As a *mac user*, I want **Fn key as modifier** so I can use the ergonomic bottom-left corner for recording
 - As a *user*, I want to choose different **languages for transcription** so that I can get a free/passive accuracy boost
 - As a *developer*, I want **WASAPI support without scipy** so that the package is smaller and more efficient
+- As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 
 ## Resolved Bugs
 

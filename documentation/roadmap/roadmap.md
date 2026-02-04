@@ -42,7 +42,7 @@
 - As a *user*, I want **automatic updates** to get new features
 - As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 
-### CLI
+### Terminal UI
 - As a *user* I want **on-screen hotkey hints** so I can see available controls at a glance like a video game HUD
 - As a *user*, I want a **terminal UI** so I can control the app without leaving the command line
 - As a *user*, I want a **terminal status bar** so I can see app state, model, and recording status at a glance
@@ -51,11 +51,14 @@
   - As a *user* I want **language selection in CLI** so I can switch transcription language without editing YAML
 - As a *user*, I want a **cleaner model download display** so I see progress without HuggingFace cluttering the terminal
 
+### CLI
+- As a *user* I want a **CLI interface** so other tools and agents can invoke transcription programmatically
+
 ### Desktop App
-- As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 - As a *user*, I want a **desktop GUI** so that I can change settings without editing files
 
 ### Real-Time Transcription
+- As a *user* I want **real-time transcription** so I can preview text as I speak
 - As a *user* I want **meeting mode** so I can transcribe an entire meeting in real-time
 
 ### Cross-Platform
@@ -72,6 +75,12 @@
 
 ### Developer Use Cases
 - As a *developer* I want **project file context** so I can reference files in voice and tag them in chats hands free
+
+### Agent & API Integration
+- As a *user* I want **headless/API input mode** so I can receive audio from external sources instead of local microphone
+- As a *user* I want **headless/API output mode** so transcriptions can be sent to external services instead of clipboard
+- As a *user* I want to **send transcriptions to CLI agents** (Claude Code, Codex, etc.) so I can voice-control coding assistants
+- As a *user* I want **Telegram bot integration** so I can transcribe voice messages for bots like OpenClaw
 
 ### Discord Integration
 - As a *user* I want to **transcribe and post commands to CLI agent at home** so I can control my home server remotely via Discord
