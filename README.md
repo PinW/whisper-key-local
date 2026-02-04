@@ -58,10 +58,15 @@ python whisper-key.py
 - Right click the system tray icon to change models
 
 ### Configuration
-The app automatically creates a user settings file in `%APPDATA%\Roaming\whisperkey\user_settings.yaml`, where you can:
-- Change whisper model size (tiny/base/small/medium/large)
+
+Settings and log files are stored at:
+- **Windows:** `%APPDATA%\whisperkey\`
+- **macOS:** `~/Library/Application Support/whisperkey/`
+
+Edit `user_settings.yaml` to customize:
+- Whisper model size (tiny/base/small/medium/large)
 - Hotkeys
-- Configure automation (auto-paste, auto-ENTER)
+- Automation (auto-paste, auto-ENTER)
 - Voice activity detection
 - And much more
 
@@ -79,12 +84,3 @@ The app automatically creates a user settings file in `%APPDATA%\Roaming\whisper
 - `Pillow` - Image processing for system tray icons
 - `hf-xet` - Cache management for Hugging Face models
 - `ten-vad` - Voice Activity Detection to prevent silent hallucinations
-
-## 🔧 Troubleshooting
-
-- Check the log file `app.log` for detailed error messages
-- Delete the user settings file and restart to reset to defaults
-
-Log and settings location:
-- **Windows:** `%APPDATA%\whisperkey\`
-- **macOS:** `~/Library/Application Support/whisperkey/`
