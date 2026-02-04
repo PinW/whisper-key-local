@@ -4,7 +4,7 @@ Global hotkey to start/stop recording and auto-paste transcription wherever your
 
 **Now on Windows and macOS!**
 
-Questions or ideas? [Discord Server](https://discord.gg/uZnXV8snhz)
+Questions or ideas? [Discord](https://discord.gg/uZnXV8snhz)
 
 ## 🎯 Features
 
