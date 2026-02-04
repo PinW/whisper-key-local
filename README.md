@@ -1,19 +1,20 @@
 # Whisper Key - Local Speech-to-Text
 
-Global hotkey to start/stop recording and auto-paste transcription wherever your cursor is.
+Global hotkey to record speech and transcribe directly to your cursor.
 
 > **Now on Windows and macOS!**
 
 Questions or ideas? [Discord](https://discord.gg/uZnXV8snhz)
 
-## 🎯 Features
+## ✨ Features
 
-- **Global Hotkey**: Press `Ctrl+Win` to start recording, `Ctrl` to stop
-- **Auto-Paste**: Transcription inserted at your cursor via auto-paste
-- **Auto-Send**: Press `Alt` to stop, auto-paste, and auto-send with ENTER keypress
+- **Global Hotkey**: Start recording speech from any app
+- **Auto-Paste**: Transcribe directly to cursor
+- **Auto-Send**: Optionally auto-send your transcription with ENTER
 - **Offline Capable**: No internet required after models downloaded
 - **Local Processing**: Voice data never leaves your computer
 - **Voice activity detection**: Prevent hallucinations, auto-stop accidental hotkey presses
+- **Cross-platform**: Works on Windows and macOS
 - **Configurable**: Customize hotkeys, models, and much more
 
 ## 🚀 Quick Start
