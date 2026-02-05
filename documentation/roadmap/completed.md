@@ -28,6 +28,7 @@
 - As a *user*, I want **better icons** so that I can easily identify the app state in the system tray
 - As a *user* I want **support for more hotkeys** (F13-F24, Insert) so I can use StreamDeck or AutoHotkey triggers ([#14](https://github.com/PinW/whisper-key-local/issues/14))
 - As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
+- As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 
 ## Resolved Bugs
 

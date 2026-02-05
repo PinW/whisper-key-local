@@ -8,7 +8,6 @@
 
 ## Next
 - As a *user* I want **AMD GPU support** so I can use my AMD GPU for faster transcription via ROCm
-- As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 
 ## Backlog
 
