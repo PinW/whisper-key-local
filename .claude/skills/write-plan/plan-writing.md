@@ -1,6 +1,6 @@
 # Implementation Plans
 
-`/documentation/implementation-plans`: plans for features & improvements
+`/documentation/plans`: plans for features & improvements
 
 ## Purpose
 
@@ -57,9 +57,9 @@ Example phase inside this section:
 
 Create .md file with descriptive name:
 - [TIMESTAMP] = bash `date +%Y-%m-%d-%H%M`
-- `documentation/implementation-plans/[TIMESTAMP]-feature-name-implementation.md`
+- `documentation/plans/[TIMESTAMP]-feature-name-implementation.md`
 - Example: `2025-01-28-1430-state-management-update.md`
 
 ## Example Plans
 
-- `implementation-plans/auto-enter-hotkey-implementation-2025-01-29.md`
+- `plans/auto-enter-hotkey-implementation-2025-01-29.md`

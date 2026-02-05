@@ -4,7 +4,7 @@ description: Execute an implementation plan (use "l" for latest plan)
 
 Execute plan: $ARGUMENTS
 
-"l" = latest timestamp in `documentation/implementation-plans`
+"l" = latest timestamp in `documentation/plans`
 
 ultrathink
 

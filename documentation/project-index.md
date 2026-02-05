@@ -68,7 +68,7 @@ whisper-key-local/
 ├── documentation/                     # Project documentation
 │   ├── project-index.md
 │   ├── design/                        # Design docs
-│   ├── implementation-plans/          # Implementation docs
+│   ├── plans/                         # Planning docs
 │   ├── research/                      # Research docs
 │   ├── roadmap/                       # Feature roadmap & user stories
 │   │   ├── roadmap.md                 # Active feature roadmap
