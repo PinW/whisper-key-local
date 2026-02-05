@@ -52,14 +52,3 @@ Example phase inside this section:
 
 ### Success Criteria
 - Define specific, testable outcomes that confirm feature functionality
-
-## Output Format
-
-Create .md file with descriptive name:
-- [TIMESTAMP] = bash `date +%Y-%m-%d-%H%M`
-- `documentation/plans/[TIMESTAMP]-feature-name-implementation.md`
-- Example: `2025-01-28-1430-state-management-update.md`
-
-## Example Plans
-
-- `plans/auto-enter-hotkey-implementation-2025-01-29.md`
