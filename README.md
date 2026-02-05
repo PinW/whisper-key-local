@@ -8,14 +8,14 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 
 - **Global Hotkey**: Start recording speech from any app
 - **Auto-Paste**: Transcribe directly to cursor
-- **Auto-Send**: Optionally auto-send your transcription with ENTER
-- **Offline Capable**: No internet required after models downloaded
-- **Local Processing**: Voice data never leaves your computer
-- **Efficient Models**: Choose a small, efficient model for CPU
-- **CUDA Support**: Or leverage your nVidia GPU with bigger models
-- **Voice activity detection**: Auto-cancel after long silences and prevent hallucination
+- **Auto-Send**: Optionally auto-send with ENTER keypress
+- **Local/Offline**: Voice data never leaves your computer
+- **CPU Ready**: Small, efficient models
+- **CUDA Support**: Leverage an NVIDIA GPU with bigger models
 - **Cross-platform**: Works on Windows and macOS
 - **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
+
+> **Roadmap**: AMD GPUs → voice commands → terminal UI → CLI wrapper (`whisper-key claude`) → [etc...](documentation/roadmap/roadmap.md)
 
 ## 🚀 Quick Start
 

@@ -2,7 +2,7 @@
 @completed.md
 
 ## Bugs
-- **Ctrl+C doesn't work during HuggingFace download** - shutdown signal not caught while model is downloading
+- **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
 - **CUDA 13.1 fails** - `cublas64_12.dll` is not found or cannot be loaded
 

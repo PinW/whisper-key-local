@@ -6,6 +6,80 @@
 
 The AMD RX 5700 XT uses RDNA 1 architecture (gfx1010) which is **not officially supported** by AMD's ROCm. While community workarounds exist, they require significant effort and have known instability issues. For practical Whisper acceleration, **whisper.cpp with Vulkan or HIPBLAS** offers the most realistic path, though CPU-based faster-whisper remains a reliable fallback.
 
+---
+
+## NEW: ROCm 6.1+ Native Support Investigation (2026-02)
+
+### The Claim: "gfx1010 Should Just Work After ROCm 6.1"
+
+A [Reddit post](https://www.reddit.com/r/ROCm/comments/1bd8vde/psa_rdna1_gfx1010gfx101_gpus_should_start_working/) and [GitHub issue comment](https://github.com/ROCm/Tensile/issues/1757) claimed that RDNA1 GPUs would work natively in ROCm 6.1+ without `HSA_OVERRIDE_GFX_VERSION`.
+
+### What Actually Happened
+
+#### Tensile Issue #1757 and PR #1897
+
+**The Problem:** Tensile (AMD's GEMM library generator for rocBLAS) wouldn't produce backend libraries for GPU architectures lacking optimized logic files when using `--separate-architectures`. Even though gfx1010 was "enabled by default in rocBLAS builds since ROCm 4.3.0", no library was actually produced because Navi10 lacked optimized logic files.
+
+**The Fix:** [PR #1897](https://github.com/ROCm/Tensile/pull/1897) (merged March 6, 2024) enabled architectures without optimized logic files to produce libraries using **fallback kernels**. This was cherry-picked into ROCm 6.1 release branch.
+
+**Timeline:**
+- Issue #1757 opened: August 17, 2023
+- Issue closed: January 24, 2024
+- PR #1897 merged: March 6, 2024
+- Cherry-picked to ROCm 6.1: ~April 2024
+
+#### Current State in rocBLAS 6.4+
+
+Arch Linux's [rocblas 6.4.4](https://archlinux.org/packages/extra/x86_64/rocblas/files/) package now includes fallback TensileLibrary files for gfx1010:
+- `TensileLibrary_fallback_gfx1010.dat`
+- Multiple `*_fallback_gfx1010.hsaco` files
+
+This means **rocBLAS itself does have gfx1010 support** via fallback kernels in ROCm 6.1+.
+
+### Why It Still Doesn't "Just Work"
+
+Despite the Tensile fix, several issues remain:
+
+| Issue | Impact |
+|-------|--------|
+| **Not officially supported** | gfx1010 is NOT in AMD's [ROCm 7.2.0 compatibility matrix](https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html) |
+| **PyTorch segfaults** | Pre-built PyTorch ROCm wheels still crash on gfx1010 |
+| **Fallback = slower** | Fallback kernels have [performance regressions](https://github.com/ROCm/ROCm/discussions/4030) vs optimized kernels |
+| **Math library gaps** | Only rocBLAS/rocSOLVER fully support gfx1010; other libraries (MIOpen, etc.) may not |
+| **No flash attention** | Triton has no RDNA1 support |
+
+### Practical Testing Results (Community Reports)
+
+| Configuration | Result |
+|--------------|--------|
+| ROCm 6.2 + PyTorch (source build) | Works with `PYTORCH_ROCM_ARCH=gfx1010` |
+| ROCm 6.4.1 + Ollama | Partial success with `HSA_OVERRIDE_GFX_VERSION=10.1.0` |
+| ROCm 6.4.3 + Ollama | SIGSEGV crashes reported |
+| Pre-built PyTorch wheels | Still broken |
+
+### Verdict: The Claim is Partially True
+
+**What's true:**
+- Tensile/rocBLAS now produces fallback libraries for gfx1010 in ROCm 6.1+
+- The underlying infrastructure for gfx1010 support exists
+
+**What's still false:**
+- gfx1010 is NOT officially supported (not in compatibility matrix)
+- Pre-built binaries (PyTorch wheels, Ollama) don't include gfx1010
+- You still need source builds or `HSA_OVERRIDE` workarounds
+- Performance is degraded compared to officially supported GPUs
+
+### Recommendation
+
+For RX 5700 XT users in 2025-2026:
+
+1. **Don't expect plug-and-play** - ROCm 6.1+ does NOT mean native out-of-box support
+2. **whisper.cpp + Vulkan/HIPBLAS** remains the most practical path
+3. **Source builds work** but require effort: [PyTorch-ROCm-gfx1010](https://github.com/Efenstor/PyTorch-ROCm-gfx1010)
+4. **Docker images** may have gfx1010 pre-built: [wyoming-faster-whisper-rocm](https://github.com/Donkey545/wyoming-faster-whisper-rocm)
+
+---
+
 ## 1. Official ROCm Support Status
 
 ### RDNA 1 / gfx1010 is NOT Officially Supported
@@ -13,11 +87,12 @@ The AMD RX 5700 XT uses RDNA 1 architecture (gfx1010) which is **not officially 
 | ROCm Version | gfx1010 Support | Notes |
 |--------------|-----------------|-------|
 | ROCm 5.x | No | Never officially supported |
-| ROCm 6.0-6.1 | No | LLVM target missing from docs |
-| ROCm 6.2+ | No | Some community hope, never materialized |
-| ROCm 7.x | No | Focus remains on RDNA 2/3 and CDNA |
+| ROCm 6.0 | No | LLVM target present but libraries missing |
+| ROCm 6.1+ | **Partial** | Tensile/rocBLAS fallback libraries included |
+| ROCm 6.4.x | **Partial** | Fallback libraries in distro packages |
+| ROCm 7.x | No | **Still NOT in official compatibility matrix** |
 
-AMD has explicitly stated that official gfx1010 support "will never happen" in their official releases. The ROCm compatibility matrix only lists RDNA 2+ (gfx1030+) for consumer GPUs.
+**Nuanced Status:** While Tensile PR #1897 (March 2024) added fallback library generation for gfx1010, AMD has NOT added RDNA1 to their official compatibility matrix. The gfx1010 target exists in builds but is considered "unofficial" and lacks optimized kernels.
 
 **Sources:**
 - [ROCm Issue #887 - 5700 XT Support](https://github.com/ROCm/ROCm/issues/887)
@@ -235,9 +310,13 @@ OpenCL is available through ROCm's runtime but has limited whisper.cpp support a
 - [PyTorch Issue #106728 - RDNA1 Segfaults](https://github.com/pytorch/pytorch/issues/106728)
 - [Ollama Issue #2503 - 5700 XT Support](https://github.com/ollama/ollama/issues/2503)
 - [whisper.cpp HIPBLAS Discussion](https://github.com/ggml-org/whisper.cpp/discussions/1491)
+- [Tensile Issue #1757 - Backend Libraries for gfx1010](https://github.com/ROCm/Tensile/issues/1757)
+- [Tensile PR #1897 - Fallback Library Fix](https://github.com/ROCm/Tensile/pull/1897)
+- [ROCm Discussion #4030 - Regression in ROCm 5.3+ for gfx1010](https://github.com/ROCm/ROCm/discussions/4030)
 
 ### Community Projects
 - [ROCm-RDNA1](https://github.com/TheTrustedComputer/ROCm-RDNA1) - RDNA1 build scripts
 - [PyTorch-ROCm-gfx1010](https://github.com/Efenstor/PyTorch-ROCm-gfx1010) - PyTorch build guide
 - [wyoming-faster-whisper-rocm](https://github.com/Donkey545/wyoming-faster-whisper-rocm) - Docker solution
 - [arlo-phoenix/CTranslate2-rocm](https://github.com/arlo-phoenix/CTranslate2-rocm) - CTranslate2 fork
+- [Arch Linux rocblas Package](https://archlinux.org/packages/extra/x86_64/rocblas/files/) - Shows fallback_gfx1010 files included
