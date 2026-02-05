@@ -7,6 +7,7 @@ from pathlib import Path
 
 FILES_TO_SYMLINK = [
     ".claude/settings.local.json",
+    "CLAUDE.local.md",
 ]
 
 FILES_TO_COPY = [

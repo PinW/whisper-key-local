@@ -124,3 +124,6 @@ src/whisper_key/assets/version.txt
 
 # Temporary documentation
 documentation/temp/
+
+# Local Claude instructions
+CLAUDE.local.md
