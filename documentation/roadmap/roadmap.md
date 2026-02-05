@@ -3,6 +3,8 @@
 
 ## Bugs
 - **Ctrl+C doesn't work during HuggingFace download** - shutdown signal not caught while model is downloading
+- **(macOS) System freezes on transcription** - needs verification
+- **CUDA 13.1 fails** - `cublas64_12.dll` is not found or cannot be loaded
 
 ## Next
 - As a *user* I want **support for more hotkeys** (F13-F24, Insert) so I can use StreamDeck or AutoHotkey triggers (#14)
@@ -11,11 +13,12 @@
 - As a *user*, I want to add **custom words** so rare words that I say often are translated accurately
 - As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 
-## macOS
+## Backlog
+
+### macOS
+- As a *mac user*, I want **better default hotkey** so fn doesn't conflict with emoji picker
 - As a *mac user*, I want **CGEventTap hotkeys** so I can use ESC or Cmd+. to cancel recording
 - As a *mac user*, I want **monochrome menu bar icons** so the app conforms to Apple's template icon guidelines
-
-## Backlog
 
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
