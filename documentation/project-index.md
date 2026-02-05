@@ -65,8 +65,6 @@ whisper-key-local/
 │       ├── voice_activity_detection.py # Voice activity detection
 │       └── whisper_engine.py          # Faster-whisper transcription
 │
-├── tools/                             # Utility scripts
-│
 ├── documentation/                     # Project documentation
 │   ├── project-index.md
 │   ├── design/                        # Design docs

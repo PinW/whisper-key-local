@@ -6,7 +6,6 @@ on:
     paths:
       - "src/**/*.py"
       - "*.py"
-      - "tools/**/*.py"
 
 jobs:
   claude-review:
