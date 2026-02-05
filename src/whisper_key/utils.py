@@ -56,7 +56,7 @@ def resolve_asset_path(relative_path: str) -> str:
     
     return str(Path(__file__).parent / relative_path) # Development
 
-def add_portaudio_dll_to_search_path():
+def setup_portaudio_path():
     if sys.platform != 'win32':
         return
     assets_dir = Path(resolve_asset_path('platform/windows/assets'))

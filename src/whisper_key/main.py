@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from .utils import add_portaudio_dll_to_search_path
-add_portaudio_dll_to_search_path()
+# Must run before importing platform modules - they initialize COM which breaks WASAPI in worker threads
+from .utils import setup_portaudio_path
+setup_portaudio_path()
 
 import argparse
 import logging
