@@ -24,7 +24,7 @@ a = Analysis(
     datas=[
         (str(project_root / 'src' / 'whisper_key' / 'config.defaults.yaml'), '.'),
         (str(project_root / 'src' / 'whisper_key' / 'assets'), 'assets'),
-        (str(project_root / 'src' / 'whisper_key' / 'platform' / 'windows' / 'assets'), 'src/whisper_key/platform/windows/assets'),
+        (str(project_root / 'src' / 'whisper_key' / 'platform' / 'windows' / 'assets'), 'platform/windows/assets'),
     ] + ten_vad_data,
     hiddenimports=[
         'win32gui', 'win32con', 'win32clipboard', 'win32api',

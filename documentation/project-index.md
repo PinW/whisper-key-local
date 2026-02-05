@@ -39,7 +39,6 @@ whisper-key-local/
 │       ├── config.defaults.yaml       # Default configuration template
 │       ├── assets/                    # Application assets
 │       │   ├── sounds/                # Audio feedback sounds
-│       │   ├── portaudio.dll          # Bundled PortAudio (Windows)
 │       │   └── version.txt            # Build version file
 │       ├── platform/                  # Platform abstraction layer
 │       │   ├── __init__.py            # Platform detection & import routing
