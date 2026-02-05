@@ -18,7 +18,7 @@ whisper: # Whisper AI Model Settings
   # Options: "cpu", "cuda" (for NVIDIA GPUs)
   #
   # CUDA Setup (for NVIDIA GPUs only):
-  #   1. Install CUDA 12: 
+  #   1. Install CUDA 12 (CUDA 13 not yet supported by faster-whisper):
   #      winget install Nvidia.CUDA --version 12.9
   #      Or download from: https://developer.nvidia.com/cuda-downloads
   #   2. Set device: cuda and compute_type: float16 below
