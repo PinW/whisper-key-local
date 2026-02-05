@@ -13,8 +13,9 @@
 ## Backlog
 
 ### Voice Commands
-- As a *user* I want **voice commands API** so I can do more than just transcribe voice
 - As a *user* I want **voice commands** so I can quickly activate tasks
+  - As a *user* I want **voice command hotkey** so I can choose between transcription/command
+- As a *user* I want **voice commands API** so I other apps can do things from whisper key commands
 - As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
 
 ### Terminal UI
@@ -29,18 +30,18 @@
 ### CLI
 - As a *user* I want a **CLI interface** so other tools and agents can invoke transcription programmatically
 - As a *user* I want to **wrap CLI tools** (e.g., `whisper-key claude`) so I can voice-input directly into any command-line application without switching windows
+  - As a *user* I want **additional instances with custom hotkeys** so that I can 
 
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
   - As a *new user* I want **model selection** so I can choose a Whisper model that balances speed vs accuracy without editing YAML
-  - As a *new user* I want **auto NVIDIA GPU detection** so CUDA mode is enabled automatically when a compatible GPU is available
-  - As a *new user* I want **CPU/GPU selection** so I can use my NVIDIA GPU for faster transcription or fall back to CPU
-  - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
-  - As a *new user* I want **language selection** so I can set my transcription language without editing YAML
-  - As a *new user* I want **system tray preference** so I can decide whether to show the tray icon or run in background
+  - As a *new user* I want **auto GPU detection** so CUDA/ROCm mode is enabled automatically when a compatible GPU is available
+  - As a *new user* I want **settings overview** so I can see default settings and change them if I want
+    - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
+    - As a *new user* I want **language selection** so I can set my transcription language without editing YAML
+    - As a *new user* I want **system tray preference** so I can decide whether to show the tray icon or run in background
+    - As a *new user* I want **auto-set key simulation delay based on machine specs** so slower computers don't miss keystrokes during auto-paste ([#21](https://github.com/PinW/whisper-key-local/issues/21))
   - As a *new user* I want **auto-paste preference** so I can choose between direct paste or clipboard-only mode
-  - As a *new user* I want **auto-set key simulation delay based on machine specs** so slower computers don't miss keystrokes during auto-paste ([#21](https://github.com/PinW/whisper-key-local/issues/21))
-  - As a *new user* I want **onboarding re-run option** so I can reconfigure settings by resetting onboarding_complete
 
 ### Transcription History
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
