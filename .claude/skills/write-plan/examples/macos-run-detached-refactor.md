@@ -33,8 +33,7 @@ system_tray.py:
 
 ## Implementation Plan
 
-### Phase 1: Refactor system_tray.py
-
+1. Refactor system_tray.py
 - [x] Remove the daemon thread (`self.thread`)
 - [x] Change `icon.run()` to `icon.run_detached()`
 - [x] Remove `_run_tray()` method (no longer needed)
@@ -42,8 +41,7 @@ system_tray.py:
 - [x] Remove macOS disable check (line 48-49) - enable tray on macOS
 - [x] **Test on Windows:** verify tray still works with `run_detached()`
 
-### Phase 2: Refactor main.py for platform-specific main loop
-
+2. Refactor main.py for platform-specific main loop
 - [x] Add platform import: `from .platform import IS_MACOS`
 - [x] Replace the `while shutdown_event.wait()` loop with platform-specific code:
   - macOS: `nsapp.run()`
@@ -51,35 +49,30 @@ system_tray.py:
 - [x] Import AppKit only on macOS (conditional import)
 - [x] **Test on Windows:** verify app still starts and shuts down correctly
 
-### Phase 3: macOS shutdown handling
-
+3. macOS shutdown handling
 - [x] On macOS, `nsapp.run()` blocks forever - need way to stop it
 - [x] Wire up signal handler to call `nsapp.stop()` or `nsapp.terminate_(None)`
 - [x] Ensure Ctrl+C still triggers graceful shutdown
 - [x] **Manual test on macOS:** verify Ctrl+C stops the app
 
-### Phase 4: macOS system tray verification
-
+4. macOS system tray verification
 - [x] **Manual test on macOS:** tray icon appears in menu bar
 - [x] **Manual test on macOS:** tray menu opens and items work
 - [ ] ~~**Manual test on macOS:** tray icon updates state (idle/recording/processing)~~ *(requires hotkeys)*
 - [x] Document any issues found (see below)
 
-### Phase 5: Hide Dock icon
-
+5. Hide Dock icon
 - [x] Research: `app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)`
 - [x] Add code to hide Dock icon on macOS (menu bar apps shouldn't show in Dock)
 - [x] **Manual test:** no Dock icon, only menu bar icon
 
-### Phase 6: Fix Ctrl+C shutdown
-
+6. Fix Ctrl+C shutdown
 - [x] Investigate why Ctrl+C shows `^C` but doesn't quit
 - [x] Solution: Use event polling loop instead of blocking `nsapp.run()`
 - [x] Refactor into `platform/*/app.py` for clean abstraction
 - [x] **Manual test:** Ctrl+C immediately shuts down app
 
-### Phase 7: Suppress secure coding warning
-
+7. Suppress secure coding warning
 - [x] Research NSApplicationDelegate.applicationSupportsSecureRestorableState
 - [x] Implement AppDelegate with `applicationSupportsSecureRestorableState_()` returning True
 - [x] **Manual test:** no warning on startup
@@ -132,7 +125,7 @@ Platform implementations in `platform/*/app.py`:
 - **macOS:** Polls NSApplication events with 0.1s timeout, checks shutdown_event each iteration
 - **Windows:** Simple `shutdown_event.wait(timeout=0.1)` loop
 
-## Files to Modify
+## Scope
 
 | File | Changes |
 |------|---------|
