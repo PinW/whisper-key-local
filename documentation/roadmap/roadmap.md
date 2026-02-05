@@ -7,18 +7,28 @@
 - **CUDA 13.1 fails** - `cublas64_12.dll` is not found or cannot be loaded
 
 ## Next
-- As a *user* I want **support for more hotkeys** (F13-F24, Insert) so I can use StreamDeck or AutoHotkey triggers (#14)
-- As a *user* I want **lock output to window/field** so I don't need to click back into Claude Code terminal before start record
-- As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
-- As a *user*, I want to add **custom words** so rare words that I say often are translated accurately
+- As a *user* I want **AMD GPU support** so I can use my AMD GPU for faster transcription via ROCm
 - As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 
 ## Backlog
 
-### macOS
-- As a *mac user*, I want **better default hotkey** so fn doesn't conflict with emoji picker
-- As a *mac user*, I want **CGEventTap hotkeys** so I can use ESC or Cmd+. to cancel recording
-- As a *mac user*, I want **monochrome menu bar icons** so the app conforms to Apple's template icon guidelines
+### Voice Commands
+- As a *user* I want **voice commands API** so I can do more than just transcribe voice
+- As a *user* I want **voice commands** so I can quickly activate tasks
+- As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
+
+### Terminal UI
+- As a *user* I want **on-screen hotkey hints** so I can see available controls at a glance like a video game HUD
+- As a *user*, I want a **terminal UI** so I can control the app without leaving the command line
+- As a *user*, I want a **terminal status bar** so I can see app state, model, and recording status at a glance
+- As a *user*, I want **terminal colors and styling** so the CLI feels modern like coding tools (Claude Code, lazygit)
+- As a *user*, I want **terminal settings control** so I can change settings interactively without editing YAML
+  - As a *user* I want **language selection in CLI** so I can switch transcription language without editing YAML
+- As a *user*, I want a **cleaner model download display** so I see progress without HuggingFace cluttering the terminal
+
+### CLI
+- As a *user* I want a **CLI interface** so other tools and agents can invoke transcription programmatically
+- As a *user* I want to **wrap CLI tools** (e.g., `whisper-key claude`) so I can voice-input directly into any command-line application without switching windows
 
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
@@ -35,28 +45,19 @@
 ### Transcription History
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
 
-### Voice Commands
-- As a *user* I want **voice commands API** so I can do more than just transcribe voice
-- As a *user* I want **voice commands** so I can quickly activate tasks
-- As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
-
 ### Packaging & Updates
 - As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
   - As a *developer*, I want **pyapp** so I can avoid PyInstaller's fragile build process and hidden import headaches
 - As a *user*, I want **automatic updates** to get new features
 - As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 
-### Terminal UI
-- As a *user* I want **on-screen hotkey hints** so I can see available controls at a glance like a video game HUD
-- As a *user*, I want a **terminal UI** so I can control the app without leaving the command line
-- As a *user*, I want a **terminal status bar** so I can see app state, model, and recording status at a glance
-- As a *user*, I want **terminal colors and styling** so the CLI feels modern like coding tools (Claude Code, lazygit)
-- As a *user*, I want **terminal settings control** so I can change settings interactively without editing YAML
-  - As a *user* I want **language selection in CLI** so I can switch transcription language without editing YAML
-- As a *user*, I want a **cleaner model download display** so I see progress without HuggingFace cluttering the terminal
+### macOS
+- As a *mac user*, I want **better default hotkey** so fn doesn't conflict with emoji picker
+- As a *mac user*, I want **CGEventTap hotkeys** so I can use ESC or Cmd+. to cancel recording
+- As a *mac user*, I want **monochrome menu bar icons** so the app conforms to Apple's template icon guidelines
 
-### CLI
-- As a *user* I want a **CLI interface** so other tools and agents can invoke transcription programmatically
+### Personalization
+- As a *user*, I want **custom vocabulary** so rare words that I say often are transcribed accurately
 
 ### Desktop App
 - As a *user*, I want a **desktop GUI** so that I can change settings without editing files
