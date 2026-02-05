@@ -57,6 +57,7 @@ def resolve_asset_path(relative_path: str) -> str:
     return str(Path(__file__).parent / relative_path) # Development
 
 def setup_portaudio_path():
+    # Called first in main.py - platform module imports break WASAPI
     if sys.platform != 'win32':
         return
     assets_dir = Path(resolve_asset_path('platform/windows/assets'))

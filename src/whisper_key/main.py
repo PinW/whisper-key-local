@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# Must run before importing platform modules - they initialize COM which breaks WASAPI in worker threads
 from .utils import setup_portaudio_path
 setup_portaudio_path()
 
