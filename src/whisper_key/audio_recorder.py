@@ -3,9 +3,6 @@ import threading
 import time
 from typing import Optional, Callable
 
-from .platform import paths
-paths.setup_portaudio_path()
-
 import numpy as np
 import sounddevice as sd
 import soxr
