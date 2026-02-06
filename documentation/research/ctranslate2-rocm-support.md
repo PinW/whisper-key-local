@@ -78,28 +78,6 @@ Requirements:
 - Conda environment with Python 3.9+
 - Build dependencies (cmake, clang)
 
-### Method 3: AMD Official Fork (ROCm/CTranslate2)
-
-AMD maintains a fork at [github.com/ROCm/CTranslate2](https://github.com/ROCm/CTranslate2):
-
-```bash
-git checkout amd_dev
-cd docker_rocm
-docker build -t rocm_ct2_v3.23.0 -f Dockerfile.rocm .
-```
-
-No pre-built wheels available; Docker or source build required.
-
-### Method 4: Docker Images for Faster-Whisper + ROCm
-
-Several community Docker solutions exist:
-
-| Image | Status | Notes |
-|-------|--------|-------|
-| pigeekcom/wyoming-faster-whisper-rocm | Active | Wyoming protocol integration |
-| jjajjara/rocm-whisper-api | Active | API-based Whisper |
-| Donkey545/wyoming-faster-whisper-rocm | Active | Home Assistant integration |
-
 ## Supported GPU Architectures
 
 | Architecture | Support Level | Notes |
@@ -163,8 +141,7 @@ Whisper models supported: tiny, base, small, medium, large
 
 1. **Short term**: Continue CUDA-only support; AMD ecosystem is still maturing
 2. **Medium term**: Monitor official CTranslate2 ROCm wheel availability on PyPI
-3. **For AMD users today**: Recommend Docker-based solutions (wyoming-faster-whisper-rocm)
-4. **Build from source**: Only for advanced users comfortable with ROCm toolchain
+3. Alternative engines (whisper.cpp) and platforms (Linux, Docker) are out of scope for this project
 
 ## References
 

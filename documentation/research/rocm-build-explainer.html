@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROCm Build Explainer: How HIP Gets Built and Why gfx1010 Fails</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ed1c24, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            color: #ff6b6b;
+            margin: 50px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #333;
+            font-size: 1.6rem;
+        }
+
+        h3 {
+            color: #ed1c24;
+            margin: 30px 0 15px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        .highlight {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .highlight-green {
+            color: #8DC26F;
+            font-weight: bold;
+        }
+
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            color: #ff9999;
+        }
+
+        .code-block {
+            background: #0d0d0d;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .code-block .comment { color: #666; }
+        .code-block .command { color: #ff9999; }
+        .code-block .keyword { color: #ff6b6b; }
+        .code-block .string { color: #8DC26F; }
+
+        .info-box {
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 1px solid #333;
+        }
+
+        .callout {
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .callout-red {
+            background: linear-gradient(135deg, #c0392b22 0%, #e74c3c22 100%);
+            border: 2px solid #c0392b;
+        }
+        .callout-red h3 { color: #e74c3c; }
+
+        .callout-green {
+            background: linear-gradient(135deg, #27ae6022 0%, #2ecc7122 100%);
+            border: 2px solid #27ae60;
+        }
+        .callout-green h3 { color: #2ecc71; }
+
+        .callout-blue {
+            background: linear-gradient(135deg, #2980b922 0%, #3498db22 100%);
+            border: 2px solid #2980b9;
+        }
+        .callout-blue h3 { color: #3498db; }
+
+        .callout-orange {
+            background: linear-gradient(135deg, #e67e2222 0%, #f39c1222 100%);
+            border: 2px solid #e67e22;
+        }
+        .callout-orange h3 { color: #f39c12; }
+
+        /* Analogy styling */
+        .analogy {
+            background: rgba(255,255,255,0.05);
+            border-left: 4px solid #f39c12;
+            padding: 20px 25px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+        .analogy-label {
+            color: #f39c12;
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Stack diagrams */
+        .layer {
+            margin: 8px 0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+        }
+        .layer-name { font-weight: bold; font-size: 1.05rem; }
+        .layer-detail { font-size: 0.85rem; opacity: 0.9; margin-top: 4px; }
+        .arrow { text-align: center; font-size: 1.3rem; color: #666; margin: 3px 0; }
+
+        /* Flow diagrams */
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        .flow-box {
+            padding: 14px 22px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            min-width: 140px;
+        }
+        .flow-arrow { font-size: 1.5rem; color: #666; }
+
+        /* Component grid */
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .component-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #333;
+        }
+        .component-card-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        /* Architecture table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        th {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Big diagram wrapper */
+        .big-diagram {
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid #444;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        /* Two-column layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        @media (max-width: 800px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        .vs-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #666;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #333;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Building ROCm: What Actually Gets Compiled</h1>
+        <p class="subtitle">Understanding HIP, GPU architectures, and why the pre-built wheel doesn't work on your 5700 XT</p>
+
+        <!-- ============================================ -->
+        <!-- SECTION 1: HIP IS NOT RUNTIME TRANSLATION    -->
+        <!-- ============================================ -->
+        <h2>1. HIP Is Not What You Think It Is</h2>
+
+        <p>You know HIP as "a translator that lets CUDA code run on AMD GPUs." That's the <em>effect</em>, but the <em>mechanism</em> is important to understand because it explains everything else.</p>
+
+        <div class="callout callout-orange">
+            <h3>The Key Misconception</h3>
+            <p>HIP is <strong>not</strong> a runtime translator. It doesn't sit between your running program and the GPU, converting CUDA calls on-the-fly. The translation happens <span class="highlight">at compile time</span>, before your program ever runs.</p>
+        </div>
+
+        <p>Here's what actually happens in two phases:</p>
+
+        <div class="big-diagram">
+            <div class="diagram-title">Phase 1: Compile Time (building the software)</div>
+            <div class="flow">
+                <div class="flow-box" style="background: linear-gradient(135deg, #76b900, #5a8f00); color: white;">
+                    Source Code<br><small><code style="color: #ddd;">cudaMalloc()</code></small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #e67e22, #d68910); color: white;">
+                    HIP Headers<br><small>#define cudaMalloc → hipMalloc</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white;">
+                    hip-clang<br><small>AMD's compiler</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #ed1c24, #c41e3a); color: white;">
+                    AMD Binary<br><small>GPU machine code</small>
+                </div>
+            </div>
+
+            <div class="diagram-title" style="margin-top: 30px;">Phase 2: Runtime (running the program)</div>
+            <div class="flow">
+                <div class="flow-box" style="background: linear-gradient(135deg, #ed1c24, #c41e3a); color: white;">
+                    AMD Binary<br><small>calls hipMalloc()</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #c0392b, #a93226); color: white;">
+                    HIP Runtime<br><small>amdhip64.dll</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white;">
+                    GPU Driver<br><small>amdgpu / PAL</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #2d2d2d, #1a1a1a); color: white; border: 2px solid #ed1c24;">
+                    AMD GPU<br><small>Hardware</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="analogy">
+            <div class="analogy-label">Analogy</div>
+            <p style="color: #ddd;">Think of it like translating a book. You don't hire a translator to stand next to the reader and translate each sentence as they read. Instead, you translate the entire book into the target language once, print it, and hand the reader a book that's already in their language. HIP translates the "book" (source code) from CUDA to AMD at print time (compile time), not at read time (runtime).</p>
+        </div>
+
+        <p>This is why your config still says <code>device="cuda"</code>. The CTranslate2 source code is written with CUDA function names. When compiled with HIP, those names get swapped to AMD equivalents by the preprocessor (a text substitution step before real compilation even starts). By the time the compiler produces the final binary, there's nothing CUDA left in it &mdash; it's pure AMD code.</p>
+
+        <!-- ============================================ -->
+        <!-- SECTION 2: WHAT'S INSIDE ROCm                -->
+        <!-- ============================================ -->
+        <h2>2. What's Inside ROCm</h2>
+
+        <p>ROCm isn't one thing. It's a <span class="highlight">collection of components</span> that work together, each with a specific job. Here's what they are and how they relate:</p>
+
+        <div class="big-diagram">
+            <div class="diagram-title">The ROCm Component Stack</div>
+
+            <div class="layer" style="background: linear-gradient(135deg, #e67e22, #d68910); color: white; max-width: 700px; margin: 8px auto;">
+                <div class="layer-name">HIP API + Headers</div>
+                <div class="layer-detail">The "translation dictionary" &mdash; maps CUDA function names to AMD equivalents</div>
+            </div>
+            <div class="arrow">↓ used by</div>
+
+            <div class="layer" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; max-width: 700px; margin: 8px auto;">
+                <div class="layer-name">hip-clang (Compiler)</div>
+                <div class="layer-detail">Compiles HIP/CUDA code into GPU machine code for a specific architecture (e.g. gfx1010)</div>
+            </div>
+            <div class="arrow">↓ produces binaries that call into</div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 700px; margin: 8px auto;">
+                <div class="layer" style="background: linear-gradient(135deg, #c0392b, #a93226); color: white;">
+                    <div class="layer-name">HIP Runtime</div>
+                    <div class="layer-detail">amdhip64.dll &mdash; memory management, device queries, kernel launch</div>
+                </div>
+                <div class="layer" style="background: linear-gradient(135deg, #2980b9, #2471a3); color: white;">
+                    <div class="layer-name">Math Libraries</div>
+                    <div class="layer-detail">rocBLAS, hipBLAS, rocSOLVER &mdash; the heavy-lifting matrix math</div>
+                </div>
+            </div>
+            <div class="arrow">↓ both talk to</div>
+
+            <div class="layer" style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white; max-width: 700px; margin: 8px auto;">
+                <div class="layer-name">Platform Abstraction</div>
+                <div class="layer-detail">Linux: HSA (Hardware System Architecture) &nbsp;|&nbsp; Windows: PAL (Platform Abstraction Layer)</div>
+            </div>
+            <div class="arrow">↓</div>
+
+            <div class="layer" style="background: linear-gradient(135deg, #2d2d2d, #1a1a1a); color: white; border: 2px solid #ed1c24; max-width: 700px; margin: 8px auto;">
+                <div class="layer-name">AMD GPU Driver + Hardware</div>
+                <div class="layer-detail">Your RX 5700 XT (gfx1010)</div>
+            </div>
+        </div>
+
+        <p>Let's look at the components that matter for our build:</p>
+
+        <div class="component-grid">
+            <div class="component-card">
+                <div class="component-card-title" style="color: #e67e22;">HIP API + Headers</div>
+                <p><strong>What it is:</strong> A set of header files (<code>.h</code> files) containing thousands of <code>#define</code> macros that rename CUDA functions to HIP functions.</p>
+                <p><strong>Architecture-specific?</strong> No. These are just text substitutions. They work for all GPUs.</p>
+                <p><strong>Do we need to rebuild it?</strong> No.</p>
+            </div>
+
+            <div class="component-card">
+                <div class="component-card-title" style="color: #8e44ad;">hip-clang (Compiler)</div>
+                <p><strong>What it is:</strong> AMD's fork of the LLVM/Clang compiler. Knows how to produce GPU machine code.</p>
+                <p><strong>Architecture-specific?</strong> The compiler itself isn't, but you tell it <em>which architecture to target</em> via a flag: <code>--offload-arch=gfx1010</code></p>
+                <p><strong>Do we need to rebuild it?</strong> No. It already knows gfx1010 exists.</p>
+            </div>
+
+            <div class="component-card" style="border: 2px solid #e74c3c;">
+                <div class="component-card-title" style="color: #e74c3c;">rocBLAS (Math Library)</div>
+                <p><strong>What it is:</strong> Matrix multiplication kernels. This is where the actual computation happens when running an AI model.</p>
+                <p><strong>Architecture-specific?</strong> <span class="highlight">YES &mdash; this is the critical one.</span> Contains pre-generated GPU code for specific architectures. If your arch isn't in there, math operations fail.</p>
+                <p><strong>Do we need to rebuild it?</strong> <strong>Yes.</strong> The pre-built version doesn't include gfx1010 kernels.</p>
+            </div>
+
+            <div class="component-card">
+                <div class="component-card-title" style="color: #c0392b;">HIP Runtime (amdhip64.dll)</div>
+                <p><strong>What it is:</strong> The runtime library that manages GPU memory, launches kernels, and queries device capabilities.</p>
+                <p><strong>Architecture-specific?</strong> Partially. It has a list of "supported" GPU IDs. If your GPU isn't on the list, it refuses to work.</p>
+                <p><strong>Do we need to rebuild it?</strong> Maybe. Depends on whether it recognizes gfx1010.</p>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 3: GPU ARCHITECTURES                 -->
+        <!-- ============================================ -->
+        <h2>3. What "gfx1010" Actually Means</h2>
+
+        <p>Every AMD GPU has an <span class="highlight">architecture codename</span> that tells the compiler which instruction set to use. Think of it like CPU architectures (x86 vs ARM) &mdash; code compiled for one can't run on the other.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Marketing Name</th>
+                    <th>Architecture</th>
+                    <th>GFX Code</th>
+                    <th>Your GPU?</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>RX 9070 (RDNA 4)</td>
+                    <td>Navi 48</td>
+                    <td><code>gfx1201</code></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>RX 7900 XTX (RDNA 3)</td>
+                    <td>Navi 31</td>
+                    <td><code>gfx1100</code></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>RX 6800 XT (RDNA 2)</td>
+                    <td>Navi 21</td>
+                    <td><code>gfx1030</code></td>
+                    <td></td>
+                </tr>
+                <tr style="background: rgba(237, 28, 36, 0.15);">
+                    <td><strong>RX 5700 XT (RDNA 1)</strong></td>
+                    <td><strong>Navi 10</strong></td>
+                    <td><code><strong>gfx1010</strong></code></td>
+                    <td><span style="color: #f39c12; font-weight: bold;">← You are here</span></td>
+                </tr>
+                <tr>
+                    <td>Vega 56/64 (GCN 5)</td>
+                    <td>Vega 10</td>
+                    <td><code>gfx900</code></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>When software is compiled for a GPU, the compiler produces <span class="highlight">machine code specific to that architecture</span>. A library compiled for <code>gfx1100</code> will not run on <code>gfx1010</code> &mdash; they have different instruction sets, different register layouts, different capabilities.</p>
+
+        <div class="analogy">
+            <div class="analogy-label">Analogy</div>
+            <p style="color: #ddd;">gfx codes are like CPU instruction sets. An app compiled for Apple's M-series chip won't run on an Intel chip, even though both are "processors." Similarly, GPU code compiled for gfx1100 won't run on gfx1010, even though both are "AMD GPUs."</p>
+        </div>
+
+        <div class="callout callout-blue">
+            <h3>Multi-Architecture Builds</h3>
+            <p>A single library <em>can</em> contain code for multiple architectures. The compiler creates a "fat binary" that bundles machine code for each target. At runtime, the correct version is selected based on the GPU that's present.</p>
+            <div class="code-block">
+<span class="comment"># Tell the compiler to include code for THREE architectures:</span>
+<span class="command">cmake -DCMAKE_HIP_ARCHITECTURES="gfx1010;gfx1030;gfx1100"</span>
+
+<span class="comment"># The resulting binary contains machine code for all three.</span>
+<span class="comment"># At runtime, it picks the right one based on your GPU.</span>
+            </div>
+            <p>This is how the official ROCm wheel <em>could</em> support the 5700 XT &mdash; if AMD chose to include <code>gfx1010</code> in the target list. They didn't.</p>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 4: THE rocBLAS PROBLEM               -->
+        <!-- ============================================ -->
+        <h2>4. The rocBLAS Problem (Where It Really Breaks)</h2>
+
+        <p>When CTranslate2 runs a Whisper model, most of the actual work is <span class="highlight">matrix multiplication</span> &mdash; multiplying huge grids of numbers together. CTranslate2 doesn't do this math itself. It calls <code>rocBLAS</code> (AMD's math library), which contains highly optimized GPU code for these operations.</p>
+
+        <div class="big-diagram">
+            <div class="diagram-title">What happens when CTranslate2 needs to multiply matrices</div>
+            <div class="flow">
+                <div class="flow-box" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: #1a1a2e;">
+                    CTranslate2<br><small>needs A × B</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #2980b9, #2471a3); color: white;">
+                    hipBLAS<br><small>thin wrapper</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #c0392b, #a93226); color: white; border: 3px solid #f39c12;">
+                    rocBLAS<br><small>has the actual<br>GPU kernels</small>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box" style="background: linear-gradient(135deg, #2d2d2d, #1a1a1a); color: white; border: 2px solid #ed1c24;">
+                    GPU<br><small>executes</small>
+                </div>
+            </div>
+        </div>
+
+        <p>rocBLAS is special because it doesn't just contain generic GPU code. It contains <span class="highlight">Tensile-generated kernels</span> &mdash; thousands of matrix multiplication routines that were individually optimized and pre-compiled for each GPU architecture.</p>
+
+        <div class="callout callout-red">
+            <h3>This Is Why Your 5700 XT Fails</h3>
+            <p>The pre-built rocBLAS libraries shipping with the HIP SDK only contain Tensile kernels for officially supported architectures (RDNA 2+). When CTranslate2 asks rocBLAS to multiply matrices on your gfx1010 GPU:</p>
+            <ol style="margin-left: 20px; margin-top: 10px;">
+                <li style="margin-bottom: 8px;">rocBLAS looks for a <code>TensileLibrary_gfx1010.dat</code> file</li>
+                <li style="margin-bottom: 8px;">It doesn't find one &mdash; not included in the build</li>
+                <li style="margin-bottom: 8px;">Error: "no ROCm-capable device is detected"</li>
+            </ol>
+            <p style="margin-top: 15px;">The HIP runtime actually <em>can</em> see your GPU. The failure happens one layer deeper, when it tries to do actual math and discovers there are no kernels compiled for your chip.</p>
+        </div>
+
+        <h3>What Are Tensile Kernels?</h3>
+
+        <p><strong>Tensile</strong> is AMD's code generator for matrix math. Instead of hand-writing GPU code, AMD built a system that <em>generates</em> thousands of specialized routines. Each routine is tuned for a specific combination of:</p>
+
+        <ul style="margin-left: 25px; margin-bottom: 20px; color: #ccc;">
+            <li>GPU architecture (gfx1010, gfx1100, etc.)</li>
+            <li>Matrix dimensions (tall-skinny, square, wide, etc.)</li>
+            <li>Data types (float32, float16, int8, etc.)</li>
+            <li>Memory access patterns</li>
+        </ul>
+
+        <p>For officially supported architectures, Tensile generates <span class="highlight-green">"optimized" kernels</span> &mdash; hand-tuned for peak performance. For unofficially supported architectures like gfx1010, since ROCm 6.1, Tensile can generate <span class="highlight">"fallback" kernels</span> &mdash; they work but aren't tuned, so performance will be lower.</p>
+
+        <div class="two-col">
+            <div class="callout callout-green" style="margin: 0;">
+                <h3>Optimized Kernel (gfx1100)</h3>
+                <p>Hand-tuned for RDNA 3. Knows the exact cache sizes, wave width, register count. Maximum throughput.</p>
+                <p style="margin-top: 10px;"><code>TensileLibrary_gfx1100.dat</code> (large file)</p>
+            </div>
+            <div class="callout callout-orange" style="margin: 0;">
+                <h3>Fallback Kernel (gfx1010)</h3>
+                <p>Generic code that runs correctly but isn't tuned. Uses conservative assumptions. Slower but functional.</p>
+                <p style="margin-top: 10px;"><code>TensileLibrary_fallback_gfx1010.dat</code></p>
+            </div>
+        </div>
+
+        <p>These fallback kernels exist on Linux (Arch Linux's rocBLAS package includes them). But the <span class="highlight">Windows HIP SDK doesn't ship them</span>. That's the gap we need to fill.</p>
+
+        <!-- ============================================ -->
+        <!-- SECTION 5: THE FULL BUILD PICTURE             -->
+        <!-- ============================================ -->
+        <h2>5. What "Building for gfx1010" Actually Means</h2>
+
+        <p>When we say "build ROCm for gfx1010," we don't mean rebuilding the entire ROCm stack. We mean rebuilding the <span class="highlight">architecture-specific pieces</span> with gfx1010 as a target. Here's what needs to happen:</p>
+
+        <div class="big-diagram">
+            <div class="diagram-title">The Build Chain: Source Code → Your GPU</div>
+
+            <div style="max-width: 800px; margin: 0 auto;">
+                <div class="layer" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <div class="layer-name">Step 1: Rebuild rocBLAS with gfx1010 target</div>
+                    <div class="layer-detail">Tensile generates fallback kernels for gfx1010. Produces rocblas.dll with gfx1010 support.</div>
+                </div>
+                <div class="arrow">↓ provides math kernels to</div>
+
+                <div class="layer" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: #1a1a2e;">
+                    <div class="layer-name">Step 2: Rebuild CTranslate2 with -DWITH_HIP=ON -DCMAKE_HIP_ARCHITECTURES=gfx1010</div>
+                    <div class="layer-detail">hip-clang compiles CTranslate2's GPU code into gfx1010 machine code. Links against our rebuilt rocBLAS.</div>
+                </div>
+                <div class="arrow">↓ produces</div>
+
+                <div class="layer" style="background: linear-gradient(135deg, #f39c12, #d68910); color: #1a1a2e;">
+                    <div class="layer-name">Step 3: Package into a Python wheel</div>
+                    <div class="layer-detail">ctranslate2-4.7.1-cp313-cp313-win_amd64.whl &mdash; now with gfx1010 code baked in</div>
+                </div>
+                <div class="arrow">↓ installed into</div>
+
+                <div class="layer" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white;">
+                    <div class="layer-name">Step 4: pip install → faster-whisper uses it</div>
+                    <div class="layer-detail">Replace the CUDA wheel with our custom ROCm wheel. Everything else stays the same.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout callout-blue">
+            <h3>What We Don't Need to Rebuild</h3>
+            <ul style="margin-left: 20px; margin-top: 10px; color: #ccc;">
+                <li style="margin-bottom: 8px;"><strong>HIP headers/API</strong> &mdash; architecture-independent, just text macros</li>
+                <li style="margin-bottom: 8px;"><strong>hip-clang compiler</strong> &mdash; already knows about gfx1010, just needs to be told to target it</li>
+                <li style="margin-bottom: 8px;"><strong>HIP runtime (amdhip64.dll)</strong> &mdash; should already recognize gfx1010 hardware</li>
+                <li style="margin-bottom: 8px;"><strong>faster-whisper</strong> &mdash; pure Python, doesn't know or care what GPU is underneath</li>
+                <li style="margin-bottom: 8px;"><strong>Whisper-Key</strong> &mdash; just calls faster-whisper</li>
+            </ul>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 6: HOW THIS CONNECTS TO OUR STACK     -->
+        <!-- ============================================ -->
+        <h2>6. How It All Connects to Whisper-Key</h2>
+
+        <p>Here's the complete picture from your app down to the hardware, showing exactly which layer we need to change:</p>
+
+        <div class="big-diagram">
+            <div style="max-width: 700px; margin: 0 auto;">
+                <div class="layer" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <div class="layer-name">Whisper-Key (Python)</div>
+                    <div class="layer-detail">state_manager.py → whisper_engine.py → calls faster-whisper</div>
+                </div>
+                <div class="arrow" style="color: #27ae60;">↓ <small>unchanged</small></div>
+
+                <div class="layer" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white;">
+                    <div class="layer-name">faster-whisper (Python)</div>
+                    <div class="layer-detail">Wraps CTranslate2 with a nice Whisper API. Passes device="cuda" through.</div>
+                </div>
+                <div class="arrow" style="color: #27ae60;">↓ <small>unchanged</small></div>
+
+                <div class="layer" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: #1a1a2e; border: 3px solid #ff6b6b;">
+                    <div class="layer-name">CTranslate2 (C++ compiled library) ← REBUILD THIS</div>
+                    <div class="layer-detail">
+                        Currently: CUDA wheel from PyPI (NVIDIA only)<br>
+                        Goal: ROCm wheel compiled for gfx1010 (your 5700 XT)
+                    </div>
+                </div>
+                <div class="arrow" style="color: #e74c3c;">↓ <small>rebuilt</small></div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="layer" style="background: linear-gradient(135deg, #c0392b, #a93226); color: white;">
+                        <div class="layer-name">HIP Runtime</div>
+                        <div class="layer-detail">amdhip64.dll<br>Already installed</div>
+                    </div>
+                    <div class="layer" style="background: linear-gradient(135deg, #c0392b, #a93226); color: white; border: 3px solid #ff6b6b;">
+                        <div class="layer-name">rocBLAS ← REBUILD THIS</div>
+                        <div class="layer-detail">Needs Tensile fallback<br>kernels for gfx1010</div>
+                    </div>
+                </div>
+                <div class="arrow" style="color: #e74c3c;">↓</div>
+
+                <div class="layer" style="background: linear-gradient(135deg, #2c3e50, #34495e); color: white;">
+                    <div class="layer-name">PAL (Windows Platform Abstraction)</div>
+                    <div class="layer-detail">Talks to the AMD GPU driver. Must recognize gfx1010 &mdash; it should, since drivers support it for gaming.</div>
+                </div>
+                <div class="arrow">↓</div>
+
+                <div class="layer" style="background: linear-gradient(135deg, #2d2d2d, #1a1a1a); color: white; border: 2px solid #ed1c24;">
+                    <div class="layer-name">RX 5700 XT (gfx1010)</div>
+                    <div class="layer-detail">The hardware works fine &mdash; it runs games, does Vulkan compute, etc. The issue is purely in the software stack above.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 7: RISKS AND UNKNOWNS                -->
+        <!-- ============================================ -->
+        <h2>7. Risks and Unknowns</h2>
+
+        <div class="component-grid">
+            <div class="component-card" style="border: 2px solid #e74c3c;">
+                <div class="component-card-title" style="color: #e74c3c;">PAL May Block gfx1010</div>
+                <p>On Linux, the HSA runtime is open-source and can be overridden with <code>HSA_OVERRIDE_GFX_VERSION</code>. Windows uses PAL which is closed-source. If PAL rejects gfx1010 at the driver level, no amount of rebuilding will help.</p>
+            </div>
+
+            <div class="component-card" style="border: 2px solid #f39c12;">
+                <div class="component-card-title" style="color: #f39c12;">Tensile Fallback Quality</div>
+                <p>Fallback kernels are correct but unoptimized. Community reports include "gibberish output" with some configurations &mdash; this might be a precision issue with fallback math on RDNA 1.</p>
+            </div>
+
+            <div class="component-card" style="border: 2px solid #f39c12;">
+                <div class="component-card-title" style="color: #f39c12;">Build Complexity on Windows</div>
+                <p>Most community success stories are on Linux. Building rocBLAS + CTranslate2 on Windows requires Visual Studio, CMake, the HIP SDK, and patience. The toolchain is less tested on Windows.</p>
+            </div>
+
+            <div class="component-card" style="border: 2px solid #3498db;">
+                <div class="component-card-title" style="color: #3498db;">Even If It Works...</div>
+                <p>Performance with fallback kernels may not be dramatically better than CPU with int8 quantization for small Whisper models. The speedup is most noticeable with larger models (medium, large).</p>
+            </div>
+        </div>
+
+        <div class="callout callout-orange">
+            <h3>The Biggest Unknown: PAL</h3>
+            <p>This is the piece we can't control. The entire build effort depends on whether Windows' PAL layer will allow compute workloads on gfx1010. Gaming works (your GPU runs DirectX/Vulkan games fine), but ROCm compute is a separate code path in the driver. We'll only know by trying.</p>
+            <p style="margin-top: 10px;">If PAL blocks gfx1010, the error will look the same as before: "no ROCm-capable device detected" &mdash; but this time it would be the runtime rejecting the GPU, not just missing math kernels.</p>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 8: SUMMARY                            -->
+        <!-- ============================================ -->
+        <h2>8. Summary: What Needs to Happen</h2>
+
+        <div class="info-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>What</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>HIP Headers</td>
+                        <td>CUDA→HIP name mapping</td>
+                        <td style="color: #27ae60;">None (architecture-independent)</td>
+                    </tr>
+                    <tr>
+                        <td>hip-clang</td>
+                        <td>Compiler</td>
+                        <td style="color: #27ae60;">None (already knows gfx1010)</td>
+                    </tr>
+                    <tr>
+                        <td>HIP Runtime</td>
+                        <td>amdhip64.dll</td>
+                        <td style="color: #f39c12;">Verify it sees 5700 XT</td>
+                    </tr>
+                    <tr style="background: rgba(237, 28, 36, 0.1);">
+                        <td><strong>rocBLAS</strong></td>
+                        <td>Matrix math kernels</td>
+                        <td style="color: #e74c3c;"><strong>Rebuild with gfx1010 Tensile kernels</strong></td>
+                    </tr>
+                    <tr style="background: rgba(237, 28, 36, 0.1);">
+                        <td><strong>CTranslate2</strong></td>
+                        <td>Inference engine</td>
+                        <td style="color: #e74c3c;"><strong>Rebuild with -DWITH_HIP=ON targeting gfx1010</strong></td>
+                    </tr>
+                    <tr>
+                        <td>faster-whisper</td>
+                        <td>Python Whisper API</td>
+                        <td style="color: #27ae60;">None (pure Python)</td>
+                    </tr>
+                    <tr>
+                        <td>Whisper-Key</td>
+                        <td>Our app</td>
+                        <td style="color: #27ae60;">None</td>
+                    </tr>
+                    <tr>
+                        <td>PAL</td>
+                        <td>Windows driver layer</td>
+                        <td style="color: #e74c3c;">Unknown &mdash; closed-source, can't modify</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>Created for Whisper-Key documentation &bull; February 2026</p>
+            <p style="margin-top: 10px;"><a href="https://github.com/PinW/whisper-key-local" style="color: #ff6b6b;">github.com/PinW/whisper-key-local</a></p>
+        </footer>
+    </div>
+</body>
+</html>
