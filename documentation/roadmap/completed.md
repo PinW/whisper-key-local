@@ -30,6 +30,7 @@
 - As a *user* I want **config table in readme** so I can understand the types of functionality available before downloading
 - As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 - As a *user* I want **AMD GPU support** so I can use my AMD GPU for faster transcription via ROCm
+- As a *user* I want **distil-whisper models** so I get faster transcription with a smaller download
 
 ## Resolved Bugs
 

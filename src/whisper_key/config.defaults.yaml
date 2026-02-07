@@ -78,10 +78,21 @@ whisper: # Whisper AI Model Settings
       label: "Medium.En (English)"
       group: custom
       enabled: true
-    distil-large-v3.5: # About 1.5x faster than large-v3-turbo
+    distil-small.en:
+      source: Systran/faster-distil-whisper-small.en
+      label: "Distil-Small.En (English)"
+      group: custom
+      enabled: true
+    distil-medium.en:
+      source: Systran/faster-distil-whisper-medium.en
+      label: "Distil-Medium.En (English)"
+      group: custom
+      enabled: true
+    distil-large-v3.5:
       source: distil-whisper/distil-large-v3.5-ct2
       label: "Distil-Large-V3.5 (English)"
       group: custom
+      enabled: true
 
 hotkey: # Hotkey Configuration
 
