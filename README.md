@@ -47,11 +47,11 @@ pip install -e .
 python whisper-key.py
 ```
 
-## ⚡ GPU Acceleration
+## ⚡ GPU Acceleration Setup
 
-GPU acceleration may require additional setup (drivers/SDKs) beyond Whisper Key's dependencies.
+Whisper Key supports both NVIDIA (CUDA, GTX 900 series or later) and AMD (ROCm, RX 6000 series or later) GPUs, but may require additional setup.
 
-**[GPU setup guide →](documentation/gpu-setup.md)** (NVIDIA CUDA, AMD ROCm)
+Please refer to the **[GPU Setup Guide](documentation/gpu-setup.md)** for instructions.
 
 ## 🎤 Basic Usage
 

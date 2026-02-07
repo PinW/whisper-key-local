@@ -23,14 +23,18 @@ Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm-
 3. Set `device: cuda` and `compute_type: float16`
 4. Restart Whisper Key
 
-## AMD — RDNA 2+ (ROCm 7+)
+## AMD — RDNA 2+ (ROCm 7.2)
 
-**Requirements:** AMD GPU with RDNA 2 or newer architecture (RX 6000 series+)
+**Requirements:** AMD GPU with RDNA 2 or newer (RX 6000, 7000, 9000 series)
 
-1. Install a CTranslate2 ROCm wheel — check [OpenNMT/CTranslate2 releases](https://github.com/OpenNMT/CTranslate2/releases) for builds
-2. Install the HIP SDK version required by the wheel
-3. Set `device: cuda` and `compute_type: float16`
-4. Restart Whisper Key
+1. Install [HIP SDK 7.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
+2. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
+3. Install the wheel matching your Python version:
+   ```
+   pip install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl
+   ```
+4. Set `device: cuda` and `compute_type: float16`
+5. Restart Whisper Key
 
 ## AMD — RDNA 1 (ROCm 6.2)
 
