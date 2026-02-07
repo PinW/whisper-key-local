@@ -49,10 +49,10 @@ python whisper-key.py
 
 ## ⚡ GPU Acceleration Setup
 
-GPU acceleration may require additional setup:
+Both NVIDIA and AMD GPUs are supported but may require additional setup:
 
-- **NVIDIA** — CUDA, GTX 900 series or later
-- **AMD** — ROCm, RX 5000 series or later
+- **NVIDIA (CUDA)** — GTX 900 or later
+- **AMD (ROCm)** — RX 5000 or later
 
 See the **[GPU Setup Guide](documentation/gpu-setup.md)** for instructions.
 
