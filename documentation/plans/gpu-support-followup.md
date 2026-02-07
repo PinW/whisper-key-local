@@ -41,17 +41,18 @@ Make whisper-key detect the user's GPU and guide them to the right setup:
 - Surface clear messages in the UI/logs: "Detected AMD RX 5700 XT (RDNA 1) — using GPU acceleration" or "No supported GPU found — using CPU mode"
 - Link to the setup doc (task 2) when GPU is detected but drivers/SDK are missing
 
-## 5. Fix crash on model switch in CUDA mode
+## 5. ~~Fix crash on model switch in CUDA mode~~ WONTFIX (2026-02-07)
 
-Switching models while in GPU mode causes an access violation (`0xC0000005`) in `ctranslate2.dll` during `StorageView` destructor. The crash happens when the old model is being torn down — specifically in `Model::~Model()` clearing a list of `shared_ptr<StorageView>` pairs. The GPU memory backing those tensors has likely already been freed or the HIP context is invalid by the time the destructor runs.
+Known upstream bug in CTranslate2 — model destruction on GPU crashes due to `thread_local` GPU resource handles (allocator, cuBLAS, cuDNN, curand) being destroyed during Worker thread teardown, corrupting HIP runtime state. Affects CUDA too, not just HIP.
 
-Stack trace (key frames):
-```
-StorageView::~StorageView() + 0x2F
-list<pair<string, shared_ptr<StorageView>>>::clear() + 0x64
-Model::~Model() + 0x5B
-make_shared<WhisperModel>() + 0x217  (new model being created while old destroys)
-Worker::run() + 0xAB
-```
+Upstream issues: [faster-whisper #71](https://github.com/SYSTRAN/faster-whisper/issues/71), [CTranslate2 #1782](https://github.com/OpenNMT/CTranslate2/issues/1782). Open PRs [#1201](https://github.com/OpenNMT/CTranslate2/pull/1201), [#1912](https://github.com/OpenNMT/CTranslate2/pull/1912) attempt partial fixes but don't fully resolve it on Windows.
 
-Likely cause: the old model's GPU tensors are freed after the HIP context or device state has changed (e.g. new model allocation triggers cleanup). Need to ensure the old model is fully destroyed before creating the new one, or that GPU resource cleanup happens in the correct order.
+**Decision:** Accept the crash. Model switching is rare in normal use, and this custom build is only used by one person. After crash, app restarts fine and loads the new model.
+
+What was tried and failed:
+- `gc.collect()` before creating new model — slightly less frequent crashes
+- `unload_model(to_cpu=False)` — first switch works, second always crashes
+- `CT2_CUDA_CACHING_ALLOCATOR_CONFIG=4,3,12,0` — made it worse (deterministic crash)
+- Removing `thread_local` from CubCachingAllocator — didn't help (other thread_local handles still corrupt HIP)
+- `time.sleep(2)` between old/new model — no improvement
+- GPU model cache (never destroying models) — works but wastes VRAM, unacceptable

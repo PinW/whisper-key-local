@@ -94,8 +94,8 @@ class WhisperEngine:
                     device=self.device,
                     compute_type=self.compute_type
                 )
-
                 self.model = new_model
+
                 self.model_key = new_model_key
                 self.logger.info(f"Whisper model [{new_model_key}] loaded successfully (async)")
 
