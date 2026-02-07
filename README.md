@@ -49,7 +49,7 @@ python whisper-key.py
 
 ## ⚡ GPU Acceleration Setup
 
-Whisper Key supports both NVIDIA (CUDA, GTX 900 series or later) and AMD (ROCm, RX 6000 series or later) GPUs, but may require additional setup.
+Whisper Key supports both NVIDIA (CUDA, GTX 900 series or later) and AMD (ROCm, RX 5000 series or later) GPUs, but may require additional setup.
 
 Please refer to the **[GPU Setup Guide](documentation/gpu-setup.md)** for instructions.
 
