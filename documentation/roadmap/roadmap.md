@@ -1,6 +1,11 @@
 # Whisper Key Local - Roadmap
 @completed.md
 
+## Next
+
+- As a *user* I want to **see CPU vs GPU mode on startup** so I can confirm the app is using the right processing device
+- As a *user* I want a **warning on suboptimal device/compute_type combos** so I don't unknowingly run with bad settings (e.g. GPU+int8, CPU+float16)
+
 ## Bugs
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
