@@ -4,7 +4,9 @@ Status: OPEN
 
 **Session notes:**
 - Use subagents (Explore, etc.) for token-heavy tasks to preserve main thread context
-- Write files in WSL (`/tmp/`), then copy to Windows with `powershell.exe -Command "Copy-Item ..."` — avoids PowerShell escaping hell
+- Write/edit files in WSL (`documentation/temp/`), then copy to Windows with `powershell.exe -Command "Copy-Item '\\\\wsl$\\Ubuntu\\...' 'C:\\...' -Force"` — avoids PowerShell escaping hell
+- PowerShell string Replace won't match if line endings differ (CRLF vs LF) — just copy the whole file instead of trying inline replacements
+- The 5700xt-rocm repo is at `C:\Users\pinwa\projects\5700xt-rocm\`, GitHub: `PinW/ctranslate2-rocm-rdna1`
 
 ## 1. ~~Restore CPU support in custom CTranslate2 build~~ DONE (2026-02-07)
 
