@@ -60,13 +60,37 @@ Note: required `CMAKE_POLICY_VERSION_MINIMUM=3.5` (same CMake 4.2 compat issue a
 - [ ] ~~Compare CPU INT8 output with stock PyPI wheel output~~ (skipped — output matches expected)
 - [ ] ~~Test model switch (gpu → cpu → gpu)~~ (not tested yet)
 
-### Phase 5 (stretch): Add OpenMP for multi-threaded CPU
+### Phase 5: Add OpenMP for multi-threaded CPU
 
-- [ ] Investigate: download standalone Intel OpenMP runtime (conda/NuGet/standalone)
-- [ ] Rebuild oneDNN with OMP runtime instead of SEQ
-- [ ] Rebuild CT2 with `OPENMP_RUNTIME=INTEL` and path to `libiomp5md.lib`
-- [ ] Bundle `libiomp5md.dll` in wheel
-- [ ] Benchmark CPU INT8 speed: single-threaded (SEQ) vs multi-threaded (OMP)
+The stock PyPI wheel uses Intel OpenMP (`libiomp5md.dll`) for multi-threaded CPU inference. This is NOT Intel-CPU-specific — it's a standard threading library that works on AMD CPUs too.
+
+**What's needed:** `libiomp5md.lib` (build-time, import library) + `libiomp5md.dll` (runtime, ~1MB)
+
+**Where to get them (lightest to heaviest):**
+1. `conda install intel-openmp` — small package, has both .lib and .dll
+2. NuGet `intelmkl.devel.win-x64` — has the files
+3. Intel oneAPI Base Toolkit — overkill (GBs) just for one DLL
+4. Extract .dll from stock CT2 wheel (but still need .lib for linking)
+
+**Build changes (two flags each):**
+1. `build_onednn.bat`: change `DNNL_CPU_RUNTIME=SEQ` → `DNNL_CPU_RUNTIME=OMP`, add path to `libiomp5md.lib`
+2. `configure.bat`: change `OPENMP_RUNTIME=NONE` → `OPENMP_RUNTIME=INTEL`, add Intel OpenMP lib dir to `CMAKE_PREFIX_PATH`
+
+**Steps:**
+- [x] Get `libiomp5md.lib` + `libiomp5md.dll` — `pip install intel-openmp` (32MB, installs to `Library/lib/` and `Library/bin/`)
+- [x] Rebuild oneDNN with `DNNL_CPU_RUNTIME=OMP` — MSVC finds OpenMP 2.0 built-in, 391 targets
+- [x] Rebuild CT2 with `OPENMP_RUNTIME=INTEL` — ROCm clang finds OpenMP 5.1 (`-fopenmp=libomp`), links `libiomp5md.lib`
+- [x] Copy `libiomp5md.dll` alongside `ctranslate2.dll` in site-packages (existing `os.add_dll_directory` covers it)
+- [x] Test CPU INT8 transcription still works — confirmed
+- [x] Benchmark: **1.8x speedup** (12 threads vs 1 thread on Ryzen 5 3600)
+
+**Benchmark results (detect_language, tiny model, avg of 5):**
+
+| Config | Time | Speedup |
+|--------|------|---------|
+| GPU float32 | 0.35s | — |
+| CPU int8 (12 threads, OMP) | 0.26s | 1.8x vs 1-thread |
+| CPU int8 (1 thread) | 0.48s | baseline |
 
 ## Implementation Details
 
@@ -94,11 +118,11 @@ cmake --install build
 ```
 
 Key flags:
-- `DNNL_CPU_RUNTIME=SEQ` — no OpenMP, avoids cross-compiler linking issues between MSVC (oneDNN) and ROCm clang (CT2)
+- `DNNL_CPU_RUNTIME=OMP` — Intel OpenMP for multi-threaded CPU inference
 - `ONEDNN_LIBRARY_TYPE=STATIC` — linked into ctranslate2.dll, no extra DLL to ship
 - `ONEDNN_ENABLE_PRIMITIVE="CONVOLUTION;REORDER"` — matches stock build, sufficient for CT2
 
-### Updated `configure.bat` (changes in bold)
+### Updated `configure.bat`
 
 ```bat
 @echo off
@@ -112,6 +136,7 @@ set HIP_DEVICE_LIB_PATH=%ROCM%\amdgcn\bitcode
 set CC=%ROCM%\bin\clang.exe
 set CXX=%ROCM%\bin\clang++.exe
 set PATH=%ROCM%\bin;%PATH%
+set INTEL_ROOT=C:\Users\pinwa\AppData\Local\Programs\Python\Python313\Library
 
 cd /d %~dp0CTranslate2
 rmdir /s /q build 2>nul
@@ -121,46 +146,41 @@ cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ^
   -DBUILD_CLI=OFF ^
   -DWITH_MKL=OFF ^
   -DWITH_DNNL=ON ^
-  -DOPENMP_RUNTIME=NONE ^
+  -DOPENMP_RUNTIME=INTEL ^
   -DWITH_HIP=ON ^
   -DCMAKE_HIP_ARCHITECTURES=gfx1010 ^
   -DCMAKE_HIP_COMPILER=C:/PROGRA~1/AMD/ROCm/6.2/bin/clang++.exe ^
   -DCMAKE_HIP_COMPILER_ROCM_ROOT=C:/PROGRA~1/AMD/ROCm/6.2 ^
   -DCMAKE_PREFIX_PATH="C:/PROGRA~1/AMD/ROCm/6.2;%~dp0onednn-install" ^
   "-DCMAKE_HIP_FLAGS=-D_MSVC_STL_DOOM_FUNCTION(mesg)=__builtin_trap()" ^
-  "-DCMAKE_CXX_FLAGS=-D_MSVC_STL_DOOM_FUNCTION(mesg)=__builtin_trap()"
+  "-DCMAKE_CXX_FLAGS=-fopenmp -D_MSVC_STL_DOOM_FUNCTION(mesg)=__builtin_trap()" ^
+  -DINTEL_ROOT=C:/Users/pinwa/AppData/Local/Programs/Python/Python313/Library
 ```
 
-Changes from current:
-1. `-DWITH_DNNL=OFF` → `-DWITH_DNNL=ON`
-2. `CMAKE_PREFIX_PATH` now includes `onednn-install` path alongside ROCm
+Changes from Phase 4:
+1. `-DOPENMP_RUNTIME=NONE` → `-DOPENMP_RUNTIME=INTEL`
+2. Added `INTEL_ROOT` pointing to `intel-openmp` pip package (`Library/lib/libiomp5md.lib`)
+3. Added `-fopenmp` to `CMAKE_CXX_FLAGS` (ROCm clang needs explicit flag)
+4. Added `set INTEL_ROOT` environment variable
 
 ### Scope
 
 | File | Action |
 |------|--------|
-| `C:\...\5700xt-rocm\build_onednn.bat` | **New** — oneDNN build script |
-| `C:\...\5700xt-rocm\configure.bat` | **Modified** — add DNNL, update PREFIX_PATH |
+| `C:\...\5700xt-rocm\build_onednn.bat` | **Modified** — `DNNL_CPU_RUNTIME=SEQ` → `OMP` |
+| `C:\...\5700xt-rocm\configure.bat` | **Modified** — `OPENMP_RUNTIME=INTEL`, `INTEL_ROOT`, `-fopenmp` |
 | `C:\...\5700xt-rocm\build.bat` | Unchanged |
 | `C:\...\5700xt-rocm\install_and_wheel.bat` | Unchanged |
-| No whisper-key source changes | DLL search path already handles ROCm; oneDNN is statically linked |
-
-## Risks
-
-| Risk | Mitigation |
-|------|------------|
-| MSVC-compiled oneDNN static lib incompatible with ROCm clang linker | Both target MSVC ABI (COFF format). If fails: build oneDNN as shared DLL instead, or build with ROCm clang |
-| `DNNL_CPU_RUNTIME=SEQ` makes CPU notably slower than stock wheel | Functional but single-threaded. Phase 5 adds OpenMP. Users needing fast CPU can use stock PyPI wheel |
-| oneDNN 3.1.1 build fails with MSVC 2026 (v14.50) | Same `_MSVC_STL_DOOM_FUNCTION` issue as CT2 — add same workaround to oneDNN cmake flags if needed |
-| `ONEDNN_ENABLE_PRIMITIVE="CONVOLUTION;REORDER"` not sufficient | CT2 uses BLAS-like GEMM API (works regardless of primitives) + CONVOLUTION + REORDER. Should be fine. If not: use `ONEDNN_ENABLE_PRIMITIVE=ALL` |
+| `libiomp5md.dll` | Copied alongside `ctranslate2.dll` in site-packages |
+| No whisper-key source changes | DLL search path in `__init__.py` already covers package directory |
 
 ## Success Criteria
 
 - [x] `ctranslate2.get_supported_compute_types('cpu')` includes `int8` — returns `{int8, int8_float32, float32}`
 - [x] CPU/INT8 transcription produces correct text
 - [x] GPU transcription still works (no regression)
-- [x] No new DLLs needed at runtime (oneDNN is statically linked)
+- [x] Multi-threaded CPU ~1.8x faster than single-threaded
 
 ## Status
 
-**Phases 1–4 complete (2026-02-07).** Phase 5 (OpenMP) deferred.
+**All phases complete (2026-02-07).** GPU + multi-threaded CPU working.
