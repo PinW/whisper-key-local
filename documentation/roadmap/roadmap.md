@@ -43,6 +43,9 @@
 ### Transcription History
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
 
+### GPU Onboarding
+- As a *user* I want **guided GPU setup** so drivers and dependencies are auto-detected, downloaded, and installed through an in-app UI instead of manual steps
+
 ### Packaging & Updates
 - As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
   - As a *developer*, I want **pyapp** so I can avoid PyInstaller's fragile build process and hidden import headaches
