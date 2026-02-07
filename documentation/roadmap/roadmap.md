@@ -5,9 +5,7 @@
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
 - **CUDA 13.1 fails** - `cublas64_12.dll` is not found or cannot be loaded
-
-## Next
-- As a *user* I want **AMD GPU support** so I can use my AMD GPU for faster transcription via ROCm
+- **GPU model switch crash** - upstream CT2 bug, `thread_local` GPU handles corrupt HIP/CUDA on Worker thread teardown ([faster-whisper #71](https://github.com/SYSTRAN/faster-whisper/issues/71)). Future option: auto-restart app on model switch in GPU mode
 
 ## Backlog
 
@@ -44,6 +42,9 @@
 
 ### Transcription History
 - As a *user* I want a **transcriptions log** so I can review my past transcriptions and look at accidental cancels or overwrites
+
+### GPU Onboarding
+- As a *user* I want **guided GPU setup** so drivers and dependencies are auto-detected, downloaded, and installed through an in-app UI instead of manual steps
 
 ### Packaging & Updates
 - As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
