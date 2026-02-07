@@ -7,9 +7,6 @@
 - **CUDA 13.1 fails** - `cublas64_12.dll` is not found or cannot be loaded
 - **GPU model switch crash** - upstream CT2 bug, `thread_local` GPU handles corrupt HIP/CUDA on Worker thread teardown ([faster-whisper #71](https://github.com/SYSTRAN/faster-whisper/issues/71)). Future option: auto-restart app on model switch in GPU mode
 
-## Next
-- As a *user* I want **AMD GPU support** so I can use my AMD GPU for faster transcription via ROCm
-
 ## Backlog
 
 ### Voice Commands

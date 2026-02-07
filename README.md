@@ -10,12 +10,12 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 - **Auto-Paste**: Transcribe directly to cursor
 - **Auto-Send**: Optionally auto-send with ENTER keypress
 - **Local/Offline**: Voice data never leaves your computer
-- **CPU Ready**: Small, efficient models
-- **CUDA Support**: Leverage an NVIDIA GPU with bigger models
+- **CPU Ready**: Small, efficient models available
+- **GPU Ready**: Support for both NVIDIA & AMD cards
 - **Cross-platform**: Works on Windows and macOS
 - **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
 
-> **Roadmap**: AMD GPUs → voice commands → terminal UI → CLI wrapper (`whisper-key claude`) → [etc...](documentation/roadmap/roadmap.md)
+> **Roadmap**: voice commands → terminal UI → CLI wrapper (`whisper-key claude`) → [etc...](documentation/roadmap/roadmap.md)
 
 ## 🚀 Quick Start
 
@@ -47,6 +47,12 @@ pip install -e .
 python whisper-key.py
 ```
 
+## ⚡ GPU Acceleration
+
+GPU acceleration may require additional setup (drivers/SDKs) beyond Whisper Key's dependencies.
+
+**[GPU setup guide →](documentation/gpu-setup.md)** (NVIDIA CUDA, AMD ROCm)
+
 ## 🎤 Basic Usage
 
 | Hotkey | Windows | macOS |
@@ -73,7 +79,7 @@ Delete this file and restart app to reset to defaults.
 |--------|---------|-------|
 | **Whisper** |||
 | `whisper.model` | `tiny` | Any model defined in `whisper.models` |
-| `whisper.device` | `cpu` | cpu or cuda (NVIDIA GPU) |
+| `whisper.device` | `cpu` | cpu or cuda (NVIDIA/AMD GPU) — [setup guide](documentation/gpu-setup.md) |
 | `whisper.compute_type` | `int8` | int8/float16/float32 |
 | `whisper.language` | `auto` | auto or language code (en, es, fr, etc.) |
 | `whisper.beam_size` | `5` | Higher = more accurate but slower (1-10) |

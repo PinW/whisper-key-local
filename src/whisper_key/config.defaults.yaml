@@ -15,20 +15,12 @@ whisper: # Whisper AI Model Settings
   model: tiny
   
   # Processing device - where the AI runs
-  # Options: "cpu", "cuda" (for NVIDIA GPUs)
-  #
-  # CUDA Setup (for NVIDIA GPUs only):
-  #   1. Install CUDA 12 (CUDA 13 not yet supported by faster-whisper):
-  #      winget install Nvidia.CUDA --version 12.9
-  #      Or download from: https://developer.nvidia.com/cuda-downloads
-  #   2. Set device: cuda and compute_type: float16 below
+  # Options: "cpu", "cuda" (NVIDIA or AMD GPU)
+  # See documentation/gpu-setup.md for full setup instructions
   device: cpu
   
-  # Compute precision - affects speed vs accuracy
-  # Options: "int8", "float16", "float32"
-  # - int8: fastest, good quality (recommended)
-  # - float16: balanced (requires GPU for best performance)
-  # - float32: highest quality, slowest
+  # Compute precision
+  # Options: "int8" (CPU), "float16" (GPU), "float32" (either, slowest)
   compute_type: int8
   
   # Language detection
