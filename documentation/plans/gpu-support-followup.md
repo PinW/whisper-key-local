@@ -2,19 +2,21 @@
 
 Status: OPEN
 
+**Session notes:**
+- Use subagents (Explore, etc.) for token-heavy tasks to preserve main thread context
+- Write files in WSL (`/tmp/`), then copy to Windows with `powershell.exe -Command "Copy-Item ..."` — avoids PowerShell escaping hell
+
 ## 1. ~~Restore CPU support in custom CTranslate2 build~~ DONE (2026-02-07)
 
-Built oneDNN 3.1.1 from source (static, SEQ runtime) and rebuilt CTranslate2 with `WITH_DNNL=ON`. CPU now supports int8, int8_float32, and float32. Both CPU INT8 and GPU float32 transcription verified working.
+Built oneDNN 3.1.1 from source (static) and rebuilt CTranslate2 with `WITH_DNNL=ON`. CPU supports int8, int8_float32, and float32. OpenMP multi-threading added (~1.8x speedup) with Intel OpenMP (`libiomp5md.dll`). Both CPU and GPU verified working in whisper-key app.
 
-Build changes: `configure.bat` updated (`WITH_DNNL=ON`, oneDNN added to `CMAKE_PREFIX_PATH`). New `build_onednn.bat` for oneDNN build. oneDNN installed to `C:\Users\pinwa\projects\5700xt-rocm\onednn-install\`.
+Build: oneDNN `DNNL_CPU_RUNTIME=OMP`, CT2 `OPENMP_RUNTIME=INTEL`, `-fopenmp` in `CMAKE_CXX_FLAGS`, `INTEL_ROOT` pointing to `intel-openmp` pip package. `libiomp5md.dll` copied alongside `ctranslate2.dll` in site-packages.
 
-OpenMP not yet added (CPU inference is single-threaded). See plan: `2026-02-07-restore-cpu-support-implementation.md` Phase 5.
+## 2. ~~Fix float16 not working on setup~~ DONE (2026-02-07)
 
-## 2. Fix float16 not working on setup
+Switched from legacy `hipblasGemmEx` (v1, takes `hipblasDatatype_t`) to `hipblasGemmEx_v2` (takes `hipblasComputeType_t` and `hipDataType`). The v1 API accepted wrong enum values silently and failed at runtime. The v2 functions exist in SDK 6.2 but are only used by default behind `#ifdef HIPBLAS_V2` — we call them directly instead.
 
-Float16 compute type fails during GPU setup/inference. Needs investigation — may be a rocBLAS Tensile kernel gap for gfx1010 half-precision GEMM, or a type mapping issue in the CTranslate2 HIP patches.
-
-Error: `2026-02-07 10:20:16,249 - src.whisper_key.whisper_engine - ERROR - Transcription failed: cuBLAS failed with status UNKNOWN`
+Wheel rebuilt and published as [GitHub release v4.7.1-rocm62-gfx1010](https://github.com/PinW/ctranslate2-rocm-rdna1/releases/tag/v4.7.1-rocm62-gfx1010).
 
 ## 3. GPU setup documentation
 
