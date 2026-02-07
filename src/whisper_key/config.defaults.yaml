@@ -37,60 +37,60 @@ whisper: # Whisper AI Model Settings
   models:
     # Official whisper models
     tiny:
-      label: "Tiny (76MB, fastest)"
+      label: "Tiny (75MB, fastest)"
       group: official
       enabled: true
     base:
-      label: "Base (145MB, balanced)"
+      label: "Base (141MB, balanced)"
       group: official
       enabled: true
     small:
-      label: "Small (484MB, accurate)"
+      label: "Small (464MB, accurate)"
       group: official
       enabled: true
     medium:
-      label: "Medium (1.5GB, very accurate)"
+      label: "Medium (1.4GB, very accurate)"
       group: official
       enabled: true
     large: # Uses the large-v3 version
-      label: "Large (3.1GB, best accuracy)"
+      label: "Large (2.9GB, best accuracy)"
       group: official
       enabled: true
     large-v3-turbo: # 8x faster and only slightly less accurate (transcription optimized)
-      label: "Large-V3-Turbo (1.6GB, newest)"
+      label: "Large-V3-Turbo (1.5GB, newest)"
       group: official
       enabled: true
 
     # Models with native faster-whisper support
     tiny.en:
-      label: "Tiny.En (English)"
+      label: "Tiny.En (English, 74MB)"
       group: custom
       enabled: true
     base.en:
-      label: "Base.En (English)"
+      label: "Base.En (English, 141MB)"
       group: custom
       enabled: true
     small.en:
-      label: "Small.En (English)"
+      label: "Small.En (English, 464MB)"
       group: custom
       enabled: true
     medium.en:
-      label: "Medium.En (English)"
+      label: "Medium.En (English, 1.5GB)"
       group: custom
       enabled: true
     distil-small.en:
       source: Systran/faster-distil-whisper-small.en
-      label: "Distil-Small.En (English)"
+      label: "Distil-Small.En (English, 320MB)"
       group: custom
       enabled: true
     distil-medium.en:
       source: Systran/faster-distil-whisper-medium.en
-      label: "Distil-Medium.En (English)"
+      label: "Distil-Medium.En (English, 755MB)"
       group: custom
       enabled: true
     distil-large-v3.5:
       source: distil-whisper/distil-large-v3.5-ct2
-      label: "Distil-Large-V3.5 (English)"
+      label: "Distil-Large-V3.5 (English, 1.4GB)"
       group: custom
       enabled: true
 
