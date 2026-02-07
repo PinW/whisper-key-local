@@ -73,8 +73,9 @@ whisper-key-local/
 │   ├── roadmap/                       # Feature roadmap & user stories
 │   │   ├── roadmap.md                 # Active feature roadmap
 │   │   └── completed.md               # Completed user stories
-│   └── temp/                          # Temporary documentation files
+│   └── ...
 │
+├── .temp/                             # Temporary working files (gitignored)
 └── py-build/                          # PyInstaller scripts and config
 ```
 

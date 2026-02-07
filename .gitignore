@@ -122,8 +122,8 @@ user-testing/
 py-build/build-config.json
 src/whisper_key/assets/version.txt
 
-# Temporary documentation
-documentation/temp/
+# Temporary working files
+.temp/
 
 # Local Claude instructions
 CLAUDE.local.md
