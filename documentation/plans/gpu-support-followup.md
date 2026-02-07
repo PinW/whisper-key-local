@@ -2,17 +2,21 @@
 
 Status: OPEN
 
-## 1. Restore CPU support in custom CTranslate2 build
+## 1. ~~Restore CPU support in custom CTranslate2 build~~ DONE (2026-02-07)
 
-The current ROCm build of CTranslate2 is GPU-only (`WITH_MKL=OFF`, `WITH_DNNL=OFF`, `OPENMP_RUNTIME=NONE`). CPU inference fails for all compute types — even float32 returns "No SGEMM backend on CPU."
+Built oneDNN 3.1.1 from source (static, SEQ runtime) and rebuilt CTranslate2 with `WITH_DNNL=ON`. CPU now supports int8, int8_float32, and float32. Both CPU INT8 and GPU float32 transcription verified working.
 
-Users without a supported GPU (or who want CPU fallback) need a working CPU path. Options:
-- Build with Intel oneDNN (`WITH_DNNL=ON`) for CPU SGEMM support
-- Build with OpenMP for multi-threaded CPU inference
-- Ship a separate CPU-only wheel alongside the GPU wheel
-- Or detect at runtime and fall back to the stock PyPI ctranslate2 wheel for CPU
+Build changes: `configure.bat` updated (`WITH_DNNL=ON`, oneDNN added to `CMAKE_PREFIX_PATH`). New `build_onednn.bat` for oneDNN build. oneDNN installed to `C:\Users\pinwa\projects\5700xt-rocm\onednn-install\`.
 
-## 2. GPU setup documentation
+OpenMP not yet added (CPU inference is single-threaded). See plan: `2026-02-07-restore-cpu-support-implementation.md` Phase 5.
+
+## 2. Fix float16 not working on setup
+
+Float16 compute type fails during GPU setup/inference. Needs investigation — may be a rocBLAS Tensile kernel gap for gfx1010 half-precision GEMM, or a type mapping issue in the CTranslate2 HIP patches.
+
+Error: `2026-02-07 10:20:16,249 - src.whisper_key.whisper_engine - ERROR - Transcription failed: cuBLAS failed with status UNKNOWN`
+
+## 3. GPU setup documentation
 
 Create a doc linked from both the whisper-key README and config comments explaining GPU setup for each vendor:
 
@@ -23,7 +27,7 @@ Create a doc linked from both the whisper-key README and config comments explain
 
 This doc should be the single source of truth for "how do I get GPU acceleration working."
 
-## 3. Auto-detection for GPU onboarding
+## 4. Auto-detection for GPU onboarding
 
 Make whisper-key detect the user's GPU and guide them to the right setup:
 
@@ -33,7 +37,7 @@ Make whisper-key detect the user's GPU and guide them to the right setup:
 - Surface clear messages in the UI/logs: "Detected AMD RX 5700 XT (RDNA 1) — using GPU acceleration" or "No supported GPU found — using CPU mode"
 - Link to the setup doc (task 2) when GPU is detected but drivers/SDK are missing
 
-## 4. Fix crash on model switch in CUDA mode
+## 5. Fix crash on model switch in CUDA mode
 
 Switching models while in GPU mode causes an access violation (`0xC0000005`) in `ctranslate2.dll` during `StorageView` destructor. The crash happens when the old model is being torn down — specifically in `Model::~Model()` clearing a list of `shared_ptr<StorageView>` pairs. The GPU memory backing those tensors has likely already been freed or the HIP context is invalid by the time the destructor runs.
 

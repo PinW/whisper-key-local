@@ -104,11 +104,11 @@ Applied to: `CUBLAS_COMPUTE_16F`, `CUBLAS_COMPUTE_32F`, `CUBLAS_COMPUTE_32I`
 
 #### `src/cuda/helpers.h` — `__syncwarp` not in HIP
 
-`__syncwarp(mask)` is a CUDA warp synchronization intrinsic. AMD wavefronts execute in lockstep (SIMD), so warp sync is a no-op. Using `__syncthreads()` is safe (more conservative but correct).
+`__syncwarp(mask)` is a CUDA warp synchronization intrinsic. AMD wavefronts execute in lockstep (SIMD), so warp sync is a no-op. **Must be defined as no-op, NOT `__syncthreads()`** — using `__syncthreads()` causes a barrier race condition in `block_reduce()` that corrupts softmax. See `gpu-transcription-hang.md` for the full investigation.
 
 ```cpp
 // Added inside #ifdef CT2_USE_HIP block:
-#define __syncwarp(mask) __syncthreads()
+#define __syncwarp(mask)  // no-op — waves are lockstep on RDNA1
 ```
 
 #### `ctranslate2/__init__.py` (site-packages) — ROCm DLL path
@@ -181,6 +181,6 @@ Three batch files in the build directory (`configure.bat`, `build.bat`, `install
 
 ## What we skipped (can add later)
 
-- **oneDNN/MKL** (`WITH_DNNL=OFF`): Only affects CPU inference performance. GPU path unaffected.
-- **OpenMP** (`OPENMP_RUNTIME=NONE`): Parallel CPU operations. Not needed for GPU inference.
+- ~~**oneDNN/MKL** (`WITH_DNNL=OFF`)~~ **DONE (2026-02-07)**: Built oneDNN 3.1.1 from source (static, SEQ runtime), rebuilt CT2 with `WITH_DNNL=ON`. CPU int8/float32 working. See `build_onednn.bat`.
+- **OpenMP** (`OPENMP_RUNTIME=NONE`): Parallel CPU operations. CPU inference works but is single-threaded. ROCm 6.2 doesn't ship libomp.dll so would need Intel OpenMP or standalone libomp.
 - **MSVC v143 toolchain**: Installed but ultimately not used — the `_MSVC_STL_DOOM_FUNCTION` workaround let us use v14.50 headers directly.
