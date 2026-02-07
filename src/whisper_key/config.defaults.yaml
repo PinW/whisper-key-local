@@ -37,31 +37,31 @@ whisper: # Whisper AI Model Settings
   models:
     # Official whisper models
     tiny:
-      label: "Tiny (75MB, fastest)"
+      label: "Tiny (75MB)"
       group: official
       enabled: true
     base:
-      label: "Base (141MB, balanced)"
+      label: "Base (141MB)"
       group: official
       enabled: true
     small:
-      label: "Small (464MB, accurate)"
+      label: "Small (464MB)"
       group: official
       enabled: true
     medium:
-      label: "Medium (1.4GB, very accurate)"
+      label: "Medium (1.4GB)"
       group: official
       enabled: true
     large: # Uses the large-v3 version
-      label: "Large (2.9GB, best accuracy)"
+      label: "Large (2.9GB)"
       group: official
       enabled: true
     large-v3-turbo: # 8x faster and only slightly less accurate (transcription optimized)
-      label: "Large-V3-Turbo (1.5GB, newest)"
+      label: "Large-V3-Turbo (1.5GB)"
       group: official
       enabled: true
 
-    # Models with native faster-whisper support
+    # English-only models — same architecture as above, trained exclusively on English
     tiny.en:
       label: "Tiny.En (English, 74MB)"
       group: custom
@@ -78,6 +78,8 @@ whisper: # Whisper AI Model Settings
       label: "Medium.En (English, 1.5GB)"
       group: custom
       enabled: true
+
+    # Distilled models — smaller and faster than standard Whisper, English only
     distil-small.en:
       source: Systran/faster-distil-whisper-small.en
       label: "Distil-Small.En (English, 320MB)"
@@ -88,7 +90,7 @@ whisper: # Whisper AI Model Settings
       label: "Distil-Medium.En (English, 755MB)"
       group: custom
       enabled: true
-    distil-large-v3.5:
+    distil-large-v3.5: # ~1.5x faster than Large-V3-Turbo with comparable accuracy
       source: distil-whisper/distil-large-v3.5-ct2
       label: "Distil-Large-V3.5 (English, 1.4GB)"
       group: custom
