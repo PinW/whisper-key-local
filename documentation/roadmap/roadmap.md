@@ -7,8 +7,10 @@
 - As a *user* I want a **warning on suboptimal device/compute_type combos** so I don't unknowingly run with bad settings (e.g. GPU+int8, CPU+float16)
 
 ## Bugs
+- **Crash on model load** - PyInstaller excludes MSVCP140.dll so systems without VS 2022 redistributable segfault in ctranslate2. Fix: bundle the correct newer DLL via PyInstaller config (exe-only — pip/dev users already have it) ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
+- **Auto-paste delivers empty text + newline** - clipboard restore races ahead of target app reading the paste; auto_enter then fires on the empty result. Transcription is correct but the receiving app (e.g. Claude Code) gets nothing followed by a line break ([#21](https://github.com/PinW/whisper-key-local/issues/21))
 - **CUDA 13.1 fails** - `cublas64_12.dll` is not found or cannot be loaded
 - **GPU model switch crash** - upstream CT2 bug, `thread_local` GPU handles corrupt HIP/CUDA on Worker thread teardown ([faster-whisper #71](https://github.com/SYSTRAN/faster-whisper/issues/71)). Future option: auto-restart app on model switch in GPU mode
 
@@ -83,6 +85,13 @@
 ### Recording
 - As a *user* I want **hotkey-per-audio-source bindings** so I can quickly switch between microphone input and speaker/system audio capture
 - As a *user*, I want **real-time transcription** so that I can get immediate feedback
+
+### Remote Transcription
+- As a *user* I want **remote transcription providers** so I can use cloud or self-hosted APIs instead of local processing
+  - As a *user* I want **OpenAI Whisper API** so I can use OpenAI's cloud transcription
+  - As a *user* I want **Groq Whisper API** so I can get fast cloud transcription at low cost
+  - As a *user* I want **Mistral Voxtral API** so I can use Voxtral Transcribe 2 with diarization
+  - As a *user* I want **xAI Grok API** so I can use Grok's transcription service
 
 ### Developer Use Cases
 - As a *developer* I want **project file context** so I can reference files in voice and tag them in chats hands free
