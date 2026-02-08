@@ -14,13 +14,13 @@ whisper: # Whisper AI Model Settings
   # See "models" below for more information
   model: tiny
   
-  # Processing device - where the AI runs
-  # Options: "cpu", "cuda" (NVIDIA or AMD GPU)
-  # See documentation/gpu-setup.md for full setup instructions
+  # Transcription device
+  # Options: cpu, cuda (for both NVIDIA and AMD)
+  # For GPU setup, see https://github.com/PinW/whisper-key-local/blob/master/documentation/gpu-setup.md
   device: cpu
-  
-  # Compute precision
-  # Options: "int8" (CPU), "float16" (GPU), "float32" (either, slowest)
+
+  # Compute Precision
+  # Options: int8, float16, float32
   compute_type: int8
   
   # Language detection

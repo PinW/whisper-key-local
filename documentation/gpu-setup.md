@@ -20,7 +20,7 @@ Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm-
    ```
    Or download from [nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
 2. Verify with `nvidia-smi` — you should see your GPU name and driver version
-3. Set `device: cuda` and `compute_type: float16`
+3. Set `device: cuda` and `compute_type: float16` (or `int8` on RTX 2000+ for faster but slightly less accurate transcription)
 4. Restart Whisper Key
 
 ## AMD — RDNA 2+ (ROCm 7.2)
@@ -33,7 +33,7 @@ Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm-
    ```
    pip install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl
    ```
-4. Set `device: cuda` and `compute_type: float16`
+4. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+ for faster but slightly less accurate transcription)
 5. Restart Whisper Key
 
 ## AMD — RDNA 1 (ROCm 6.2)

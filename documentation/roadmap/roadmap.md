@@ -29,7 +29,7 @@
 - As a *user*, I want **terminal colors and styling** so the CLI feels modern like coding tools (Claude Code, lazygit)
 - As a *user*, I want **terminal settings control** so I can change settings interactively without editing YAML
   - As a *user* I want **language selection in CLI** so I can switch transcription language without editing YAML
-- As a *user*, I want a **cleaner model download display** so I see progress without HuggingFace cluttering the terminal
+- As a *user*, I want **wrapped model downloading** so I see a clean progress display and get helpful error messages instead of raw HuggingFace output (symlink errors, cluttered progress bars)
 
 ### CLI
 - As a *user* I want a **CLI interface** so other tools and agents can invoke transcription programmatically
@@ -52,6 +52,9 @@
 
 ### GPU Onboarding
 - As a *user* I want **guided GPU setup** so drivers and dependencies are auto-detected, downloaded, and installed through an in-app UI instead of manual steps
+
+### GPU Performance
+- As a *GPU user* I want **int8_float16 and int8_float32 compute types** so I can use less VRAM and get faster inference on RTX 20xx+ GPUs with INT8 tensor cores
 
 ### Packaging & Updates
 - As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
