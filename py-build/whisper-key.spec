@@ -49,9 +49,9 @@ a = Analysis(
     noarchive=False,
 )
 
-# Exclude bundled MSVC runtime - use system version instead
-# ctranslate2 4.6.3+ compiled with VS 2022 requires newer MSVCP140.dll than PyInstaller bundles
+# Replace PyInstaller's bundled MSVCP140.dll — its version crashes ctranslate2
 a.binaries = [b for b in a.binaries if b[0].lower() != 'msvcp140.dll']
+a.binaries.append(('msvcp140.dll', str(spec_dir / 'force-dll' / 'msvcp140.dll'), 'BINARY'))
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
