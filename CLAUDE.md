@@ -9,4 +9,3 @@ https://github.com/PinW/whisper-key-local
 - Use explicit variable/function names
 - **AVOID COMMENTS** IF AT ALL POSSIBLE! DO NOT WRITE DOCSTRINGS!
 - **No backward compatibility** - Break old formats freely
-- When I say "to temp": `.temp/`
