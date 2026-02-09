@@ -8,7 +8,7 @@ whisper:
   device: cuda
   compute_type: float16
 ```
-Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm-7) GPUs.
+Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm-72) GPUs.
 
 ## NVIDIA (CUDA)
 
@@ -27,20 +27,44 @@ Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm-
 
 **Requirements:** AMD GPU with RDNA 2 or newer (RX 6000, 7000, 9000 series)
 
+### Portable exe
+
+1. Install [HIP SDK 7.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
+2. Download `whisper-key-v*-windows-amd-gpu-rocm.zip` from the [latest release](https://github.com/PinW/whisper-key-local/releases/latest)
+3. Extract and run `whisper-key.exe`
+4. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
+
+### pip
+
 1. Install [HIP SDK 7.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
 2. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
 3. Install the wheel matching your Python version:
    ```
-   pip install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl
+   pip install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
    ```
-4. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+ for faster but slightly less accurate transcription)
+4. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
+5. Restart Whisper Key
+
+### pipx
+
+1. Install [HIP SDK 7.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
+2. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
+3. Install the wheel into the pipx venv:
+   ```
+   pipx runpip whisper-key-local install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
+   ```
+4. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
 5. Restart Whisper Key
 
 ## AMD — RDNA 1 (ROCm 6.2)
 
 **Requirements:** AMD GPU with RDNA 1 architecture (RX 5000 series)
 
+> **Note:** The portable exe AMD variant ships with RDNA 2+ support. RDNA 1 users should install via pip or pipx.
+
 1. Follow the instructions at **[ctranslate2-rocm-rdna1](https://github.com/PinW/ctranslate2-rocm-rdna1)** to install the custom wheel and prerequisites
+   - For pip: `pip install <wheel> --force-reinstall --no-deps`
+   - For pipx: `pipx runpip whisper-key-local install <wheel> --force-reinstall --no-deps`
 2. Set `device: cuda` and `compute_type: float16`
 3. Restart Whisper Key
 
@@ -51,4 +75,3 @@ CPU mode works out of the box with no extra dependencies.
 - Use `compute_type: int8` for the best speed (default)
 - `tiny` and `base` models transcribe quickly on most machines
 - `small` is usable but slower — larger models will be very slow on CPU
-

@@ -1,7 +1,9 @@
 from pathlib import Path
 from PIL import Image
 
-ASSETS_DIR = Path(__file__).parent / "assets"
+from ...utils import resolve_asset_path
+
+ASSETS_DIR = Path(resolve_asset_path("platform/macos/assets"))
 
 def get_tray_icons() -> dict:
     return {

@@ -2,6 +2,8 @@
 param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$AppName = "whisper-key",
+    [ValidateSet("cuda", "rocm")]
+    [string]$Variant = "cuda",
     [switch]$Clean,
     [switch]$NoZip
 )
@@ -45,8 +47,10 @@ $VersionFile = Join-Path $ProjectRoot "src\whisper_key\assets\version.txt"
 [System.IO.File]::WriteAllText($VersionFile, $AppVersion)
 Write-Host "Version file written: $VersionFile" -ForegroundColor Gray
 
-# Configuration - Check for build config file
-$ConfigFile = Join-Path $PSScriptRoot "build-config.json"
+# Configuration - Check for build config file (variant-specific config takes priority)
+$VariantConfigFile = Join-Path $PSScriptRoot "build-config-$Variant.json"
+$DefaultConfigFile = Join-Path $PSScriptRoot "build-config.json"
+$ConfigFile = if (Test-Path $VariantConfigFile) { $VariantConfigFile } else { $DefaultConfigFile }
 if (Test-Path $ConfigFile) {
     Write-Host "Loading build configuration from: $ConfigFile" -ForegroundColor Cyan
     try {
@@ -60,19 +64,20 @@ if (Test-Path $ConfigFile) {
         $DistDir = Get-ResolvedPath $ExpandedDistPath $ProjectRoot
     } catch {
         Write-Host "Error reading config file, using defaults: $_" -ForegroundColor Yellow
-        $VenvPath = Join-Path $ProjectRoot "venv-$AppName"
-        $DistDir = Join-Path $ProjectRoot "dist\$AppName-v$AppVersion"
+        $VariantSuffix = if ($Variant -eq "cuda") { "" } else { "-amd-gpu-rocm" }
+        $VenvPath = Join-Path $ProjectRoot "venv-$AppName$VariantSuffix"
+        $DistDir = Join-Path $ProjectRoot "dist\$AppName-v$AppVersion$VariantSuffix"
     }
 } else {
     Write-Host "No build config found, using default paths" -ForegroundColor Yellow
-    # Default configuration - Build in project root
-    $VenvPath = Join-Path $ProjectRoot "venv-$AppName"
-    $DistDir = Join-Path $ProjectRoot "dist\$AppName-v$AppVersion"
+    $VariantSuffix = if ($Variant -eq "cuda") { "" } else { "-amd-gpu-rocm" }
+    $VenvPath = Join-Path $ProjectRoot "venv-$AppName$VariantSuffix"
+    $DistDir = Join-Path $ProjectRoot "dist\$AppName-v$AppVersion$VariantSuffix"
 }
 
 $SpecFile = Join-Path $PSScriptRoot "$AppName.spec"
 
-Write-Host "Starting $AppName build with PyInstaller..." -ForegroundColor Green
+Write-Host "Starting $AppName build with PyInstaller... [variant: $Variant]" -ForegroundColor Green
 Write-Host "Virtual Environment: $VenvPath" -ForegroundColor Gray
 Write-Host "Distribution Directory: $DistDir" -ForegroundColor Gray
 
@@ -116,13 +121,6 @@ if (-not (Test-Path $VenvPath)) {
         exit 1
     }
 
-    Write-Host "Installing TEN VAD..." -ForegroundColor Yellow
-    & $VenvPip install "git+https://github.com/TEN-framework/ten-vad.git@v1.0-ONNX"
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Failed to install TEN VAD" -ForegroundColor Red
-        exit 1
-    }
-
     Write-Host "Installing PyInstaller..." -ForegroundColor Yellow
     & $VenvPip install pyinstaller
     if ($LASTEXITCODE -ne 0) {
@@ -153,6 +151,25 @@ if (-not (Test-Path $VenvPath)) {
         Write-Host "Dependencies synced successfully" -ForegroundColor Green
     }
 }
+
+# Install ROCm CTranslate2 wheel if building ROCm variant
+if ($Variant -eq "rocm") {
+    $RocmWheelDir = Join-Path $PSScriptRoot "wheels\rocm-rdna2"
+    $RocmWheel = Get-ChildItem -Path $RocmWheelDir -Filter "ctranslate2-*.whl" | Select-Object -First 1
+    if (-not $RocmWheel) {
+        Write-Host "Error: No ROCm CTranslate2 wheel found in $RocmWheelDir" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Installing ROCm CTranslate2 wheel: $($RocmWheel.Name)" -ForegroundColor Yellow
+    & $VenvPip install $RocmWheel.FullName --force-reinstall --no-deps
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to install ROCm CTranslate2 wheel" -ForegroundColor Red
+        exit 1
+    }
+}
+
+# Set build variant environment variable for spec file
+$env:WHISPER_KEY_VARIANT = $Variant
 
 # Clean previous build
 if (Test-Path $DistDir) {
@@ -185,7 +202,8 @@ Write-Host "Distribution size: $Size MB" -ForegroundColor Green
 # Create compressed distribution (optional)
 if (-not $NoZip) {
     Write-Host "Creating compressed distribution..." -ForegroundColor Yellow
-    $ZipFileName = "$AppName-v$AppVersion-windows.zip"
+    $VariantSuffix = if ($Variant -eq "cuda") { "" } else { "-amd-gpu-rocm" }
+    $ZipFileName = "$AppName-v$AppVersion-windows$VariantSuffix.zip"
     $ZipPath = Join-Path $DistDir $ZipFileName
     $AppDir = Join-Path $DistDir $AppName
 

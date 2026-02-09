@@ -1,11 +1,13 @@
 ---
 description: Build PyInstaller executable
-argument-hint: "[-NoZip (faster, use for testing)] [-Test (run exe after build)]"
+argument-hint: "[-Variant rocm] [-NoZip (faster, use for testing)] [-Test (run exe after build)]"
 allowed-tools: Bash(powershell.exe:*), Bash(whisper-key.exe:*)
 ---
 [FLAGS]=$ARGUMENTS
 
-1. Build: `powershell.exe -ExecutionPolicy Bypass -File py-build/build-windows.ps1` (add -NoZip if in [FLAGS])
+1. Build: `powershell.exe -ExecutionPolicy Bypass -File py-build/build-windows.ps1` (pass through flags from [FLAGS])
+   - `-Variant rocm`: Build ROCm version (separate venv, ROCm CTranslate2 wheel, runtime hook)
+   - `-NoZip`: Skip zip creation (faster for testing)
 2. Watch for "Build successful!" message
 3. Note the "Distribution Directory:" path from output
 

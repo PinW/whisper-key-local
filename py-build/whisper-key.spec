@@ -1,6 +1,7 @@
 # whisper-key.spec
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
 import sys
 import pathlib
 import site
@@ -8,6 +9,10 @@ import site
 # Project paths
 project_root = pathlib.Path.cwd()
 src_path = project_root / "src"
+spec_dir = pathlib.Path(SPECPATH)
+
+# Build variant: "cuda" (default) or "rocm"
+build_variant = os.environ.get("WHISPER_KEY_VARIANT", "cuda")
 
 # Dynamic ten_vad library path detection
 ten_vad_data = []
@@ -36,7 +41,7 @@ a = Analysis(
     ],
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=[str(spec_dir / 'hooks' / 'rth_rocm_paths.py')] if build_variant == 'rocm' else [],
     excludes=[],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,

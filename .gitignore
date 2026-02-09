@@ -119,7 +119,8 @@ dmypy.json
 user-testing/
 
 # Build configuration (user-specific paths)
-py-build/build-config.json
+py-build/build-config*.json
+!py-build/build-config.example.json
 src/whisper_key/assets/version.txt
 
 # Temporary working files

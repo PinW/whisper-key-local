@@ -35,7 +35,9 @@ Then run: `whisper-key`
 
 ### Portable App (Windows Only)
 
-1. [Download the latest release zip](https://github.com/PinW/whisper-key-local/releases/latest)
+1. [Download the latest release](https://github.com/PinW/whisper-key-local/releases/latest):
+   - NVIDIA or CPU — `windows.zip`
+   - AMD GPU — `windows-amd-gpu-rocm.zip` ([HIP SDK](documentation/gpu-setup.md#amd--rdna-2-rocm-72) required)
 2. Extract and run `whisper-key.exe`
 
 ### From Source
