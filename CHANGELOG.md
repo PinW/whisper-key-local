@@ -2,6 +2,21 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.6.2] - 2026-02-09
+
+### Added
+- **AMD GPU portable exe** - Separate ROCm build variant for AMD RX 5000+ GPUs
+- **CPU/GPU mode display** - Shows device mode and compute type on startup
+- **Distil-whisper models** - Added distil-medium.en and distil-small.en to default config
+
+### Fixed
+- **Model load crash** - Bundled correct MSVCP140.dll instead of PyInstaller's incompatible version (#22)
+- **Tray icon path** - Fixed icon resolution for PyInstaller builds using `resolve_asset_path()`
+
+### Changed
+- Updated GPU setup guide with pip, pipx, and portable exe instructions for AMD GPUs
+- Updated README with AMD GPU download variant
+
 ## [0.6.1] - 2026-02-04
 
 ### Added
