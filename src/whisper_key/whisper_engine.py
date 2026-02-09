@@ -64,6 +64,8 @@ class WhisperEngine:
                 print("\n")  # Workaround for download status bar misplacement
 
             print(f"   ✓ Whisper model [{self.model_key}] ready!")
+            device_label = "GPU" if self.device == "cuda" else "CPU"
+            print(f"   ✓ Running on {device_label} with {self.compute_type} precision")
 
         except Exception as e:
             self.logger.error(f"Failed to load Whisper model: {e}")

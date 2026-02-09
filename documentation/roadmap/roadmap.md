@@ -3,10 +3,8 @@
 
 ## Next
 
-- As a *user* I want to **see CPU vs GPU mode on startup** so I can confirm the app is using the right processing device
 
 ## Bugs
-- **Crash on model load** - PyInstaller excludes MSVCP140.dll so systems without VS 2022 redistributable segfault in ctranslate2. Fix: bundle the correct newer DLL via PyInstaller config (exe-only — pip/dev users already have it) ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
 - **Auto-paste delivers empty text + newline** - clipboard restore races ahead of target app reading the paste; auto_enter then fires on the empty result. Transcription is correct but the receiving app (e.g. Claude Code) gets nothing followed by a line break ([#21](https://github.com/PinW/whisper-key-local/issues/21))

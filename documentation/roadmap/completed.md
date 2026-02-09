@@ -32,7 +32,9 @@
 - As a *user* I want **AMD GPU support** so I can use my AMD GPU for faster transcription via ROCm
 - As a *user* I want **distil-whisper models** so I get faster transcription with a smaller download
 - As a *GPU user* I want **int8_float16 and int8_float32 compute types** so I can use less VRAM and get faster inference on RTX 20xx+ GPUs with INT8 tensor cores
+- As a *user* I want to **see CPU vs GPU mode on startup** so I can confirm the app is using the right processing device
 
 ## Resolved Bugs
 
+- **Crash on model load** - bundled correct MSVCP140.dll instead of PyInstaller's incompatible version ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 - Auto-pasting does not work in Notepad (Alt unfocuses text field) `[WON'T FIX]`
