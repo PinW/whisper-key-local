@@ -32,6 +32,7 @@
 - As a *user*, I want **wrapped model downloading** so I see a clean progress display and get helpful error messages instead of raw HuggingFace output (symlink errors, cluttered progress bars)
 
 ### CLI
+- As a *user* I want a **short command alias (`wk`)** in `[project.scripts]` so I can launch the app by typing `wk` instead of `whisper-key`
 - As a *user* I want a **CLI interface** so other tools and agents can invoke transcription programmatically
 - As a *user* I want to **wrap CLI tools** (e.g., `whisper-key claude`) so I can voice-input directly into any command-line application without switching windows
   - As a *user* I want **additional instances with custom hotkeys** so that I can 
