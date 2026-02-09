@@ -4,7 +4,6 @@
 ## Next
 
 - As a *user* I want to **see CPU vs GPU mode on startup** so I can confirm the app is using the right processing device
-- As a *user* I want a **warning on suboptimal device/compute_type combos** so I don't unknowingly run with bad settings (e.g. GPU+int8, CPU+float16)
 
 ## Bugs
 - **Crash on model load** - PyInstaller excludes MSVCP140.dll so systems without VS 2022 redistributable segfault in ctranslate2. Fix: bundle the correct newer DLL via PyInstaller config (exe-only — pip/dev users already have it) ([#22](https://github.com/PinW/whisper-key-local/issues/22))
@@ -53,9 +52,6 @@
 
 ### GPU Onboarding
 - As a *user* I want **guided GPU setup** so drivers and dependencies are auto-detected, downloaded, and installed through an in-app UI instead of manual steps
-
-### GPU Performance
-- As a *GPU user* I want **int8_float16 and int8_float32 compute types** so I can use less VRAM and get faster inference on RTX 20xx+ GPUs with INT8 tensor cores
 
 ### Packaging & Updates
 - As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc

@@ -31,6 +31,7 @@
 - As a *contributor* I want a **LICENSE** so I know the terms for using and contributing
 - As a *user* I want **AMD GPU support** so I can use my AMD GPU for faster transcription via ROCm
 - As a *user* I want **distil-whisper models** so I get faster transcription with a smaller download
+- As a *GPU user* I want **int8_float16 and int8_float32 compute types** so I can use less VRAM and get faster inference on RTX 20xx+ GPUs with INT8 tensor cores
 
 ## Resolved Bugs
 
