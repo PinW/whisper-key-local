@@ -18,6 +18,7 @@ dependencies = [
     "ctranslate2>=4.6.3",
     "numpy>=1.24.0",
     "soxr>=0.3.0",
+    "sherpa-onnx>=1.11.3",
     "sounddevice>=0.4.6",
     "pyperclip>=1.8.2",
     "ruamel.yaml>=0.18.14",

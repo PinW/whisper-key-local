@@ -42,6 +42,7 @@ class StateManager:
         self._pending_model_change = None
         self._pending_device_change = None
         self._state_lock = threading.Lock()
+        self._streaming_display_active = False
 
         self.logger = logging.getLogger(__name__)
         self._current_audio_host = None
@@ -62,14 +63,31 @@ class StateManager:
         if event == VadEvent.SILENCE_TIMEOUT:
             self.logger.info("VAD silence timeout detected - stopping recording")
             timeout_seconds = int(self.vad_manager.vad_silence_timeout_seconds)
+            self._clear_streaming_display()
             print(f"⏰ Stopping recording after {timeout_seconds} seconds of silence...")
             audio_data = self.audio_recorder.stop_recording()
             self._transcription_pipeline(audio_data, use_auto_enter=False)
+
+    def handle_streaming_result(self, text: str, is_final: bool):
+        if is_final:
+            if self._streaming_display_active:
+                print(f"\r   {text:<70}")
+                self._streaming_display_active = False
+        else:
+            display_text = text if len(text) < 67 else "..." + text[-64:]
+            print(f"\r   {display_text:<70}", end="", flush=True)
+            self._streaming_display_active = True
+
+    def _clear_streaming_display(self):
+        if self._streaming_display_active:
+            print("\r" + " " * 75 + "\r", end="", flush=True)
+            self._streaming_display_active = False
     
     def stop_recording(self, use_auto_enter: bool = False) -> bool:
         currently_recording = self.audio_recorder.get_recording_status()
-        
+
         if currently_recording:
+            self._clear_streaming_display()
             audio_data = self.audio_recorder.stop_recording()
             self._transcription_pipeline(audio_data, use_auto_enter)
             return True
@@ -77,6 +95,7 @@ class StateManager:
             return False
     
     def cancel_active_recording(self):
+        self._clear_streaming_display()
         self.audio_recorder.cancel_recording()
         self.audio_feedback.play_cancel_sound()
         self.system_tray.update_state("idle")
@@ -379,6 +398,8 @@ class StateManager:
             max_duration = self.audio_recorder.max_duration
             on_max_duration = self.audio_recorder.on_max_duration_reached
             vad_manager = self.audio_recorder.vad_manager
+            streaming_manager = self.audio_recorder.streaming_manager
+            on_streaming_result = self.audio_recorder.on_streaming_result
 
             new_recorder = AudioRecorder(
                 on_vad_event=self.handle_vad_event,
@@ -387,6 +408,8 @@ class StateManager:
                 max_duration=max_duration,
                 on_max_duration_reached=on_max_duration,
                 vad_manager=vad_manager,
+                streaming_manager=streaming_manager,
+                on_streaming_result=on_streaming_result,
                 device=device_id if device_id != -1 else None
             )
 

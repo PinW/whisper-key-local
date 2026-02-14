@@ -96,6 +96,27 @@ whisper: # Whisper AI Model Settings
       group: custom
       enabled: true
 
+streaming: # Real-time STT (Experimental, speech preview only)
+
+  # Real-time streaming speech recognition using sherpa-onnx
+  streaming_enabled: false
+
+  # Streaming model type
+  streaming_model: zipformer.tiny.en
+
+  # Available streaming models
+  # Requires sherpa-onnx streaming transducer models (e.g., Zipformer)
+  # Browse models: https://k2-fsa.github.io/sherpa/onnx/pretrained_models/index.html
+  models:
+    zipformer.tiny.en:
+      source: csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17
+      label: "Zipformer English Tiny (20MB)"
+      files:
+        encoder: encoder-epoch-99-avg-1.int8.onnx
+        decoder: decoder-epoch-99-avg-1.int8.onnx
+        joiner: joiner-epoch-99-avg-1.int8.onnx
+        tokens: tokens.txt
+
 hotkey: # Hotkey Configuration
 
   # Key combination to start/stop recording
