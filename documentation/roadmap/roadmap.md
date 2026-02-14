@@ -33,7 +33,8 @@
 - As a *user* I want a **short command alias (`wk`)** in `[project.scripts]` so I can launch the app by typing `wk` instead of `whisper-key`
 - As a *user* I want a **CLI interface** so other tools and agents can invoke transcription programmatically
 - As a *user* I want to **wrap CLI tools** (e.g., `whisper-key claude`) so I can voice-input directly into any command-line application without switching windows
-  - As a *user* I want **additional instances with custom hotkeys** so that I can 
+  - As a *user* I want **additional instances with custom hotkeys** so that I can be keyboard-only when dictating to multiple agents
+  - As a *user* I want **hotkey instance management** so that multiple instances will be allowed and work together
 
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
