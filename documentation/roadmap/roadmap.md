@@ -8,6 +8,7 @@
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
 - **Auto-paste delivers empty text + newline** - clipboard restore races ahead of target app reading the paste; auto_enter then fires on the empty result. Transcription is correct but the receiving app (e.g. Claude Code) gets nothing followed by a line break ([#21](https://github.com/PinW/whisper-key-local/issues/21))
+- **PyAV DLL missing in exe** - `av._core` import fails; `faster-whisper` added PyAV dependency whose DLLs aren't bundled by PyInstaller ([#29](https://github.com/PinW/whisper-key-local/issues/29))
 - **CUDA 13.1 fails** - `cublas64_12.dll` is not found or cannot be loaded
 - **GPU model switch crash** - upstream CT2 bug, `thread_local` GPU handles corrupt HIP/CUDA on Worker thread teardown ([faster-whisper #71](https://github.com/SYSTRAN/faster-whisper/issues/71)). Future option: auto-restart app on model switch in GPU mode
 
