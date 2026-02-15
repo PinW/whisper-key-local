@@ -8,7 +8,7 @@ whisper:
   device: cuda
   compute_type: float16
 ```
-Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm-72) GPUs.
+Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm) GPUs.
 
 ## NVIDIA (CUDA)
 
@@ -23,38 +23,52 @@ Note: `cuda` applies to both [NVIDIA](#nvidia-cuda) and [AMD](#amd--rdna-2-rocm-
 3. Set `device: cuda` and `compute_type: float16` (or `int8` on RTX 2000+ for faster but slightly less accurate transcription)
 4. Restart Whisper Key
 
-## AMD — RDNA 2+ (ROCm 7.2)
+## AMD — RDNA 2+ (ROCm)
 
 **Requirements:** AMD GPU with RDNA 2 or newer (RX 6000, 7000, 9000 series)
 
+First, install the ROCm prerequisites using **one** of these two methods:
+
+#### Method A: HIP SDK 7.1 installer
+
+1. Install [HIP SDK 7.1](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
+2. **DLL fix required:** HIP 7.1 renamed `hipblas.dll` to `libhipblas.dll`, which CTranslate2 doesn't recognize. Go to the ROCm bin folder (e.g. `C:\Program Files\AMD\ROCm\7.1\bin`), find `libhipblas.dll`, and copy it as `hipblas.dll` in the same folder.
+
+#### Method B: ROCm SDK via pip (HIP 7.2)
+
+1. Follow AMD's [ROCm install guide](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/install/installrad/windows/install-pytorch.html) prerequisites
+2. Install the SDK packages:
+   ```
+   pip install rocm-sdk-core rocm-sdk-libraries-custom
+   ```
+
+Then install Whisper Key:
+
 ### Portable exe
 
-1. Install [HIP SDK 7.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
-2. Download `whisper-key-v*-windows-amd-gpu-rocm.zip` from the [latest release](https://github.com/PinW/whisper-key-local/releases/latest)
-3. Extract and run `whisper-key.exe`
-4. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
+1. Download `whisper-key-v*-windows-amd-gpu-rocm.zip` from the [latest release](https://github.com/PinW/whisper-key-local/releases/latest)
+2. Extract and run `whisper-key.exe`
+3. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
 
 ### pip
 
-1. Install [HIP SDK 7.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
-2. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
-3. Install the wheel matching your Python version:
+1. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
+2. Install the wheel matching your Python version:
    ```
    pip install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
    ```
-4. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
-5. Restart Whisper Key
+3. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
+4. Restart Whisper Key
 
 ### pipx
 
-1. Install [HIP SDK 7.2](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html)
-2. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
-3. Install the wheel into the pipx venv:
+1. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
+2. Install the wheel into the pipx venv:
    ```
    pipx runpip whisper-key-local install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
    ```
-4. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
-5. Restart Whisper Key
+3. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
+4. Restart Whisper Key
 
 ## AMD — RDNA 1 (ROCm 6.2)
 
