@@ -1,24 +1,49 @@
 # Auto-Paste Reliability
 
+Prior investigation: @plans/auto-paste-empty-bug.md
+
 ## Problem
 
-Auto-paste fails on fast transcriptions (~0.5s GPU). The transcription is correct and copied to clipboard, but the target app receives empty text followed by a stray Enter.
+Auto-paste fails intermittently. The transcription is correct (printed to terminal), but the target app receives empty text followed by a stray Enter. Related: [#21](https://github.com/PinW/whisper-key-local/issues/21)
 
-## Root Cause
+## Observations
 
-`clipboard_manager.py:execute_auto_paste` does this:
+- **Pin's bug**: Only started after switching to GPU mode (ROCm). One occurrence had 1.3s transcription time — not unusually fast. Claude Code receives empty paste + newline.
+- **#21 reporter** (@linnkoln): Text doesn't paste at all. Fixed by increasing `key_simulation_delay` from 0.05 to 0.1. Affects "all apps".
+- **#21 second user** (@N3M1X10): Auto-paste "never works" in Warframe, "sometimes" fails elsewhere. Windows 11 24H2.
+
+## The Paste Sequence (`clipboard_manager.py:88-109`)
 
 ```
-1. pyperclip.copy(text)           # write transcription to clipboard
-2. pyautogui.hotkey('ctrl', 'v')  # inject Ctrl+V via SendInput (ASYNC)
-3. pyperclip.copy(original)       # restore clipboard
+1. original = pyperclip.paste()         # save clipboard
+2. pyperclip.copy(text)                 # write transcription
+3. pyautogui.hotkey('ctrl', 'v')        # simulate paste  ← PAUSE (50ms) after
+4. print("Auto-pasted...")
+5. pyperclip.copy(original)             # restore clipboard
+6. time.sleep(key_simulation_delay)     # 50ms wait
+--- back in deliver_transcription ---
+7. pyautogui.press('enter')             # auto_enter      ← PAUSE (50ms) after
 ```
 
-Step 2 puts keystrokes into the Windows input queue. The target app processes them asynchronously through its message loop, then calls `GetClipboardData()`. If step 3 runs before the target app reads the clipboard, it reads the restored (old/empty) content instead.
+## Root Cause Analysis
 
-The only delay is `pyautogui.PAUSE` (default 50ms) between steps 2 and 3. GPU transcription completes so fast that the system is still busy processing audio/sound events when paste fires, making 50ms insufficient.
+There are likely **two separate bugs** producing the same symptom:
 
-`auto_enter` then sends Enter to an empty input field — in Claude Code this inserts a newline rather than submitting.
+### Bug 1: Clipboard Restore Race (affects #21 users)
+
+Step 3 puts keystrokes into the Windows input queue. The target app processes them asynchronously through its message loop, then calls `GetClipboardData()`. If step 5 runs before the target app reads the clipboard, it gets the restored (old/empty) content.
+
+The only delay between steps 3→5 is `pyautogui.PAUSE` (50ms). Increasing `key_simulation_delay` to 0.1 fixes this for #21 users, confirming a timing race.
+
+### Bug 2: Clipboard Lock Contention (affects GPU/ROCm mode)
+
+Pin's bug occurred at 1.3s transcription time — 50ms should be plenty for the race window. This suggests a different cause: `pyperclip.copy(text)` at step 2 may **silently fail** due to clipboard lock contention.
+
+Windows clipboard can only be opened by one process/thread at a time (`OpenClipboard`). The custom CTranslate2 ROCm build spawns HIP runtime threads — if any of them hold system resources that block `OpenClipboard()`, `pyperclip.copy()` could fail silently. The old clipboard content stays, Ctrl+V pastes it (empty or stale), and Enter fires on the empty result.
+
+### Shared Symptom
+
+In both cases, `auto_enter` sends Enter to an empty input field — in Claude Code this inserts a newline rather than submitting.
 
 ## Constraint: Clipboard Reads Are Invisible
 
@@ -122,7 +147,7 @@ Paste via clipboard but poll the clipboard in a loop to ensure our content is st
 **Implement Option A (direct text injection) as the primary delivery method, with clipboard paste as the fallback.**
 
 Rationale:
-- It's the only option that structurally eliminates the race condition
+- It's the only option that structurally eliminates **both bugs** — the clipboard restore race (Bug 1) AND clipboard lock contention (Bug 2)
 - Clipboard is naturally preserved without any save/restore logic
 - The platform abstraction layer already exists — add `type_text()` alongside `send_key()` and `send_hotkey()`
 - On macOS where direct injection is less reliable, keep clipboard + Cmd+V (the race is less severe there due to different message dispatch)
