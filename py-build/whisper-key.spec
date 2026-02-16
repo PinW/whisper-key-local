@@ -71,6 +71,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=str(project_root / 'src' / 'whisper_key' / 'platform' / 'windows' / 'assets' / 'whisperkey-icon.ico'),
 )
 
 coll = COLLECT(
