@@ -9,7 +9,7 @@
 From `roadmap.md`: *"(macOS) System freezes on transcription - needs verification"*
 
 ### 2. Very Slow Transcription (User Report)
-User experienced very slow transcription on macOS, notably with Xcode/Swift open at the time.
+User experienced very slow transcription on macOS while Zwift (3D cycling game) was running.
 
 ---
 
@@ -102,23 +102,23 @@ Although callbacks are dispatched to threads, the `_handle_event` function itsel
 
 ## Hypothesis 2: The Slowness
 
-### Root Cause: Resource Contention with Xcode/Swift
+### Root Cause: Resource Contention with Zwift
 
-The user experienced slow transcription specifically **with Xcode/Swift open**. This is almost certainly caused by:
+The user experienced slow transcription specifically **with Zwift running**. Zwift is a 3D cycling/running game that's both GPU and CPU intensive. This is almost certainly caused by:
 
 **A. CPU Competition**
 
-Xcode's SourceKit, `swift-frontend`, and indexing processes are notoriously CPU-hungry. They can consume multiple cores continuously. CTranslate2's inference then competes for the same CPU cores, dramatically increasing transcription time.
+Zwift's 3D rendering, physics simulation, and networking consume significant CPU. CTranslate2's inference then competes for the same CPU cores, dramatically increasing transcription time.
 
-On CPU mode (which is the default and most common on macOS), faster-whisper's transcription time is directly proportional to available CPU. If Xcode is consuming 50-80% of CPU, transcription that normally takes 2-3 seconds could take 10-15 seconds.
+On CPU mode (which is the default and most common on macOS), faster-whisper's transcription time is directly proportional to available CPU. If Zwift is consuming 50-80% of CPU, transcription that normally takes 2-3 seconds could take 10-15 seconds.
 
 **B. Memory Pressure and Swap**
 
-Xcode routinely uses 4-12 GB of RAM. Combined with the Whisper model in memory, this can push the system into memory pressure, causing page faults and disk I/O during inference.
+Zwift typically uses 2-4 GB of RAM plus GPU memory. Combined with the Whisper model in memory, this can push the system into memory pressure, causing page faults and disk I/O during inference.
 
 **C. Thermal Throttling**
 
-MacBooks aggressively thermal throttle. If Xcode has already heated up the CPU, the system may be running at reduced clock speeds when transcription starts.
+MacBooks aggressively thermal throttle. If Zwift has already heated up the CPU/GPU, the system may be running at reduced clock speeds when transcription starts. This is especially relevant since Zwift keeps thermals elevated continuously during a ride.
 
 ---
 
@@ -127,7 +127,7 @@ MacBooks aggressively thermal throttle. If Xcode has already heated up the CPU, 
 **Yes, they share the same underlying mechanism: CPU/resource saturation.**
 
 The difference is degree:
-- **Slowness**: Moderate resource contention (e.g., Xcode indexing) means transcription takes longer but completes
+- **Slowness**: Moderate resource contention (e.g., Zwift running) means transcription takes longer but completes
 - **Freeze**: Severe resource contention (e.g., CTranslate2 using all cores + other apps) means the system becomes unresponsive
 
 Both stem from CTranslate2 consuming as many CPU resources as it can get, without being constrained.
@@ -149,7 +149,7 @@ Both stem from CTranslate2 consuming as many CPU resources as it can get, withou
 
 ### Step 3: Test with Controlled CPU Load
 - Run transcription with nothing else open (baseline)
-- Run transcription with Xcode open and indexing
+- Run transcription with Zwift running
 - Compare transcription times
 
 ### Step 4: Test Thread Limiting
