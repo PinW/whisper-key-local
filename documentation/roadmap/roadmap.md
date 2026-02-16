@@ -81,6 +81,7 @@
   - As a *Linux user* I want **key simulation via evdev UInput** so auto-paste works on both X11 and Wayland
   - As a *Linux user* I want **input group permission guidance** so I get clear setup instructions when evdev access is missing
   - As a *Linux user* I want **Linux GPU transcription** so I can use CUDA or ROCm (which works better on Linux than Windows)
+- As a *WSL user* I want **WSL support via a Windows hotkey shim** so I can run the app natively in WSL while capturing global hotkeys on the Windows side — small Python shim using ctypes `RegisterHotKey`, communicating over localhost TCP ([research](../research/2026-02-16-wsl-hotkey-shim-research.md))
 - As a phone *user*, I want this app on **mobile**
 
 ### Transcription Quality
