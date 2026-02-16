@@ -76,6 +76,11 @@
 - As a *user* I want **meeting mode** so I can transcribe an entire meeting in real-time
 
 ### Cross-Platform
+- As a *Linux user* I want **Linux desktop support** so I can use Whisper Key on my Linux machine — add `platform/linux/` with evdev-based global hotkeys and key simulation, XDG paths, and fcntl instance locking ([research](../research/2026-02-16-linux-support-research.md))
+  - As a *Linux user* I want **global hotkeys via evdev** so hotkey detection works on both X11 and Wayland
+  - As a *Linux user* I want **key simulation via evdev UInput** so auto-paste works on both X11 and Wayland
+  - As a *Linux user* I want **input group permission guidance** so I get clear setup instructions when evdev access is missing
+  - As a *Linux user* I want **Linux GPU transcription** so I can use CUDA or ROCm (which works better on Linux than Windows)
 - As a phone *user*, I want this app on **mobile**
 
 ### Transcription Quality
