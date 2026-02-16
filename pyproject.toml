@@ -40,6 +40,7 @@ dependencies = [
 
 [project.scripts]
 whisper-key = "whisper_key.main:main"
+wk = "whisper_key.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

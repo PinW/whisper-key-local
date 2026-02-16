@@ -31,7 +31,7 @@ pipx install whisper-key-local
 pip install whisper-key-local
 ```
 
-Then run: `whisper-key`
+Then run: `whisper-key` (or `wk` for short)
 
 ### Portable App (Windows Only)
 
