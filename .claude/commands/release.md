@@ -8,7 +8,7 @@ allowed-tools: Bash(git *), Bash(gh *)
 3. Update @CHANGELOG.md with [LATEST_TAG] based on those commits
 4. Commit changelog and re-tag: `git add CHANGELOG.md && git commit -m "Update CHANGELOG.md for [VERSION] release" && git tag -d [VERSION] && git tag [VERSION]`
 5. Git push
-6. Create GitHub release: `gh release create [VERSION] --draft=false --title "[VERSION]" --notes "[VERSION CHANGELOG]"`
+6. Create GitHub release: `gh release create [VERSION] --draft=false --title "[VERSION]" --notes "[VERSION CHANGELOG]"` (omit the `## [VERSION] - DATE` header)
 7. Build CUDA exe: `powershell.exe -ExecutionPolicy Bypass -File py-build/build-windows.ps1`
 8. Build ROCm exe: `powershell.exe -ExecutionPolicy Bypass -File py-build/build-windows.ps1 -Variant rocm`
 9. Upload both zips to release: `gh release upload [VERSION] [PATH_TO_CUDA_ZIP] [PATH_TO_ROCM_ZIP]`
