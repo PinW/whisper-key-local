@@ -13,7 +13,7 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+ and 
 | **Speech Recognition** | `whisper_engine.py` | Audio transcription using AI | faster-whisper |
 | **Model Management** | `model_registry.py` | Whisper model registry & cache detection | faster-whisper |
 | **Voice Activity Detection** | `voice_activity_detection.py` | Continuous VAD monitoring & silence detection | ten-vad, threading |
-| **Clipboard Operations** | `clipboard_manager.py` | Text copying & auto-paste functionality | pyperclip, pyautogui (Win), Quartz (Mac) |
+| **Clipboard Operations** | `clipboard_manager.py` | Text copying & auto-paste functionality | pyperclip, ctypes SendInput (Win), Quartz (Mac) |
 | **Hotkey Detection** | `hotkey_listener.py` | Global hotkey monitoring | global-hotkeys (Win), NSEvent (Mac) |
 | **Configuration** | `config_manager.py` | YAML settings management & validation | ruamel.yaml |
 | **System Integration** | `system_tray.py` | System tray icon & menu interface | pystray, Pillow |

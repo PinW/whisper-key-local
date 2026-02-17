@@ -31,7 +31,6 @@ dependencies = [
     # Windows-only
     "global-hotkeys>=0.1.7; sys_platform=='win32'",
     "pywin32>=306; sys_platform=='win32'",
-    "pyautogui>=0.9.54; sys_platform=='win32'",
 
     # macOS-only
     "pyobjc-framework-Quartz; sys_platform=='darwin'",

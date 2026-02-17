@@ -140,6 +140,6 @@ Default path for transcription models (via HuggingFace):
 **Cross-platform:**
 `faster-whisper` · `numpy` · `sounddevice` · `soxr` · `pyperclip` · `ruamel.yaml` · `pystray` · `Pillow` · `playsound3` · `ten-vad` · `hf-xet`
 
-**Windows:** `global-hotkeys` · `pywin32` · `pyautogui`
+**Windows:** `global-hotkeys` · `pywin32`
 
 **macOS:** `pyobjc-framework-Quartz` · `pyobjc-framework-ApplicationServices`
