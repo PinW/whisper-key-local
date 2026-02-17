@@ -36,47 +36,44 @@ Delivery flow (paste):
 ## Implementation Plan
 
 1. Native Windows key simulation
-- [ ] Rewrite `platform/windows/keyboard.py` using ctypes `SendInput`
-- [ ] Implement virtual key code mapping (modifiers, enter, tab, function keys)
-- [ ] Implement `send_key(key)` — single keystroke via virtual key code
-- [ ] Implement `send_hotkey(*keys)` — modifier combo via virtual key codes
-- [ ] Implement `type_text(text)` — bulk Unicode injection via `KEYEVENTF_UNICODE`
-- [ ] Handle `\n` as `VK_RETURN`, `\t` as `VK_TAB`
-- [ ] Handle surrogate pairs for characters above U+FFFF (emoji)
-- [ ] Own delay via explicit `time.sleep()` in `set_delay()`
-- [ ] **Test:** verify `send_key('enter')` works
-- [ ] **Test:** verify `send_hotkey('ctrl', 'v')` works (for paste mode)
-- [ ] **Test:** verify `type_text()` delivers text to Notepad, Claude Code, browser
+- [x] Rewrite `platform/windows/keyboard.py` using ctypes `SendInput`
+  - ✅ Full ctypes INPUT/KEYBDINPUT structs, VK_MAP with all keys
+  - ✅ `send_key()`, `send_hotkey()`, `type_text()` with KEYEVENTF_UNICODE
+  - ✅ `\n` → VK_RETURN, `\t` → VK_TAB, surrogate pairs for emoji
+  - ✅ Own delay via `time.sleep()` in `set_delay()`
+- [x] **Test:** verify `send_key('enter')` works
+- [x] **Test:** verify `send_hotkey('ctrl', 'v')` works (for paste mode)
+- [x] **Test:** verify `type_text()` delivers text to Notepad, Claude Code, browser
 
 2. macOS keyboard stub
-- [ ] Add `type_text(text)` to `platform/macos/keyboard.py`
-- [ ] Implement as clipboard + Cmd+V (same as current paste, most reliable on macOS)
-- [ ] No-op for now — macOS doesn't use pyautogui, no regression
+- [x] Add `type_text(text)` to `platform/macos/keyboard.py`
+  - ✅ Implemented as clipboard + Cmd+V (most reliable on macOS)
 
 3. Update clipboard_manager.py
-- [ ] Accept `delivery_method` config ("type" or "paste")
-- [ ] When `delivery_method="type"`: call `keyboard.type_text(text)` — no clipboard, no restore
-- [ ] When `delivery_method="paste"`: current clipboard flow with `clipboard_restore_delay`
-- [ ] Auto-enter (`send_enter_key`) unchanged — already uses `send_key('enter')`
-- [ ] Update `_print_status()` to show delivery method
+- [x] Accept `delivery_method` config ("type" or "paste")
+  - ✅ `_type_delivery()` calls `keyboard.type_text()` — no clipboard
+  - ✅ `_clipboard_paste()` uses clipboard with `clipboard_restore_delay`
+  - ✅ `execute_delivery()` routes by config
+  - ✅ `_print_status()` shows delivery method
+  - ✅ Clipboard test skipped in type mode
 
 4. Config
-- [ ] Add `delivery_method: type` to clipboard section in `config.defaults.yaml`
-- [ ] Add `clipboard_restore_delay: 0.5` for paste mode
-- [ ] Wire up new settings in `config_manager.py` and `main.py`
+- [x] Add `delivery_method: type` to clipboard section in `config.defaults.yaml`
+- [x] Add `clipboard_restore_delay: 0.5` for paste mode
+- [x] Wire up new settings in `config_manager.py` and `main.py`
 
 5. Remove pyautogui
-- [ ] Remove `pyautogui` from `pyproject.toml` dependencies
-- [ ] Update `README.md` dependencies list
-- [ ] Update `documentation/project-index.md` (clipboard_manager technologies)
+- [x] Remove `pyautogui` from `pyproject.toml` dependencies
+- [x] Update `README.md` dependencies list
+- [x] Update `documentation/project-index.md` (clipboard_manager technologies)
 
 6. Test
-- [ ] **Test:** type mode delivers text to Claude Code terminal
-- [ ] **Test:** type mode delivers text to browser text field
-- [ ] **Test:** type mode handles multi-line transcriptions
-- [ ] **Test:** paste mode still works as before
-- [ ] **Test:** auto-enter works in both modes
-- [ ] **Test:** app starts and runs with pyautogui fully removed
+- [x] **Test:** type mode delivers text to Claude Code terminal
+- [x] **Test:** type mode delivers text to browser text field
+- [x] **Test:** type mode handles multi-line transcriptions
+- [x] **Test:** paste mode still works as before
+- [x] **Test:** auto-enter works in both modes
+- [x] **Test:** app starts and runs with pyautogui fully removed
 
 ## Implementation Details
 
@@ -156,8 +153,8 @@ clipboard:
 
 ## Success Criteria
 
-- [ ] Default mode (type): transcription appears in target app without touching clipboard
-- [ ] Paste mode: transcription delivered via clipboard with configurable restore delay
-- [ ] Auto-enter works correctly in both modes
-- [ ] pyautogui fully removed from project
-- [ ] No regression on macOS (clipboard + Cmd+V continues to work)
+- [x] Default mode (type): transcription appears in target app without touching clipboard
+- [x] Paste mode: transcription delivered via clipboard with configurable restore delay
+- [x] Auto-enter works correctly in both modes
+- [x] pyautogui fully removed from project
+- [x] No regression on macOS (clipboard + Cmd+V continues to work)
