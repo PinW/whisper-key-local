@@ -8,23 +8,25 @@ from .platform import keyboard
 from .utils import parse_hotkey
 
 class ClipboardManager:
-    def __init__(self, key_simulation_delay, auto_paste, also_copy_to_clipboard,
-                 paste_hotkey, delivery_method, clipboard_restore_delay):
+    def __init__(self, auto_paste, delivery_method, paste_hotkey,
+                 paste_pre_paste_delay, paste_preserve_clipboard,
+                 paste_clipboard_restore_delay,
+                 type_also_copy_to_clipboard, type_auto_enter_delay,
+                 macos_key_simulation_delay):
         self.logger = logging.getLogger(__name__)
-        self.key_simulation_delay = key_simulation_delay
         self.auto_paste = auto_paste
-        self.also_copy_to_clipboard = also_copy_to_clipboard
+        self.delivery_method = delivery_method
         self.paste_hotkey = paste_hotkey
         self.paste_keys = parse_hotkey(paste_hotkey)
-        self.delivery_method = delivery_method
-        self.clipboard_restore_delay = clipboard_restore_delay
-        self._configure_keyboard_timing()
+        self.paste_pre_paste_delay = paste_pre_paste_delay
+        self.paste_preserve_clipboard = paste_preserve_clipboard
+        self.paste_clipboard_restore_delay = paste_clipboard_restore_delay
+        self.type_also_copy_to_clipboard = type_also_copy_to_clipboard
+        self.type_auto_enter_delay = type_auto_enter_delay
+        keyboard.set_delay(macos_key_simulation_delay)
         if self.delivery_method == "paste":
             self._test_clipboard_access()
         self._print_status()
-
-    def _configure_keyboard_timing(self):
-        keyboard.set_delay(self.key_simulation_delay)
 
     def _test_clipboard_access(self):
         try:
@@ -95,7 +97,7 @@ class ClipboardManager:
     def _type_delivery(self, text: str) -> bool:
         try:
             keyboard.type_text(text)
-            if self.also_copy_to_clipboard:
+            if self.type_also_copy_to_clipboard:
                 pyperclip.copy(text)
             print(f"   ✓ Auto-pasted via text injection")
             return True
@@ -106,18 +108,19 @@ class ClipboardManager:
     def _clipboard_paste(self, text: str) -> bool:
         try:
             original_content = None
-            if not self.also_copy_to_clipboard:
+            if self.paste_preserve_clipboard:
                 original_content = pyperclip.paste()
 
             if not self.copy_text(text):
                 return False
 
+            time.sleep(self.paste_pre_paste_delay)
             keyboard.send_hotkey(*self.paste_keys)
 
             print(f"   ✓ Auto-pasted via key simulation")
 
             if original_content is not None:
-                time.sleep(self.clipboard_restore_delay)
+                time.sleep(self.paste_clipboard_restore_delay)
                 pyperclip.copy(original_content)
 
             return True
@@ -149,17 +152,13 @@ class ClipboardManager:
                               use_auto_enter: bool = False) -> bool:
 
         try:
-            if use_auto_enter:
-                print("🚀 Auto-pasting text and SENDING with ENTER...")
-
-                success = self._clipboard_paste(transcribed_text)
-                if success:
-                    success = self.send_enter_key()
-
-            elif self.auto_paste:
+            if self.auto_paste:
                 print("🚀 Auto-pasting text...")
                 success = self.execute_delivery(transcribed_text)
-
+                if success and use_auto_enter:
+                    if self.delivery_method == "type" and self.type_auto_enter_delay > 0:
+                        time.sleep(self.type_auto_enter_delay)
+                    success = self.send_enter_key()
             else:
                 print("📋 Copying to clipboard...")
                 success = self.copy_with_notification(transcribed_text)

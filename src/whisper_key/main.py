@@ -110,12 +110,15 @@ def setup_whisper_engine(whisper_config, vad_manager, model_registry):
 
 def setup_clipboard_manager(clipboard_config):
     return ClipboardManager(
-        key_simulation_delay=clipboard_config['key_simulation_delay'],
         auto_paste=clipboard_config['auto_paste'],
-        also_copy_to_clipboard=clipboard_config['also_copy_to_clipboard'],
-        paste_hotkey=clipboard_config['paste_hotkey'],
         delivery_method=clipboard_config['delivery_method'],
-        clipboard_restore_delay=clipboard_config['clipboard_restore_delay']
+        paste_hotkey=clipboard_config['paste_hotkey'],
+        paste_pre_paste_delay=clipboard_config['paste_pre_paste_delay'],
+        paste_preserve_clipboard=clipboard_config['paste_preserve_clipboard'],
+        paste_clipboard_restore_delay=clipboard_config['paste_clipboard_restore_delay'],
+        type_also_copy_to_clipboard=clipboard_config['type_also_copy_to_clipboard'],
+        type_auto_enter_delay=clipboard_config['type_auto_enter_delay'],
+        macos_key_simulation_delay=clipboard_config['macos_key_simulation_delay']
     )
 
 def setup_audio_feedback(audio_feedback_config):
