@@ -207,7 +207,12 @@ clipboard: # Clipboard Behavior
   # false = only copy to clipboard (paste manually)
   auto_paste: true
 
-  # Key combination to simulate paste
+  # Delivery method for auto-paste
+  # "type" = direct text injection via SendInput (no clipboard involvement)
+  # "paste" = clipboard copy + simulated Ctrl+V paste
+  delivery_method: type
+
+  # Key combination to simulate paste (only used when delivery_method is "paste")
   # Format: modifier+key (use lowercase)
   # Examples:
   #   - "ctrl+v"         (standard paste)
@@ -219,6 +224,9 @@ clipboard: # Clipboard Behavior
   # true = save current clipboard, paste transcription, then restore original clipboard
   # false = replace clipboard with transcription (default behavior)
   preserve_clipboard: true
+
+  # Delay between clipboard restore after paste (seconds, only applies to paste mode)
+  clipboard_restore_delay: 0.5
 
   # Delay for key simulation operations (seconds)
   # Small delay ensures operations complete reliably

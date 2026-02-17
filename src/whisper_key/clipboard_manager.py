@@ -8,15 +8,19 @@ from .platform import keyboard
 from .utils import parse_hotkey
 
 class ClipboardManager:
-    def __init__(self, key_simulation_delay, auto_paste, preserve_clipboard, paste_hotkey):
+    def __init__(self, key_simulation_delay, auto_paste, preserve_clipboard,
+                 paste_hotkey, delivery_method, clipboard_restore_delay):
         self.logger = logging.getLogger(__name__)
         self.key_simulation_delay = key_simulation_delay
         self.auto_paste = auto_paste
         self.preserve_clipboard = preserve_clipboard
         self.paste_hotkey = paste_hotkey
         self.paste_keys = parse_hotkey(paste_hotkey)
+        self.delivery_method = delivery_method
+        self.clipboard_restore_delay = clipboard_restore_delay
         self._configure_keyboard_timing()
-        self._test_clipboard_access()
+        if self.delivery_method == "paste":
+            self._test_clipboard_access()
         self._print_status()
 
     def _configure_keyboard_timing(self):
@@ -34,7 +38,10 @@ class ClipboardManager:
     def _print_status(self):
         hotkey_display = self.paste_hotkey.upper()
         if self.auto_paste:
-            print(f"   ✓ Auto-paste is ENABLED using key simulation ({hotkey_display})")
+            if self.delivery_method == "type":
+                print(f"   ✓ Auto-paste is ENABLED using direct text injection")
+            else:
+                print(f"   ✓ Auto-paste is ENABLED using clipboard paste ({hotkey_display})")
         else:
             print(f"   ✗ Auto-paste is DISABLED - paste manually with {hotkey_display}")
 
@@ -85,10 +92,19 @@ class ClipboardManager:
             self.logger.error(f"Failed to clear clipboard: {e}")
             return False
 
-    def execute_auto_paste(self, text: str, preserve_clipboard: bool) -> bool:
+    def _type_delivery(self, text: str) -> bool:
+        try:
+            keyboard.type_text(text)
+            print(f"   ✓ Text injected directly")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to inject text: {e}")
+            return False
+
+    def _clipboard_paste(self, text: str) -> bool:
         try:
             original_content = None
-            if preserve_clipboard:
+            if self.preserve_clipboard:
                 original_content = pyperclip.paste()
 
             if not self.copy_text(text):
@@ -96,17 +112,23 @@ class ClipboardManager:
 
             keyboard.send_hotkey(*self.paste_keys)
 
-            print(f"   ✓ Auto-pasted via key simulation")
+            print(f"   ✓ Auto-pasted via clipboard")
 
             if original_content is not None:
+                time.sleep(self.clipboard_restore_delay)
                 pyperclip.copy(original_content)
-                time.sleep(self.key_simulation_delay)
 
             return True
 
         except Exception as e:
             self.logger.error(f"Failed to simulate paste keypress: {e}")
             return False
+
+    def execute_delivery(self, text: str) -> bool:
+        if self.delivery_method == "type":
+            return self._type_delivery(text)
+        else:
+            return self._clipboard_paste(text)
 
     def send_enter_key(self) -> bool:
         try:
@@ -128,13 +150,13 @@ class ClipboardManager:
             if use_auto_enter:
                 print("🚀 Auto-pasting text and SENDING with ENTER...")
 
-                success = self.execute_auto_paste(transcribed_text, self.preserve_clipboard)
+                success = self.execute_delivery(transcribed_text)
                 if success:
                     success = self.send_enter_key()
 
             elif self.auto_paste:
                 print("🚀 Auto-pasting text...")
-                success = self.execute_auto_paste(transcribed_text, self.preserve_clipboard)
+                success = self.execute_delivery(transcribed_text)
 
             else:
                 print("📋 Copying to clipboard...")

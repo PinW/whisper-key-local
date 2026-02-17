@@ -95,3 +95,9 @@ def send_hotkey(*keys: str):
         event = CGEventCreateKeyboardEvent(None, key_code, False)
         CGEventSetFlags(event, flags)
         CGEventPost(kCGHIDEventTap, event)
+
+
+def type_text(text: str):
+    import pyperclip
+    pyperclip.copy(text)
+    send_hotkey('cmd', 'v')

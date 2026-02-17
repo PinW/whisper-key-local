@@ -377,7 +377,9 @@ class ConfigValidator:
         self._validate_enum('logging.console.level', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
         
         self._validate_boolean('clipboard.auto_paste')
+        self._validate_enum('clipboard.delivery_method', ['type', 'paste'])
         self._validate_boolean('clipboard.preserve_clipboard')
+        self._validate_numeric_range('clipboard.clipboard_restore_delay', min_val=0, description='clipboard restore delay')
         self._validate_numeric_range('clipboard.key_simulation_delay', min_val=0, description='key simulation delay')
         self._validate_hotkey_string('clipboard.paste_hotkey')
         
