@@ -95,7 +95,7 @@ class ClipboardManager:
     def _type_delivery(self, text: str) -> bool:
         try:
             keyboard.type_text(text)
-            print(f"   ✓ Text injected directly")
+            print(f"   ✓ Auto-pasted via text injection")
             return True
         except Exception as e:
             self.logger.error(f"Failed to inject text: {e}")
@@ -112,7 +112,7 @@ class ClipboardManager:
 
             keyboard.send_hotkey(*self.paste_keys)
 
-            print(f"   ✓ Auto-pasted via clipboard")
+            print(f"   ✓ Auto-pasted via key simulation")
 
             if original_content is not None:
                 time.sleep(self.clipboard_restore_delay)
