@@ -8,12 +8,12 @@ from .platform import keyboard
 from .utils import parse_hotkey
 
 class ClipboardManager:
-    def __init__(self, key_simulation_delay, auto_paste, preserve_clipboard,
+    def __init__(self, key_simulation_delay, auto_paste, also_copy_to_clipboard,
                  paste_hotkey, delivery_method, clipboard_restore_delay):
         self.logger = logging.getLogger(__name__)
         self.key_simulation_delay = key_simulation_delay
         self.auto_paste = auto_paste
-        self.preserve_clipboard = preserve_clipboard
+        self.also_copy_to_clipboard = also_copy_to_clipboard
         self.paste_hotkey = paste_hotkey
         self.paste_keys = parse_hotkey(paste_hotkey)
         self.delivery_method = delivery_method
@@ -95,6 +95,8 @@ class ClipboardManager:
     def _type_delivery(self, text: str) -> bool:
         try:
             keyboard.type_text(text)
+            if self.also_copy_to_clipboard:
+                pyperclip.copy(text)
             print(f"   ✓ Auto-pasted via text injection")
             return True
         except Exception as e:
@@ -104,7 +106,7 @@ class ClipboardManager:
     def _clipboard_paste(self, text: str) -> bool:
         try:
             original_content = None
-            if self.preserve_clipboard:
+            if not self.also_copy_to_clipboard:
                 original_content = pyperclip.paste()
 
             if not self.copy_text(text):

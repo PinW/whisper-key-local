@@ -382,7 +382,7 @@ class ConfigValidator:
             self._get_config_value_at_path(self.config, 'clipboard.delivery_method')
         )
         self._set_config_value_at_path(self.config, 'clipboard.delivery_method', validated_method)
-        self._validate_boolean('clipboard.preserve_clipboard')
+        self._validate_boolean('clipboard.also_copy_to_clipboard')
         self._validate_numeric_range('clipboard.clipboard_restore_delay', min_val=0, description='clipboard restore delay')
         self._validate_numeric_range('clipboard.key_simulation_delay', min_val=0, description='key simulation delay')
         self._validate_hotkey_string('clipboard.paste_hotkey')

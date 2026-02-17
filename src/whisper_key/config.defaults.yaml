@@ -222,10 +222,10 @@ clipboard: # Clipboard Behavior
   #   - "shift+insert"   (terminal paste)
   paste_hotkey: "ctrl+v | macos: cmd+v"
 
-  # Preserve existing clipboard content when pasting
-  # true = save current clipboard, paste transcription, then restore original clipboard
-  # false = replace clipboard with transcription (default behavior)
-  preserve_clipboard: true
+  # Also copy transcription to clipboard after delivery
+  # true = transcription available on clipboard for re-pasting
+  # false = clipboard left untouched (type mode) or restored to original (paste mode)
+  also_copy_to_clipboard: false
 
   # Delay between clipboard restore after paste (seconds, only applies to paste mode)
   clipboard_restore_delay: 0.5
