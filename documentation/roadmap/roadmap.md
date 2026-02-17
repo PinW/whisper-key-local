@@ -2,9 +2,6 @@
 @completed.md
 
 ## Next
-- As a *user* I want **direct text injection** so transcriptions reliably reach the target app without clipboard race conditions ([design](../design/auto-paste-reliability.md))
-  - As a *user* I want the **auto-paste empty text bug fixed** so transcriptions reach the target app instead of delivering empty text + stray Enter ([#21](https://github.com/PinW/whisper-key-local/issues/21))
-  - As a *user* I want a **configurable delivery method** so I can choose between direct typing and clipboard paste depending on my target app
 - As a *user* I want **ROCm DLLs bundled in the exe** so the portable ROCm build works out of the box without installing HIP SDK or pip packages — bundle `amdhip64_7.dll`, `hipblas.dll`, and other required DLLs from `rocm_sdk_core`/`rocm_sdk_libraries_custom` into the PyInstaller build ([#30](https://github.com/PinW/whisper-key-local/issues/30))
 
 ## Bugs
@@ -47,7 +44,7 @@
     - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
     - As a *new user* I want **language selection** so I can set my transcription language without editing YAML
     - As a *new user* I want **system tray preference** so I can decide whether to show the tray icon or run in background
-    - As a *new user* I want **auto-set key simulation delay based on machine specs** so slower computers don't miss keystrokes during auto-paste ([#21](https://github.com/PinW/whisper-key-local/issues/21))
+    - As a *new user* I want **auto-set key simulation delay based on machine specs** so slower computers don't miss keystrokes during auto-paste
   - As a *new user* I want **auto-paste preference** so I can choose between direct paste or clipboard-only mode
 
 ### Transcription History

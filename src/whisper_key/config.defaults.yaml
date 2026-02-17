@@ -229,14 +229,16 @@ clipboard: # Clipboard Behavior
   paste_preserve_clipboard: true
 
   # Delay before clipboard restore (seconds, paste mode)
-  paste_clipboard_restore_delay: 0.7
+  paste_clipboard_restore_delay: 0.5
 
   # Also copy transcription to clipboard after delivery (type mode)
   type_also_copy_to_clipboard: false
 
   # Delay before sending ENTER key after text injection (seconds, type mode)
   # Terminal apps need time to process typed characters before Enter submits
-  type_auto_enter_delay: 0.3
+  # Total delay = type_auto_enter_delay + (characters / 100 * type_auto_enter_delay_per_100_chars)
+  type_auto_enter_delay: 0.15
+  type_auto_enter_delay_per_100_chars: 0.1
 
   # Delay for key simulation operations (seconds)
   # Small delay ensures operations complete reliably (macOS only)

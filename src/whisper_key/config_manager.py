@@ -387,6 +387,7 @@ class ConfigValidator:
         self._validate_numeric_range('clipboard.paste_clipboard_restore_delay', min_val=0, description='paste clipboard restore delay')
         self._validate_boolean('clipboard.type_also_copy_to_clipboard')
         self._validate_numeric_range('clipboard.type_auto_enter_delay', min_val=0, description='type auto enter delay')
+        self._validate_numeric_range('clipboard.type_auto_enter_delay_per_100_chars', min_val=0, description='type auto enter delay per char')
         self._validate_numeric_range('clipboard.macos_key_simulation_delay', min_val=0, description='macOS key simulation delay')
         self._validate_hotkey_string('clipboard.paste_hotkey')
         

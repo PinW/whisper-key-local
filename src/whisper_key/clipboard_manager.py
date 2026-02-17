@@ -12,6 +12,7 @@ class ClipboardManager:
                  paste_pre_paste_delay, paste_preserve_clipboard,
                  paste_clipboard_restore_delay,
                  type_also_copy_to_clipboard, type_auto_enter_delay,
+                 type_auto_enter_delay_per_100_chars,
                  macos_key_simulation_delay):
         self.logger = logging.getLogger(__name__)
         self.auto_paste = auto_paste
@@ -23,6 +24,7 @@ class ClipboardManager:
         self.paste_clipboard_restore_delay = paste_clipboard_restore_delay
         self.type_also_copy_to_clipboard = type_also_copy_to_clipboard
         self.type_auto_enter_delay = type_auto_enter_delay
+        self.type_auto_enter_delay_per_100_chars = type_auto_enter_delay_per_100_chars
         keyboard.set_delay(macos_key_simulation_delay)
         if self.delivery_method == "paste":
             self._test_clipboard_access()
@@ -156,8 +158,10 @@ class ClipboardManager:
                 print("🚀 Auto-pasting text...")
                 success = self.execute_delivery(transcribed_text)
                 if success and use_auto_enter:
-                    if self.delivery_method == "type" and self.type_auto_enter_delay > 0:
-                        time.sleep(self.type_auto_enter_delay)
+                    if self.delivery_method == "type":
+                        delay = self.type_auto_enter_delay + len(transcribed_text) / 100 * self.type_auto_enter_delay_per_100_chars
+                        if delay > 0:
+                            time.sleep(delay)
                     success = self.send_enter_key()
             else:
                 print("📋 Copying to clipboard...")

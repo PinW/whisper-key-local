@@ -33,6 +33,9 @@
 - As a *user* I want **distil-whisper models** so I get faster transcription with a smaller download
 - As a *GPU user* I want **int8_float16 and int8_float32 compute types** so I can use less VRAM and get faster inference on RTX 20xx+ GPUs with INT8 tensor cores
 - As a *user* I want to **see CPU vs GPU mode on startup** so I can confirm the app is using the right processing device
+- As a *user* I want **direct text injection** so transcriptions reliably reach the target app without clipboard race conditions ([design](../design/auto-paste-reliability.md))
+  - As a *user* I want the **auto-paste empty text bug fixed** so transcriptions reach the target app instead of delivering empty text + stray Enter ([#21](https://github.com/PinW/whisper-key-local/issues/21))
+  - As a *user* I want a **configurable delivery method** so I can choose between direct typing and clipboard paste depending on my target app
 
 ## Resolved Bugs
 
