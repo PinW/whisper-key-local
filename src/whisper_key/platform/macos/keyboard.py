@@ -34,6 +34,13 @@ except ImportError:
     logger.warning("Quartz not available - keyboard simulation disabled")
 
 
+def validate_delivery_method(method: str) -> str:
+    if method == "type":
+        print("   ✗ delivery_method 'type' is not supported on macOS, using 'paste'")
+        return "paste"
+    return method
+
+
 def set_delay(delay: float):
     global _delay
     _delay = delay

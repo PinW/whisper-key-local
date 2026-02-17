@@ -208,9 +208,11 @@ clipboard: # Clipboard Behavior
   auto_paste: true
 
   # Delivery method for auto-paste
-  # "type" = direct text injection via SendInput (no clipboard involvement)
+  # "type" = direct text injection via SendInput (Windows only, no clipboard involvement)
   # "paste" = clipboard copy + simulated Ctrl+V paste
-  delivery_method: type
+  # Note: "type" silently fails into elevated (Run as Admin) windows and
+  # some Remote Desktop sessions. Switch to "paste" if text isn't appearing.
+  delivery_method: "type | macos: paste"
 
   # Key combination to simulate paste (only used when delivery_method is "paste")
   # Format: modifier+key (use lowercase)
@@ -229,7 +231,7 @@ clipboard: # Clipboard Behavior
   clipboard_restore_delay: 0.5
 
   # Delay for key simulation operations (seconds)
-  # Small delay ensures operations complete reliably
+  # Small delay ensures operations complete reliably (macOS only)
   key_simulation_delay: 0.05
 
 logging: # Logging Configuration

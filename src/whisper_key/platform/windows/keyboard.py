@@ -101,6 +101,10 @@ def _send(inputs):
     user32.SendInput(n, array, ctypes.sizeof(INPUT))
 
 
+def validate_delivery_method(method: str) -> str:
+    return method
+
+
 def set_delay(delay: float):
     pass
 

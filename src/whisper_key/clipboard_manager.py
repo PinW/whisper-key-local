@@ -150,7 +150,7 @@ class ClipboardManager:
             if use_auto_enter:
                 print("🚀 Auto-pasting text and SENDING with ENTER...")
 
-                success = self.execute_delivery(transcribed_text)
+                success = self._clipboard_paste(transcribed_text)
                 if success:
                     success = self.send_enter_key()
 

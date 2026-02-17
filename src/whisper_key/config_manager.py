@@ -8,7 +8,7 @@ from io import StringIO
 from ruamel.yaml import YAML
 
 from .utils import resolve_asset_path, beautify_hotkey, get_user_app_data_path
-from .platform import IS_MACOS
+from .platform import IS_MACOS, keyboard as platform_keyboard
 
 def deep_merge_config(default_config: Dict[str, Any],
                       user_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -378,6 +378,10 @@ class ConfigValidator:
         
         self._validate_boolean('clipboard.auto_paste')
         self._validate_enum('clipboard.delivery_method', ['type', 'paste'])
+        validated_method = platform_keyboard.validate_delivery_method(
+            self._get_config_value_at_path(self.config, 'clipboard.delivery_method')
+        )
+        self._set_config_value_at_path(self.config, 'clipboard.delivery_method', validated_method)
         self._validate_boolean('clipboard.preserve_clipboard')
         self._validate_numeric_range('clipboard.clipboard_restore_delay', min_val=0, description='clipboard restore delay')
         self._validate_numeric_range('clipboard.key_simulation_delay', min_val=0, description='key simulation delay')
