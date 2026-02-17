@@ -1,6 +1,5 @@
 import ctypes
 import ctypes.wintypes as wintypes
-import time
 
 user32 = ctypes.windll.user32
 
@@ -10,6 +9,17 @@ KEYEVENTF_UNICODE = 0x0004
 
 VK_RETURN = 0x0D
 VK_TAB = 0x09
+
+
+class MOUSEINPUT(ctypes.Structure):
+    _fields_ = [
+        ("dx", wintypes.LONG),
+        ("dy", wintypes.LONG),
+        ("mouseData", wintypes.DWORD),
+        ("dwFlags", wintypes.DWORD),
+        ("time", wintypes.DWORD),
+        ("dwExtraInfo", ctypes.POINTER(ctypes.c_ulong)),
+    ]
 
 
 class KEYBDINPUT(ctypes.Structure):
@@ -22,9 +32,21 @@ class KEYBDINPUT(ctypes.Structure):
     ]
 
 
+class HARDWAREINPUT(ctypes.Structure):
+    _fields_ = [
+        ("uMsg", wintypes.DWORD),
+        ("wParamL", wintypes.WORD),
+        ("wParamH", wintypes.WORD),
+    ]
+
+
 class INPUT(ctypes.Structure):
     class _INPUT_UNION(ctypes.Union):
-        _fields_ = [("ki", KEYBDINPUT)]
+        _fields_ = [
+            ("mi", MOUSEINPUT),
+            ("ki", KEYBDINPUT),
+            ("hi", HARDWAREINPUT),
+        ]
 
     _anonymous_ = ("_union",)
     _fields_ = [
@@ -56,9 +78,6 @@ for c in "abcdefghijklmnopqrstuvwxyz":
 for d in "0123456789":
     VK_MAP[d] = ord(d)
 
-_delay = 0.0
-
-
 def _make_vk_input(vk, flags=0):
     inp = INPUT()
     inp.type = INPUT_KEYBOARD
@@ -83,8 +102,7 @@ def _send(inputs):
 
 
 def set_delay(delay: float):
-    global _delay
-    _delay = delay
+    pass
 
 
 def send_key(key: str):
@@ -92,8 +110,6 @@ def send_key(key: str):
     if vk is None:
         return
     _send([_make_vk_input(vk), _make_vk_input(vk, KEYEVENTF_KEYUP)])
-    if _delay > 0:
-        time.sleep(_delay)
 
 
 def send_hotkey(*keys: str):
@@ -106,8 +122,6 @@ def send_hotkey(*keys: str):
         down.append(_make_vk_input(vk))
         up.insert(0, _make_vk_input(vk, KEYEVENTF_KEYUP))
     _send(down + up)
-    if _delay > 0:
-        time.sleep(_delay)
 
 
 def type_text(text: str):

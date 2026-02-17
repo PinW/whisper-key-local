@@ -98,6 +98,4 @@ def send_hotkey(*keys: str):
 
 
 def type_text(text: str):
-    import pyperclip
-    pyperclip.copy(text)
-    send_hotkey('cmd', 'v')
+    pass  # SendInput method not used in macOS
