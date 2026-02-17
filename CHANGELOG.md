@@ -2,6 +2,29 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.6.3] - 2026-02-17
+
+### Added
+- **Direct text injection** - New `type` delivery method using native ctypes `SendInput` with `KEYEVENTF_UNICODE`, bypassing clipboard entirely (Windows only) (#21)
+- **Configurable delivery method** - Choose between `paste` (clipboard + Ctrl+V) and `type` (direct key injection) via `clipboard.delivery_method`
+- **Pre-paste delay** - `paste_pre_paste_delay` setting (50ms default) fixes intermittent empty paste caused by Windows Clipboard History service contention (#21)
+- **Scaling auto-enter delay** - Type mode delay before Enter now scales with text length: `type_auto_enter_delay + chars/100 * type_auto_enter_delay_per_100_chars`
+- **Real-time speech preview** - Experimental streaming transcription using sherpa-onnx (enable with `streaming.streaming_enabled: true`; downloads a small ~20MB model on first use)
+- **Application icon** - PyInstaller exe now has a proper app icon
+- **`wk` CLI alias** - Short command alias for `whisper-key`
+
+### Fixed
+- **Auto-paste empty text bug** - Clipboard race condition where Windows Clipboard History service contests clipboard between copy and paste, causing target app to receive nothing (#21)
+
+### Changed
+- Replaced pyautogui with native ctypes `SendInput` for keyboard simulation on Windows (smaller dependency footprint, atomic key injection)
+- Restructured clipboard config: `paste_*` prefix for paste-mode settings, `type_*` for type-mode settings, `macos_*` for macOS-only
+- Delivery method validation moved into platform keyboard modules
+- Default `paste_clipboard_restore_delay` set to 0.5s
+
+### Removed
+- **pyautogui** dependency — replaced by native ctypes
+
 ## [0.6.2] - 2026-02-09
 
 ### Added
