@@ -15,8 +15,6 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 - **Cross-platform**: Works on Windows and macOS
 - **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
 
-> **Roadmap**: voice commands → terminal UI → CLI wrapper (`whisper-key claude`) → [etc...](documentation/roadmap/roadmap.md)
-
 ## 🚀 Quick Start
 
 ### From PyPI (Recommended)
