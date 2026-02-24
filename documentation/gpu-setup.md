@@ -36,11 +36,7 @@ First, install the ROCm prerequisites using **one** of these two methods:
 
 #### Method B: ROCm SDK via pip (HIP 7.2)
 
-1. Follow AMD's [ROCm install guide](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/install/installrad/windows/install-pytorch.html) prerequisites
-2. Install the SDK packages:
-   ```
-   pip install rocm-sdk-core rocm-sdk-libraries-custom
-   ```
+1. Follow the prerequisites and the first step under "Install PyTorch via PIP" from AMD's [ROCm install guide](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/install/installrad/windows/install-pytorch.html) — skip the rest
 
 Then install Whisper Key:
 
@@ -55,7 +51,7 @@ Then install Whisper Key:
 1. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
 2. Install the wheel matching your Python version:
    ```
-   pip install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
+   pip install ctranslate2-4.7.1-cp312-cp312-win_amd64.whl --force-reinstall --no-deps
    ```
 3. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
 4. Restart Whisper Key
@@ -65,7 +61,7 @@ Then install Whisper Key:
 1. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
 2. Install the wheel into the pipx venv:
    ```
-   pipx runpip whisper-key-local install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
+   pipx runpip whisper-key-local install ctranslate2-4.7.1-cp312-cp312-win_amd64.whl --force-reinstall --no-deps
    ```
 3. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
 4. Restart Whisper Key
