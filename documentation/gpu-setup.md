@@ -44,7 +44,7 @@ Then install Whisper Key:
 
 1. Download `whisper-key-v*-windows-amd-gpu-rocm.zip` from the [latest release](https://github.com/PinW/whisper-key-local/releases/latest)
 2. Extract and run `whisper-key.exe`
-3. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
+3. Set `device: cuda` and `compute_type: float16`
 
 ### pip
 
@@ -53,7 +53,7 @@ Then install Whisper Key:
    ```
    pip install ctranslate2-4.7.1-cp312-cp312-win_amd64.whl --force-reinstall --no-deps
    ```
-3. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
+3. Set `device: cuda` and `compute_type: float16`
 4. Restart Whisper Key
 
 ### pipx
@@ -63,7 +63,7 @@ Then install Whisper Key:
    ```
    pipx runpip whisper-key-local install ctranslate2-4.7.1-cp312-cp312-win_amd64.whl --force-reinstall --no-deps
    ```
-3. Set `device: cuda` and `compute_type: float16` (or `int8` on RX 7000+)
+3. Set `device: cuda` and `compute_type: float16`
 4. Restart Whisper Key
 
 ## AMD — RDNA 1 (ROCm 6.2)
