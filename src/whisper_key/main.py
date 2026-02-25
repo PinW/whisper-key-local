@@ -11,6 +11,8 @@ import sys
 import threading
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.write("\033]0;Whisper Key\007")
+sys.stdout.flush()
 
 from .platform import app, permissions
 from .config_manager import ConfigManager
