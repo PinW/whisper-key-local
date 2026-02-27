@@ -212,9 +212,6 @@ class SystemTray:
             self.logger.error(f"Error in _create_menu: {e}")
             raise
 
-    def _tray_toggle_recording(self, icon=None, item=None):
-        self.state_manager.toggle_recording()
-
     def _show_console(self, icon=None, item=None):
         self.state_manager.show_console()
 

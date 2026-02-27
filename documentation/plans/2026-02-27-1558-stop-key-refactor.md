@@ -65,9 +65,8 @@ state_manager.py:
 - [x] `config_manager.py`: update `print_command_stop_instructions()` — uses `_get_stop_key_display()`
 
 4. StateManager refactor
-- [ ] `state_manager.py`: remove `toggle_recording()`
-- [ ] `state_manager.py`: make `_start_recording()` public as `start_recording()` with `can_start_recording()` guard and busy-state messages
-- [ ] `system_tray.py`: remove dead `_tray_toggle_recording()` method (calls removed `toggle_recording`)
+- [x] `state_manager.py`: remove `toggle_recording()`, add public `start_recording()` with guard, rename `_start_recording` → `_begin_recording`
+- [x] `system_tray.py`: remove dead `_tray_toggle_recording()` method
 
 5. HotkeyListener refactor
 - [ ] `hotkey_listener.py`: replace `stop_with_modifier_enabled` + `auto_enter_enabled` params with `stop_key` param

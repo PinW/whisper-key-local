@@ -115,20 +115,18 @@ class StateManager:
         else:
             return False
     
-    def toggle_recording(self):
-        was_recording = self.stop_recording(use_auto_enter=False)
-        
-        if not was_recording:
+    def start_recording(self):
+        if not self.can_start_recording():
             current_state = self.get_current_state()
-            if self.can_start_recording():
-                self._start_recording()
+            if self.is_processing:
+                print("⏳ Still processing previous recording...")
+            elif self.is_model_loading:
+                print("⏳ Still loading model...")
             else:
-                if self.is_processing:
-                    print("⏳ Still processing previous recording...")
-                elif self.is_model_loading:
-                    print("⏳ Still loading model...")
-                else:
-                    print(f"⏳ Cannot record while {current_state}...")
+                print(f"⏳ Cannot record while {current_state}...")
+            return
+
+        self._begin_recording()
 
     def start_command_recording(self):
         if not self.can_start_recording():
@@ -145,7 +143,7 @@ class StateManager:
             self.audio_feedback.play_start_sound()
             self.system_tray.update_state("recording")
 
-    def _start_recording(self):
+    def _begin_recording(self):
         success = self.audio_recorder.start_recording()
 
         if success:
