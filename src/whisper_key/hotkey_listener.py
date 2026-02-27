@@ -4,19 +4,16 @@ from .platform import hotkeys
 from .state_manager import StateManager
 
 class HotkeyListener:
-    def __init__(self, state_manager: StateManager, recording_hotkey: str,
-                 auto_enter_hotkey: str = None, auto_enter_enabled: bool = True,
-                 stop_with_modifier_enabled: bool = False, cancel_combination: str = None,
+    def __init__(self, state_manager: StateManager, recording_hotkey: str, stop_key: str,
+                 auto_send_key: str = None, cancel_combination: str = None,
                  command_hotkey: str = None):
         self.state_manager = state_manager
         self.recording_hotkey = recording_hotkey
-        self.auto_enter_hotkey = auto_enter_hotkey
-        self.auto_enter_enabled = auto_enter_enabled
-        self.stop_with_modifier_enabled = stop_with_modifier_enabled
+        self.stop_key = stop_key
+        self.auto_send_key = auto_send_key
         self.cancel_combination = cancel_combination
         self.command_hotkey = command_hotkey
-        self.stop_modifier_hotkey = None
-        self.modifier_key_released = True
+        self.keys_armed = True
         self.is_listening = False
         self.logger = logging.getLogger(__name__)
 
@@ -33,11 +30,19 @@ class HotkeyListener:
             'name': 'standard'
         })
 
-        if self.auto_enter_enabled and self.auto_enter_hotkey:
+        hotkey_configs.append({
+            'combination': self.stop_key,
+            'callback': self._stop_key_pressed,
+            'release_callback': self._arm_keys_on_release,
+            'name': 'stop'
+        })
+
+        if self.auto_send_key:
             hotkey_configs.append({
-                'combination': self.auto_enter_hotkey,
-                'callback': self._auto_enter_hotkey_pressed,
-                'name': 'auto-enter'
+                'combination': self.auto_send_key,
+                'callback': self._auto_send_key_pressed,
+                'release_callback': self._arm_keys_on_release,
+                'name': 'auto-send'
             })
 
         if self.cancel_combination:
@@ -53,16 +58,6 @@ class HotkeyListener:
                 'callback': self._command_hotkey_pressed,
                 'name': 'command'
             })
-
-        if self.stop_with_modifier_enabled:
-            self.stop_modifier_hotkey = self._extract_first_modifier(self.recording_hotkey)
-            if self.stop_modifier_hotkey:
-                hotkey_configs.append({
-                    'combination': self.stop_modifier_hotkey,
-                    'callback': self._stop_modifier_hotkey_pressed,
-                    'release_callback': self._arm_stop_modifier_hotkey_on_release,
-                    'name': 'stop-modifier'
-                })
 
         hotkey_configs.sort(key=self._get_hotkey_combination_specificity, reverse=True)
 
@@ -85,28 +80,34 @@ class HotkeyListener:
 
     def _standard_hotkey_pressed(self):
         self.logger.info(f"Standard hotkey pressed: {self.recording_hotkey}")
+        self.keys_armed = False
+        self.state_manager.start_recording()
 
-        self.modifier_key_released = False
+    def _stop_key_pressed(self):
+        self.logger.debug(f"Stop key pressed: {self.stop_key}, keys_armed={self.keys_armed}")
 
-        self.state_manager.toggle_recording()
+        if self.keys_armed:
+            self.logger.info(f"Stop key activated: {self.stop_key}")
+            self.state_manager.stop_recording()
+        else:
+            self.logger.debug("Stop key ignored - waiting for key release first")
 
-    def _auto_enter_hotkey_pressed(self):
-        self.logger.info(f"Auto-enter hotkey pressed: {self.auto_enter_hotkey}")
+    def _auto_send_key_pressed(self):
+        self.logger.debug(f"Auto-send key pressed: {self.auto_send_key}, keys_armed={self.keys_armed}")
 
         if not self.state_manager.audio_recorder.get_recording_status():
-            self.logger.debug("Auto-enter hotkey ignored - not currently recording")
+            self.logger.debug("Auto-send key ignored - not currently recording")
             return
 
         if not self.state_manager.clipboard_manager.auto_paste:
-            self.logger.debug("Auto-enter hotkey ignored - auto-paste is disabled")
+            self.logger.debug("Auto-send key ignored - auto-paste is disabled")
             return
 
-        if self.stop_with_modifier_enabled and not self.modifier_key_released:
-            self.logger.debug("Auto-enter hotkey ignored - waiting for modifier key release")
+        if not self.keys_armed:
+            self.logger.debug("Auto-send key ignored - waiting for key release first")
             return
 
-        self.modifier_key_released = False
-
+        self.keys_armed = False
         self.state_manager.stop_recording(use_auto_enter=True)
 
     def _cancel_hotkey_pressed(self):
@@ -115,28 +116,12 @@ class HotkeyListener:
 
     def _command_hotkey_pressed(self):
         self.logger.info(f"Command hotkey pressed: {self.command_hotkey}")
-        stop_modifier_in_hotkey = self.stop_modifier_hotkey and self.stop_modifier_hotkey in self.command_hotkey.lower()
-        self.modifier_key_released = not stop_modifier_in_hotkey
+        self.keys_armed = False
         self.state_manager.start_command_recording()
 
-    def _stop_modifier_hotkey_pressed(self):
-        self.logger.debug(f"Stop-modifier hotkey pressed: {self.stop_modifier_hotkey}, modifier_released={self.modifier_key_released}")
-
-        if self.modifier_key_released:
-            self.logger.info(f"Stop-modifier hotkey activated: {self.stop_modifier_hotkey}")
-            self.state_manager.stop_recording()
-        else:
-            self.logger.debug("Stop-modifier ignored - waiting for key release first")
-
-    def _arm_stop_modifier_hotkey_on_release(self):
-        self.logger.debug(f"Stop-modifier key released: {self.stop_modifier_hotkey}")
-        self.modifier_key_released = True
-
-    def _extract_first_modifier(self, hotkey_str: str) -> str:
-        parts = hotkey_str.lower().split('+')
-        if len(parts) > 1:
-            return parts[0].strip()
-        return None
+    def _arm_keys_on_release(self):
+        self.logger.debug("Key released - arming stop/auto-send keys")
+        self.keys_armed = True
 
     def start_listening(self):
         if self.is_listening:
@@ -163,9 +148,8 @@ class HotkeyListener:
         except Exception as e:
             self.logger.error(f"Error stopping hotkey listener: {e}")
 
-
     def change_hotkey_config(self, setting: str, value):
-        valid_settings = ['recording_hotkey', 'auto_enter_hotkey', 'auto_enter_enabled', 'stop_with_modifier_enabled', 'cancel_combination', 'command_hotkey']
+        valid_settings = ['recording_hotkey', 'stop_key', 'auto_send_key', 'cancel_combination', 'command_hotkey']
 
         if setting not in valid_settings:
             raise ValueError(f"Invalid setting '{setting}'. Valid options: {valid_settings}")

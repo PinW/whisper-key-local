@@ -69,13 +69,12 @@ state_manager.py:
 - [x] `system_tray.py`: remove dead `_tray_toggle_recording()` method
 
 5. HotkeyListener refactor
-- [ ] `hotkey_listener.py`: replace `stop_with_modifier_enabled` + `auto_enter_enabled` params with `stop_key` param
-- [ ] `hotkey_listener.py`: rename `auto_enter_hotkey` → `auto_send_key`
-- [ ] `hotkey_listener.py`: `_standard_hotkey_pressed()` calls `start_recording()` (not toggle)
-- [ ] `hotkey_listener.py`: register `stop_key` directly (no `_extract_first_modifier` derivation)
-- [ ] `hotkey_listener.py`: register `auto_send_key` with release callback (arming protection for `alt` in `alt+win`)
-- [ ] `hotkey_listener.py`: remove `_extract_first_modifier()` method
-- [ ] `hotkey_listener.py`: update `change_hotkey_config()` valid settings list
+- [x] `hotkey_listener.py`: replace params with `stop_key` + `auto_send_key`, rename `modifier_key_released` → `keys_armed`
+- [x] `hotkey_listener.py`: `_standard_hotkey_pressed()` calls `start_recording()` (start-only)
+- [x] `hotkey_listener.py`: register `stop_key` and `auto_send_key` with shared `_arm_keys_on_release` callback
+- [x] `hotkey_listener.py`: `_command_hotkey_pressed()` always disarms `keys_armed`
+- [x] `hotkey_listener.py`: remove `_extract_first_modifier()`, `_stop_modifier_hotkey_pressed()`, `_arm_stop_modifier_hotkey_on_release()`
+- [x] `hotkey_listener.py`: update `change_hotkey_config()` valid settings list
 
 6. main.py wiring
 - [ ] `main.py`: update `setup_hotkey_listener()` — pass `stop_key` and `auto_send_key` instead of old params
