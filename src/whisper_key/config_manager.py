@@ -169,9 +169,22 @@ class ConfigManager:
         print("📁 Loading configuration...")
 
         if self.use_user_settings:
-            print(f"   ✓ Using user settings from: {self.user_settings_path}")
+            config_dir = os.path.dirname(self.user_settings_path)
+            display_dir = self._display_path(config_dir)
+            settings_file = os.path.basename(self.user_settings_path)
+            print(f"   ✓ Local settings: {display_dir}\\{settings_file}")
+            print(f"   ✓ Voice commands: {display_dir}\\commands.yaml")
+
+    def _display_path(self, path: str) -> str:
+        if IS_MACOS:
+            home = os.path.expanduser("~")
+            if path.startswith(home):
+                return "~" + path[len(home):]
         else:
-            print(f"   ✗ Using default settings from: {self.config_path}")
+            appdata = os.getenv('APPDATA', '')
+            if appdata and path.startswith(appdata):
+                return "%APPDATA%" + path[len(appdata):]
+        return path
     
     def _get_stop_key(self, hotkey: str) -> str:
         stop_with_modifier = self.config['hotkey']['stop_with_modifier_enabled']

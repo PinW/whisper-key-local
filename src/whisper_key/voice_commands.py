@@ -25,6 +25,7 @@ class VoiceCommandManager:
         with open(user_path, 'r', encoding='utf-8') as f:
             data = yaml.load(f)
 
+        self.commands_path = user_path
         self.commands = data.get('commands', []) if data else []
         self.commands.sort(key=lambda cmd: len(cmd.get('trigger', '')), reverse=True)
         self.logger.info(f"Loaded {len(self.commands)} voice commands")
