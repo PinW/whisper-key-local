@@ -1,19 +1,24 @@
 import os
+import shutil
 import sys
-import ctypes
 
 if sys.platform == "win32":
+    rocm_dirs = []
+
     hip_path = os.environ.get("HIP_PATH")
     if hip_path:
         hip_bin = os.path.join(hip_path, "bin")
         if os.path.isdir(hip_bin):
-            os.add_dll_directory(hip_bin)
-            os.environ["PATH"] = hip_bin + ";" + os.environ.get("PATH", "")
+            rocm_dirs.append(hip_bin)
 
-            for dll_name in ("amdhip64_6.dll", "amdhip64_7.dll", "rocblas.dll"):
-                dll_path = os.path.join(hip_bin, dll_name)
-                if os.path.isfile(dll_path):
-                    try:
-                        ctypes.WinDLL(dll_path)
-                    except OSError:
-                        pass
+    python_exe = shutil.which("python")
+    if python_exe:
+        site_packages = os.path.join(os.path.dirname(python_exe), "Lib", "site-packages")
+        for pkg in ("_rocm_sdk_core", "_rocm_sdk_libraries_custom"):
+            bin_dir = os.path.join(site_packages, pkg, "bin")
+            if os.path.isdir(bin_dir):
+                rocm_dirs.append(bin_dir)
+
+    for d in rocm_dirs:
+        os.add_dll_directory(d)
+        os.environ["PATH"] = d + ";" + os.environ.get("PATH", "")

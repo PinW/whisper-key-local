@@ -36,7 +36,15 @@ First, install the ROCm prerequisites using **one** of these two methods:
 
 #### Method B: ROCm SDK via pip (HIP 7.2)
 
-1. Follow the prerequisites and the first step under "Install PyTorch via PIP" from AMD's [ROCm install guide](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/install/installrad/windows/install-pytorch.html) — skip the rest
+**Prerequisite:** [AMD Adrenalin 26.1.1](https://www.amd.com/en/resources/support-articles/release-notes/RN-RAD-WIN-26-1-1.html) graphics driver or newer
+
+```powershell
+pip install --no-cache-dir `
+    https://repo.radeon.com/rocm/windows/rocm-rel-7.2/rocm_sdk_core-7.2.0.dev0-py3-none-win_amd64.whl `
+    https://repo.radeon.com/rocm/windows/rocm-rel-7.2/rocm_sdk_devel-7.2.0.dev0-py3-none-win_amd64.whl `
+    https://repo.radeon.com/rocm/windows/rocm-rel-7.2/rocm_sdk_libraries_custom-7.2.0.dev0-py3-none-win_amd64.whl `
+    https://repo.radeon.com/rocm/windows/rocm-rel-7.2/rocm-7.2.0.dev0.tar.gz
+```
 
 Then install Whisper Key:
 
