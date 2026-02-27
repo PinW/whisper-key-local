@@ -80,7 +80,7 @@ state_manager.py:
 - [x] `main.py`: update `setup_hotkey_listener()` — pass `stop_key` and `auto_send_key`
 
 7. Documentation
-- [ ] `documentation/voice-commands.md`: update stop-modifier reference (line 81) to describe `stop_key`
+- [x] `documentation/voice-commands.md`: updated hotkey defaults and stop-modifier reference to `stop_key`
 
 ## Implementation Details
 

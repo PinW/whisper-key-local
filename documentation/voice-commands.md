@@ -1,6 +1,6 @@
 # Voice Commands
 
-Voice command mode lets you run shell commands by speaking trigger phrases. Press **Ctrl+G** (default) to record, speak a trigger phrase, then press **Ctrl** to stop. If the transcription matches a trigger, the associated command runs.
+Voice command mode lets you run shell commands by speaking trigger phrases. Press **Alt+Win** (default) to record, speak a trigger phrase, then press the stop key to stop. If the transcription matches a trigger, the associated command runs.
 
 ## Configuration
 
@@ -72,10 +72,11 @@ Each command has:
 
 ## Hotkey
 
-The command hotkey is configured in your user settings (`user_settings.yaml`):
+The command hotkey and stop key are configured in your user settings (`user_settings.yaml`):
 ```yaml
 hotkey:
-  command_hotkey: "ctrl+g"
+  command_hotkey: "alt+win | macos: fn+command"
+  stop_key: "ctrl | macos: fn"
 ```
 
-The same stop method as normal recording applies — if `stop_with_modifier_enabled` is on, pressing **Ctrl** alone stops the recording.
+The `stop_key` is shared between transcription and command modes.
