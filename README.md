@@ -2,7 +2,7 @@
 
 Global hotkeys to record speech and transcribe directly to your cursor. 
 
-> **Now on Windows and macOS!** Questions or ideas? [Discord](https://discord.gg/uZnXV8snhz)
+> Questions or ideas? [Discord](https://discord.gg/uZnXV8snhz)
 
 ## ✨ Features
 
