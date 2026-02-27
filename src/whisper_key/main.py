@@ -133,9 +133,10 @@ def setup_audio_feedback(audio_feedback_config):
         cancel_sound=audio_feedback_config['cancel_sound']
     )
 
-def setup_voice_commands(voice_commands_config):
+def setup_voice_commands(voice_commands_config, clipboard_manager):
     return VoiceCommandManager(
-        enabled=voice_commands_config['enabled']
+        enabled=voice_commands_config['enabled'],
+        clipboard_manager=clipboard_manager
     )
 
 def setup_console_manager(console_config, is_executable_mode):
@@ -230,7 +231,7 @@ def main():
         streaming_manager.initialize()
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
-        voice_command_manager = setup_voice_commands(voice_commands_config)
+        voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager)
 
         state_manager = StateManager(
             audio_recorder=None,

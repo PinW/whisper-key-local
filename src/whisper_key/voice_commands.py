@@ -12,8 +12,9 @@ from .platform import keyboard
 
 
 class VoiceCommandManager:
-    def __init__(self, enabled=True):
+    def __init__(self, enabled=True, clipboard_manager=None):
         self.enabled = enabled
+        self.clipboard_manager = clipboard_manager
         self.logger = logging.getLogger(__name__)
 
         if not self.enabled:
@@ -41,15 +42,14 @@ class VoiceCommandManager:
         valid = []
         for i, cmd in enumerate(raw_commands):
             trigger = cmd.get('trigger', '')
-            has_run = 'run' in cmd
-            has_hotkey = 'hotkey' in cmd
+            action_count = sum(1 for key in ('run', 'hotkey', 'type') if key in cmd)
 
             if not trigger:
                 self.logger.warning(f"Command {i}: missing trigger, skipping")
                 continue
 
-            if has_run == has_hotkey:
-                self.logger.warning(f"Command '{trigger}': needs exactly one of 'run' or 'hotkey', skipping")
+            if action_count != 1:
+                self.logger.warning(f"Command '{trigger}': needs exactly one of 'run', 'hotkey', or 'type', skipping")
                 continue
 
             valid.append(cmd)
@@ -72,6 +72,8 @@ class VoiceCommandManager:
             self._execute_shell(command['run'], trigger)
         elif 'hotkey' in command:
             self._send_hotkey(command['hotkey'], trigger)
+        elif 'type' in command:
+            self._deliver_text(command['type'], trigger)
 
     def _execute_shell(self, run_str: str, trigger: str):
         try:
@@ -91,3 +93,16 @@ class VoiceCommandManager:
         except Exception as e:
             self.logger.error(f"Failed to send hotkey '{trigger}': {e}")
             print(f"   Failed to send hotkey: {e}")
+
+    def _deliver_text(self, text: str, trigger: str):
+        try:
+            if self.clipboard_manager:
+                self.clipboard_manager.deliver_transcription(text)
+                self.logger.info(f"Delivered text '{trigger}': {text}")
+                print(f"   ✓ Typed: {trigger}")
+            else:
+                self.logger.error("No clipboard manager available for type command")
+                print(f"   Failed: clipboard manager not available")
+        except Exception as e:
+            self.logger.error(f"Failed to deliver text '{trigger}': {e}")
+            print(f"   Failed to deliver text: {e}")

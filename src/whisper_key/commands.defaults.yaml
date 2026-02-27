@@ -2,7 +2,8 @@
 # WHISPER KEY - VOICE COMMANDS (EXPERIMENTAL)
 # =============================================================================
 # Speak a trigger phrase during command mode to run the associated command.
-# Each command needs a "trigger" phrase and one action: "run" (shell) or "hotkey" (keypress).
+# Each command needs a "trigger" phrase and one action:
+#   "run" (shell command), "hotkey" (keypress), or "type" (deliver pre-written text).
 #
 # Matching: triggers are case-insensitive substrings — saying "please open notepad"
 # matches the trigger "open notepad". Longer triggers are checked first.
@@ -27,6 +28,12 @@ commands:
     hotkey: "win+down"
   - trigger: "show desktop"
     hotkey: "win+d"
+
+  # Type commands — deliver pre-written text to the active window
+  - trigger: "my email"
+    type: "user@example.com"
+  - trigger: "my address"
+    type: "123 Main Street, City, State 12345"
 
   # Shell commands — run any shell command (cmd.exe on Windows, /bin/sh on macOS)
   - trigger: "open notepad"
