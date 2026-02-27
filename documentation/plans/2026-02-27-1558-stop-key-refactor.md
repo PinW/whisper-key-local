@@ -53,11 +53,11 @@ state_manager.py:
 - [x] `config.defaults.yaml`: update `recording_hotkey` comment from "start/stop" → "start"
 
 2. ConfigValidator refactor
-- [ ] `config_manager.py`: remove `_validate_boolean('hotkey.stop_with_modifier_enabled')`
-- [ ] `config_manager.py`: remove `_validate_boolean('hotkey.auto_enter_enabled')`
-- [ ] `config_manager.py`: add `_validate_hotkey_string('hotkey.stop_key')`
-- [ ] `config_manager.py`: rename `auto_enter_combination` → `auto_send_key` in validation
-- [ ] `config_manager.py`: simplify `_resolve_hotkey_conflicts()` — just check stop_key != auto_send_key and neither equals a start hotkey
+- [x] `config_manager.py`: remove `_validate_boolean('hotkey.stop_with_modifier_enabled')`
+- [x] `config_manager.py`: remove `_validate_boolean('hotkey.auto_enter_enabled')`
+- [x] `config_manager.py`: add `_validate_hotkey_string('hotkey.stop_key')`
+- [x] `config_manager.py`: rename `auto_enter_combination` → `auto_send_key` in validation
+- [x] `config_manager.py`: simplify `_resolve_hotkey_conflicts()` — just check stop_key != auto_send_key and neither equals a start hotkey
 
 3. ConfigManager display methods
 - [ ] `config_manager.py`: simplify `_get_stop_key()` — read `stop_key` config directly, no modifier extraction
