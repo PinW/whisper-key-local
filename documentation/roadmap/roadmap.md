@@ -16,7 +16,6 @@
 
 ### Voice Commands
 - As a *user* I want **voice commands** so I can quickly activate tasks
-- As a *user* I want **voice-triggered hotkeys** so I can send keyboard shortcuts hands-free by speaking a trigger phrase ([plan](../plans/2026-02-27-0958-voice-commands-hotkey-triggers.md))
 - As a *user* I want **transcription preset commands** so I can instantly deliver pre-written phrases without recording or transcribing
 - As a *user* I want **hotkey-activated commands** so I can bind specific voice commands to custom hotkeys and skip the speech step entirely
 - As a *user* I want **command aliases** so I can define multiple trigger phrases for the same command (e.g., "open browser", "launch chrome", and "start browser" all execute the same action)

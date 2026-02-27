@@ -38,6 +38,7 @@
   - As a *user* I want a **configurable delivery method** so I can choose between direct typing and clipboard paste depending on my target app
 
 - As a *user* I want **voice command hotkey** so I can choose between transcription/command
+- As a *user* I want **voice-triggered hotkeys** so I can send keyboard shortcuts hands-free by speaking a trigger phrase
 
 ## Resolved Bugs
 
