@@ -155,7 +155,6 @@ class ClipboardManager:
 
         try:
             if self.auto_paste:
-                print("🚀 Auto-pasting text...")
                 success = self.execute_delivery(transcribed_text)
                 if success and use_auto_enter:
                     if self.delivery_method == "type":

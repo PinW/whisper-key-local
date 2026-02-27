@@ -167,7 +167,7 @@ class StateManager:
                 return
 
             duration = self.audio_recorder.get_audio_duration(audio_data)
-            print(f"🎤 Recorded {duration:.1f} seconds! Transcribing...")
+            print(f"   ✓ Recorded {duration:.1f} seconds, transcribing...")
 
             self.system_tray.update_state("processing")
 
