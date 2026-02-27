@@ -173,29 +173,31 @@ class ConfigManager:
         else:
             print(f"   ✗ Using default settings from: {self.config_path}")
     
-    def print_stop_instructions_based_on_config(self):        
-        main_hotkey = self.config['hotkey']['recording_hotkey']
-        auto_enter_enabled = self.config['hotkey']['auto_enter_enabled']
-        auto_enter_hotkey = self.config['hotkey']['auto_enter_combination']
+    def _get_stop_key(self, hotkey: str) -> str:
         stop_with_modifier = self.config['hotkey']['stop_with_modifier_enabled']
-        auto_paste_enabled = self.config['clipboard']['auto_paste']
-        
         if stop_with_modifier:
-            # Extract first modifier for display
-            primary_key = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
-            primary_key = primary_key.upper()
+            return hotkey.split('+')[0].upper() if '+' in hotkey else hotkey.upper()
+        return beautify_hotkey(hotkey)
+
+    def print_stop_instructions_based_on_config(self):
+        main_hotkey = self.config['hotkey']['recording_hotkey']
+        stop_key = self._get_stop_key(main_hotkey)
+        auto_paste_enabled = self.config['clipboard']['auto_paste']
+        auto_enter_enabled = self.config['hotkey']['auto_enter_enabled']
+
+        if auto_paste_enabled:
+            print(f"   [{stop_key}] stop and auto-paste")
         else:
-            primary_key = beautify_hotkey(main_hotkey)
-        
-        if auto_enter_enabled:
-            auto_enter_key = beautify_hotkey(auto_enter_hotkey)
-        
-        if not auto_paste_enabled:
-            print(f"   Press [{primary_key}] to stop recording and copy to clipboard.")
-        elif not auto_enter_enabled:
-            print(f"   Press [{primary_key}] to stop recording and auto-paste.")
-        else:
-            print(f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press.")
+            print(f"   [{stop_key}] stop and copy to clipboard")
+
+        if auto_paste_enabled and auto_enter_enabled:
+            auto_enter_key = beautify_hotkey(self.config['hotkey']['auto_enter_combination'])
+            print(f"   [{auto_enter_key}] auto-paste and send with ENTER")
+
+    def print_command_stop_instructions(self):
+        command_hotkey = self.config['hotkey']['command_hotkey']
+        stop_key = self._get_stop_key(command_hotkey)
+        print(f"   [{stop_key}] stop and execute command")
     
     def get_whisper_config(self) -> Dict[str, Any]:
         """Get Whisper AI configuration settings"""
