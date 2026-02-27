@@ -163,9 +163,8 @@ def setup_hotkey_listener(hotkey_config, state_manager, voice_commands_enabled=T
     return HotkeyListener(
         state_manager=state_manager,
         recording_hotkey=hotkey_config['recording_hotkey'],
-        auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
-        auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
-        stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False),
+        stop_key=hotkey_config['stop_key'],
+        auto_send_key=hotkey_config.get('auto_send_key'),
         cancel_combination=hotkey_config.get('cancel_combination'),
         command_hotkey=hotkey_config.get('command_hotkey') if voice_commands_enabled else None
     )

@@ -77,7 +77,7 @@ state_manager.py:
 - [x] `hotkey_listener.py`: update `change_hotkey_config()` valid settings list
 
 6. main.py wiring
-- [ ] `main.py`: update `setup_hotkey_listener()` — pass `stop_key` and `auto_send_key` instead of old params
+- [x] `main.py`: update `setup_hotkey_listener()` — pass `stop_key` and `auto_send_key`
 
 7. Documentation
 - [ ] `documentation/voice-commands.md`: update stop-modifier reference (line 81) to describe `stop_key`
