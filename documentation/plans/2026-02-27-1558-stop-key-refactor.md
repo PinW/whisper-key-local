@@ -47,10 +47,10 @@ state_manager.py:
 ## Implementation Plan
 
 1. Config changes
-- [ ] `config.defaults.yaml`: remove `stop_with_modifier_enabled` and `auto_enter_enabled`
-- [ ] `config.defaults.yaml`: rename `auto_enter_combination` → `auto_send_key`
-- [ ] `config.defaults.yaml`: add `stop_key: "ctrl | macos: fn"` with updated comments
-- [ ] `config.defaults.yaml`: update `recording_hotkey` comment from "start/stop" → "start"
+- [x] `config.defaults.yaml`: remove `stop_with_modifier_enabled` and `auto_enter_enabled`
+- [x] `config.defaults.yaml`: rename `auto_enter_combination` → `auto_send_key`
+- [x] `config.defaults.yaml`: add `stop_key: "ctrl | macos: fn"` with updated comments
+- [x] `config.defaults.yaml`: update `recording_hotkey` comment from "start/stop" → "start"
 
 2. ConfigValidator refactor
 - [ ] `config_manager.py`: remove `_validate_boolean('hotkey.stop_with_modifier_enabled')`
