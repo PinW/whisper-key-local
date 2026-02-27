@@ -12,6 +12,11 @@ FILES_TO_SYMLINK = [
 
 FILES_TO_COPY = [
     "py-build/build-config.json",  # Windows PowerShell can't follow Linux symlinks
+    "py-build/build-config-rocm.json",
+]
+
+DIRS_TO_COPY = [
+    "py-build/wheels",
 ]
 
 def main():
@@ -77,6 +82,21 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
         print(f"Copied: {source} -> {target}")
+
+    for rel_path in DIRS_TO_COPY:
+        source = main_repo / rel_path
+        target = worktree / rel_path
+
+        if not source.exists():
+            print(f"Warning: Source directory not found: {source}")
+            continue
+
+        if target.exists():
+            print(f"Skipping (already exists): {target}")
+            continue
+
+        shutil.copytree(source, target)
+        print(f"Copied directory: {source} -> {target}")
 
 if __name__ == "__main__":
     main()

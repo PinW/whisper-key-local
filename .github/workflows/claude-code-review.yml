@@ -39,9 +39,10 @@ jobs:
             - Potential bugs or issues
             - Performance considerations
             - Security concerns
-            
+
             Keep feedback within PR scope
             DHH > defensive programming
+            Only suggest things that need changing
 
             Audience: beginner coder
 

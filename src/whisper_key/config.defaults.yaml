@@ -6,7 +6,7 @@
 #
 # Personal settings are stored at:
 # Windows: %APPDATA%\whisperkey\user_settings.yaml
-# macOS: ~/Library/Application Support/whisperkey/user_settings.yaml
+# macOS: ~/.whisperkey/user_settings.yaml
 
 whisper: # Whisper AI Model Settings
 
@@ -119,7 +119,7 @@ streaming: # Real-time STT (Experimental, speech preview only)
 
 hotkey: # Hotkey Configuration
 
-  # Key combination to start/stop recording
+  # Key combination to start recording
   # Format: modifier+modifier+key (use lowercase)
   # Windows modifiers: ctrl, shift, alt, win
   # macOS modifiers: cmd, ctrl, shift, option, fn
@@ -131,25 +131,22 @@ hotkey: # Hotkey Configuration
   #   - "ctrl+shift+f12"
   recording_hotkey: "ctrl+win | macos: fn+ctrl"
 
-  # Stop recording with just the first modifier key
-  # If enabled, stops recording with first modifier of the main hotkey
-  # (e.g., if combination is 'ctrl+win', pressing 'ctrl' will stop)
-  # (e.g., if combination is 'ctrl+shift+t', pressing 'ctrl' will stop)
-  stop_with_modifier_enabled: true
+  # Key to stop recording (shared between transcription and command modes)
+  stop_key: "ctrl | macos: fn"
 
-  # Auto-ENTER functionality
-  # If enabled, allows alternative stop key that sends ENTER key press
-  # Only works when auto-paste is also enabled
-  auto_enter_enabled: true
-
-  # Key combination for auto-ENTER function
-  auto_enter_combination: "alt | macos: option"
+  # Alternative stop key that also sends ENTER after pasting
+  # Only works when auto-paste is enabled
+  auto_send_key: "alt | macos: option"
   
   # Key combination to cancel recording
   # Format: modifier+modifier+key (use lowercase) or single key
   # Examples: "esc", "ctrl+c", "shift+esc"
   # Note: On macOS, ESC is system-reserved
   cancel_combination: "esc | macos: shift"
+
+  # Key combination for voice command mode
+  # Records speech and matches against user-defined commands
+  command_hotkey: "alt+win | macos: fn+command"
 
 vad: # Voice Activity Detection (VAD)
 
@@ -287,6 +284,14 @@ system_tray: # System Tray Settings
 
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
+
+voice_commands: # Voice Command Settings
+
+  # Enable/disable voice commands feature
+  # true = register command hotkey and load commands file
+  # false = disable voice commands entirely
+  # Define commands in commands.yaml (same folder as user_settings.yaml)
+  enabled: true
 
 console: # Console Visibility Settings
 

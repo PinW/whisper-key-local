@@ -168,9 +168,14 @@ class SystemTray:
 
             model_sub_menu_items = self._build_model_menu_items(current_model, is_model_loading)
 
+            voice_commands_enabled = self.config_manager.get_setting('voice_commands', 'enabled')
+
             menu_items = [
-                pystray.MenuItem("View Log", self._view_log_file),
-                pystray.MenuItem("Advanced Settings", self._open_config_file),
+                pystray.MenuItem("Open log file...", self._open_log_file),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem("Open config folder...", self._open_config_folder),
+                pystray.MenuItem("Open settings file...", self._open_config_file),
+                pystray.MenuItem("Open commands file...", self._open_commands_file) if voice_commands_enabled else None,
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(
                     "Audio Host",
@@ -207,27 +212,38 @@ class SystemTray:
             self.logger.error(f"Error in _create_menu: {e}")
             raise
 
-    def _tray_toggle_recording(self, icon=None, item=None):
-        self.state_manager.toggle_recording()
-
     def _show_console(self, icon=None, item=None):
         self.state_manager.show_console()
 
-    def _view_log_file(self, icon=None, item=None):
+    def _open_config_folder(self, icon=None, item=None):
         try:
-            print("⚙️ Opening log file...")
+            config_dir = os.path.dirname(self.config_manager.user_settings_path)
+            open_file(config_dir)
+        except Exception as e:
+            self.logger.error(f"Failed to open config folder: {e}")
+
+    def _open_config_file(self, icon=None, item=None):
+        try:
+            open_file(self.config_manager.user_settings_path)
+        except Exception as e:
+            self.logger.error(f"Failed to open config file: {e}")
+
+    def _open_commands_file(self, icon=None, item=None):
+        try:
+            commands_path = os.path.join(
+                os.path.dirname(self.config_manager.user_settings_path),
+                "commands.yaml"
+            )
+            open_file(commands_path)
+        except Exception as e:
+            self.logger.error(f"Failed to open commands file: {e}")
+
+    def _open_log_file(self, icon=None, item=None):
+        try:
             log_path = self.config_manager.get_log_file_path()
             open_file(log_path)
         except Exception as e:
             self.logger.error(f"Failed to open log file: {e}")
-
-    def _open_config_file(self, icon=None, item=None):
-        try:
-            print("⚙️ Opening settings...")
-            config_path = self.config_manager.user_settings_path
-            open_file(config_path)
-        except Exception as e:
-            self.logger.error(f"Failed to open config file: {e}")
 
     def _set_transcription_mode(self, auto_paste: bool):
         if auto_paste:

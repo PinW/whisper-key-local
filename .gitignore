@@ -129,3 +129,4 @@ src/whisper_key/assets/version.txt
 # Local Claude instructions
 CLAUDE.local.md
 .claude/local-memory/
+.claude/settings.local.json

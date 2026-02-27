@@ -1,0 +1,56 @@
+# =============================================================================
+# WHISPER KEY - VOICE COMMANDS (EXPERIMENTAL)
+# =============================================================================
+# Speak a trigger phrase during command mode to run the associated command.
+# Each command needs a "trigger" phrase and one action:
+#   "run" (shell command), "hotkey" (keypress), or "type" (deliver pre-written text).
+#
+# Matching: triggers are case-insensitive substrings — saying "please open notepad"
+# matches the trigger "open notepad". Longer triggers are checked first.
+#
+# Full documentation: https://github.com/PinW/whisper-key-local/blob/master/documentation/voice-commands.md
+
+commands:
+  # Hotkey commands — send keyboard shortcuts to the active window
+  - trigger: "undo"
+    hotkey: "ctrl+z"
+  - trigger: "select all"
+    hotkey: "ctrl+a"
+  - trigger: "paste that"
+    hotkey: "ctrl+v"
+  - trigger: "snap left"
+    hotkey: "win+left"
+  - trigger: "snap right"
+    hotkey: "win+right"
+  - trigger: "maximize"
+    hotkey: "win+up"
+  - trigger: "minimize"
+    hotkey: "win+down"
+  - trigger: "show desktop"
+    hotkey: "win+d"
+
+  # Type commands — deliver pre-written text to the active window
+  - trigger: "my email"
+    type: "user@example.com"
+  - trigger: "my address"
+    type: "123 Main Street, City, State 12345"
+
+  # Shell commands — run any shell command (cmd.exe on Windows, /bin/sh on macOS)
+  - trigger: "open notepad"
+    run: 'notepad.exe'
+  - trigger: "open calculator"
+    run: 'calc.exe'
+  - trigger: "open browser"
+    run: 'start https://www.google.com'
+  - trigger: "open downloads"
+    run: 'explorer "%USERPROFILE%\Downloads"'
+  - trigger: "dark mode"
+    run: 'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme /t REG_DWORD /d 0 /f'
+  - trigger: "light mode"
+    run: 'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme /t REG_DWORD /d 1 /f'
+  - trigger: "new terminal"
+    run: 'wt.exe'
+  - trigger: "screenshot"
+    run: 'snippingtool'
+  - trigger: "lock screen"
+    run: 'rundll32.exe user32.dll,LockWorkStation'

@@ -37,6 +37,9 @@
   - As a *user* I want the **auto-paste empty text bug fixed** so transcriptions reach the target app instead of delivering empty text + stray Enter ([#21](https://github.com/PinW/whisper-key-local/issues/21))
   - As a *user* I want a **configurable delivery method** so I can choose between direct typing and clipboard paste depending on my target app
 
+- As a *user* I want **voice command hotkey** so I can choose between transcription/command
+- As a *user* I want **voice-triggered hotkeys** so I can send keyboard shortcuts hands-free by speaking a trigger phrase
+
 ## Resolved Bugs
 
 - **Crash on model load** - bundled correct MSVCP140.dll instead of PyInstaller's incompatible version ([#22](https://github.com/PinW/whisper-key-local/issues/22))

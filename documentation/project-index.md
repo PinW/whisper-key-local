@@ -19,6 +19,7 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+ and 
 | **System Integration** | `system_tray.py` | System tray icon & menu interface | pystray, Pillow |
 | **Console Management** | `console_manager.py` | Console window visibility control (exe only) | win32console (Win) |
 | **Instance Management** | `instance_manager.py` | Single instance enforcement | win32event (Win), fcntl (Mac) |
+| **Voice Commands** | `voice_commands.py` | Trigger matching & command execution | subprocess |
 | **Platform Abstraction** | `platform/` | OS-specific implementations | pywin32 (Win), pyobjc (Mac) |
 | **Utilities** | `utils.py` | Common utility functions | - |
 
@@ -37,6 +38,7 @@ whisper-key-local/
 │       ├── __init__.py                # Package initialization
 │       ├── main.py                    # Main application entry point
 │       ├── config.defaults.yaml       # Default configuration template
+│       ├── commands.defaults.yaml     # Default voice commands template
 │       ├── assets/                    # Application assets
 │       │   ├── sounds/                # Audio feedback sounds
 │       │   └── version.txt            # Build version file
@@ -63,10 +65,12 @@ whisper-key-local/
 │       ├── system_tray.py             # System tray icon & menu
 │       ├── utils.py                   # Common utility functions
 │       ├── voice_activity_detection.py # Voice activity detection
+│       ├── voice_commands.py          # Voice command matching & execution
 │       └── whisper_engine.py          # Faster-whisper transcription
 │
 ├── documentation/                     # Project documentation
 │   ├── project-index.md
+│   ├── voice-commands.md              # Voice commands user guide
 │   ├── design/                        # Design docs
 │   ├── plans/                         # Planning docs
 │   ├── research/                      # Research docs
@@ -81,4 +85,4 @@ whisper-key-local/
 
 ---
 
-*Last Updated: 2026-02-04 | Project Status: Active Development*
+*Last Updated: 2026-02-27 | Project Status: Active Development*

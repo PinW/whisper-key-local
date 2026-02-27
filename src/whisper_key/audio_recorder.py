@@ -160,10 +160,9 @@ class AudioRecorder:
                 self.continuous_streaming.reset()
 
             self.recording_thread = threading.Thread(target=self._record_audio)
-            self.recording_thread.daemon = True  # Thread will close when main program closes
+            self.recording_thread.daemon = True
             self.recording_thread.start()
 
-            print("🎤 Recording started! Speak now...")
             return True
 
         except Exception as e:
@@ -247,6 +246,9 @@ class AudioRecorder:
                                 blocksize=blocksize,
                                 device=self.device):
 
+                # NOTE: WASAPI breaks if the calling thread is blocked or if audio
+                # playback runs from this thread. Reason unknown. Don't add synchronization
+                # or audio calls here — print messages before start_recording() returns instead.
                 while self.is_recording:
                     if self._check_max_duration_exceeded():
                         break
@@ -255,6 +257,7 @@ class AudioRecorder:
 
         except Exception as e:
             self.logger.error(f"Error during audio recording: {e}")
+            print(f"❌ Recording failed: {e}")
             self.is_recording = False
     
     def _check_max_duration_exceeded(self) -> bool:

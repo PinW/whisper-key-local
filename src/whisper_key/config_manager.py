@@ -53,9 +53,9 @@ class ConfigManager:
         
         self.config_path = self._determine_config_path(use_user_settings, config_path)
         
-        self._print_config_status()
         self.config = self._load_config()
-        
+        self._print_config_status()
+
         self.logger.info("Configuration loaded successfully")
     
     def _determine_config_path(self, use_user_settings: bool, config_path: str) -> str:
@@ -169,33 +169,57 @@ class ConfigManager:
         print("📁 Loading configuration...")
 
         if self.use_user_settings:
-            print(f"   ✓ Using user settings from: {self.user_settings_path}")
+            config_dir = os.path.dirname(self.user_settings_path)
+            display_dir = self._display_path(config_dir)
+            settings_file = os.path.basename(self.user_settings_path)
+            print(f"   ✓ Local settings: {display_dir}\\{settings_file}")
+
+            if self.get_voice_commands_config().get('enabled', True):
+                print(f"   ✓ Voice commands: {display_dir}\\commands.yaml")
+            else:
+                print(f"   ✓ Voice commands: disabled")
+
+    def _display_path(self, path: str) -> str:
+        if IS_MACOS:
+            home = os.path.expanduser("~")
+            if path.startswith(home):
+                return "~" + path[len(home):]
         else:
-            print(f"   ✗ Using default settings from: {self.config_path}")
+            appdata = os.getenv('APPDATA', '')
+            if appdata and path.startswith(appdata):
+                return "%APPDATA%" + path[len(appdata):]
+        return path
     
-    def print_stop_instructions_based_on_config(self):        
-        main_hotkey = self.config['hotkey']['recording_hotkey']
-        auto_enter_enabled = self.config['hotkey']['auto_enter_enabled']
-        auto_enter_hotkey = self.config['hotkey']['auto_enter_combination']
-        stop_with_modifier = self.config['hotkey']['stop_with_modifier_enabled']
+    def _get_stop_key_display(self) -> str:
+        return beautify_hotkey(self.config['hotkey']['stop_key'])
+
+    def print_stop_instructions_based_on_config(self):
+        stop_key = self._get_stop_key_display()
         auto_paste_enabled = self.config['clipboard']['auto_paste']
-        
-        if stop_with_modifier:
-            # Extract first modifier for display
-            primary_key = main_hotkey.split('+')[0] if '+' in main_hotkey else main_hotkey
-            primary_key = primary_key.upper()
+        auto_send_key = self.config['hotkey'].get('auto_send_key', '')
+
+        if auto_paste_enabled:
+            print(f"   [{stop_key}] to stop and auto-paste")
         else:
-            primary_key = beautify_hotkey(main_hotkey)
-        
-        if auto_enter_enabled:
-            auto_enter_key = beautify_hotkey(auto_enter_hotkey)
-        
-        if not auto_paste_enabled:
-            print(f"   Press [{primary_key}] to stop recording and copy to clipboard.")
-        elif not auto_enter_enabled:
-            print(f"   Press [{primary_key}] to stop recording and auto-paste.")
-        else:
-            print(f"   Press [{primary_key}] to stop recording and auto-paste, [{auto_enter_key}] to auto-paste and send with (ENTER) key press.")
+            print(f"   [{stop_key}] to stop and copy to clipboard")
+
+        if auto_paste_enabled and auto_send_key:
+            print(f"   [{beautify_hotkey(auto_send_key)}] to auto-paste and send with ENTER")
+
+    def print_startup_hotkey_instructions(self):
+        recording_hotkey = beautify_hotkey(self.config['hotkey']['recording_hotkey'])
+        print(f"   [{recording_hotkey}] for transcription")
+
+        if self.get_voice_commands_config().get('enabled', True):
+            command_hotkey = self.config['hotkey'].get('command_hotkey')
+            if command_hotkey:
+                print(f"   [{beautify_hotkey(command_hotkey)}] for voice commands")
+
+    def print_command_stop_instructions(self):
+        stop_key = self._get_stop_key_display()
+        auto_send_key = self.config['hotkey'].get('auto_send_key', '')
+        keys = f"{stop_key}/{beautify_hotkey(auto_send_key)}" if auto_send_key else stop_key
+        print(f"   [{keys}] to stop and execute command")
     
     def get_whisper_config(self) -> Dict[str, Any]:
         """Get Whisper AI configuration settings"""
@@ -227,6 +251,9 @@ class ConfigManager:
 
     def get_console_config(self) -> Dict[str, Any]:
         return self.config.get('console', {}).copy()
+
+    def get_voice_commands_config(self) -> Dict[str, Any]:
+        return self.config.get('voice_commands', {}).copy()
 
     def get_streaming_config(self) -> Dict[str, Any]:
         return self.config.get('streaming', {}).copy()
@@ -391,13 +418,12 @@ class ConfigValidator:
         self._validate_numeric_range('clipboard.macos_key_simulation_delay', min_val=0, description='macOS key simulation delay')
         self._validate_hotkey_string('clipboard.paste_hotkey')
         
-        self._validate_boolean('hotkey.stop_with_modifier_enabled')
-        self._validate_boolean('hotkey.auto_enter_enabled')
-
-        main_combination = self._validate_hotkey_string('hotkey.recording_hotkey')
-        auto_enter_combination = self._validate_hotkey_string('hotkey.auto_enter_combination')
-        cancel_combination = self._validate_hotkey_string('hotkey.cancel_combination')
-        self._resolve_hotkey_conflicts(main_combination, auto_enter_combination)
+        recording_hotkey = self._validate_hotkey_string('hotkey.recording_hotkey')
+        stop_key = self._validate_hotkey_string('hotkey.stop_key')
+        auto_send_key = self._validate_hotkey_string('hotkey.auto_send_key')
+        self._validate_hotkey_string('hotkey.cancel_combination')
+        command_hotkey = self._validate_hotkey_string('hotkey.command_hotkey')
+        self._resolve_hotkey_conflicts(stop_key, auto_send_key, recording_hotkey, command_hotkey)
         
         self._validate_boolean('vad.vad_precheck_enabled')
         self._validate_boolean('vad.vad_realtime_enabled')
@@ -408,27 +434,22 @@ class ConfigValidator:
         
         self._validate_boolean('audio_feedback.enabled')
         self._validate_boolean('system_tray.enabled')
+        self._validate_boolean('voice_commands.enabled')
         
         return self.config
     
-    def _resolve_hotkey_conflicts(self, main_combination: str, auto_enter_combination: str):
-        stop_with_modifier = self._get_config_value_at_path(self.config, 'hotkey.stop_with_modifier_enabled')
+    def _resolve_hotkey_conflicts(self, stop_key: str, auto_send_key: str, recording_hotkey: str, command_hotkey: str = None):
+        if stop_key == auto_send_key:
+            self.logger.warning(f"   ✗ Auto-send key disabled: '{auto_send_key}' conflicts with stop key")
+            self._set_config_value_at_path(self.config, 'hotkey.auto_send_key', '')
 
-        conflict_detected = ""
-        
-        if stop_with_modifier:
-            main_first_key = main_combination.split('+')[0] if '+' in main_combination else main_combination
-            auto_enter_first_key = auto_enter_combination.split('+')[0] if '+' in auto_enter_combination else auto_enter_combination
-            
-            if main_first_key == auto_enter_first_key:
-                conflict_detected = f"hotkey '{auto_enter_combination}' first key is shared with main hotkey and stop-with-modifier is enabled'"
-        else:
-            if auto_enter_combination == main_combination:
-                conflict_detected = f"hotkey '{auto_enter_combination}' is same as main hotkey"
-        
-        if conflict_detected:
-            self.logger.warning(f"   ✗ Auto-enter disabled: {conflict_detected}")
-            self._set_config_value_at_path(self.config, 'hotkey.auto_enter_enabled', False)
+        if stop_key == recording_hotkey:
+            self.logger.warning(f"   ✗ Stop key '{stop_key}' conflicts with recording hotkey, resetting to default")
+            self._set_to_default('hotkey.stop_key', stop_key)
+
+        if command_hotkey and command_hotkey == recording_hotkey:
+            self.logger.warning(f"   ✗ Command hotkey disabled: '{command_hotkey}' conflicts with recording hotkey")
+            self._set_config_value_at_path(self.config, 'hotkey.command_hotkey', '')
 
     def _validate_audio_host(self):
         host_path = 'audio.host'

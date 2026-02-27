@@ -15,6 +15,7 @@ from .audio_feedback import AudioFeedback
 from .console_manager import ConsoleManager
 from .utils import OptionalComponent
 from .voice_activity_detection import VadEvent, VadManager
+from .voice_commands import VoiceCommandManager
 
 class StateManager:
     def __init__(self,
@@ -25,7 +26,8 @@ class StateManager:
                  vad_manager: VadManager,
                  console_manager: ConsoleManager,
                  system_tray: Optional[SystemTray] = None,
-                 audio_feedback: Optional[AudioFeedback] = None):
+                 audio_feedback: Optional[AudioFeedback] = None,
+                 voice_command_manager: Optional[VoiceCommandManager] = None):
 
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
@@ -35,12 +37,14 @@ class StateManager:
         self.config_manager = config_manager
         self.audio_feedback = OptionalComponent(audio_feedback)
         self.vad_manager = vad_manager
-        
+        self.voice_command_manager = voice_command_manager
+
         self.is_processing = False
         self.is_model_loading = False
         self.last_transcription = None
         self._pending_model_change = None
         self._pending_device_change = None
+        self._command_mode = False
         self._state_lock = threading.Lock()
         self._streaming_display_active = False
 
@@ -96,6 +100,7 @@ class StateManager:
     
     def cancel_active_recording(self):
         self._clear_streaming_display()
+        self._command_mode = False
         self.audio_recorder.cancel_recording()
         self.audio_feedback.play_cancel_sound()
         self.system_tray.update_state("idle")
@@ -110,42 +115,57 @@ class StateManager:
         else:
             return False
     
-    def toggle_recording(self):
-        was_recording = self.stop_recording(use_auto_enter=False)
-        
-        if not was_recording:
+    def start_recording(self):
+        if not self.can_start_recording():
             current_state = self.get_current_state()
-            if self.can_start_recording():
-                self._start_recording()
+            if self.is_processing:
+                print("⏳ Still processing previous recording...")
+            elif self.is_model_loading:
+                print("⏳ Still loading model...")
             else:
-                if self.is_processing:
-                    print("⏳ Still processing previous recording...")
-                elif self.is_model_loading:
-                    print("⏳ Still loading model...")
-                else:
-                    print(f"⏳ Cannot record while {current_state}...")
+                print(f"⏳ Cannot record while {current_state}...")
+            return
 
-    def _start_recording(self):
+        self._begin_recording()
+
+    def start_command_recording(self):
+        if not self.can_start_recording():
+            return
+
+        with self._state_lock:
+            self._command_mode = True
+
+        self.logger.info("Starting command mode recording")
         success = self.audio_recorder.start_recording()
-        
         if success:
+            print("\n🎤 Command mode activated! Speak a command...")
+            self.config_manager.print_command_stop_instructions()
+            self.audio_feedback.play_start_sound()
+            self.system_tray.update_state("recording")
+
+    def _begin_recording(self):
+        success = self.audio_recorder.start_recording()
+
+        if success:
+            print("\n🎤 Recording started! Speak now...")
             self.config_manager.print_stop_instructions_based_on_config()
             self.audio_feedback.play_start_sound()
             self.system_tray.update_state("recording")
     
     def _transcription_pipeline(self, audio_data, use_auto_enter: bool = False):
         try:
-            # Prevent multiple threads from starting simultaneous transcription
             with self._state_lock:
                 self.is_processing = True
+                command_mode = self._command_mode
+                self._command_mode = False
 
             self.audio_feedback.play_stop_sound()
-            
+
             if audio_data is None:
                 return
-            
+
             duration = self.audio_recorder.get_audio_duration(audio_data)
-            print(f"🎤 Recorded {duration:.1f} seconds! Transcribing...")
+            print(f"   ✓ Recorded {duration:.1f} seconds, transcribing...")
 
             self.system_tray.update_state("processing")
 
@@ -154,10 +174,14 @@ class StateManager:
             if not transcribed_text:
                 return
 
+            if command_mode:
+                self._handle_command_transcription(transcribed_text, use_auto_enter)
+                return
+
             success = self.clipboard_manager.deliver_transcription(
                 transcribed_text, use_auto_enter
             )
-            
+
             if success:
                 self.last_transcription = transcribed_text
             
@@ -185,7 +209,20 @@ class StateManager:
 
             if not (pending_device or pending_model):
                 self.system_tray.update_state("idle")
-    
+
+    def _handle_command_transcription(self, text: str, use_auto_enter: bool = False):
+        self.logger.info(f"Command mode transcription: '{text}'")
+
+        if not self.voice_command_manager.enabled:
+            self.logger.warning("Voice commands disabled")
+            return
+
+        matched = self.voice_command_manager.match_command(text)
+        if matched:
+            self.voice_command_manager.execute_command(matched, use_auto_enter)
+        else:
+            print("   ✗ No matching command found")
+
     def get_application_state(self) -> dict:
         status = {
             "recording": self.audio_recorder.get_recording_status(),
@@ -230,6 +267,9 @@ class StateManager:
                 else:
                     self.system_tray.update_state("idle")
     
+    def is_transcription_recording(self) -> bool:
+        return self.audio_recorder.get_recording_status() and not self._command_mode
+
     def can_start_recording(self) -> bool:
         with self._state_lock:
             return not (self.is_processing or self.is_model_loading or self.audio_recorder.get_recording_status())

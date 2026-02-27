@@ -16,8 +16,12 @@
 
 ### Voice Commands
 - As a *user* I want **voice commands** so I can quickly activate tasks
-  - As a *user* I want **voice command hotkey** so I can choose between transcription/command
-- As a *user* I want **voice commands API** so I other apps can do things from whisper key commands
+- As a *user* I want **transcription preset commands** so I can instantly deliver pre-written phrases without recording or transcribing
+- As a *user* I want **hotkey-activated commands** so I can bind specific voice commands to custom hotkeys and skip the speech step entirely
+- As a *user* I want **command aliases** so I can define multiple trigger phrases for the same command (e.g., "open browser", "launch chrome", and "start browser" all execute the same action)
+- As a *user* I want **semantic command matching** so commands are matched intelligently instead of requiring exact phrases (e.g., "open up chrome" still matches "open browser")
+- As a *user* I want **parameterized commands** so I can define command templates with variables that are extracted from speech (e.g., "open {filename}" or "search for {query}")
+- As a *user* I want **voice commands API** so other apps can do things from whisper key commands
 - As a *user* I want **verbal stop recording** command so I don't need to hit the hotkey
 
 ### Terminal UI
@@ -63,6 +67,9 @@
 - As a *mac user*, I want **better default hotkey** so fn doesn't conflict with emoji picker
 - As a *mac user*, I want **CGEventTap hotkeys** so I can use ESC or Cmd+. to cancel recording
 - As a *mac user*, I want **monochrome menu bar icons** so the app conforms to Apple's template icon guidelines
+
+### Hotkeys
+- As a *user* I want **hotkey sequence ordering** so more hotkey combos can coexist without conflicting (e.g., Ctrl+Alt+Space vs Alt+Ctrl+Space become distinct sequences)
 
 ### Personalization
 - As a *user*, I want **custom vocabulary** so rare words that I say often are transcribed accurately
