@@ -175,7 +175,7 @@ class StateManager:
                 return
 
             if command_mode:
-                self._handle_command_transcription(transcribed_text)
+                self._handle_command_transcription(transcribed_text, use_auto_enter)
                 return
 
             success = self.clipboard_manager.deliver_transcription(
@@ -210,7 +210,7 @@ class StateManager:
             if not (pending_device or pending_model):
                 self.system_tray.update_state("idle")
 
-    def _handle_command_transcription(self, text: str):
+    def _handle_command_transcription(self, text: str, use_auto_enter: bool = False):
         self.logger.info(f"Command mode transcription: '{text}'")
 
         if not self.voice_command_manager.enabled:
@@ -219,7 +219,7 @@ class StateManager:
 
         matched = self.voice_command_manager.match_command(text)
         if matched:
-            self.voice_command_manager.execute_command(matched)
+            self.voice_command_manager.execute_command(matched, use_auto_enter)
         else:
             print("   ✗ No matching command found")
 

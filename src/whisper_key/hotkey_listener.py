@@ -105,10 +105,7 @@ class HotkeyListener:
 
         self.keys_armed = False
 
-        if self.state_manager.is_transcription_recording() and self.state_manager.clipboard_manager.auto_paste:
-            self.state_manager.stop_recording(use_auto_enter=True)
-        else:
-            self.state_manager.stop_recording()
+        self.state_manager.stop_recording(use_auto_enter=True)
 
     def _cancel_hotkey_pressed(self):
         self.logger.info(f"Cancel hotkey pressed: {self.cancel_combination}")

@@ -65,7 +65,7 @@ class VoiceCommandManager:
 
         return None
 
-    def execute_command(self, command: dict):
+    def execute_command(self, command: dict, use_auto_enter: bool = False):
         trigger = command.get('trigger', '')
 
         if 'run' in command:
@@ -73,7 +73,7 @@ class VoiceCommandManager:
         elif 'hotkey' in command:
             self._send_hotkey(command['hotkey'], trigger)
         elif 'type' in command:
-            self._deliver_text(command['type'], trigger)
+            self._deliver_text(command['type'], trigger, use_auto_enter)
 
     def _execute_shell(self, run_str: str, trigger: str):
         try:
@@ -94,10 +94,10 @@ class VoiceCommandManager:
             self.logger.error(f"Failed to send hotkey '{trigger}': {e}")
             print(f"   Failed to send hotkey: {e}")
 
-    def _deliver_text(self, text: str, trigger: str):
+    def _deliver_text(self, text: str, trigger: str, use_auto_enter: bool = False):
         try:
             if self.clipboard_manager:
-                self.clipboard_manager.deliver_transcription(text)
+                self.clipboard_manager.deliver_transcription(text, use_auto_enter)
                 self.logger.info(f"Delivered text '{trigger}': {text}")
                 print(f"   ✓ Typed: {trigger}")
             else:
