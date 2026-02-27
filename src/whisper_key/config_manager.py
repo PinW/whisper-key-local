@@ -217,7 +217,9 @@ class ConfigManager:
 
     def print_command_stop_instructions(self):
         stop_key = self._get_stop_key_display()
-        print(f"   [{stop_key}] to stop and execute command")
+        auto_send_key = self.config['hotkey'].get('auto_send_key', '')
+        keys = f"{stop_key}/{beautify_hotkey(auto_send_key)}" if auto_send_key else stop_key
+        print(f"   [{keys}] to stop and execute command")
     
     def get_whisper_config(self) -> Dict[str, Any]:
         """Get Whisper AI configuration settings"""

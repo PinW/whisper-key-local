@@ -95,12 +95,8 @@ class HotkeyListener:
     def _auto_send_key_pressed(self):
         self.logger.debug(f"Auto-send key pressed: {self.auto_send_key}, keys_armed={self.keys_armed}")
 
-        if not self.state_manager.is_transcription_recording():
-            self.logger.debug("Auto-send key ignored - not in transcription recording")
-            return
-
-        if not self.state_manager.clipboard_manager.auto_paste:
-            self.logger.debug("Auto-send key ignored - auto-paste is disabled")
+        if not self.state_manager.audio_recorder.get_recording_status():
+            self.logger.debug("Auto-send key ignored - not currently recording")
             return
 
         if not self.keys_armed:
@@ -108,7 +104,11 @@ class HotkeyListener:
             return
 
         self.keys_armed = False
-        self.state_manager.stop_recording(use_auto_enter=True)
+
+        if self.state_manager.is_transcription_recording() and self.state_manager.clipboard_manager.auto_paste:
+            self.state_manager.stop_recording(use_auto_enter=True)
+        else:
+            self.state_manager.stop_recording()
 
     def _cancel_hotkey_pressed(self):
         self.logger.info(f"Cancel hotkey pressed: {self.cancel_combination}")
