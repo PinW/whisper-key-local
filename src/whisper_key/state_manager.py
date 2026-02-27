@@ -140,7 +140,7 @@ class StateManager:
         self.logger.info("Starting command mode recording")
         success = self.audio_recorder.start_recording()
         if success:
-            print("🎤 Command mode activated! Speak a command...")
+            print("\n🎤 Command mode activated! Speak a command...")
             self.config_manager.print_command_stop_instructions()
             self.audio_feedback.play_start_sound()
             self.system_tray.update_state("recording")
@@ -149,7 +149,7 @@ class StateManager:
         success = self.audio_recorder.start_recording()
 
         if success:
-            print("🎤 Recording started! Speak now...")
+            print("\n🎤 Recording started! Speak now...")
             self.config_manager.print_stop_instructions_based_on_config()
             self.audio_feedback.play_start_sound()
             self.system_tray.update_state("recording")
