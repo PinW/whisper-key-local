@@ -163,7 +163,6 @@ class AudioRecorder:
             self.recording_thread.daemon = True  # Thread will close when main program closes
             self.recording_thread.start()
 
-            print("🎤 Recording started! Speak now...")
             return True
 
         except Exception as e:
