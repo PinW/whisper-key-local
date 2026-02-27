@@ -60,9 +60,9 @@ state_manager.py:
 - [x] `config_manager.py`: simplify `_resolve_hotkey_conflicts()` — just check stop_key != auto_send_key and neither equals a start hotkey
 
 3. ConfigManager display methods
-- [ ] `config_manager.py`: simplify `_get_stop_key()` — read `stop_key` config directly, no modifier extraction
-- [ ] `config_manager.py`: update `print_stop_instructions_based_on_config()` — use `stop_key` and `auto_send_key` config names
-- [ ] `config_manager.py`: update `print_command_stop_instructions()` — use `stop_key` config
+- [x] `config_manager.py`: simplify `_get_stop_key()` → `_get_stop_key_display()` reads `stop_key` config directly
+- [x] `config_manager.py`: update `print_stop_instructions_based_on_config()` — uses `stop_key` and `auto_send_key`
+- [x] `config_manager.py`: update `print_command_stop_instructions()` — uses `_get_stop_key_display()`
 
 4. StateManager refactor
 - [ ] `state_manager.py`: remove `toggle_recording()`

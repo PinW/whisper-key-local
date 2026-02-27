@@ -190,26 +190,21 @@ class ConfigManager:
                 return "%APPDATA%" + path[len(appdata):]
         return path
     
-    def _get_stop_key(self, hotkey: str) -> str:
-        stop_with_modifier = self.config['hotkey']['stop_with_modifier_enabled']
-        if stop_with_modifier:
-            return hotkey.split('+')[0].upper() if '+' in hotkey else hotkey.upper()
-        return beautify_hotkey(hotkey)
+    def _get_stop_key_display(self) -> str:
+        return beautify_hotkey(self.config['hotkey']['stop_key'])
 
     def print_stop_instructions_based_on_config(self):
-        main_hotkey = self.config['hotkey']['recording_hotkey']
-        stop_key = self._get_stop_key(main_hotkey)
+        stop_key = self._get_stop_key_display()
         auto_paste_enabled = self.config['clipboard']['auto_paste']
-        auto_enter_enabled = self.config['hotkey']['auto_enter_enabled']
+        auto_send_key = self.config['hotkey'].get('auto_send_key', '')
 
         if auto_paste_enabled:
             print(f"   [{stop_key}] to stop and auto-paste")
         else:
             print(f"   [{stop_key}] to stop and copy to clipboard")
 
-        if auto_paste_enabled and auto_enter_enabled:
-            auto_enter_key = beautify_hotkey(self.config['hotkey']['auto_enter_combination'])
-            print(f"   [{auto_enter_key}] to auto-paste and send with ENTER")
+        if auto_paste_enabled and auto_send_key:
+            print(f"   [{beautify_hotkey(auto_send_key)}] to auto-paste and send with ENTER")
 
     def print_startup_hotkey_instructions(self):
         recording_hotkey = beautify_hotkey(self.config['hotkey']['recording_hotkey'])
@@ -221,8 +216,7 @@ class ConfigManager:
                 print(f"   [{beautify_hotkey(command_hotkey)}] for voice commands")
 
     def print_command_stop_instructions(self):
-        command_hotkey = self.config['hotkey']['command_hotkey']
-        stop_key = self._get_stop_key(command_hotkey)
+        stop_key = self._get_stop_key_display()
         print(f"   [{stop_key}] to stop and execute command")
     
     def get_whisper_config(self) -> Dict[str, Any]:
