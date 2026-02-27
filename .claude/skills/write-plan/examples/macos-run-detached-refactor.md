@@ -176,4 +176,4 @@ Platform implementations in `platform/*/app.py`:
 
 - [pystray FAQ - macOS main thread requirement](https://pystray.readthedocs.io/en/latest/faq.html)
 - [pystray Issue #138 - GIL on M2](https://github.com/moses-palmer/pystray/issues/138)
-- Design doc: `documentation/design/macos-support.md` Phase 5
+- Design doc: `docs/design/macos-support.md` Phase 5

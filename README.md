@@ -13,7 +13,7 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 - **CPU Ready**: Small, efficient models available
 - **GPU Ready**: Support for both NVIDIA & AMD cards
 - **Cross-platform**: Works on Windows and macOS
-- **Voice Commands**: Trigger shortcuts, text snippets, and shell commands by voice — [docs](documentation/voice-commands.md)
+- **Voice Commands**: Trigger shortcuts, text snippets, and shell commands by voice — [docs](docs/voice-commands.md)
 - **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
 
 ## 🚀 Quick Start
@@ -36,7 +36,7 @@ Then run: `whisper-key` (or `wk` for short)
 
 1. [Download the latest release](https://github.com/PinW/whisper-key-local/releases/latest):
    - NVIDIA or CPU — `windows.zip`
-   - AMD GPU — `windows-amd-gpu-rocm.zip` ([HIP SDK](documentation/gpu-setup.md#amd--rdna-2-rocm-72) required)
+   - AMD GPU — `windows-amd-gpu-rocm.zip` ([HIP SDK](docs/gpu-setup.md#amd--rdna-2-rocm-72) required)
 2. Extract and run `whisper-key.exe`
 
 ### From Source
@@ -55,7 +55,7 @@ Both NVIDIA and AMD GPUs are supported but may require additional setup:
 - **NVIDIA (CUDA)** — GTX 900 or later
 - **AMD (ROCm)** — RX 5000 or later
 
-See the **[GPU Setup Guide](documentation/gpu-setup.md)** for instructions.
+See the **[GPU Setup Guide](docs/gpu-setup.md)** for instructions.
 
 ## 🎤 Basic Usage
 
@@ -91,7 +91,7 @@ commands:
     run: 'notepad.exe'
 ```
 
-See the **[Voice Commands Guide](documentation/voice-commands.md)** for full details.
+See the **[Voice Commands Guide](docs/voice-commands.md)** for full details.
 
 ## ⚙️ Configuration
 
@@ -105,7 +105,7 @@ Delete this file and restart app to reset to defaults.
 |--------|---------|-------|
 | **Whisper** |||
 | `whisper.model` | `tiny` | Any model defined in `whisper.models` |
-| `whisper.device` | `cpu` | cpu or cuda (NVIDIA/AMD GPU) — [setup guide](documentation/gpu-setup.md) |
+| `whisper.device` | `cpu` | cpu or cuda (NVIDIA/AMD GPU) — [setup guide](docs/gpu-setup.md) |
 | `whisper.compute_type` | `int8` | int8/float16/float32 |
 | `whisper.language` | `auto` | auto or language code (en, es, fr, etc.) |
 | `whisper.beam_size` | `5` | Higher = more accurate but slower (1-10) |

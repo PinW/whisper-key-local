@@ -8,7 +8,7 @@
 # Matching: triggers are case-insensitive substrings — saying "please open notepad"
 # matches the trigger "open notepad". Longer triggers are checked first.
 #
-# Full documentation: https://github.com/PinW/whisper-key-local/blob/master/documentation/voice-commands.md
+# Full documentation: https://github.com/PinW/whisper-key-local/blob/master/docs/voice-commands.md
 
 commands:
   # Hotkey commands — send keyboard shortcuts to the active window

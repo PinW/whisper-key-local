@@ -97,7 +97,7 @@ gpu = detect_gpu()
 if gpu.name:
     print(f"🖥️  Detected {gpu.name}")
     if device_config == 'cuda' and not gpu.cuda_available:
-        print(f"⚠️  device: cuda but CUDA runtime not available — see documentation/gpu-setup.md")
+        print(f"⚠️  device: cuda but CUDA runtime not available — see docs/gpu-setup.md")
     elif device_config == 'cpu' and gpu.cuda_available:
         logger.info(f"GPU available — set device: cuda for faster transcription")
 else:

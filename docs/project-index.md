@@ -68,7 +68,7 @@ whisper-key-local/
 │       ├── voice_commands.py          # Voice command matching & execution
 │       └── whisper_engine.py          # Faster-whisper transcription
 │
-├── documentation/                     # Project documentation
+├── docs/                              # Project documentation
 │   ├── project-index.md
 │   ├── voice-commands.md              # Voice commands user guide
 │   ├── design/                        # Design docs
