@@ -29,8 +29,12 @@ class VoiceCommandManager:
             self.logger.info(f"Created user commands file from defaults: {user_path}")
 
         yaml = YAML()
-        with open(user_path, 'r', encoding='utf-8') as f:
-            data = yaml.load(f)
+        try:
+            with open(user_path, 'r', encoding='utf-8') as f:
+                data = yaml.load(f)
+        except Exception as e:
+            self.logger.error(f"Failed to parse {user_path}: {e}")
+            raise
 
         self.commands_path = user_path
         raw_commands = data.get('commands', []) if data else []
