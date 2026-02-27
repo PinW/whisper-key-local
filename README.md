@@ -72,6 +72,27 @@ Open the system tray / menu bar icon to:
 - Change transcription model
 - Select audio device
 
+## 🗣️ Voice Commands
+
+Speak trigger phrases to run shell commands and more. Define in:
+- **Windows:** `%APPDATA%\whisperkey\commands.yaml`
+- **macOS:** `~/.whisperkey/commands.yaml`
+
+```yaml
+commands:
+  # Send a keyboard shortcut
+  - trigger: "undo"
+    hotkey: "ctrl+z"
+  # Deliver pre-written text
+  - trigger: "my email"
+    type: "user@example.com"
+  # Run a shell command
+  - trigger: "open notepad"
+    run: 'notepad.exe'
+```
+
+See the **[Voice Commands Guide](documentation/voice-commands.md)** for full details.
+
 ## ⚙️ Configuration
 
 Local settings at:
