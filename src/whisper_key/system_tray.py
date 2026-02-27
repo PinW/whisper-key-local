@@ -169,6 +169,7 @@ class SystemTray:
             model_sub_menu_items = self._build_model_menu_items(current_model, is_model_loading)
 
             menu_items = [
+                pystray.MenuItem("Open Config Folder", self._open_config_folder),
                 pystray.MenuItem("View Log", self._view_log_file),
                 pystray.MenuItem("Advanced Settings", self._open_config_file),
                 pystray.Menu.SEPARATOR,
@@ -220,6 +221,14 @@ class SystemTray:
             open_file(log_path)
         except Exception as e:
             self.logger.error(f"Failed to open log file: {e}")
+
+    def _open_config_folder(self, icon=None, item=None):
+        try:
+            print("⚙️ Opening config folder...")
+            config_dir = os.path.dirname(self.config_manager.user_settings_path)
+            open_file(config_dir)
+        except Exception as e:
+            self.logger.error(f"Failed to open config folder: {e}")
 
     def _open_config_file(self, icon=None, item=None):
         try:

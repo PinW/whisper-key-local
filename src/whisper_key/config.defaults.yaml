@@ -151,6 +151,10 @@ hotkey: # Hotkey Configuration
   # Note: On macOS, ESC is system-reserved
   cancel_combination: "esc | macos: shift"
 
+  # Key combination for voice command mode
+  # Records speech and matches against user-defined commands
+  command_hotkey: "ctrl+g | macos: ctrl+g"
+
 vad: # Voice Activity Detection (VAD)
 
   # Voice Activity Detection (VAD) Pre-check

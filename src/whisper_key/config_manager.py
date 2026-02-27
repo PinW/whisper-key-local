@@ -397,7 +397,8 @@ class ConfigValidator:
         main_combination = self._validate_hotkey_string('hotkey.recording_hotkey')
         auto_enter_combination = self._validate_hotkey_string('hotkey.auto_enter_combination')
         cancel_combination = self._validate_hotkey_string('hotkey.cancel_combination')
-        self._resolve_hotkey_conflicts(main_combination, auto_enter_combination)
+        command_hotkey = self._validate_hotkey_string('hotkey.command_hotkey')
+        self._resolve_hotkey_conflicts(main_combination, auto_enter_combination, command_hotkey)
         
         self._validate_boolean('vad.vad_precheck_enabled')
         self._validate_boolean('vad.vad_realtime_enabled')
@@ -411,24 +412,28 @@ class ConfigValidator:
         
         return self.config
     
-    def _resolve_hotkey_conflicts(self, main_combination: str, auto_enter_combination: str):
+    def _resolve_hotkey_conflicts(self, main_combination: str, auto_enter_combination: str, command_hotkey: str = None):
         stop_with_modifier = self._get_config_value_at_path(self.config, 'hotkey.stop_with_modifier_enabled')
 
         conflict_detected = ""
-        
+
         if stop_with_modifier:
             main_first_key = main_combination.split('+')[0] if '+' in main_combination else main_combination
             auto_enter_first_key = auto_enter_combination.split('+')[0] if '+' in auto_enter_combination else auto_enter_combination
-            
+
             if main_first_key == auto_enter_first_key:
                 conflict_detected = f"hotkey '{auto_enter_combination}' first key is shared with main hotkey and stop-with-modifier is enabled'"
         else:
             if auto_enter_combination == main_combination:
                 conflict_detected = f"hotkey '{auto_enter_combination}' is same as main hotkey"
-        
+
         if conflict_detected:
             self.logger.warning(f"   ✗ Auto-enter disabled: {conflict_detected}")
             self._set_config_value_at_path(self.config, 'hotkey.auto_enter_enabled', False)
+
+        if command_hotkey and command_hotkey == main_combination:
+            self.logger.warning(f"   ✗ Command hotkey disabled: '{command_hotkey}' conflicts with recording hotkey")
+            self._set_config_value_at_path(self.config, 'hotkey.command_hotkey', '')
 
     def _validate_audio_host(self):
         host_path = 'audio.host'

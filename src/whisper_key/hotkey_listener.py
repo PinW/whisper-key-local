@@ -6,13 +6,15 @@ from .state_manager import StateManager
 class HotkeyListener:
     def __init__(self, state_manager: StateManager, recording_hotkey: str,
                  auto_enter_hotkey: str = None, auto_enter_enabled: bool = True,
-                 stop_with_modifier_enabled: bool = False, cancel_combination: str = None):
+                 stop_with_modifier_enabled: bool = False, cancel_combination: str = None,
+                 command_hotkey: str = None):
         self.state_manager = state_manager
         self.recording_hotkey = recording_hotkey
         self.auto_enter_hotkey = auto_enter_hotkey
         self.auto_enter_enabled = auto_enter_enabled
         self.stop_with_modifier_enabled = stop_with_modifier_enabled
         self.cancel_combination = cancel_combination
+        self.command_hotkey = command_hotkey
         self.stop_modifier_hotkey = None
         self.modifier_key_released = True
         self.is_listening = False
@@ -43,6 +45,13 @@ class HotkeyListener:
                 'combination': self.cancel_combination,
                 'callback': self._cancel_hotkey_pressed,
                 'name': 'cancel'
+            })
+
+        if self.command_hotkey:
+            hotkey_configs.append({
+                'combination': self.command_hotkey,
+                'callback': self._command_hotkey_pressed,
+                'name': 'command'
             })
 
         if self.stop_with_modifier_enabled:
@@ -104,6 +113,11 @@ class HotkeyListener:
         self.logger.info(f"Cancel hotkey pressed: {self.cancel_combination}")
         self.state_manager.cancel_recording_hotkey_pressed()
 
+    def _command_hotkey_pressed(self):
+        self.logger.info(f"Command hotkey pressed: {self.command_hotkey}")
+        self.modifier_key_released = False
+        self.state_manager.start_command_recording()
+
     def _stop_modifier_hotkey_pressed(self):
         self.logger.debug(f"Stop-modifier hotkey pressed: {self.stop_modifier_hotkey}, modifier_released={self.modifier_key_released}")
 
@@ -150,7 +164,7 @@ class HotkeyListener:
 
 
     def change_hotkey_config(self, setting: str, value):
-        valid_settings = ['recording_hotkey', 'auto_enter_hotkey', 'auto_enter_enabled', 'stop_with_modifier_enabled', 'cancel_combination']
+        valid_settings = ['recording_hotkey', 'auto_enter_hotkey', 'auto_enter_enabled', 'stop_with_modifier_enabled', 'cancel_combination', 'command_hotkey']
 
         if setting not in valid_settings:
             raise ValueError(f"Invalid setting '{setting}'. Valid options: {valid_settings}")

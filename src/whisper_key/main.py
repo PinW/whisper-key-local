@@ -28,6 +28,7 @@ from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
 from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
+from .voice_commands import VoiceCommandManager
 from .utils import beautify_hotkey, get_user_app_data_path, get_version
 
 def is_built_executable():
@@ -160,7 +161,8 @@ def setup_hotkey_listener(hotkey_config, state_manager):
         auto_enter_hotkey=hotkey_config.get('auto_enter_combination'),
         auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
         stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False),
-        cancel_combination=hotkey_config.get('cancel_combination')
+        cancel_combination=hotkey_config.get('cancel_combination'),
+        command_hotkey=hotkey_config.get('command_hotkey')
     )
 
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
@@ -223,6 +225,7 @@ def main():
         streaming_manager.initialize()
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
+        voice_command_manager = VoiceCommandManager()
 
         state_manager = StateManager(
             audio_recorder=None,
@@ -232,7 +235,8 @@ def main():
             system_tray=None,
             config_manager=config_manager,
             audio_feedback=audio_feedback,
-            vad_manager=vad_manager
+            vad_manager=vad_manager,
+            voice_command_manager=voice_command_manager
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
@@ -242,7 +246,11 @@ def main():
 
         system_tray.start()
 
-        print(f"🚀 Application ready! Press [{beautify_hotkey(hotkey_config['recording_hotkey'])}] to start recording.", flush=True)  # flush so headless agent can detect startup success
+        ready_msg = f"🚀 Application ready! Press [{beautify_hotkey(hotkey_config['recording_hotkey'])}] to start recording."
+        command_hk = hotkey_config.get('command_hotkey')
+        if command_hk:
+            ready_msg += f" Press [{beautify_hotkey(command_hk)}] for voice commands."
+        print(ready_msg, flush=True)
         print("Press Ctrl+C to quit.")
 
         if clipboard_config['auto_paste']:

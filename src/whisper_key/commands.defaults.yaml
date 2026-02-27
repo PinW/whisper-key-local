@@ -1,0 +1,9 @@
+commands:
+  - trigger: "open notepad"
+    run: 'notepad.exe'
+  - trigger: "open calculator"
+    run: 'calc.exe'
+  - trigger: "open browser"
+    run: 'start https://www.google.com'
+  - trigger: "lock screen"
+    run: 'rundll32.exe user32.dll,LockWorkStation'
