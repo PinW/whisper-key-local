@@ -115,7 +115,8 @@ class HotkeyListener:
 
     def _command_hotkey_pressed(self):
         self.logger.info(f"Command hotkey pressed: {self.command_hotkey}")
-        self.modifier_key_released = False
+        stop_modifier_in_hotkey = self.stop_modifier_hotkey and self.stop_modifier_hotkey in self.command_hotkey.lower()
+        self.modifier_key_released = not stop_modifier_in_hotkey
         self.state_manager.start_command_recording()
 
     def _stop_modifier_hotkey_pressed(self):
