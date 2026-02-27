@@ -292,6 +292,14 @@ system_tray: # System Tray Settings
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
 
+voice_commands: # Voice Command Settings
+
+  # Enable/disable voice commands feature
+  # true = register command hotkey and load commands file
+  # false = disable voice commands entirely
+  # Define commands in commands.yaml (same folder as user_settings.yaml)
+  enabled: true
+
 console: # Console Visibility Settings
 
   # Start with console hidden to system tray

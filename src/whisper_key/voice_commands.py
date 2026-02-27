@@ -11,8 +11,13 @@ from .utils import resolve_asset_path, get_user_app_data_path
 
 
 class VoiceCommandManager:
-    def __init__(self):
+    def __init__(self, enabled=True):
+        self.enabled = enabled
         self.logger = logging.getLogger(__name__)
+
+        if not self.enabled:
+            self.logger.info("Voice commands disabled by configuration")
+            return
 
         defaults_path = resolve_asset_path("commands.defaults.yaml")
         user_path = os.path.join(get_user_app_data_path(), "commands.yaml")

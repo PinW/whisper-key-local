@@ -29,7 +29,7 @@ from .instance_manager import guard_against_multiple_instances
 from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
-from .utils import beautify_hotkey, get_user_app_data_path, get_version
+from .utils import get_user_app_data_path, get_version
 
 def is_built_executable():
     return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
@@ -133,6 +133,11 @@ def setup_audio_feedback(audio_feedback_config):
         cancel_sound=audio_feedback_config['cancel_sound']
     )
 
+def setup_voice_commands(voice_commands_config):
+    return VoiceCommandManager(
+        enabled=voice_commands_config['enabled']
+    )
+
 def setup_console_manager(console_config, is_executable_mode):
     return ConsoleManager(
         config=console_config,
@@ -154,7 +159,7 @@ def setup_signal_handlers(shutdown_event):
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-def setup_hotkey_listener(hotkey_config, state_manager):
+def setup_hotkey_listener(hotkey_config, state_manager, voice_commands_enabled=True):
     return HotkeyListener(
         state_manager=state_manager,
         recording_hotkey=hotkey_config['recording_hotkey'],
@@ -162,7 +167,7 @@ def setup_hotkey_listener(hotkey_config, state_manager):
         auto_enter_enabled=hotkey_config.get('auto_enter_enabled', True),
         stop_with_modifier_enabled=hotkey_config.get('stop_with_modifier_enabled', False),
         cancel_combination=hotkey_config.get('cancel_combination'),
-        command_hotkey=hotkey_config.get('command_hotkey')
+        command_hotkey=hotkey_config.get('command_hotkey') if voice_commands_enabled else None
     )
 
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
@@ -211,6 +216,7 @@ def main():
         vad_config = config_manager.get_vad_config()
         console_config = config_manager.get_console_config()
         streaming_config = config_manager.get_streaming_config()
+        voice_commands_config = config_manager.get_voice_commands_config()
 
         is_executable = is_built_executable()
         console_manager = setup_console_manager(console_config, is_executable)
@@ -225,7 +231,7 @@ def main():
         streaming_manager.initialize()
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
-        voice_command_manager = VoiceCommandManager()
+        voice_command_manager = setup_voice_commands(voice_commands_config)
 
         state_manager = StateManager(
             audio_recorder=None,
@@ -242,16 +248,9 @@ def main():
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
         
-        hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager)
+        hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager, voice_commands_config['enabled'])
 
         system_tray.start()
-
-        print("🚀 Whisper Key ready!")
-        print(f"   [{beautify_hotkey(hotkey_config['recording_hotkey'])}] for transcription")
-        command_hk = hotkey_config.get('command_hotkey')
-        if command_hk:
-            print(f"   [{beautify_hotkey(command_hk)}] for voice commands")
-        print("   [CTRL+C] to quit", flush=True)
 
         if clipboard_config['auto_paste']:
             if not permissions.check_accessibility_permission():
@@ -259,6 +258,10 @@ def main():
                     app.run_event_loop(shutdown_event)
                     return
                 clipboard_manager.update_auto_paste(False)
+
+        print("🚀 Whisper Key ready!")
+        config_manager.print_startup_hotkey_instructions()
+        print("   [CTRL+C] to quit", flush=True)
 
         app.run_event_loop(shutdown_event)
             

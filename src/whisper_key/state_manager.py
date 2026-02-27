@@ -216,8 +216,8 @@ class StateManager:
         self.logger.info(f"Command mode transcription: '{text}'")
         print(f"   Heard: \"{text}\"")
 
-        if not self.voice_command_manager:
-            self.logger.warning("Voice command manager not available")
+        if not self.voice_command_manager.enabled:
+            self.logger.warning("Voice commands disabled")
             return
 
         matched = self.voice_command_manager.match_command(text)

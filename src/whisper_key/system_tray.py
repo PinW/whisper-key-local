@@ -168,12 +168,14 @@ class SystemTray:
 
             model_sub_menu_items = self._build_model_menu_items(current_model, is_model_loading)
 
+            voice_commands_enabled = self.config_manager.get_setting('voice_commands', 'enabled')
+
             menu_items = [
                 pystray.MenuItem("Open log file...", self._open_log_file),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Open config folder...", self._open_config_folder),
                 pystray.MenuItem("Open settings file...", self._open_config_file),
-                pystray.MenuItem("Open commands file...", self._open_commands_file),
+                pystray.MenuItem("Open commands file...", self._open_commands_file) if voice_commands_enabled else None,
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(
                     "Audio Host",

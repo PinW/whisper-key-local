@@ -53,9 +53,9 @@ class ConfigManager:
         
         self.config_path = self._determine_config_path(use_user_settings, config_path)
         
-        self._print_config_status()
         self.config = self._load_config()
-        
+        self._print_config_status()
+
         self.logger.info("Configuration loaded successfully")
     
     def _determine_config_path(self, use_user_settings: bool, config_path: str) -> str:
@@ -173,7 +173,11 @@ class ConfigManager:
             display_dir = self._display_path(config_dir)
             settings_file = os.path.basename(self.user_settings_path)
             print(f"   ✓ Local settings: {display_dir}\\{settings_file}")
-            print(f"   ✓ Voice commands: {display_dir}\\commands.yaml")
+
+            if self.get_voice_commands_config().get('enabled', True):
+                print(f"   ✓ Voice commands: {display_dir}\\commands.yaml")
+            else:
+                print(f"   ✗ Voice commands: disabled")
 
     def _display_path(self, path: str) -> str:
         if IS_MACOS:
@@ -206,6 +210,15 @@ class ConfigManager:
         if auto_paste_enabled and auto_enter_enabled:
             auto_enter_key = beautify_hotkey(self.config['hotkey']['auto_enter_combination'])
             print(f"   [{auto_enter_key}] to auto-paste and send with ENTER")
+
+    def print_startup_hotkey_instructions(self):
+        recording_hotkey = beautify_hotkey(self.config['hotkey']['recording_hotkey'])
+        print(f"   [{recording_hotkey}] for transcription")
+
+        if self.get_voice_commands_config().get('enabled', True):
+            command_hotkey = self.config['hotkey'].get('command_hotkey')
+            if command_hotkey:
+                print(f"   [{beautify_hotkey(command_hotkey)}] for voice commands")
 
     def print_command_stop_instructions(self):
         command_hotkey = self.config['hotkey']['command_hotkey']
@@ -242,6 +255,9 @@ class ConfigManager:
 
     def get_console_config(self) -> Dict[str, Any]:
         return self.config.get('console', {}).copy()
+
+    def get_voice_commands_config(self) -> Dict[str, Any]:
+        return self.config.get('voice_commands', {}).copy()
 
     def get_streaming_config(self) -> Dict[str, Any]:
         return self.config.get('streaming', {}).copy()
@@ -424,6 +440,7 @@ class ConfigValidator:
         
         self._validate_boolean('audio_feedback.enabled')
         self._validate_boolean('system_tray.enabled')
+        self._validate_boolean('voice_commands.enabled')
         
         return self.config
     
