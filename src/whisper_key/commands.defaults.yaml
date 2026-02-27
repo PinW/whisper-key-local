@@ -16,5 +16,15 @@ commands:
     run: 'calc.exe'
   - trigger: "open browser"
     run: 'start https://www.google.com'
+  - trigger: "open downloads"
+    run: 'explorer "%USERPROFILE%\Downloads"'
+  - trigger: "dark mode"
+    run: 'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme /t REG_DWORD /d 0 /f'
+  - trigger: "light mode"
+    run: 'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme /t REG_DWORD /d 1 /f'
+  - trigger: "new terminal"
+    run: 'wt.exe'
+  - trigger: "screenshot"
+    run: 'snippingtool'
   - trigger: "lock screen"
     run: 'rundll32.exe user32.dll,LockWorkStation'
