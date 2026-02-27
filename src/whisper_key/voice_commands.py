@@ -87,7 +87,7 @@ class VoiceCommandManager:
         try:
             keyboard.send_hotkey(*keys)
             self.logger.info(f"Sent hotkey '{trigger}': {hotkey_str}")
-            print(f"   Sent hotkey: {trigger} [{hotkey_str}]")
+            print(f"   ✓ Sent hotkey: {trigger} [{hotkey_str}]")
         except Exception as e:
             self.logger.error(f"Failed to send hotkey '{trigger}': {e}")
             print(f"   Failed to send hotkey: {e}")

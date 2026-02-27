@@ -222,7 +222,7 @@ class StateManager:
         if matched:
             self.voice_command_manager.execute_command(matched)
         else:
-            print("   No matching command found")
+            print("   ✗ No matching command found")
 
     def get_application_state(self) -> dict:
         status = {
