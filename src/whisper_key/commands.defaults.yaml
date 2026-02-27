@@ -21,6 +21,10 @@ commands:
     hotkey: "win+left"
   - trigger: "snap right"
     hotkey: "win+right"
+  - trigger: "maximize"
+    hotkey: "win+up"
+  - trigger: "minimize"
+    hotkey: "win+down"
   - trigger: "show desktop"
     hotkey: "win+d"
 
