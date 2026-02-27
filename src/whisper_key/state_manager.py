@@ -268,6 +268,9 @@ class StateManager:
                 else:
                     self.system_tray.update_state("idle")
     
+    def is_transcription_recording(self) -> bool:
+        return self.audio_recorder.get_recording_status() and not self._command_mode
+
     def can_start_recording(self) -> bool:
         with self._state_lock:
             return not (self.is_processing or self.is_model_loading or self.audio_recorder.get_recording_status())
