@@ -1,3 +1,14 @@
+# =============================================================================
+# WHISPER KEY - VOICE COMMANDS (EXPERIMENTAL)
+# =============================================================================
+# Speak a trigger phrase during command mode (Ctrl+G) to run the associated command.
+# The "run" field accepts any shell command (cmd.exe on Windows, /bin/sh on macOS).
+#
+# Matching: triggers are case-insensitive substrings — saying "please open notepad"
+# matches the trigger "open notepad". Longer triggers are checked first.
+#
+# Full documentation: https://github.com/PinW/whisper-key-local/blob/master/documentation/voice-commands.md
+
 commands:
   - trigger: "open notepad"
     run: 'notepad.exe'
