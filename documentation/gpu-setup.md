@@ -51,7 +51,7 @@ Then install Whisper Key:
 1. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
 2. Install the wheel matching your Python version:
    ```
-   pip install ctranslate2-4.7.1-cp312-cp312-win_amd64.whl --force-reinstall --no-deps
+   pip install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
    ```
 3. Set `device: cuda` and `compute_type: float16`
 4. Restart Whisper Key
@@ -61,7 +61,7 @@ Then install Whisper Key:
 1. Download `rocm-python-wheels-Windows.zip` from [CTranslate2 v4.7.1](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.7.1) and extract
 2. Install the wheel into the pipx venv:
    ```
-   pipx runpip whisper-key-local install ctranslate2-4.7.1-cp312-cp312-win_amd64.whl --force-reinstall --no-deps
+   pipx runpip whisper-key-local install ctranslate2-4.7.1-cp313-cp313-win_amd64.whl --force-reinstall --no-deps
    ```
 3. Set `device: cuda` and `compute_type: float16`
 4. Restart Whisper Key
