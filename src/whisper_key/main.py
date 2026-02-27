@@ -246,12 +246,12 @@ def main():
 
         system_tray.start()
 
-        ready_msg = f"🚀 Application ready! Press [{beautify_hotkey(hotkey_config['recording_hotkey'])}] to start recording."
+        print("🚀 Whisper Key ready!")
+        print(f"   [{beautify_hotkey(hotkey_config['recording_hotkey'])}] for transcription")
         command_hk = hotkey_config.get('command_hotkey')
         if command_hk:
-            ready_msg += f" Press [{beautify_hotkey(command_hk)}] for voice commands."
-        print(ready_msg, flush=True)
-        print("Press Ctrl+C to quit.")
+            print(f"   [{beautify_hotkey(command_hk)}] for voice commands")
+        print("   [CTRL+C] to quit", flush=True)
 
         if clipboard_config['auto_paste']:
             if not permissions.check_accessibility_permission():
