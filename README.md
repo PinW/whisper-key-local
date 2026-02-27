@@ -13,6 +13,7 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 - **CPU Ready**: Small, efficient models available
 - **GPU Ready**: Support for both NVIDIA & AMD cards
 - **Cross-platform**: Works on Windows and macOS
+- **Voice Commands**: Trigger shortcuts, text snippets, and shell commands by voice — [docs](documentation/voice-commands.md)
 - **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
 
 ## 🚀 Quick Start
@@ -64,6 +65,7 @@ See the **[GPU Setup Guide](documentation/gpu-setup.md)** for instructions.
 | Stop & transcribe | `Ctrl` | `Fn` |
 | Stop & auto-send | `Alt` | `Option` |
 | Cancel recording | `Esc` | `Shift` |
+| Voice command mode | `Alt+Win` | `Fn+Command` |
 
 Open the system tray / menu bar icon to:
 - Toggle auto-paste vs clipboard-only
@@ -74,7 +76,7 @@ Open the system tray / menu bar icon to:
 
 Local settings at:
 - **Windows:** `%APPDATA%\whisperkey\user_settings.yaml`
-- **macOS:** `~/Library/Application Support/whisperkey/user_settings.yaml`
+- **macOS:** `~/.whisperkey/user_settings.yaml`
 
 Delete this file and restart app to reset to defaults.
 
@@ -89,10 +91,10 @@ Delete this file and restart app to reset to defaults.
 | `whisper.models` | (see config) | Add custom HuggingFace or local models |
 | **Hotkeys** |||
 | `hotkey.recording_hotkey` | `ctrl+win` / `fn+ctrl` | Windows / macOS |
-| `hotkey.stop_with_modifier_enabled` | `true` | Stop with first modifier only |
-| `hotkey.auto_enter_enabled` | `true` | Enable auto-send hotkey |
-| `hotkey.auto_enter_combination` | `alt` / `option` | Stop + paste + Enter |
+| `hotkey.stop_key` | `ctrl` / `fn` | Stop recording |
+| `hotkey.auto_send_key` | `alt` / `option` | Stop + paste + Enter |
 | `hotkey.cancel_combination` | `esc` / `shift` | Cancel recording |
+| `hotkey.command_hotkey` | `alt+win` / `fn+command` | Voice command mode |
 | **Voice Activity Detection** |||
 | `vad.vad_precheck_enabled` | `true` | Prevent hallucinations on silence |
 | `vad.vad_onset_threshold` | `0.7` | Speech detection start (0.0-1.0) |
@@ -108,9 +110,9 @@ Delete this file and restart app to reset to defaults.
 | `audio.input_device` | `default` | Device ID or "default" |
 | **Clipboard** |||
 | `clipboard.auto_paste` | `true` | false = clipboard only |
+| `clipboard.delivery_method` | `paste` | paste (Ctrl+V) or type (direct injection) |
 | `clipboard.paste_hotkey` | `ctrl+v` / `cmd+v` | Paste key simulation |
-| `clipboard.preserve_clipboard` | `true` | Restore clipboard after paste |
-| `clipboard.key_simulation_delay` | `0.05` | Delay between keystrokes (seconds) |
+| `clipboard.paste_preserve_clipboard` | `true` | Restore clipboard after paste |
 | **Logging** |||
 | `logging.level` | `INFO` | DEBUG/INFO/WARNING/ERROR/CRITICAL |
 | `logging.file.enabled` | `true` | Write to app.log |
@@ -124,6 +126,8 @@ Delete this file and restart app to reset to defaults.
 | **System Tray** |||
 | `system_tray.enabled` | `true` | Show tray icon |
 | `system_tray.tooltip` | `Whisper Key` | Hover text |
+| **Voice Commands** |||
+| `voice_commands.enabled` | `true` | Enable voice command mode |
 | **Console** |||
 | `console.start_hidden` | `false` | Start minimized to tray |
 

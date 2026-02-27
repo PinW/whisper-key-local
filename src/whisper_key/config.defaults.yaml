@@ -6,7 +6,7 @@
 #
 # Personal settings are stored at:
 # Windows: %APPDATA%\whisperkey\user_settings.yaml
-# macOS: ~/Library/Application Support/whisperkey/user_settings.yaml
+# macOS: ~/.whisperkey/user_settings.yaml
 
 whisper: # Whisper AI Model Settings
 
