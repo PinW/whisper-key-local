@@ -212,7 +212,6 @@ class StateManager:
 
     def _handle_command_transcription(self, text: str):
         self.logger.info(f"Command mode transcription: '{text}'")
-        print(f"   Heard: \"{text}\"")
 
         if not self.voice_command_manager.enabled:
             self.logger.warning("Voice commands disabled")
