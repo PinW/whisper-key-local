@@ -2,6 +2,29 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.7.0] - 2026-02-27
+
+### Added
+- **Voice command mode** - Dedicated hotkey (`Alt+Win` / `Fn+Command`) records speech and matches against user-defined trigger phrases in `commands.yaml` (#33)
+  - `run` action — execute shell commands (e.g., "open notepad" → `notepad.exe`)
+  - `hotkey` action — send keyboard shortcuts (e.g., "undo" → `Ctrl+Z`)
+  - `type` action — deliver pre-written text (e.g., "my email" → `user@example.com`)
+  - Case-insensitive substring matching with longest-trigger-first priority
+  - Auto-send support — press `Alt` to stop and send ENTER after type commands
+- **Commands file shortcuts** in system tray menu for quick editing
+- Terminal tab title set to "Whisper Key" on startup
+
+### Changed
+- **Hotkey config refactored** — replaced `stop_with_modifier` toggle with explicit `stop_key` and `auto_send_key` settings
+- Recording hotkey is now start-only (no longer toggles)
+- Cleaner console messages: one-line-per-hotkey format, indented recording output
+- Renamed `documentation/` folder to `docs/`
+- macOS config path moved to `~/.whisperkey`
+- Updated GPU setup guide: simplified ROCm instructions, updated wheel versions
+
+### Fixed
+- ROCm runtime hook now finds pip-installed HIP SDK
+
 ## [0.6.3] - 2026-02-17
 
 ### Added
