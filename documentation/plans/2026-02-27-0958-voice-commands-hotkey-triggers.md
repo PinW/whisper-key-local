@@ -27,19 +27,18 @@ commands:
 ## Implementation Plan
 
 ### 1. Extend commands config format
-- [ ] Add `hotkey` as an alternative to `run` in command definitions
-- [ ] Validate that each command has exactly one of `run` or `hotkey`
-- [ ] Add hotkey examples to `commands.defaults.yaml`
+- [x] Add `hotkey` as an alternative to `run` in command definitions
+- [x] Validate that each command has exactly one of `run` or `hotkey`
+- [x] Add hotkey examples to `commands.defaults.yaml`
 
 ### 2. Hotkey sending via existing platform keyboard module
-- [ ] Add `send_hotkey(hotkey_string)` method to `VoiceCommandManager`
-- [ ] Reuse `platform/windows/keyboard.py` SendInput infrastructure
-- [ ] Parse hotkey string (e.g., "ctrl+z") into modifier + key sequence
-- [ ] Press modifiers down, press key, release key, release modifiers
+- [x] Add `_send_hotkey(hotkey_string, trigger)` method to `VoiceCommandManager`
+- [x] Reuse `platform/keyboard.send_hotkey()` (works on both Windows and macOS)
+- [x] Parse hotkey string (e.g., "ctrl+z") into keys via split('+')
 
 ### 3. Command dispatch
-- [ ] Update `handle_transcription()` to check command type (`run` vs `hotkey`)
-- [ ] Route to `execute_command()` or `send_hotkey()` accordingly
+- [x] `execute_command()` checks command type (`run` vs `hotkey`)
+- [x] Routes to `_execute_shell()` or `_send_hotkey()` accordingly
 
 ## Implementation Details
 
