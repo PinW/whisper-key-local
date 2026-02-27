@@ -99,7 +99,7 @@ class VoiceCommandManager:
             if self.clipboard_manager:
                 self.clipboard_manager.deliver_transcription(text, use_auto_enter)
                 self.logger.info(f"Delivered text '{trigger}': {text}")
-                print(f"   ✓ Typed: {trigger}")
+                print(f"   ✓ Typed: {text}")
             else:
                 self.logger.error("No clipboard manager available for type command")
                 print(f"   Failed: clipboard manager not available")
