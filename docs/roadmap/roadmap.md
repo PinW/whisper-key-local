@@ -6,6 +6,7 @@
 
 ## Bugs
 - **ROCm DLL loading broken for official CT2 wheels** - runtime hook (`rth_rocm_paths.py`) looks for `HIP_PATH` env var but official CT2 v4.7.1 ROCm wheel needs `amdhip64_7.dll` + `hipblas.dll` from pip packages (`rocm_sdk_core`, `rocm_sdk_libraries_custom` v7.2), not the HIP SDK installer (which only goes to 7.1.1). Hook doesn't search pip `site-packages`. Also: HIP SDK 7.2 doesn't exist as a Windows installer — only as pip packages from `repo.radeon.com` ([#30](https://github.com/PinW/whisper-key-local/issues/30))
+- **No download progress shown** - HuggingFace model download doesn't display any state or progress to the user
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
 - **PyAV DLL missing in exe** - `av._core` import fails; `faster-whisper` added PyAV dependency whose DLLs aren't bundled by PyInstaller ([#29](https://github.com/PinW/whisper-key-local/issues/29))
