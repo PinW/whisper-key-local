@@ -172,6 +172,7 @@ class SystemTray:
 
             menu_items = [
                 pystray.MenuItem("Open log file...", self._open_log_file),
+                pystray.MenuItem("Open model cache...", self._open_model_cache),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Open config folder...", self._open_config_folder),
                 pystray.MenuItem("Open settings file...", self._open_config_file),
@@ -244,6 +245,14 @@ class SystemTray:
             open_file(log_path)
         except Exception as e:
             self.logger.error(f"Failed to open log file: {e}")
+
+    def _open_model_cache(self, icon=None, item=None):
+        try:
+            cache_path = self.model_registry.get_hf_cache_path()
+            os.makedirs(cache_path, exist_ok=True)
+            open_file(cache_path)
+        except Exception as e:
+            self.logger.error(f"Failed to open model cache: {e}")
 
     def _set_transcription_mode(self, auto_paste: bool):
         if auto_paste:
