@@ -39,6 +39,12 @@
 - As a *user* I want to **wrap CLI tools** (e.g., `whisper-key claude`) so I can voice-input directly into any command-line application without switching windows
   - As a *user* I want **additional instances with custom hotkeys** so that I can be keyboard-only when dictating to multiple agents
   - As a *user* I want **hotkey instance management** so that multiple instances will be allowed and work together
+- As a *user* I want **agent skill packages** so CLI agents (Claude Code, Codex, OpenClaw, etc.) can install a whisper-key skill from a marketplace and use the CLI
+- As a *user* I want **voice command CLI management** so I can list, add, run, and delete voice commands from the command line
+  - `whisper-key commands list` — list all configured voice commands
+  - `whisper-key commands add` — add a new voice command
+  - `whisper-key commands run <command>` — execute a voice command directly
+  - `whisper-key commands delete <command>` — remove a voice command
 
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
