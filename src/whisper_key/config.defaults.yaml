@@ -31,6 +31,11 @@ whisper: # Whisper AI Model Settings
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
 
+  # Custom hotwords — words the model should favor during transcription
+  # Useful for names, technical terms, or domain-specific vocabulary
+  # Example: ["CTranslate2", "PyInstaller", "Whisper Key"]
+  hotwords: []
+
   # Available models (set enabled: false to hide from menu)
   # To add custom models (CTranslate2 format), add entry with source (HuggingFace or local path)
   # Example: my-model: {source: "username/repo-ct2", label: "My Model", group: custom}

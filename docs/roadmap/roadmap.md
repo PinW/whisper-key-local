@@ -79,7 +79,8 @@
 - As a *user* I want **hotkey sequence ordering** so more hotkey combos can coexist without conflicting (e.g., Ctrl+Alt+Space vs Alt+Ctrl+Space become distinct sequences)
 
 ### Personalization
-- As a *user*, I want **custom vocabulary** so rare words that I say often are transcribed accurately
+- As a *user*, I want **custom hotwords** so I can bias the transcription model toward rare words and names that I say often
+- As a *user*, I want **post-transcription replacements** so consistent misrecognitions are automatically corrected after transcription (e.g., "see translate two" → "CTranslate2")
 
 ### Desktop App
 - As a *user*, I want a **desktop GUI** so that I can change settings without editing files
