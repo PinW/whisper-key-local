@@ -433,8 +433,10 @@ class ConfigValidator:
         self._validate_numeric_range('vad.vad_silence_timeout_seconds', min_val=1.0, max_val=36000.0, description='VAD silence timeout')
         
         self._validate_boolean('audio_feedback.enabled')
+        self._validate_boolean('audio_feedback.transcription_complete_enabled')
         self._validate_boolean('system_tray.enabled')
         self._validate_boolean('voice_commands.enabled')
+        
         
         return self.config
     

@@ -268,12 +268,20 @@ audio_feedback: # Audio Feedback Settings
   # true = play sounds when recording starts/stops
   # false = silent operation
   enabled: true
-  
+
+  # Enable/disable audio feedback sounds when transcription stops
+  # true = play sounds when transcription stops
+  # false = silent operation
+  transcription_complete_enabled: false
+
+
   # Sound file paths (relative to project root or absolute paths)
   # Use .wav files for best Windows compatibility
   start_sound: assets/sounds/record_start.wav
   stop_sound: assets/sounds/record_stop.wav
   cancel_sound: assets/sounds/record_cancel.wav
+  transcription_complete_sound: assets/sounds/transcription_complete.wav
+
 
 system_tray: # System Tray Settings
 
