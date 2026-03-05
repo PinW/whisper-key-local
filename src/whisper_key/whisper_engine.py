@@ -14,6 +14,7 @@ class WhisperEngine:
                  compute_type: str = "int8",
                  language: str = None,
                  beam_size: int = 5,
+                 hotwords: list = None,
                  vad_manager = None,
                  model_registry = None):
 
@@ -22,6 +23,7 @@ class WhisperEngine:
         self.compute_type = compute_type
         self.language = None if language == 'auto' else language
         self.beam_size = beam_size
+        self.hotwords = ", ".join(hotwords) if hotwords else None
         self.model = None
         self.logger = logging.getLogger(__name__)
         self.registry = model_registry
@@ -152,12 +154,15 @@ class WhisperEngine:
             
             audio_data = audio_data.astype(np.float32)
             
-            segments, info = self.model.transcribe(
-                audio_data,
+            transcribe_kwargs = dict(
                 beam_size=self.beam_size,
                 language=self.language,
-                condition_on_previous_text=False 
+                condition_on_previous_text=False,
             )
+            if self.hotwords:
+                transcribe_kwargs["hotwords"] = self.hotwords
+
+            segments, info = self.model.transcribe(audio_data, **transcribe_kwargs)
             
             transcribed_text = ""
             for segment in segments:
