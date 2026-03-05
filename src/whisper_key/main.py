@@ -128,6 +128,7 @@ def setup_clipboard_manager(clipboard_config):
 def setup_audio_feedback(audio_feedback_config):
     return AudioFeedback(
         enabled=audio_feedback_config['enabled'],
+        transcription_complete_enabled=audio_feedback_config['transcription_complete_enabled'],
         start_sound=audio_feedback_config['start_sound'],
         stop_sound=audio_feedback_config['stop_sound'],
         cancel_sound=audio_feedback_config['cancel_sound'],

@@ -184,8 +184,7 @@ class StateManager:
 
             if success:
                 self.last_transcription = transcribed_text
-                if self.config_manager.get_setting('audio_feedback', 'transcription_complete_enabled'):
-                    self.audio_feedback.play_transcription_complete_sound()
+                self.audio_feedback.play_transcription_complete_sound()
             
         except Exception as e:
             self.logger.error(f"Error in processing workflow: {e}")

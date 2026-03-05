@@ -141,7 +141,7 @@ Delete this file and restart app to reset to defaults.
 | `logging.console.level` | `WARNING` | Console verbosity |
 | **Audio Feedback** |||
 | `audio_feedback.enabled` | `true` | Play sounds on record/stop |
-| `audio_feedback.transcription_complete_enabled` | `false` | Play sound on transciption end. Also toggleable from tray/menu bar. |
+| `audio_feedback.transcription_complete_enabled` | `false` | Play sound on transcription complete |
 | `audio_feedback.start_sound` | `assets/sounds/...` | Custom sound file path |
 | `audio_feedback.stop_sound` | `assets/sounds/...` | Custom sound file path |
 | `audio_feedback.cancel_sound` | `assets/sounds/...` | Custom sound file path |

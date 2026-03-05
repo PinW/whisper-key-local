@@ -10,8 +10,9 @@ SOUND_BACKEND = "winmm" if platform.system() == "Windows" else None
 from .utils import resolve_asset_path
 
 class AudioFeedback:
-    def __init__(self, enabled=True, start_sound='', stop_sound='', cancel_sound='', transcription_complete_sound=''):
+    def __init__(self, enabled=True, transcription_complete_enabled=False, start_sound='', stop_sound='', cancel_sound='', transcription_complete_sound=''):
         self.enabled = enabled
+        self.transcription_complete_enabled = transcription_complete_enabled
         self.logger = logging.getLogger(__name__)
 
         self.start_sound_path = resolve_asset_path(start_sound)
@@ -37,7 +38,7 @@ class AudioFeedback:
             self.logger.warning(f"Cancel sound file not found: {self.cancel_sound_path}")
 
         if self.transcription_complete_sound_path and not os.path.isfile(self.transcription_complete_sound_path):
-            self.logger.warning(f"Transcription complete sound file not found: {self.transcription_complete_sound_path}")            
+            self.logger.warning(f"Transcription complete sound file not found: {self.transcription_complete_sound_path}")
 
     def _play_sound_file_async(self, file_path: str):
         def play():
@@ -61,5 +62,5 @@ class AudioFeedback:
             self._play_sound_file_async(self.cancel_sound_path)
 
     def play_transcription_complete_sound(self):
-        if self.enabled and self.transcription_complete_sound_path:
+        if self.enabled and self.transcription_complete_enabled:
             self._play_sound_file_async(self.transcription_complete_sound_path)
