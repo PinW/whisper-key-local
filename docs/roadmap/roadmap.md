@@ -2,6 +2,7 @@
 @completed.md
 
 ## Next
+- As a *user* I want an optional **"transcription complete" sound** so I get an audible cue when the result is ready after clicking away — configurable sound path ([#35](https://github.com/PinW/whisper-key-local/pull/35))
 - As a *user* I want **ROCm DLLs bundled in the exe** so the portable ROCm build works out of the box without installing HIP SDK or pip packages — bundle `amdhip64_7.dll`, `hipblas.dll`, and other required DLLs from `rocm_sdk_core`/`rocm_sdk_libraries_custom` into the PyInstaller build ([#30](https://github.com/PinW/whisper-key-local/issues/30))
 
 ## Bugs
