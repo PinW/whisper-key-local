@@ -117,7 +117,6 @@ class SystemTray:
             is_model_loading = app_state.get('model_loading', False)
 
             auto_paste_enabled = self.config_manager.get_setting('clipboard', 'auto_paste')
-            transcription_complete_sound_enabled = self.config_manager.get_setting('audio_feedback', 'transcription_complete_enabled')
             current_model = self.config_manager.get_setting('whisper', 'model')
 
             available_hosts = self.state_manager.get_available_audio_hosts()
@@ -150,14 +149,6 @@ class SystemTray:
 
             def switch_device(dev_id, dev_name):
                 return lambda icon, item: self._select_audio_device(dev_id, dev_name)
-            
-            def toggle_transcription_complete_sound(icon, item):
-                self.config_manager.update_user_setting(
-                    'audio_feedback',
-                    'transcription_complete_enabled',
-                    not transcription_complete_sound_enabled
-                )
-                self.icon.menu = self._create_menu()            
 
             audio_device_items = []
 
@@ -198,11 +189,6 @@ class SystemTray:
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Auto-paste", lambda icon, item: self._set_transcription_mode(True), radio=True, checked=lambda item: auto_paste_enabled),
                 pystray.MenuItem("Copy to clipboard", lambda icon, item: self._set_transcription_mode(False), radio=True, checked=lambda item: not auto_paste_enabled),
-                pystray.MenuItem(
-                    "Sound: transcription complete",
-                    toggle_transcription_complete_sound,
-                    checked=lambda item: transcription_complete_sound_enabled
-                ),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_sub_menu_items)),
             ]

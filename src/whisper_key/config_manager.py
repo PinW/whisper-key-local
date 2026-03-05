@@ -436,8 +436,7 @@ class ConfigValidator:
         self._validate_boolean('audio_feedback.transcription_complete_enabled')
         self._validate_boolean('system_tray.enabled')
         self._validate_boolean('voice_commands.enabled')
-        
-        
+
         return self.config
     
     def _resolve_hotkey_conflicts(self, stop_key: str, auto_send_key: str, recording_hotkey: str, command_hotkey: str = None):
