@@ -160,6 +160,10 @@ Default path for transcription models (via HuggingFace):
 - **Windows:** `%USERPROFILE%\.cache\huggingface\hub\`
 - **macOS:** `~/.cache/huggingface/hub/`
 
+## Contributing
+
+Check the [roadmap](docs/roadmap/roadmap.md) for planned features and see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. Please open an issue before starting work on new features.
+
 ## 📦 Dependencies
 
 **Cross-platform:**
