@@ -1,5 +1,6 @@
 # Whisper Key - Completed Stories
 
+- As a *user* I want an optional **"transcription complete" sound** so I get an audible cue when the result is ready ([#35](https://github.com/PinW/whisper-key-local/pull/35))
 - As a *user*, I want **audio recording length** so I can get a feel for transcription times
 - As a *user*, I want **distinct cancel sound** so I can immediately tell when I cancelled vs stopped recording
 - As a *developer*, I want **beginner comments removed** so that the code is forced to be readable and can be read easily
