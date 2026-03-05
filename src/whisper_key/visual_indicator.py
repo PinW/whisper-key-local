@@ -1,3 +1,4 @@
+import os
 import threading
 import tkinter as tk
 
@@ -22,7 +23,10 @@ class VisualIndicator:
         self._root = tk.Tk()
         self._root.overrideredirect(True)
         self._root.attributes("-topmost", True)
-        self._root.attributes("-transparentcolor", "black")
+        
+        # Transparent background is Windows-only in Tkinter
+        if os.name == 'nt':
+            self._root.attributes("-transparentcolor", "black")
             
         # Minimal bar just above the bottom taskbar
         w = 300
