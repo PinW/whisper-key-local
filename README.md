@@ -9,6 +9,7 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 - **Global Hotkey**: Start recording speech from any app
 - **Auto-Paste**: Transcribe directly to cursor
 - **Auto-Send**: Optionally auto-send with ENTER keypress
+- **Visual Status**: Minimal on-screen indicator for recording/processing states
 - **Local/Offline**: Voice data never leaves your computer
 - **CPU Ready**: Small, efficient models available
 - **GPU Ready**: Support for both NVIDIA & AMD cards

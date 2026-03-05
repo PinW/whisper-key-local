@@ -23,6 +23,7 @@ from .voice_activity_detection import VadManager
 from .clipboard_manager import ClipboardManager
 from .state_manager import StateManager
 from .system_tray import SystemTray
+from .visual_indicator import VisualIndicator
 from .audio_feedback import AudioFeedback
 from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
@@ -148,6 +149,9 @@ def setup_console_manager(console_config, is_executable_mode):
         is_executable_mode=is_executable_mode
     )
 
+def setup_visual_indicator(state_manager):
+    return VisualIndicator(state_manager)
+
 def setup_system_tray(tray_config, config_manager, state_manager, model_registry):
     return SystemTray(
         state_manager=state_manager,
@@ -249,11 +253,13 @@ def main():
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
-        state_manager.attach_components(audio_recorder, system_tray)
+        visual_indicator = setup_visual_indicator(state_manager)
+        state_manager.attach_components(audio_recorder, system_tray, visual_indicator)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager, voice_commands_config['enabled'])
 
         system_tray.start()
+        visual_indicator.start()
 
         if clipboard_config['auto_paste']:
             if not permissions.check_accessibility_permission():
