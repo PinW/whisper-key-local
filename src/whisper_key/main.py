@@ -130,7 +130,8 @@ def setup_audio_feedback(audio_feedback_config):
         enabled=audio_feedback_config['enabled'],
         start_sound=audio_feedback_config['start_sound'],
         stop_sound=audio_feedback_config['stop_sound'],
-        cancel_sound=audio_feedback_config['cancel_sound']
+        cancel_sound=audio_feedback_config['cancel_sound'],
+        transcription_complete_sound=audio_feedback_config['transcription_complete_sound']
     )
 
 def setup_voice_commands(voice_commands_config, clipboard_manager):
