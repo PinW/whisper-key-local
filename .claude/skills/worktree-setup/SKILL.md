@@ -1,6 +1,6 @@
 ---
 name: worktree-setup
-description: Create a git worktree and set up symlinks to shared gitignored files
+description: ALWAYS use this skill when creating a git worktree. Sets up symlinks to shared gitignored files.
 disable-model-invocation: false
 allowed-tools: Bash(python3 *), Bash(git worktree *)
 ---
