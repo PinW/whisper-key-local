@@ -273,7 +273,7 @@ def main():
         print("\nShutting down application...")
         
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}", exc_info=True)
         print(f"Error occurred: {e}")
         
     finally:

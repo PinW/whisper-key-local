@@ -28,6 +28,7 @@ a = Analysis(
     binaries=[],
     datas=[
         (str(project_root / 'src' / 'whisper_key' / 'config.defaults.yaml'), '.'),
+        (str(project_root / 'src' / 'whisper_key' / 'commands.defaults.yaml'), '.'),
         (str(project_root / 'src' / 'whisper_key' / 'assets'), 'assets'),
         (str(project_root / 'src' / 'whisper_key' / 'platform' / 'windows' / 'assets'), 'platform/windows/assets'),
     ] + ten_vad_data,
