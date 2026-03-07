@@ -2,6 +2,18 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.7.1] - 2026-03-08
+
+### Added
+- **Transcription complete sound** - Optional audio notification when transcription finishes (`audio_feedback.transcription_complete_enabled`) (#35)
+- **Custom hotwords** - Bias transcription toward specific words/phrases via `whisper.hotwords` config (#34)
+- **Open model cache** shortcut in system tray menu
+- CONTRIBUTING.md with PR guidelines
+
+### Fixed
+- **Portable exe crash on startup** - `commands.defaults.yaml` was not bundled in PyInstaller build, causing `[WinError 2]` crash when voice commands initialize (#37)
+- Startup error handler now logs full traceback for better crash diagnostics
+
 ## [0.7.0] - 2026-02-27
 
 ### Added
