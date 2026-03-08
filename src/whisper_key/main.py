@@ -29,6 +29,7 @@ from .instance_manager import guard_against_multiple_instances
 from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
+from .gpu_detection import detect_gpu, print_gpu_status
 from .utils import get_user_app_data_path, get_version
 
 def is_built_executable():
@@ -148,12 +149,13 @@ def setup_console_manager(console_config, is_executable_mode):
         is_executable_mode=is_executable_mode
     )
 
-def setup_system_tray(tray_config, config_manager, state_manager, model_registry):
+def setup_system_tray(tray_config, config_manager, state_manager, model_registry, gpu_info=None):
     return SystemTray(
         state_manager=state_manager,
         tray_config=tray_config,
         config_manager=config_manager,
-        model_registry=model_registry
+        model_registry=model_registry,
+        gpu_info=gpu_info
     )
 
 def setup_signal_handlers(shutdown_event):
@@ -221,6 +223,9 @@ def main():
         streaming_config = config_manager.get_streaming_config()
         voice_commands_config = config_manager.get_voice_commands_config()
 
+        gpu_info = detect_gpu()
+        print_gpu_status(gpu_info, whisper_config['device'])
+
         is_executable = is_built_executable()
         console_manager = setup_console_manager(console_config, is_executable)
 
@@ -248,7 +253,7 @@ def main():
             voice_command_manager=voice_command_manager
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
-        system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
+        system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry, gpu_info)
         state_manager.attach_components(audio_recorder, system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager, voice_commands_config['enabled'])

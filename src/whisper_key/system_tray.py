@@ -25,12 +25,14 @@ class SystemTray:
                  state_manager: 'StateManager',
                  tray_config: dict = None,
                  config_manager: Optional['ConfigManager'] = None,
-                 model_registry = None):
+                 model_registry = None,
+                 gpu_info = None):
 
         self.state_manager = state_manager
         self.tray_config = tray_config or {}
         self.config_manager = config_manager
         self.model_registry = model_registry
+        self.gpu_info = gpu_info
         self.logger = logging.getLogger(__name__)
                
         self.icon = None  # pystray object, holds menu, state, etc.
@@ -51,7 +53,13 @@ class SystemTray:
             self.available = False
 
         return self.available
-    
+
+    def _get_tray_title(self):
+        device = self.config_manager.get_setting('whisper', 'device')
+        if device == 'cuda' and self.gpu_info and self.gpu_info.name:
+            return f"Whisper Key — {self.gpu_info.name} (GPU)"
+        return f"Whisper Key — CPU"
+
     def _load_icons_to_cache(self):
         try:
             self.icons = icons.get_tray_icons()
@@ -335,7 +343,7 @@ class SystemTray:
             self.icon = pystray.Icon(
                 name="whisper-key",
                 icon=idle_icon,
-                title="Whisper Key",
+                title=self._get_tray_title(),
                 menu=menu
             )
 
