@@ -1,5 +1,5 @@
 ---
-description: Create implementation plan for a feature or task
+description: Create implementation plan for a feature or task. Use when asked to create a plan, write a plan, or plan an implementation.
 ---
 
 Create implementation plan for: $ARGUMENTS
