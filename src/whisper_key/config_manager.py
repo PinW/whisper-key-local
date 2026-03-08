@@ -28,6 +28,8 @@ MIGRATIONS = [
     # (from_version, to_version, migration_function)
 ]
 
+EXTENSIBLE_PATHS = {'whisper.models', 'streaming.models'}
+
 def deep_merge_config(default_config: Dict[str, Any],
                       user_config: Dict[str, Any]) -> Dict[str, Any]:
 
@@ -50,13 +52,16 @@ def _to_plain(obj):
     return obj
 
 
-def _compute_overrides(config, defaults):
+def _compute_overrides(config, defaults, path_prefix=''):
     overrides = {}
     for key, value in config.items():
+        current_path = f"{path_prefix}.{key}" if path_prefix else key
         if key not in defaults:
+            if current_path in EXTENSIBLE_PATHS or path_prefix in EXTENSIBLE_PATHS:
+                overrides[key] = value
             continue
         if isinstance(value, dict) and isinstance(defaults[key], dict):
-            nested = _compute_overrides(value, defaults[key])
+            nested = _compute_overrides(value, defaults[key], current_path)
             if nested:
                 overrides[key] = nested
         elif value != defaults[key]:
@@ -119,9 +124,9 @@ class ConfigManager:
             self.logger.info(f"Created starter user settings at {self.user_settings_path}")
     
     def _remove_unused_keys_from_user_config(self, user_config: Dict[str, Any], default_config: Dict[str, Any]):
-        
+
         sections_to_remove = []
-        
+
         for section, values in user_config.items():
             if section not in default_config:
                 self.logger.info(f"Removed invalid config section: {section}")
@@ -129,13 +134,13 @@ class ConfigManager:
             elif isinstance(values, dict) and isinstance(default_config[section], dict):
                 keys_to_remove = []
                 for key in values.keys():
-                    if key not in default_config[section]:
+                    if key not in default_config[section] and f"{section}.{key}" not in EXTENSIBLE_PATHS:
                         self.logger.info(f"Removed invalid config key: {section}.{key}")
                         keys_to_remove.append(key)
-                
+
                 for key in keys_to_remove:
                     del values[key]
-        
+
         for section in sections_to_remove:
             del user_config[section]
     
