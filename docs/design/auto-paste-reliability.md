@@ -1,7 +1,5 @@
 # Auto-Paste Reliability
 
-Prior investigation: @plans/auto-paste-empty-bug.md
-
 ## Problem
 
 Auto-paste fails intermittently. The transcription is correct (printed to terminal), but the target app receives empty text followed by a stray Enter. Related: [#21](https://github.com/PinW/whisper-key-local/issues/21)
