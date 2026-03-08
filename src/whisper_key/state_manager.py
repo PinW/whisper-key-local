@@ -212,7 +212,11 @@ class StateManager:
                 self.system_tray.update_state("idle")
 
     def _handle_command_transcription(self, text: str, use_auto_enter: bool = False):
-        self.logger.info(f"Command mode transcription: '{text}'")
+        log_config = self.config_manager.get_logging_config()
+        if log_config.get('log_transcriptions', False):
+            self.logger.info(f"Command mode transcription: '{text}'")
+        else:
+            self.logger.info("Command mode transcription received")
 
         if not self.voice_command_manager.enabled:
             self.logger.warning("Voice commands disabled")

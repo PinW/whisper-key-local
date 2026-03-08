@@ -432,6 +432,7 @@ class ConfigValidator:
         self._validate_numeric_range('vad.vad_min_speech_duration', min_val=0.001, max_val=5.0, description='VAD minimum speech duration')
         self._validate_numeric_range('vad.vad_silence_timeout_seconds', min_val=1.0, max_val=36000.0, description='VAD silence timeout')
         
+        self._validate_boolean('logging.log_transcriptions')
         self._validate_boolean('audio_feedback.enabled')
         self._validate_boolean('audio_feedback.transcription_complete_enabled')
         self._validate_boolean('system_tray.enabled')
