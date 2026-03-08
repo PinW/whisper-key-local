@@ -4,7 +4,7 @@ allowed-tools: Bash(git *), Bash(gh *)
 ---
 
 1. Get the two latest git tags: !`git tag --sort=-v:refname | head -2`
-2. Use `git log [PREVIOUS_TAG]..[LATEST_TAG] --oneline`
+2. Use `git log [PREVIOUS_TAG]..[LATEST_TAG] --format="%s%n%b---"`
 3. Update @CHANGELOG.md with [LATEST_TAG] based on those commits
 4. Commit changelog and re-tag: `git add CHANGELOG.md && git commit -m "Update CHANGELOG.md for [VERSION] release" && git tag -d [VERSION] && git tag [VERSION]`
 5. Git push
