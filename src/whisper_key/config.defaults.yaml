@@ -31,6 +31,9 @@ whisper: # Whisper AI Model Settings
   # Transcription quality settings
   beam_size: 5  # Higher = more accurate but slower (1-10)
 
+  # Initial prompt to guide transcription style, language variant, or script
+  initial_prompt: ""
+
   # Custom hotwords — words the model should favor during transcription
   # Useful for names, technical terms, or domain-specific vocabulary
   # Example: ["CTranslate2", "PyInstaller", "Whisper Key"]

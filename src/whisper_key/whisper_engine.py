@@ -14,6 +14,7 @@ class WhisperEngine:
                  compute_type: str = "int8",
                  language: str = None,
                  beam_size: int = 5,
+                 initial_prompt: str = "",
                  hotwords: list = None,
                  vad_manager = None,
                  model_registry = None,
@@ -24,6 +25,7 @@ class WhisperEngine:
         self.compute_type = compute_type
         self.language = None if language == 'auto' else language
         self.beam_size = beam_size
+        self.initial_prompt = initial_prompt or None
         self.hotwords = ", ".join(hotwords) if hotwords else None
         self.model = None
         self.logger = logging.getLogger(__name__)
@@ -161,6 +163,8 @@ class WhisperEngine:
                 language=self.language,
                 condition_on_previous_text=False,
             )
+            if self.initial_prompt:
+                transcribe_kwargs["initial_prompt"] = self.initial_prompt
             if self.hotwords:
                 transcribe_kwargs["hotwords"] = self.hotwords
 

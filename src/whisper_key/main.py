@@ -107,6 +107,7 @@ def setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transc
         compute_type=whisper_config['compute_type'],
         language=whisper_config['language'],
         beam_size=whisper_config['beam_size'],
+        initial_prompt=whisper_config.get('initial_prompt', ''),
         hotwords=whisper_config.get('hotwords', []),
         vad_manager=vad_manager,
         model_registry=model_registry,
