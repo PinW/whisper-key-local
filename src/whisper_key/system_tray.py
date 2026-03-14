@@ -58,7 +58,7 @@ class SystemTray:
         device = self.config_manager.get_setting('whisper', 'device')
         if device == 'cuda' and self.gpu_info and self.gpu_info.name:
             return f"Whisper Key — {self.gpu_info.name} (GPU)"
-        return f"Whisper Key — CPU"
+        return "Whisper Key — CPU"
 
     def _load_icons_to_cache(self):
         try:
