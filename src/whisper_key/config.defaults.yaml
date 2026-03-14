@@ -263,6 +263,11 @@ logging: # Logging Configuration
     enabled: true
     filename: app.log
   
+  # Log transcription text content to log file
+  # false = only log metadata (char count, language, timing) for privacy
+  # true = include actual transcribed text in log entries
+  log_transcriptions: false
+
   # Console output
   console:
     enabled: true

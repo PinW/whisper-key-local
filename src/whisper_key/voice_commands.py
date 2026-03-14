@@ -12,9 +12,10 @@ from .platform import keyboard
 
 
 class VoiceCommandManager:
-    def __init__(self, enabled=True, clipboard_manager=None):
+    def __init__(self, enabled=True, clipboard_manager=None, log_transcriptions=False):
         self.enabled = enabled
         self.clipboard_manager = clipboard_manager
+        self.log_transcriptions = log_transcriptions
         self.logger = logging.getLogger(__name__)
 
         if not self.enabled:
@@ -102,7 +103,10 @@ class VoiceCommandManager:
         try:
             if self.clipboard_manager:
                 self.clipboard_manager.deliver_transcription(text, use_auto_enter)
-                self.logger.info(f"Delivered text '{trigger}': {text}")
+                if self.log_transcriptions:
+                    self.logger.info(f"Delivered text '{trigger}': {text}")
+                else:
+                    self.logger.info(f"Delivered text for '{trigger}'")
                 print(f"   ✓ Typed: {text}")
             else:
                 self.logger.error("No clipboard manager available for type command")
