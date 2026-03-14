@@ -529,8 +529,8 @@ class StateManager:
         device_name = self._get_device_name(fallback_device_id)
         success = self.request_audio_device_change(fallback_device_id, device_name)
 
-        if success:
-            self.config_manager.update_user_setting('audio', 'input_device', fallback_device_id)
+        if not success:
+            self.logger.warning(f"Failed to switch to fallback device {fallback_device_id} for host {host_name}")
 
     def _device_matches_host(self, device_id: int, host_name: str) -> bool:
         try:

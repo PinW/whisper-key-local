@@ -82,7 +82,34 @@ Rename and change to diff-based save:
 - Update `self.config` as today
 - Call `_save_user_overrides()` instead of `save_config_to_user_settings_file()`
 
-### 3. `config_manager.py` — migration framework
+### 3. `config_manager.py` — diff baseline
+
+The diff must compare against the true "zero user input" baseline, not raw defaults. Raw defaults contain unresolved platform values (`"ctrl+win | macos: fn+ctrl"`) and pre-validation values (`audio.host: null`), which would always differ from the resolved/validated config and create false overrides.
+
+On load, build the baseline by running defaults through the same pipeline the merged config goes through:
+
+```python
+self._defaults_baseline = fix_config(_resolve_platform_values(deep_copy(default_config)))
+```
+
+`_compute_overrides` diffs against `self._defaults_baseline`, not raw defaults.
+
+### 4. `config_manager.py` — simplify `_prepare_user_config_header`
+
+Replace the current method (which dumps the full config with a big banner) with a minimal header for overlay files:
+
+```yaml
+# Whisper Key - User Settings
+# Only values here override defaults. See config.defaults.yaml for all options.
+```
+
+Just prepend this header before YAML-dumping the small overrides dict.
+
+### 5. `config_manager.py` — update `_is_user_config_empty`
+
+A comments-only starter file (no uncommented keys) parses as `None` in YAML, which currently triggers re-creation via `_ensure_user_settings_exist`. Fix: if the file exists on disk, don't re-create it regardless of parsed content. The overlay model intentionally allows near-empty files.
+
+### 6. `config_manager.py` — migration framework
 
 Add a migrations list:
 
@@ -100,7 +127,7 @@ MIGRATIONS = [
 
 Migrations are added as needed in future PRs — this PR just sets up the framework with an empty list.
 
-### 4. `config_manager.py` — diff helper
+### 7. `config_manager.py` — diff helper
 
 ```python
 def _compute_overrides(config, defaults):
@@ -117,7 +144,7 @@ def _compute_overrides(config, defaults):
     return overrides
 ```
 
-### 5. Existing user migration (one-time)
+### 8. Existing user migration (one-time)
 
 On first load after this change, existing users will have a full-copy `user_settings.yaml` without `_config_version`. Handle this:
 
@@ -150,6 +177,6 @@ AFTER (overlay):
 ## Edge Cases
 
 - **User manually adds a value equal to default**: gets stripped on next save (harmless, value doesn't change)
-- **Platform values** (`"x | macos: y"`): diff runs against pre-resolved defaults, so platform resolution still works correctly
+- **Platform values** (`"x | macos: y"`): diff runs against the resolved+validated defaults baseline, so platform-specific values won't appear as false overrides
 - **Empty user file**: deep merge returns pure defaults (already works)
 - **Corrupt user file**: existing error handling falls back to defaults (unchanged)
