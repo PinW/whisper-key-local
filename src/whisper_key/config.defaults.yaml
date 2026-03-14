@@ -8,8 +8,6 @@
 # Windows: %APPDATA%\whisperkey\user_settings.yaml
 # macOS: ~/.whisperkey/user_settings.yaml
 
-_config_version: 1
-
 whisper: # Whisper AI Model Settings
 
   # Model selection

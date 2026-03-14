@@ -23,10 +23,6 @@ STARTER_FILE = (
     "#   device: cpu\n"
 )
 
-MIGRATIONS = [
-    # (from_version, to_version, migration_function)
-]
-
 EXTENSIBLE_PATHS = {'whisper.models', 'streaming.models'}
 
 def deep_merge_config(default_config: Dict[str, Any],
@@ -162,7 +158,6 @@ class ConfigManager:
                 if user_config is None:
                     user_config = {}
 
-                self._run_migrations(user_config, default_config)
                 self._remove_unused_keys_from_user_config(user_config, default_config)
                 merged_config = deep_merge_config(default_config, user_config)
                 resolved_config = _resolve_platform_values(merged_config)
@@ -178,6 +173,7 @@ class ConfigManager:
                     self.logger.error(f"Error parsing user YAML config: {e}")
                 else:
                     self.logger.error(f"Error loading user config file: {e}")
+                print(f"   ✗ Error loading user settings, using defaults: {e}")
 
         self.logger.info(f"Using default configuration from {self.default_config_path}")
         return _resolve_platform_values(default_config)
@@ -202,34 +198,6 @@ class ConfigManager:
                 self.logger.error(f"Error loading default config file: {e}")
             raise
 
-    def _run_migrations(self, user_config, default_config):
-        user_version = user_config.get('_config_version', 0)
-        target_version = default_config.get('_config_version', 1)
-
-        if user_version >= target_version:
-            return
-
-        if user_version == 0:
-            resolved_defaults = validate_config(
-                _resolve_platform_values(copy.deepcopy(default_config)),
-                default_config,
-                self.logger,
-            )
-            trimmed = _compute_overrides(user_config, resolved_defaults)
-            user_config.clear()
-            user_config.update(trimmed)
-            user_version = 1
-            self.logger.info("Migrated v0→v1: trimmed full-copy user config to overrides only")
-
-        for from_ver, to_ver, migrate_fn in MIGRATIONS:
-            if from_ver == user_version:
-                migrate_fn(user_config)
-                user_version = to_ver
-                self.logger.info(f"Migrated v{from_ver}→v{to_ver}")
-
-        user_config['_config_version'] = target_version
-        self._write_user_config(user_config)
-
     def _write_user_config(self, user_config):
         yaml = YAML()
         yaml.preserve_quotes = True
@@ -249,10 +217,10 @@ class ConfigManager:
             config_dir = os.path.dirname(self.user_settings_path)
             display_dir = self._display_path(config_dir)
             settings_file = os.path.basename(self.user_settings_path)
-            print(f"   ✓ Local settings: {display_dir}\\{settings_file}")
+            print(f"   ✓ Local settings: {display_dir}{os.sep}{settings_file}")
 
             if self.get_voice_commands_config().get('enabled', True):
-                print(f"   ✓ Voice commands: {display_dir}\\commands.yaml")
+                print(f"   ✓ Voice commands: {display_dir}{os.sep}commands.yaml")
             else:
                 print(f"   ✓ Voice commands: disabled")
 
@@ -299,7 +267,6 @@ class ConfigManager:
         print(f"   [{keys}] to stop and execute command")
     
     def get_whisper_config(self) -> Dict[str, Any]:
-        """Get Whisper AI configuration settings"""
         return self.config['whisper'].copy()
     
     def get_hotkey_config(self) -> Dict[str, Any]:
@@ -345,19 +312,7 @@ class ConfigManager:
     def _save_user_overrides(self):
         try:
             overrides = _compute_overrides(self.config, self._defaults_baseline)
-            overrides['_config_version'] = self._defaults_baseline.get('_config_version', 1)
-
-            yaml = YAML()
-            yaml.preserve_quotes = True
-            yaml.indent(mapping=2, sequence=4, offset=2)
-
-            body = StringIO()
-            yaml.dump(_to_plain(overrides), body)
-
-            with open(self.user_settings_path, 'w', encoding='utf-8') as f:
-                f.write(USER_SETTINGS_HEADER)
-                f.write(body.getvalue())
-
+            self._write_user_config(overrides)
             self.logger.info(f"User overrides saved to {self.user_settings_path}")
         except Exception as e:
             self.logger.error(f"Error saving user overrides to {self.user_settings_path}: {e}")
