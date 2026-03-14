@@ -8,7 +8,7 @@ Strip `ConfigValidator` down to only the validations that prevent broken behavio
 
 The validator does three things that hurt the overlay config model:
 1. **Mutates values** (`audio.host: null` -> `"WASAPI"`, hotkey `.lower().strip()`) — creates diff against defaults baseline, producing false user overrides
-2. **Validates things YAML already handles** (9 boolean checks) — YAML parses `true`/`false` natively
+2. **Validates things YAML already handles** (10 boolean checks) — YAML parses `true`/`false` natively
 3. **Validates things consumers already handle** (enum checks, clipboard delays) — bad values fail with clear errors at the component that uses them
 
 ## Changes
@@ -41,8 +41,8 @@ def fix_config(config, default_config, logger):
     return config
 ```
 
-**Removed** (33 calls total):
-- 9x `_validate_boolean` — YAML parses bools natively
+**Removed** (34 calls total):
+- 10x `_validate_boolean` (`auto_paste`, `paste_preserve_clipboard`, `type_also_copy_to_clipboard`, `vad_precheck_enabled`, `vad_realtime_enabled`, `log_transcriptions`, `audio_feedback.enabled`, `transcription_complete_enabled`, `system_tray.enabled`, `voice_commands.enabled`) — YAML parses bools natively
 - 5x `_validate_enum` (`whisper.device`, `audio.channels`, 2x logging levels, `clipboard.delivery_method`) — bad values fail clearly at consumer
 - 6x `_validate_numeric_range` for clipboard delays — harmless if wrong
 - 5x `_validate_hotkey_string` — `hotkey_listener.py` already does `.lower().strip()`
@@ -70,50 +70,36 @@ def fix_config(config, default_config, logger):
 
 Update `ConfigManager` references:
 - Line 97: delete `self.validator = ConfigValidator(self.logger)`
-- Lines 150-153, 172, 214: change `self.validator.fix_config(...)` to `fix_config(..., self.logger)`
-- Remove `from .platform import IS_MACOS, keyboard as platform_keyboard` (no longer needed here after delivery_method move)
+- Lines 150, 172, 214: change `self.validator.fix_config(...)` to `fix_config(..., self.logger)`
+- Simplify import: `from .platform import IS_MACOS, keyboard as platform_keyboard` → `from .platform import IS_MACOS`
 
-### 2. `state_manager.py` — absorb `audio.host: null` -> platform default
+### 2. `state_manager.py` — no changes needed for `audio.host`
 
-`_initialize_audio_host()` (line 465) already resolves `null` to WASAPI via `_resolve_audio_host` -> `_preferred_platform_host`. The validator's `_validate_audio_host` was doing the same thing redundantly. No change needed here — removing the validator's version is sufficient. The state_manager already handles `null` correctly:
+`_initialize_audio_host()` already resolves `null` to WASAPI via `_resolve_audio_host` → `_preferred_platform_host`. The validator's `_validate_audio_host` was doing the same thing redundantly. Removing the validator's version is sufficient.
 
-- `configured_host = self.config_manager.get_setting('audio', 'host')` returns `None`
-- `_resolve_audio_host(None, available_hosts)` falls through to `_preferred_platform_host()` which returns `'WASAPI'` on Windows
-- `update_audio_host(resolved_host)` persists it
-
-The validator was mutating config before this code ever ran, creating a false override in the baseline. Removing it means `audio.host` stays `null` in the defaults baseline, and the state_manager's resolution (which writes back the real host) correctly shows as a user override.
+The auto-persist of fallback device IDs was already removed in a prior commit on this branch.
 
 ### 3. `clipboard_manager.py` — absorb `validate_delivery_method()`
 
-In `ClipboardManager.__init__` (line 19), after setting `self.delivery_method`, add the platform validation:
+In `ClipboardManager.__init__`, after setting `self.delivery_method`, add the platform validation:
 
 ```python
 self.delivery_method = keyboard.validate_delivery_method(delivery_method)
 ```
 
-This replaces the validator's call at config_manager.py lines 464-467. The `from .platform import keyboard` import already exists at line 7.
-
-### 4. `config_manager.py` — remove platform keyboard import
-
-After moving `validate_delivery_method` to clipboard_manager.py, the import at line 11 can be simplified:
-
-```python
-from .platform import IS_MACOS  # remove keyboard as platform_keyboard
-```
-
-`IS_MACOS` is still used by `_resolve_platform_values` and `_display_path`.
+This replaces the validator's call at config_manager.py line 464. The `from .platform import keyboard` import already exists in clipboard_manager.py.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `config_manager.py` | Replace `ConfigValidator` class with `fix_config()` function, remove platform keyboard import |
-| `clipboard_manager.py` | Add `validate_delivery_method()` call in `__init__` (line 19) |
+| `config_manager.py` | Replace `ConfigValidator` class with `fix_config()` function, simplify platform import |
+| `clipboard_manager.py` | Add `validate_delivery_method()` call in `__init__` |
 
 2 files. `state_manager.py` and `audio_recorder.py` unchanged.
 
 ## Impact on Overlay Config
 
-Before: the defaults baseline runs through `fix_config` which mutates `audio.host: null` -> `"WASAPI"` and lowercases hotkeys. These mutations mean the baseline differs from raw defaults, and any user config that matches the mutation also appears as a "no difference" — but if the mutation is removed later, old user files break.
+Before: the defaults baseline runs through `fix_config` which mutates `audio.host: null` → `"WASAPI"` and lowercases hotkeys. These mutations mean the baseline differs from raw defaults, and any user config that matches the mutation also appears as a "no difference" — but if the mutation is removed later, old user files break.
 
 After: `fix_config` only resets bad numeric ranges and resolves hotkey conflicts. No mutations that alter default-matching values. The defaults baseline stays clean, and `_compute_overrides` produces accurate diffs.
