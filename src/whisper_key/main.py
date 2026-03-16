@@ -219,7 +219,7 @@ def main():
         log_config = config_manager.get_logging_config()
         log_transcriptions = log_config.get('log_transcriptions', False)
 
-        detect_hardware(whisper_config['device'])
+        gpu_class, gpu_name, ct2_works = detect_hardware(whisper_config['device'])
 
 
         model_registry = ModelRegistry(

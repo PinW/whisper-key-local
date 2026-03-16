@@ -184,13 +184,17 @@ subprocess.run(
 ## Implementation Plan
 
 1. Refactor detection to return results
-- [ ] Make `detect_and_print()` return `(gpu_class, gpu_name, ct2_works)` tuple
-- [ ] Update `hardware_detection.py` wrapper to pass through the return value
-- [ ] macOS stub returns `(None, None, False)`
-- [ ] Update `main.py` to capture the result
+- [x] Make `detect_and_print()` return `(gpu_class, gpu_name, ct2_works)` tuple
+  - ✅ Returns `(None, None, False)` when no GPU detected
+  - ✅ Quiet GPU test when device != cuda (for onboarding auto-detection)
+  - ✅ Full status printing preserved when device == cuda
+- [x] Update `hardware_detection.py` wrapper to pass through the return value
+- [x] macOS stub returns `(None, None, False)`
+- [x] Update `main.py` to capture the result
 
 2. Add onboarding config
-- [ ] Add `onboarding` section to `config.defaults.yaml`
+- [x] Add `onboarding` section to `config.defaults.yaml`
+  - ✅ `gpu: pending` and `gpu_class: null` defaults added
 
 3. Create onboarding module
 - [ ] Create `src/whisper_key/onboarding.py`
