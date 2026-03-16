@@ -4,9 +4,15 @@ As a *user* I want **automatic update checks on startup** so I always run the la
 
 ## Background
 
-The pyapp binary wraps a pip-installed package. Updates require running `whisper-key.exe self update` (pip upgrade) — but users don't know when a new version is available. The app should check PyPI on startup and offer to update before heavy initialization (model loading, audio, tray setup).
+Users don't know when a new version is available. The app should check PyPI on startup and offer to update before heavy initialization (model loading, audio, tray setup). Works for both pyapp binary and regular pip installs.
 
-Dev versions (`X.Y.Z-dev`) skip the check entirely — developers manage their own installs.
+| Install method | Update mechanism | Restart |
+|---|---|---|
+| pyapp binary | pip upgrade (same as `self update`) | exit, user relaunches |
+| `pip install` | pip upgrade | exit, user relaunches |
+| source (`whisper-key.py`) | notice only ("git pull") | no action |
+
+Dev versions (`X.Y.Z-dev`) and `--test` mode show a notice only — no prompt, no blocking.
 
 ## Current Startup Flow
 
@@ -50,10 +56,7 @@ main() →
 - [ ] Implement `self update` execution and app restart
 
 3. Wire into main.py
-- [ ] Call `check_for_updates()` after ConfigManager init, before component setup
-- [ ] Skip when version ends in `-dev` (running from source)
-- [ ] Skip when editable install detected (dev testing via pyapp)
-- [ ] Skip when `--test` flag is set
+- [ ] Call `check_for_updates(config_manager, test_mode=args.test)` after ConfigManager init, before component setup
 
 4. Test
 - [ ] Build pyapp exe and test update prompt flow
@@ -78,33 +81,31 @@ Query `https://pypi.org/pypi/whisper-key-local/json` — returns JSON with `info
 
 ```python
 # Core function called from main.py
-def check_for_updates(config_manager):
+def check_for_updates(config_manager, test_mode=False):
     version = get_version()
+    is_dev = version.endswith("-dev") or test_mode
+
     latest = fetch_latest_version()  # returns None on failure
     if not latest or not is_newer(latest, version):
         return
 
-    if version.endswith("-dev") or is_editable_install():
+    if is_dev:
         print(f"   ** Update available: {version} → {latest} (git pull to update)")
         return
 
     update_config = config_manager.get_update_config()
-    update_config = config_manager.get_update_config()
 
     if update_config['mode'] == 'auto':
         run_update()
-        restart_app()
         return
 
     # mode == 'prompt'
     choice = prompt_update(version, latest)
     if choice == UPDATE_NOW:
         run_update()
-        restart_app()
     elif choice == ALWAYS_UPDATE:
         config_manager.update_user_setting('update', 'mode', 'auto')
         run_update()
-        restart_app()
 ```
 
 ### Version comparison
@@ -135,15 +136,13 @@ Use `packaging.version.Version` (already a transitive dependency via pip/setupto
 
 ```python
 def run_update():
-    print("Updating...")
+    print("   Updating...")
     subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "whisper-key-local"])
-
-def restart_app():
-    print("Restarting...")
-    os.execv(sys.argv[0], sys.argv)
+    print("   Update installed. Please restart Whisper Key.")
+    sys.exit(0)
 ```
 
-`os.execv` replaces the current process with a fresh one — no double-loading.
+Exits after update — avoids `os.execv` console flicker on Windows. User relaunches.
 
 ### Scope
 
@@ -157,10 +156,9 @@ def restart_app():
 ## Success Criteria
 
 - [ ] Update prompt appears when PyPI has newer version
-- [ ] "Update now" downloads update and restarts app with new version
-- [ ] "Always keep up-to-date" sets mode to auto, updates, and restarts
+- [ ] "Update now" downloads update and exits for user to relaunch
+- [ ] "Always keep up-to-date" sets mode to auto, updates, and exits
 - [ ] "Not now" skips and continues startup normally
 - [ ] Auto mode updates silently without prompt on subsequent launches
-- [ ] Dev versions and editable installs show non-blocking notice instead of prompt
+- [ ] Dev versions and `--test` mode show non-blocking notice instead of prompt
 - [ ] Offline / timeout doesn't block or delay startup noticeably (≤3s)
-- [ ] `--test` flag skips check
