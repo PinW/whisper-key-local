@@ -30,7 +30,7 @@ On first launch, Whisper Key detects your GPU and offers to install the required
 
 ## Manual Setup
 
-If you prefer to install GPU dependencies yourself, or need to troubleshoot, follow the instructions below.
+If you prefer to install GPU dependencies yourself, have an [AMD RDNA 1 GPU](#amd--rdna-1-rocm-62), or need to troubleshoot, follow the instructions below.
 
 To enable GPU mode, set these in your [user settings](../README.md#️-configuration):
 ```yaml
