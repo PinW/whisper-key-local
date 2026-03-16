@@ -12,89 +12,21 @@ Add `onboarding_complete: false` at the end of `config.defaults.yaml`. When the 
 
 Uses the `terminal_ui.prompt_choice()` system (already built for permissions prompt).
 
-### 1. Welcome + Model Selection
+### 1. Engine + Model Selection
 
-```
-┌─────────────────────────────────────────────────────────┐
-│ Welcome to Whisper Key! Let's get you set up...         │
-│                                                         │
-│ [1] tiny (fastest, least accurate, ~75MB)               │
-│ [2] base (good balance, ~150MB)                         │
-│ [3] small (better accuracy, ~500MB)                     │
-│ [4] medium (high accuracy, ~1.5GB)                      │
-│ [5] large-v3 (best accuracy, ~3GB)                      │
-└─────────────────────────────────────────────────────────┘
-```
+**TODO**: This step will be significantly more complex. Engine selection depends on user hardware and platform:
 
-Config: `whisper.model`
+- **whisper.cpp** — Apple Metal (macOS GPU acceleration)
+- **Parakeet (NVIDIA NeMo)** — NVIDIA/AMD GPUs, English only, fastest
+- **faster-whisper + CTranslate2** — CPU fallback, multilingual, current default
 
-### 2. Processing Device (CPU vs GPU)
+Model options depend on the selected engine. Hardware detection (from GPU onboarding) informs which engines are available and recommended.
 
-Detect NVIDIA GPU availability first, then present options:
+Config: engine selection (new), `whisper.model`
 
-**If NVIDIA GPU detected:**
-```
-┌─────────────────────────────────────────────────────────┐
-│ Where should Whisper run?                               │
-│                                                         │
-│ [1] GPU - NVIDIA GeForce RTX 3080 (Recommended)         │
-│     Faster transcription, requires CUDA 12              │
-│ [2] CPU                                                 │
-│     Works everywhere, slower but reliable               │
-└─────────────────────────────────────────────────────────┘
-```
+### 2. GPU Setup
 
-**If no GPU detected:**
-```
-┌─────────────────────────────────────────────────────────┐
-│ No NVIDIA GPU detected. Using CPU for processing.       │
-│                                                         │
-│ Press Enter to continue...                              │
-└─────────────────────────────────────────────────────────┘
-```
-
-Config: `whisper.device` (cpu/cuda), `whisper.compute_type` (auto-set: int8 for CPU, float16 for GPU)
-
-**GPU Detection:**
-```python
-def detect_nvidia_gpu():
-    try:
-        import subprocess
-        result = subprocess.run(
-            ['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'],
-            capture_output=True, text=True, timeout=5
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            return result.stdout.strip().split('\n')[0]  # First GPU name
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-    return None
-```
-
-**CUDA Availability Check:**
-
-If user selects GPU, verify CUDA is usable:
-```python
-def check_cuda_available():
-    try:
-        import torch
-        return torch.cuda.is_available()
-    except ImportError:
-        return False
-```
-
-If CUDA not available after GPU selection, show:
-```
-┌─────────────────────────────────────────────────────────┐
-│ CUDA not ready. GPU detected but CUDA 12 not installed. │
-│                                                         │
-│ To use GPU acceleration:                                │
-│   winget install Nvidia.CUDA --version 12.9             │
-│                                                         │
-│ [1] Continue with CPU for now                           │
-│ [2] Exit and install CUDA first                         │
-└─────────────────────────────────────────────────────────┘
-```
+See GPU onboarding plan (separate). Handles GPU detection, correct CT2 wheel installation, and device configuration for both NVIDIA and AMD.
 
 ### 3. Audio Device Confirmation
 
@@ -199,8 +131,7 @@ main.py
   └── if not config.onboarding_complete:
         └── onboarding.run(config_manager)
               ├── prompt model selection → save
-              ├── detect GPU → prompt device selection → save
-              │     └── if GPU selected: verify CUDA → fallback to CPU if needed
+              ├── GPU onboarding (see separate plan)
               ├── prompt audio device → save
               ├── prompt system tray → save
               ├── prompt auto-paste → save
@@ -214,8 +145,7 @@ main.py
 - **Ctrl+C during onboarding**: Exit cleanly, don't save partial config
 - **No audio devices**: Show error, suggest checking hardware
 - **macOS permission denied**: Handled by existing `permissions.py` flow
-- **GPU detected but CUDA missing**: Offer fallback to CPU with install instructions
-- **nvidia-smi not in PATH**: Treat as no GPU detected, default to CPU
+- **GPU edge cases**: See GPU onboarding plan
 
 ## Future Enhancements
 
