@@ -213,11 +213,18 @@ subprocess.run(
 - [x] Define `get_ct2_wheel_url(gpu_class)` for use by both onboarding and update_checker
 
 4. Define GPU package lists
-- [ ] Research and pin exact NVIDIA CUDA pip packages + versions
-- [ ] Research and pin exact AMD ROCm pip packages + versions + URLs
-- [ ] Research and pin CT2 ROCm wheel URLs for RDNA2+ and RDNA1
-- [ ] Verify all wheels exist for Python 3.12 (pyapp's Python version)
-- [ ] Document download and installed sizes per GPU class
+- [x] Research and pin exact NVIDIA CUDA pip packages + versions
+  - ✅ nvidia-cuda-runtime-cu12, nvidia-cublas-cu12, nvidia-cudnn-cu12
+- [x] Research and pin exact AMD ROCm pip packages + versions + URLs
+  - ✅ ROCm 7.2: direct URLs from repo.radeon.com/rocm/windows/rocm-rel-7.2/
+  - ✅ ROCm 6.2: direct URLs from repo.radeon.com/rocm/windows/rocm-rel-6.2/
+- [x] Research and pin CT2 ROCm wheel URLs for RDNA2+ and RDNA1
+  - ✅ RDNA2+: PinW/ctranslate2-rocm per Python version (cp311/cp312/cp313)
+  - ✅ RDNA1: PinW/ctranslate2-rocm-rdna1 per Python version
+  - ⚠️ **ACTION NEEDED:** Upload individual wheel files to these repos for cp311, cp312, cp313
+- [ ] Verify all wheels exist for Python 3.11, 3.12, 3.13
+- [x] Document download and installed sizes per GPU class
+  - ✅ NVIDIA: ~2 GB, AMD: ~3 GB
 
 5. Wire into main.py
 - [x] Call `onboarding.check_gpu()` after `detect_and_print()`, before component setup

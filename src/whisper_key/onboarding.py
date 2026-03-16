@@ -11,32 +11,35 @@ BOLD_GREEN = "\x1b[1;32m"
 BOLD_RED = "\x1b[1;31m"
 RESET = "\x1b[0m"
 
+_PY_TAG = f"cp{sys.version_info.major}{sys.version_info.minor}"
+
 NVIDIA_PACKAGES = [
     "nvidia-cuda-runtime-cu12",
     "nvidia-cublas-cu12",
     "nvidia-cudnn-cu12",
 ]
 
-ROCM_72_INDEX = "https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/"
-ROCM_62_INDEX = "https://repo.radeon.com/rocm/manylinux/rocm-rel-6.2/"
+_ROCM_BASE = "https://repo.radeon.com/rocm/windows/rocm-rel-{ver}"
+_CT2_RDNA2_BASE = "https://github.com/PinW/ctranslate2-rocm/releases/download/v4.7.1-rocm72"
+_CT2_RDNA1_BASE = "https://github.com/PinW/ctranslate2-rocm-rdna1/releases/download/v4.7.1-rocm62-gfx1010"
 
 ROCM_72_PACKAGES = [
-    "rocm-sdk-core",
+    f"{_ROCM_BASE.format(ver='7.2')}/rocm_sdk_core-7.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_BASE.format(ver='7.2')}/rocm_sdk_devel-7.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_BASE.format(ver='7.2')}/rocm_sdk_libraries_custom-7.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_BASE.format(ver='7.2')}/rocm-7.2.0.dev0.tar.gz",
 ]
 
 ROCM_62_PACKAGES = [
-    "rocm-sdk-core",
+    f"{_ROCM_BASE.format(ver='6.2')}/rocm_sdk_core-6.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_BASE.format(ver='6.2')}/rocm_sdk_devel-6.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_BASE.format(ver='6.2')}/rocm_sdk_libraries_custom-6.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_BASE.format(ver='6.2')}/rocm-6.2.0.dev0.tar.gz",
 ]
 
 CT2_WHEEL_URLS = {
-    'amd_rdna2+': "https://github.com/PinW/ctranslate2-rocm/releases/download/v4.5.0.rocm72/ctranslate2-4.5.0+rocm72-cp312-cp312-win_amd64.whl",
-    'amd_rdna1': "https://github.com/PinW/ctranslate2-rocm/releases/download/v4.5.0.rocm62/ctranslate2-4.5.0+rocm62-cp312-cp312-win_amd64.whl",
-}
-
-GPU_CLASS_LABELS = {
-    'nvidia': 'NVIDIA CUDA',
-    'amd_rdna2+': 'AMD ROCm',
-    'amd_rdna1': 'AMD ROCm',
+    'amd_rdna2+': f"{_CT2_RDNA2_BASE}/ctranslate2-4.7.1+rocm72-{_PY_TAG}-{_PY_TAG}-win_amd64.whl",
+    'amd_rdna1': f"{_CT2_RDNA1_BASE}/ctranslate2-4.7.1+rocm62.gfx1010-{_PY_TAG}-{_PY_TAG}-win_amd64.whl",
 }
 
 DOWNLOAD_SIZES = {
@@ -70,11 +73,11 @@ def _prompt_and_install(gpu_class, gpu_name, config_manager):
     download_size = DOWNLOAD_SIZES.get(gpu_class, '~2 GB')
 
     choice = prompt_choice(
-        f"GPU acceleration available",
+        f"{gpu_name} — GPU acceleration available",
         [
             (
                 "Install GPU acceleration",
-                f"Your {gpu_name} can speed up transcription significantly"
+                f"One-time download ({download_size}) for {gpu_name}"
             ),
             (
                 "Use CPU for now",
@@ -96,8 +99,6 @@ def _prompt_and_install(gpu_class, gpu_name, config_manager):
     elif choice == NEVER_ASK:
         config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
         config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
-    else:
-        pass
 
 
 def _install_gpu_packages(gpu_class, gpu_name, config_manager):
@@ -109,12 +110,14 @@ def _install_gpu_packages(gpu_class, gpu_name, config_manager):
         success = _pip_install(NVIDIA_PACKAGES)
     elif gpu_class in ('amd_rdna2+', 'amd_rdna1'):
         packages = ROCM_72_PACKAGES if gpu_class == 'amd_rdna2+' else ROCM_62_PACKAGES
-        index_url = ROCM_72_INDEX if gpu_class == 'amd_rdna2+' else ROCM_62_INDEX
-        success = _pip_install(packages, extra_index_url=index_url)
+        success = _pip_install(packages)
         if success:
             ct2_url = get_ct2_wheel_url(gpu_class)
             if ct2_url:
                 success = _pip_install_wheel(ct2_url)
+            else:
+                print(f"\n{BOLD_RED}No CTranslate2 ROCm wheel available for Python {_PY_TAG}.{RESET}")
+                success = False
 
     if not success:
         print(f"\n{BOLD_RED}GPU setup failed. You'll be prompted again next launch.{RESET}\n")
@@ -129,17 +132,15 @@ def _install_gpu_packages(gpu_class, gpu_name, config_manager):
     sys.exit(0)
 
 
-def _pip_install(packages, extra_index_url=None):
-    cmd = [sys.executable, "-m", "pip", "install"] + packages
-    if extra_index_url:
-        cmd.extend(["--extra-index-url", extra_index_url])
-    print(f"   Downloading runtime libraries... (this may take a few minutes)")
+def _pip_install(packages):
+    cmd = [sys.executable, "-m", "pip", "install", "--no-cache-dir"] + packages
+    print("   Downloading runtime libraries... (this may take a few minutes)")
     result = subprocess.run(cmd)
     return result.returncode == 0
 
 
 def _pip_install_wheel(url):
-    print(f"   Installing GPU-optimized CTranslate2...")
+    print("   Installing GPU-optimized CTranslate2...")
     result = subprocess.run(
         [sys.executable, "-m", "pip", "install", "--force-reinstall", "--no-deps", url]
     )
