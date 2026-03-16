@@ -1,3 +1,5 @@
+import ctypes
+import glob
 import importlib.metadata
 import importlib.util
 import logging
@@ -24,10 +26,14 @@ def detect_and_print(configured_device):
         runtime_version = _find_cuda_runtime()
         if runtime_version:
             _status(f"   ✓ NVIDIA CUDA {runtime_version} runtime available")
+        else:
+            _status("   ✗ NVIDIA CUDA runtime not found", 'warning')
     elif gpu_vendor == 'amd':
         runtime_version = _find_rocm_runtime()
         if runtime_version:
-            _status(f"   ✓ AMD ROCm HIP {runtime_version} runtime available")
+            _status(f"   ✓ AMD HIP {runtime_version} runtime available")
+        else:
+            _status("   ✗ AMD HIP runtime not found", 'warning')
 
     ct2_variant = _detect_ct2_variant()
     if ct2_variant != 'not_installed':
@@ -39,20 +45,16 @@ def detect_and_print(configured_device):
 
     if configured_device == 'cuda' and ct2_variant != 'not_installed':
         if ct2_variant == 'rocm' and gpu_vendor == 'nvidia':
-            _status("   ✗ ctranslate2 is built for ROCm (AMD)", 'warning')
+            _status("   ✗ CTranslate2 is built for ROCm (AMD)", 'warning')
         elif ct2_variant == 'cuda' and gpu_vendor == 'amd':
-            _status("   ✗ ctranslate2 is built for CUDA (NVIDIA)", 'warning')
-        elif not _test_ct2_gpu():
-            if gpu_vendor == 'nvidia':
-                if runtime_version:
-                    _status("   ✗ CUDA libraries found but failed to initialize", 'warning')
-                else:
-                    _status("   ✗ CUDA Toolkit 12 not found", 'warning')
-            else:
-                if runtime_version:
-                    _status("   ✗ ROCm libraries found but failed to initialize", 'warning')
-                else:
-                    _status("   ✗ ROCm SDK not found", 'warning')
+            _status("   ✗ CTranslate2 is built for CUDA (NVIDIA)", 'warning')
+        elif not runtime_version:
+            runtime_name = 'CUDA' if gpu_vendor == 'nvidia' else 'HIP'
+            _status(f"   ✗ {runtime_name} runtime required for GPU acceleration", 'warning')
+        elif not _check_runtime_compatibility(ct2_variant, runtime_version):
+            pass
+        elif not _test_ct2_gpu(ct2_variant):
+            _status("   ✗ GPU libraries found but failed to initialize", 'warning')
         else:
             _status("   ✓ GPU acceleration available")
 
@@ -103,45 +105,77 @@ def _detect_amd_gpu() -> str | None:
 
 
 def _find_cuda_runtime() -> str | None:
+    search_dirs = []
+
     cuda_path = os.environ.get('CUDA_PATH')
-    if cuda_path and os.path.isfile(os.path.join(cuda_path, 'bin', 'cublas64_12.dll')):
-        return '12'
+    if cuda_path:
+        search_dirs.append(os.path.join(cuda_path, 'bin'))
 
     for sp in site.getsitepackages():
-        cublas_bin = os.path.join(sp, 'nvidia', 'cublas', 'bin')
-        if os.path.isdir(cublas_bin) and any(pathlib.Path(cublas_bin).glob('cublas64_12*')):
-            return '12'
+        search_dirs.append(os.path.join(sp, 'nvidia', 'cuda_runtime', 'bin'))
 
-    for d in os.environ.get('PATH', '').split(os.pathsep):
-        if os.path.isfile(os.path.join(d, 'cublas64_12.dll')):
-            return '12'
+    search_dirs.extend(os.environ.get('PATH', '').split(os.pathsep))
+
+    for search_dir in search_dirs:
+        for dll_path in glob.glob(os.path.join(search_dir, 'cudart64_*.dll')):
+            version = _get_cuda_version_from_dll(dll_path)
+            if version:
+                return version
 
     return None
 
 
+def _get_cuda_version_from_dll(dll_path: str) -> str | None:
+    try:
+        cudart = ctypes.CDLL(dll_path)
+        version = ctypes.c_int(0)
+        if cudart.cudaRuntimeGetVersion(ctypes.byref(version)) == 0:
+            v = version.value
+            major = v // 1000
+            minor = (v % 1000) // 10
+            return f"{major}.{minor}"
+    except OSError:
+        pass
+    return None
+
+
 def _find_rocm_runtime() -> str | None:
-    def _hip_version() -> str:
-        try:
-            version = importlib.metadata.version('rocm-sdk-core')
-            return '.'.join(version.split('.')[:2])
-        except importlib.metadata.PackageNotFoundError:
-            return '7'
+    search_dirs = []
 
     for var in ('HIP_PATH', 'HIP_DIR'):
         hip_path = os.environ.get(var)
-        if hip_path and os.path.isfile(os.path.join(hip_path, 'bin', 'amdhip64_7.dll')):
-            return _hip_version()
+        if hip_path:
+            search_dirs.append(os.path.join(hip_path, 'bin'))
 
     spec = importlib.util.find_spec('_rocm_sdk_core')
     if spec and spec.submodule_search_locations:
-        core_bin = os.path.join(spec.submodule_search_locations[0], 'bin')
-        if os.path.isfile(os.path.join(core_bin, 'amdhip64_7.dll')):
-            return _hip_version()
+        search_dirs.append(os.path.join(spec.submodule_search_locations[0], 'bin'))
 
-    for d in os.environ.get('PATH', '').split(os.pathsep):
-        if os.path.isfile(os.path.join(d, 'amdhip64_7.dll')):
-            return _hip_version()
+    search_dirs.append(r'C:\Windows\System32')
+    search_dirs.extend(os.environ.get('PATH', '').split(os.pathsep))
 
+    for search_dir in search_dirs:
+        for dll_path in glob.glob(os.path.join(search_dir, 'amdhip64_*.dll')):
+            version = _get_hip_version_from_dll(dll_path)
+            if version:
+                return version
+
+    return None
+
+
+def _get_hip_version_from_dll(dll_path: str) -> str | None:
+    try:
+        hip = ctypes.CDLL(dll_path)
+        hip.hipRuntimeGetVersion.restype = ctypes.c_int
+        hip.hipRuntimeGetVersion.argtypes = [ctypes.POINTER(ctypes.c_int)]
+        version = ctypes.c_int(0)
+        if hip.hipRuntimeGetVersion(ctypes.byref(version)) == 0:
+            v = version.value
+            major = v // 10_000_000
+            minor = (v % 10_000_000) // 100_000
+            return f"{major}.{minor}"
+    except OSError:
+        pass
     return None
 
 
@@ -244,10 +278,34 @@ def _detect_ct2_version() -> tuple[str, bool]:
         return 'unknown', False
 
 
-def _test_ct2_gpu() -> bool:
+_CT2_REQUIRED_VERSIONS = {
+    'cuda': 12,
+    'rocm': 7,
+}
+
+
+def _check_runtime_compatibility(ct2_variant: str, runtime_version: str) -> bool:
+    required_major = _CT2_REQUIRED_VERSIONS.get(ct2_variant)
+    if required_major is None:
+        return True
+
+    actual_major = int(runtime_version.split('.')[0])
+    if actual_major != required_major:
+        runtime_name = 'CUDA' if ct2_variant == 'cuda' else 'HIP'
+        _status(
+            f"   ✗ CTranslate2 requires {runtime_name} {required_major}, "
+            f"found {runtime_name} {runtime_version}",
+            'warning'
+        )
+        return False
+    return True
+
+
+def _test_ct2_gpu(ct2_variant: str) -> bool:
     try:
         import ctranslate2
-        supported = ctranslate2.get_supported_compute_types('cuda')
+        device = 'cuda'
+        supported = ctranslate2.get_supported_compute_types(device)
         return len(supported) > 0
     except Exception:
         return False
