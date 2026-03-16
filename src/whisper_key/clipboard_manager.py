@@ -16,7 +16,7 @@ class ClipboardManager:
                  macos_key_simulation_delay):
         self.logger = logging.getLogger(__name__)
         self.auto_paste = auto_paste
-        self.delivery_method = delivery_method
+        self.delivery_method = keyboard.validate_delivery_method(delivery_method)
         self.paste_hotkey = paste_hotkey
         self.paste_keys = parse_hotkey(paste_hotkey)
         self.paste_pre_paste_delay = paste_pre_paste_delay

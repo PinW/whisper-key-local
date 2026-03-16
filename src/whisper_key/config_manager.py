@@ -1,14 +1,29 @@
 import os
+import copy
 import logging
-import platform
-import shutil
 from typing import Dict, Any, Optional
 from io import StringIO
 
 from ruamel.yaml import YAML
 
-from .utils import resolve_asset_path, beautify_hotkey, get_user_app_data_path
-from .platform import IS_MACOS, keyboard as platform_keyboard
+from .utils import resolve_asset_path, beautify_hotkey, get_user_app_data_path, get_version
+from .platform import IS_MACOS
+
+REPO_URL = "https://github.com/PinW/whisper-key-local"
+
+
+def _build_settings_header():
+    version = get_version()
+    ref = "master" if version.endswith("-dev") else f"v{version}"
+    return (
+        f"# Whisper Key {version} - User Settings\n"
+        "#\n"
+        f"# Available settings: {REPO_URL}/tree/{ref}?tab=readme-ov-file#%EF%B8%8F-configuration\n"
+        f"# Defaults reference: {REPO_URL}/blob/{ref}/src/whisper_key/config.defaults.yaml\n"
+        "\n"
+    )
+
+EXTENSIBLE_PATHS = {'whisper.models', 'streaming.models'}
 
 def deep_merge_config(default_config: Dict[str, Any],
                       user_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -22,6 +37,31 @@ def deep_merge_config(default_config: Dict[str, Any],
             result[key] = value
 
     return result
+
+
+def _to_plain(obj):
+    if isinstance(obj, dict):
+        return {k: _to_plain(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_to_plain(v) for v in obj]
+    return obj
+
+
+def _compute_overrides(config, defaults, path_prefix=''):
+    overrides = {}
+    for key, value in config.items():
+        current_path = f"{path_prefix}.{key}" if path_prefix else key
+        if key not in defaults:
+            if current_path in EXTENSIBLE_PATHS or path_prefix in EXTENSIBLE_PATHS:
+                overrides[key] = value
+            continue
+        if isinstance(value, dict) and isinstance(defaults[key], dict):
+            nested = _compute_overrides(value, defaults[key], current_path)
+            if nested:
+                overrides[key] = nested
+        elif value != defaults[key]:
+            overrides[key] = value
+    return overrides
 
 
 def _parse_platform_value(value: str) -> str:
@@ -49,7 +89,6 @@ class ConfigManager:
         self.use_user_settings = use_user_settings
         self.config = {}
         self.logger = logging.getLogger(__name__)
-        self.validator = ConfigValidator(self.logger)
         
         self.config_path = self._determine_config_path(use_user_settings, config_path)
         
@@ -67,34 +106,21 @@ class ConfigManager:
             return config_path
     
     
-    def _is_user_config_empty(self) -> bool:
-        try:
-            with open(self.user_settings_path, 'r', encoding='utf-8') as f:
-                yaml = YAML()
-                content = yaml.load(f)
-                return content is None or len(content) == 0
-        except:
-            return True
-    
     def _ensure_user_settings_exist(self):
         user_settings_dir = os.path.dirname(self.user_settings_path)
-        
+
         if not os.path.exists(user_settings_dir):
             os.makedirs(user_settings_dir, exist_ok=True)
-        
-        if not os.path.exists(self.user_settings_path) or self._is_user_config_empty():
-            if os.path.exists(self.default_config_path):
-                shutil.copy2(self.default_config_path, self.user_settings_path)
-                self.logger.info(f"Created user settings from {self.default_config_path}")
-            else:
-                error_msg = f"Default config {self.default_config_path} not found - cannot create user settings"
-                self.logger.error(error_msg)
-                raise FileNotFoundError(error_msg)
+
+        if not os.path.exists(self.user_settings_path):
+            with open(self.user_settings_path, 'w', encoding='utf-8') as f:
+                f.write(_build_settings_header())
+            self.logger.info(f"Created user settings at {self.user_settings_path}")
     
     def _remove_unused_keys_from_user_config(self, user_config: Dict[str, Any], default_config: Dict[str, Any]):
-        
+
         sections_to_remove = []
-        
+
         for section, values in user_config.items():
             if section not in default_config:
                 self.logger.info(f"Removed invalid config section: {section}")
@@ -102,20 +128,25 @@ class ConfigManager:
             elif isinstance(values, dict) and isinstance(default_config[section], dict):
                 keys_to_remove = []
                 for key in values.keys():
-                    if key not in default_config[section]:
+                    if key not in default_config[section] and f"{section}.{key}" not in EXTENSIBLE_PATHS:
                         self.logger.info(f"Removed invalid config key: {section}.{key}")
                         keys_to_remove.append(key)
-                
+
                 for key in keys_to_remove:
                     del values[key]
-        
+
         for section in sections_to_remove:
             del user_config[section]
     
     def _load_config(self):
 
         default_config = self._load_default_config()
-        
+        self._defaults_baseline = validate_config(
+            _resolve_platform_values(copy.deepcopy(default_config)),
+            default_config,
+            self.logger,
+        )
+
         if self.use_user_settings:
             self._ensure_user_settings_exist()
 
@@ -123,25 +154,27 @@ class ConfigManager:
                 yaml = YAML()
                 with open(self.config_path, 'r', encoding='utf-8') as file:
                     user_config = yaml.load(file)
-                
+
+                if user_config is None:
+                    user_config = {}
+
                 self._remove_unused_keys_from_user_config(user_config, default_config)
                 merged_config = deep_merge_config(default_config, user_config)
                 resolved_config = _resolve_platform_values(merged_config)
                 self.logger.info(f"Loaded user configuration from {self.config_path}")
 
-                validated_config = self.validator.fix_config(resolved_config, default_config)
+                validated_config = validate_config(resolved_config, default_config, self.logger)
                 self.config = validated_config
-                
-                self.save_config_to_user_settings_file()
 
                 return validated_config
-                    
+
             except Exception as e:
                 if "YAML" in str(e):
                     self.logger.error(f"Error parsing user YAML config: {e}")
                 else:
                     self.logger.error(f"Error loading user config file: {e}")
-                
+                print(f"   ✗ Error loading user settings, using defaults: {e}")
+
         self.logger.info(f"Using default configuration from {self.default_config_path}")
         return _resolve_platform_values(default_config)
     
@@ -164,7 +197,19 @@ class ConfigManager:
             else:
                 self.logger.error(f"Error loading default config file: {e}")
             raise
-    
+
+    def _write_user_config(self, user_config):
+        yaml = YAML()
+        yaml.preserve_quotes = True
+        yaml.indent(mapping=2, sequence=4, offset=2)
+
+        body = StringIO()
+        yaml.dump(_to_plain(user_config), body)
+
+        with open(self.user_settings_path, 'w', encoding='utf-8') as f:
+            f.write(_build_settings_header())
+            f.write(body.getvalue())
+
     def _print_config_status(self):
         print("📁 Loading configuration...")
 
@@ -172,10 +217,10 @@ class ConfigManager:
             config_dir = os.path.dirname(self.user_settings_path)
             display_dir = self._display_path(config_dir)
             settings_file = os.path.basename(self.user_settings_path)
-            print(f"   ✓ Local settings: {display_dir}\\{settings_file}")
+            print(f"   ✓ Local settings: {display_dir}{os.sep}{settings_file}")
 
             if self.get_voice_commands_config().get('enabled', True):
-                print(f"   ✓ Voice commands: {display_dir}\\commands.yaml")
+                print(f"   ✓ Voice commands: {display_dir}{os.sep}commands.yaml")
             else:
                 print(f"   ✓ Voice commands: disabled")
 
@@ -222,7 +267,6 @@ class ConfigManager:
         print(f"   [{keys}] to stop and execute command")
     
     def get_whisper_config(self) -> Dict[str, Any]:
-        """Get Whisper AI configuration settings"""
         return self.config['whisper'].copy()
     
     def get_hotkey_config(self) -> Dict[str, Any]:
@@ -265,46 +309,13 @@ class ConfigManager:
     def get_setting(self, section: str, key: str) -> Any:
         return self.config[section][key]
     
-    def _prepare_user_config_header(self, config_data):
-        yaml = YAML()
-        yaml.preserve_quotes = True
-        yaml.indent(mapping=2, sequence=4, offset=2)
-
-        temp_output = StringIO()
-        yaml.dump(config_data, temp_output)
-        lines = temp_output.getvalue().split('\n')
-
-        content_start = 0
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            if stripped and not stripped.startswith('#'):
-                content_start = i
-                break
-
-        content_lines = lines[content_start:]
-
-        header = [
-            "# =============================================================================",
-            "# WHISPER KEY - PERSONAL CONFIGURATION",
-            "# =============================================================================",
-            "# Edit this file to customize your settings",
-            "# Save and restart Whisper Key for changes to take effect",
-            ""
-        ]
-
-        return '\n'.join(header + content_lines)
-
-    def save_config_to_user_settings_file(self):
+    def _save_user_overrides(self):
         try:
-            config_to_save = self.config
-            config_with_user_header = self._prepare_user_config_header(config_to_save)
-            
-            with open(self.user_settings_path, 'w', encoding='utf-8') as f:
-                f.write(config_with_user_header)
-            
-            self.logger.info(f"Configuration saved to {self.user_settings_path}")
+            overrides = _compute_overrides(self.config, self._defaults_baseline)
+            self._write_user_config(overrides)
+            self.logger.info(f"User overrides saved to {self.user_settings_path}")
         except Exception as e:
-            self.logger.error(f"Error saving configuration to {self.user_settings_path}: {e}")
+            self.logger.error(f"Error saving user overrides to {self.user_settings_path}: {e}")
             raise
     
     def update_audio_host(self, host_name: Optional[str]):
@@ -315,158 +326,82 @@ class ConfigManager:
             old_value = None
             if section in self.config and key in self.config[section]:
                 old_value = self.config[section][key]
-                        
+
                 if old_value != value:
                     self.config[section][key] = value
-                    self.save_config_to_user_settings_file()
+                    self._save_user_overrides()
 
                     self.logger.debug(f"Updated setting {section}.{key}: {old_value} -> {value}")
             else:
                 self.logger.error(f"Setting {section}:{key} does not exist")
-            
+
         except Exception as e:
             self.logger.error(f"Error updating user setting {section}.{key}: {e}")
             raise
 
 
-class ConfigValidator:
-    def __init__(self, logger: logging.Logger):
-        self.logger = logger
-        self.config = None
-        self.default_config = None
-    
-    def _validate_enum(self, path: str, valid_values: list):
-        current_value = self._get_config_value_at_path(self.config, path)
-        if current_value not in valid_values:
-            self._set_to_default(path, current_value)
-    
-    def _validate_boolean(self, path: str):
-        current_value = self._get_config_value_at_path(self.config, path)
-        if not isinstance(current_value, bool):
-            self._set_to_default(path, current_value)
-    
-    def _validate_numeric_range(self, path: str, min_val: float = None, max_val: float = None, description: str = None):
-        current_value = self._get_config_value_at_path(self.config, path)
-        
-        if not isinstance(current_value, (int, float)):
-            self.logger.warning(f"{current_value} must be numeric")
-            self._set_to_default(path, current_value)
-        elif min_val is not None and current_value < min_val:
-            self.logger.warning(f"{current_value} must be >= {min_val}")
-            self._set_to_default(path, current_value)
-        elif max_val is not None and current_value > max_val:
-            self.logger.warning(f"{current_value} must be <= {max_val}")
-            self._set_to_default(path, current_value)
-    
-    def _get_config_value_at_path(self, config_dict: dict, path: str):
-        keys = path.split('.')
-        current = config_dict
-        for key in keys:
-            current = current[key]
-        return current
-    
-    def _set_config_value_at_path(self, config_dict: dict, path: str, value):
-        keys = path.split('.')
-        current = config_dict
-        for key in keys[:-1]:
-            current = current[key]
-        current[keys[-1]] = value
-    
-    def _validate_hotkey_string(self, path: str):
-        current_value = self._get_config_value_at_path(self.config, path)
-        
-        if not isinstance(current_value, str) or not current_value.strip():
-            self._set_to_default(path, current_value)
-            return self._get_config_value_at_path(self.config, path)
-        
-        cleaned_combination = current_value.strip().lower()
-        if cleaned_combination != current_value:
-            self._set_config_value_at_path(self.config, path, cleaned_combination)
-        
-        return cleaned_combination
-    
-    def _set_to_default(self, path: str, prev_value: str):
-        default_value = self._get_config_value_at_path(self.default_config, path)
-        self._set_config_value_at_path(self.config, path, default_value)
-        self.logger.warning(f"{prev_value} value not validated for config {path}, setting to default")
-    
-    def fix_config(self, config: Dict[str, Any], default_config: Dict[str, Any]) -> Dict[str, Any]:
-        self.config = config
-        self.default_config = default_config
-        
-        self._validate_enum('whisper.device', ['cpu', 'cuda'])
-        
-        self._validate_enum('audio.channels', [1, 2])       
-        self._validate_audio_host()
-        self._validate_numeric_range('audio.max_duration', min_val=0, description='max duration')
-        
-        self._validate_enum('logging.level', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
-        self._validate_enum('logging.console.level', ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
-        
-        self._validate_boolean('clipboard.auto_paste')
-        self._validate_enum('clipboard.delivery_method', ['type', 'paste'])
-        validated_method = platform_keyboard.validate_delivery_method(
-            self._get_config_value_at_path(self.config, 'clipboard.delivery_method')
-        )
-        self._set_config_value_at_path(self.config, 'clipboard.delivery_method', validated_method)
-        self._validate_numeric_range('clipboard.paste_pre_paste_delay', min_val=0, description='paste pre-paste delay')
-        self._validate_boolean('clipboard.paste_preserve_clipboard')
-        self._validate_numeric_range('clipboard.paste_clipboard_restore_delay', min_val=0, description='paste clipboard restore delay')
-        self._validate_boolean('clipboard.type_also_copy_to_clipboard')
-        self._validate_numeric_range('clipboard.type_auto_enter_delay', min_val=0, description='type auto enter delay')
-        self._validate_numeric_range('clipboard.type_auto_enter_delay_per_100_chars', min_val=0, description='type auto enter delay per char')
-        self._validate_numeric_range('clipboard.macos_key_simulation_delay', min_val=0, description='macOS key simulation delay')
-        self._validate_hotkey_string('clipboard.paste_hotkey')
-        
-        recording_hotkey = self._validate_hotkey_string('hotkey.recording_hotkey')
-        stop_key = self._validate_hotkey_string('hotkey.stop_key')
-        auto_send_key = self._validate_hotkey_string('hotkey.auto_send_key')
-        self._validate_hotkey_string('hotkey.cancel_combination')
-        command_hotkey = self._validate_hotkey_string('hotkey.command_hotkey')
-        self._resolve_hotkey_conflicts(stop_key, auto_send_key, recording_hotkey, command_hotkey)
-        
-        self._validate_boolean('vad.vad_precheck_enabled')
-        self._validate_boolean('vad.vad_realtime_enabled')
-        self._validate_numeric_range('vad.vad_onset_threshold', min_val=0.0, max_val=1.0, description='VAD onset threshold')
-        self._validate_numeric_range('vad.vad_offset_threshold', min_val=0.0, max_val=1.0, description='VAD offset threshold')
-        self._validate_numeric_range('vad.vad_min_speech_duration', min_val=0.001, max_val=5.0, description='VAD minimum speech duration')
-        self._validate_numeric_range('vad.vad_silence_timeout_seconds', min_val=1.0, max_val=36000.0, description='VAD silence timeout')
-        
-        self._validate_boolean('audio_feedback.enabled')
-        self._validate_boolean('audio_feedback.transcription_complete_enabled')
-        self._validate_boolean('system_tray.enabled')
-        self._validate_boolean('voice_commands.enabled')
+def _get_config_value_at_path(config_dict, path):
+    keys = path.split('.')
+    current = config_dict
+    for key in keys:
+        current = current[key]
+    return current
 
-        return self.config
-    
-    def _resolve_hotkey_conflicts(self, stop_key: str, auto_send_key: str, recording_hotkey: str, command_hotkey: str = None):
-        if stop_key == auto_send_key:
-            self.logger.warning(f"   ✗ Auto-send key disabled: '{auto_send_key}' conflicts with stop key")
-            self._set_config_value_at_path(self.config, 'hotkey.auto_send_key', '')
 
-        if stop_key == recording_hotkey:
-            self.logger.warning(f"   ✗ Stop key '{stop_key}' conflicts with recording hotkey, resetting to default")
-            self._set_to_default('hotkey.stop_key', stop_key)
+def _set_config_value_at_path(config_dict, path, value):
+    keys = path.split('.')
+    current = config_dict
+    for key in keys[:-1]:
+        current = current[key]
+    current[keys[-1]] = value
 
-        if command_hotkey and command_hotkey == recording_hotkey:
-            self.logger.warning(f"   ✗ Command hotkey disabled: '{command_hotkey}' conflicts with recording hotkey")
-            self._set_config_value_at_path(self.config, 'hotkey.command_hotkey', '')
 
-    def _validate_audio_host(self):
-        host_path = 'audio.host'
-        host_value = self._get_config_value_at_path(self.config, host_path)
+def _set_to_default(config, default_config, path, prev_value, logger):
+    default_value = _get_config_value_at_path(default_config, path)
+    _set_config_value_at_path(config, path, default_value)
+    logger.warning(f"{prev_value} value not validated for config {path}, setting to default")
 
-        if host_value is not None and not isinstance(host_value, str):
-            self._set_to_default(host_path, host_value)
-            host_value = self._get_config_value_at_path(self.config, host_path)
 
-        if host_value is None:
-            platform_default = self._get_platform_default_audio_host()
-            if platform_default:
-                self._set_config_value_at_path(self.config, host_path, platform_default)
+def _validate_numeric_range(config, default_config, path, logger, min_val=None, max_val=None):
+    current_value = _get_config_value_at_path(config, path)
 
-    def _get_platform_default_audio_host(self) -> Optional[str]:
-        current_platform = platform.system().lower()
-        if current_platform == 'windows':
-            return 'WASAPI'
-        return None
+    if not isinstance(current_value, (int, float)):
+        logger.warning(f"{current_value} must be numeric")
+        _set_to_default(config, default_config, path, current_value, logger)
+    elif min_val is not None and current_value < min_val:
+        logger.warning(f"{current_value} must be >= {min_val}")
+        _set_to_default(config, default_config, path, current_value, logger)
+    elif max_val is not None and current_value > max_val:
+        logger.warning(f"{current_value} must be <= {max_val}")
+        _set_to_default(config, default_config, path, current_value, logger)
+
+
+def _resolve_hotkey_conflicts(config, default_config, stop_key, auto_send_key, recording_hotkey, command_hotkey, logger):
+    if stop_key == auto_send_key:
+        logger.warning(f"   ✗ Auto-send key disabled: '{auto_send_key}' conflicts with stop key")
+        _set_config_value_at_path(config, 'hotkey.auto_send_key', '')
+
+    if stop_key == recording_hotkey:
+        logger.warning(f"   ✗ Stop key '{stop_key}' conflicts with recording hotkey, resetting to default")
+        _set_to_default(config, default_config, 'hotkey.stop_key', stop_key, logger)
+
+    if command_hotkey and command_hotkey == recording_hotkey:
+        logger.warning(f"   ✗ Command hotkey disabled: '{command_hotkey}' conflicts with recording hotkey")
+        _set_config_value_at_path(config, 'hotkey.command_hotkey', '')
+
+
+def validate_config(config, default_config, logger):
+    _validate_numeric_range(config, default_config, 'audio.max_duration', logger, min_val=0)
+
+    _validate_numeric_range(config, default_config, 'vad.vad_onset_threshold', logger, min_val=0.0, max_val=1.0)
+    _validate_numeric_range(config, default_config, 'vad.vad_offset_threshold', logger, min_val=0.0, max_val=1.0)
+    _validate_numeric_range(config, default_config, 'vad.vad_min_speech_duration', logger, min_val=0.001, max_val=5.0)
+    _validate_numeric_range(config, default_config, 'vad.vad_silence_timeout_seconds', logger, min_val=1.0, max_val=36000.0)
+
+    stop_key = _get_config_value_at_path(config, 'hotkey.stop_key')
+    auto_send_key = _get_config_value_at_path(config, 'hotkey.auto_send_key')
+    recording_hotkey = _get_config_value_at_path(config, 'hotkey.recording_hotkey')
+    command_hotkey = _get_config_value_at_path(config, 'hotkey.command_hotkey')
+    _resolve_hotkey_conflicts(config, default_config, stop_key, auto_send_key, recording_hotkey, command_hotkey, logger)
+
+    return config
