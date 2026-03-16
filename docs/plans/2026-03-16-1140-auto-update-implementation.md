@@ -135,14 +135,28 @@ Use `packaging.version.Version` (already a transitive dependency via pip/setupto
 ### Running the update
 
 ```python
-def run_update():
+def run_update(config_manager):
     print("   Updating...")
     subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "whisper-key-local"])
+    restore_gpu_packages(config_manager)
     print("   Update installed. Please restart Whisper Key.")
     sys.exit(0)
+
+def restore_gpu_packages(config_manager):
+    gpu_config = config_manager.get_gpu_onboarding_config()
+    gpu_class = gpu_config.get('gpu_class')
+    if not gpu_class or not gpu_class.startswith('amd'):
+        return
+    # pip upgrade replaced ROCm CT2 wheel with standard CUDA build from PyPI
+    # Re-install the correct ROCm CT2 wheel for this GPU class
+    print("   Restoring GPU packages...")
+    ct2_wheel_url = get_ct2_wheel_url(gpu_class)
+    subprocess.run([sys.executable, "-m", "pip", "install", "--force-reinstall", "--no-deps", ct2_wheel_url])
 ```
 
 Exits after update — avoids `os.execv` console flicker on Windows. User relaunches.
+
+**AMD CT2 re-install:** `pip install --upgrade whisper-key-local` pulls the standard CUDA CT2 wheel from PyPI, overwriting the ROCm wheel. `restore_gpu_packages()` detects AMD GPU class from config and re-installs the correct ROCm CT2 wheel. `--force-reinstall --no-deps` replaces only CT2 without touching other packages. NVIDIA users are unaffected (standard CT2 from PyPI is correct for them).
 
 ### Scope
 
@@ -162,3 +176,4 @@ Exits after update — avoids `os.execv` console flicker on Windows. User relaun
 - [ ] Auto mode updates silently without prompt on subsequent launches
 - [ ] Dev versions and `--test` mode show non-blocking notice instead of prompt
 - [ ] Offline / timeout doesn't block or delay startup noticeably (≤3s)
+- [ ] AMD GPU users: ROCm CT2 wheel restored after update
