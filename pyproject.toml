@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "whisper-key-local"
 version = "0.7.1"
-description = "Local faster-whisper speech-to-text app with global hotkeys for Windows"
+description = "Global hotkeys to record speech and transcribe directly to your cursor"
 readme = "README.md"
 license = "MIT"
 authors = [
