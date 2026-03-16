@@ -29,7 +29,7 @@ from .instance_manager import guard_against_multiple_instances
 from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
-from .gpu_detection import detect_gpu, detect_runtime, detect_ct2, test_ct2_gpu, print_gpu_status
+from .hardware_detection import detect_and_print as detect_hardware
 from .utils import get_user_app_data_path, get_version
 
 def is_built_executable():
@@ -227,11 +227,7 @@ def main():
         log_config = config_manager.get_logging_config()
         log_transcriptions = log_config.get('log_transcriptions', False)
 
-        gpu_info = detect_gpu()
-        runtime_info = detect_runtime(gpu_info)
-        ct2_info = detect_ct2()
-        ct2_gpu_works = test_ct2_gpu() if ct2_info.installed else False
-        print_gpu_status(gpu_info, runtime_info, ct2_info, ct2_gpu_works, whisper_config['device'])
+        detect_hardware(whisper_config['device'])
 
         is_executable = is_built_executable()
         console_manager = setup_console_manager(console_config, is_executable)
