@@ -31,7 +31,7 @@ def detect_and_print(configured_device):
 
     ct2_variant = _detect_ct2_variant()
     if ct2_variant != 'not_installed':
-        ct2_version, ct2_is_custom = _detect_ct2_version()
+        ct2_version, _ = _detect_ct2_version()
         variant_label = {'cuda': 'CUDA', 'rocm': 'ROCm'}.get(ct2_variant, ct2_variant)
         _status(f"   ✓ CTranslate2 {ct2_version} ({variant_label})")
     else:
@@ -56,7 +56,7 @@ def detect_and_print(configured_device):
                 else:
                     _status("   ✗ ROCm SDK not found", 'warning')
         else:
-            _status("   ✓ GPU acceleration enabled")
+            _status("   ✓ GPU acceleration available")
 
 
 def _status(msg, level='info'):
