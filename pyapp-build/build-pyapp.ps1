@@ -98,7 +98,7 @@ if ($Clean) {
     }
 }
 
-Set-Location $PyAppSourcePath
+Push-Location $PyAppSourcePath
 Write-Host "Running cargo build --release..." -ForegroundColor Yellow
 cargo build --release
 if ($LASTEXITCODE -ne 0) {
@@ -119,6 +119,7 @@ Write-Host "Build successful!" -ForegroundColor Green
 Write-Host "Executable: $DestExe" -ForegroundColor Green
 Write-Host ("Size: {0:N2} MB" -f $ExeSize) -ForegroundColor Green
 
+Pop-Location
 Remove-Item Env:\PYAPP_PROJECT_NAME -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_PROJECT_VERSION -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_PYTHON_VERSION -ErrorAction SilentlyContinue
