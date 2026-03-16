@@ -11,26 +11,22 @@ On first launch, Whisper Key detects your GPU and offers to install the required
    ✓ Detected NVIDIA GeForce RTX 4070
    ✗ NVIDIA CUDA runtime not found
 
-  ┌──────────────────────────────────────────────────────┐
-  │ GPU acceleration available                           │
-  │ Use NVIDIA GeForce RTX 4070 for fast transcription?  │
-  │                                                      │
-  │ [1] Setup GPU, install CUDA                          │
-  │     1.2 GB download, 1.8 GB disk space               │
-  │                                                      │
-  │ [2] Skip for now                                     │
-  │     Use CPU transcription for this session            │
-  │                                                      │
-  │ [3] Use CPU only                                     │
-  │     Don't ask again                                  │
-  └──────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────┐
+  │ GPU acceleration available                              │
+  │ Use NVIDIA GeForce RTX 4070 for fast transcription?     │
+  │                                                         │
+  │ [1] Setup GPU, install CUDA                             │
+  │     1.2 GB download, 1.8 GB disk space                  │
+  │                                                         │
+  │ [2] Skip for now                                        │
+  │     Use CPU transcription for this session               │
+  │                                                         │
+  │ [3] Use CPU only                                        │
+  │     Don't ask again                                     │
+  └─────────────────────────────────────────────────────────┘
 
   Press a number to choose:
 ```
-
-Press `1` and Whisper Key handles the rest — downloads the runtime, configures GPU mode, and restarts.
-
-To re-trigger onboarding after choosing "Use CPU only", delete the `onboarding` section from your [user settings](../README.md#️-configuration) and restart.
 
 ## Manual Setup
 
