@@ -20,7 +20,7 @@ NVIDIA_PACKAGES = [
 ]
 
 _ROCM_72_BASE = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2"
-_CT2_RDNA2_BASE = "https://github.com/PinW/ctranslate2-rocm/releases/download/v4.7.1-rocm72"
+_CT2_RDNA2_BASE = "https://github.com/PinW/ctranslate2-rocm-wheels/releases/download/v4.7.1-rocm72"
 
 ROCM_72_PACKAGES = [
     f"{_ROCM_72_BASE}/rocm_sdk_core-7.2.0.dev0-py3-none-win_amd64.whl",
@@ -29,7 +29,7 @@ ROCM_72_PACKAGES = [
 ]
 
 CT2_WHEEL_URLS = {
-    'amd_rdna2+': f"{_CT2_RDNA2_BASE}/ctranslate2-4.7.1+rocm72-{_PY_TAG}-{_PY_TAG}-win_amd64.whl",
+    'amd_rdna2+': f"{_CT2_RDNA2_BASE}/ctranslate2-4.7.1-{_PY_TAG}-{_PY_TAG}-win_amd64.whl",
 }
 
 RDNA1_SETUP_URL = "https://github.com/PinW/ctranslate2-rocm-rdna1"
