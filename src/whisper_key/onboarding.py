@@ -1,6 +1,8 @@
 import subprocess
 import sys
+import webbrowser
 
+from .platform import app
 from .terminal_ui import prompt_choice
 
 INSTALL_GPU = 1
@@ -57,6 +59,10 @@ def check_gpu(gpu_class, gpu_name, ct2_works, configured_device, config_manager)
         config_manager.update_user_setting('onboarding', 'gpu', 'complete')
         return
 
+    if gpu_class == 'amd_rdna1':
+        _prompt_rdna1(gpu_name, config_manager)
+        return
+
     _prompt_and_install(gpu_class, gpu_name, config_manager)
 
 
@@ -111,7 +117,8 @@ def _install_gpu_packages(gpu_class, gpu_name, config_manager):
         _show_rdna1_instructions(gpu_name, config_manager)
         return
 
-    print(f"\n{BOLD_GREEN}Installing GPU acceleration for {gpu_name}...{RESET}")
+    runtime = RUNTIME_LABELS.get(gpu_class, 'GPU')
+    print(f"{BOLD_GREEN}Installing {runtime} to enable GPU acceleration for {gpu_name}...{RESET}\n")
 
     success = True
 
@@ -140,12 +147,43 @@ def _install_gpu_packages(gpu_class, gpu_name, config_manager):
     sys.exit(0)
 
 
-def _show_rdna1_instructions(gpu_name, config_manager):
-    print(f"\n   {gpu_name} requires manual setup (HIP SDK 6.2 + community rocBLAS).")
-    print(f"   Instructions: {RDNA1_SETUP_URL}")
+def _prompt_rdna1(gpu_name, config_manager):
+    choice = prompt_choice(
+        "GPU acceleration available",
+        [
+            (
+                "Open setup guide in browser",
+                "RDNA 1 GPUs require manual setup"
+            ),
+            (
+                "Skip for now",
+                "Use CPU transcription for this session"
+            ),
+            (
+                "Use CPU only",
+                "Don't ask again"
+            ),
+        ],
+        subtitle=f"Use {gpu_name} for fast transcription?",
+    )
+
     print()
-    config_manager.update_user_setting('onboarding', 'gpu_class', 'amd_rdna1')
-    config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
+
+    if choice == INSTALL_GPU:
+        config_manager.update_user_setting('onboarding', 'gpu_class', 'amd_rdna1')
+        config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
+        webbrowser.open(RDNA1_SETUP_URL)
+        print(f"   Setup guide: {RDNA1_SETUP_URL}")
+        print()
+        print("   Press any key to exit...", end="", flush=True)
+        app.getch()
+        sys.exit(0)
+    elif choice == USE_CPU:
+        _ensure_cpu_config(config_manager)
+    elif choice == NEVER_ASK:
+        _ensure_cpu_config(config_manager)
+        config_manager.update_user_setting('onboarding', 'gpu_class', 'amd_rdna1')
+        config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
 
 
 def _pip_install(packages):

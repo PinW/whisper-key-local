@@ -19,7 +19,7 @@ On first launch, Whisper Key detects your GPU and offers to install the required
   │     1.2 GB download, 1.8 GB disk space                  │
   │                                                         │
   │ [2] Skip for now                                        │
-  │     Use CPU transcription for this session               │
+  │     Use CPU transcription for this session              │
   │                                                         │
   │ [3] Use CPU only                                        │
   │     Don't ask again                                     │
