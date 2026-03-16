@@ -40,7 +40,6 @@ whisper-key-local/
 │       ├── commands.defaults.yaml     # Default voice commands template
 │       ├── assets/                    # Application assets
 │       │   ├── sounds/                # Audio feedback sounds
-│       │   └── version.txt            # Build version file
 │       ├── platform/                  # Platform abstraction layer
 │       │   ├── __init__.py            # Platform detection & import routing
 │       │   └── {macos,windows}/       # Platform-specific implementations

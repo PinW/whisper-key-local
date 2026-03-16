@@ -123,7 +123,6 @@ pyinstaller-build/build-config*.json
 !pyinstaller-build/build-config.example.json
 pyapp-build/build-config.json
 !pyapp-build/build-config.example.json
-src/whisper_key/assets/version.txt
 
 # Temporary working files
 .temp/
