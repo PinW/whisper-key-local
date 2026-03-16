@@ -132,6 +132,63 @@ class Ct2Info:
 | `_check_cuda_runtime()` | `test_ct2_gpu()` | 4 | Rename, make public |
 | `_read_pe_imports()` | `_read_pe_imports()` | 3 | None |
 
+### `gpu_detection.py` — `detect_gpu()` (stage 1, simplified)
+
+```python
+def detect_gpu() -> GpuInfo:
+    nvidia_name = _detect_nvidia_gpu()
+    if nvidia_name:
+        return GpuInfo(vendor="nvidia", name=nvidia_name)
+
+    amd_name = _detect_amd_gpu()
+    if amd_name:
+        return GpuInfo(vendor="amd", name=amd_name)
+
+    return GpuInfo(vendor=None, name=None)
+```
+
+### `gpu_detection.py` — `detect_runtime()` (stage 2, new)
+
+```python
+def detect_runtime() -> RuntimeInfo:
+    return RuntimeInfo(cuda=_find_cuda_runtime(), rocm=_find_rocm_runtime())
+```
+
+### `gpu_detection.py` — `detect_ct2()` (stage 3, extracted)
+
+```python
+def detect_ct2() -> Ct2Info:
+    variant = _detect_ct2_variant()
+    if variant == 'not_installed':
+        return Ct2Info(installed=False, version=None, variant=None, is_custom=False)
+    version, is_custom = _detect_ct2_version()
+    return Ct2Info(installed=True, version=version, variant=variant, is_custom=is_custom)
+```
+
+### `gpu_detection.py` — `test_ct2_gpu()` (stage 4, renamed from `_check_cuda_runtime`)
+
+```python
+def test_ct2_gpu() -> bool:
+    try:
+        import ctranslate2
+        supported = ctranslate2.get_supported_compute_types('cuda')
+        return len(supported) > 0
+    except Exception:
+        return False
+```
+
+### `main.py` — import (line 32)
+
+**Before:**
+```python
+from .gpu_detection import detect_gpu, print_gpu_status
+```
+
+**After:**
+```python
+from .gpu_detection import detect_gpu, detect_runtime, detect_ct2, test_ct2_gpu, print_gpu_status
+```
+
 ### `main.py` — call site (lines 230-231)
 
 **Before:**
@@ -147,6 +204,41 @@ runtime_info = detect_runtime()
 ct2_info = detect_ct2()
 ct2_gpu_works = test_ct2_gpu() if ct2_info.installed else False
 print_gpu_status(gpu_info, runtime_info, ct2_info, ct2_gpu_works, whisper_config['device'])
+```
+
+### `gpu_detection.py` — `print_gpu_status()` decision tree
+
+**Before:** accesses `gpu_info.ct2.*` and calls `_find_cuda_runtime()`/`_find_rocm_runtime()` inline as fallbacks.
+
+**After:** uses pre-computed separated arguments. Same user-visible messages.
+
+```python
+def print_gpu_status(gpu, runtime, ct2, ct2_gpu_works, configured_device):
+    if gpu.name:
+        _gpu_status(f"   ✓ Detected {gpu.name}")
+
+    if configured_device == 'cuda':
+        if not gpu.name:
+            _gpu_status("   ⚠ device: cuda but no GPU detected — transcription may fail", 'warning')
+        elif not ct2.installed:
+            _gpu_status("   ⚠ ctranslate2 not found", 'warning')
+        elif ct2.variant == 'rocm' and gpu.vendor == 'nvidia':
+            _gpu_status("   ⚠ ctranslate2 is built for ROCm — install the standard wheel (see docs/gpu-setup.md)", 'warning')
+        elif ct2.variant == 'cuda' and gpu.vendor == 'amd':
+            _gpu_status("   ⚠ ctranslate2 is built for CUDA — install the ROCm wheel (see docs/gpu-setup.md)", 'warning')
+        elif not ct2_gpu_works:
+            if gpu.vendor == 'nvidia':
+                if runtime.cuda:
+                    _gpu_status("   ⚠ CUDA libraries found but failed to initialize — see docs/gpu-setup.md", 'warning')
+                else:
+                    _gpu_status("   ⚠ CUDA Toolkit 12 not found — see docs/gpu-setup.md", 'warning')
+            else:
+                if runtime.rocm:
+                    _gpu_status("   ⚠ ROCm libraries found but failed to initialize — see docs/gpu-setup.md", 'warning')
+                else:
+                    _gpu_status("   ⚠ ROCm SDK not found — see docs/gpu-setup.md", 'warning')
+    elif gpu.name and ct2_gpu_works:
+        _gpu_status("   ℹ GPU ready — set device: cuda in settings for faster transcription")
 ```
 
 ### Scope
