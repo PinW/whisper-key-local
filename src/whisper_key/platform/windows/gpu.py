@@ -31,16 +31,14 @@ def detect_and_print(configured_device):
 
     ct2_variant = _detect_ct2_variant()
     if ct2_variant != 'not_installed':
-        ct2_version, _ = _detect_ct2_version()
+        ct2_version = _detect_ct2_version()[0]
         variant_label = {'cuda': 'CUDA', 'rocm': 'ROCm'}.get(ct2_variant, ct2_variant)
         _status(f"   ✓ CTranslate2 {ct2_version} ({variant_label})")
     else:
         _status("   ✗ CTranslate2 not installed", 'warning')
 
-    if configured_device == 'cuda':
-        if ct2_variant == 'not_installed':
-            _status("   ✗ ctranslate2 not found", 'warning')
-        elif ct2_variant == 'rocm' and gpu_vendor == 'nvidia':
+    if configured_device == 'cuda' and ct2_variant != 'not_installed':
+        if ct2_variant == 'rocm' and gpu_vendor == 'nvidia':
             _status("   ✗ ctranslate2 is built for ROCm (AMD)", 'warning')
         elif ct2_variant == 'cuda' and gpu_vendor == 'amd':
             _status("   ✗ ctranslate2 is built for CUDA (NVIDIA)", 'warning')
@@ -148,6 +146,13 @@ def _find_rocm_runtime() -> str | None:
 
 
 def _read_pe_imports(dll_path: pathlib.Path) -> list[str]:
+    try:
+        return _parse_pe_imports(dll_path)
+    except Exception:
+        return []
+
+
+def _parse_pe_imports(dll_path: pathlib.Path) -> list[str]:
     with open(dll_path, 'rb') as f:
         f.seek(0x3C)
         pe_offset = int.from_bytes(f.read(4), 'little')
