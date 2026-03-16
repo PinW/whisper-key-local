@@ -36,8 +36,8 @@ CT2_WHEEL_URLS = {
 RDNA1_SETUP_URL = "https://github.com/PinW/ctranslate2-rocm-rdna1"
 
 DOWNLOAD_SIZES = {
-    'nvidia': '~2 GB',
-    'amd_rdna2+': '~3 GB',
+    'nvidia': '~1.2 GB',
+    'amd_rdna2+': '~2.5 GB',
 }
 
 
