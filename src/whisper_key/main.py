@@ -29,6 +29,7 @@ from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
 from .hardware_detection import detect_and_print as detect_hardware
+from .onboarding import check_gpu
 from .update_checker import check_for_updates
 from .utils import get_user_app_data_path, get_version
 
@@ -220,7 +221,7 @@ def main():
         log_transcriptions = log_config.get('log_transcriptions', False)
 
         gpu_class, gpu_name, ct2_works = detect_hardware(whisper_config['device'])
-
+        check_gpu(gpu_class, gpu_name, ct2_works, whisper_config['device'], config_manager)
 
         model_registry = ModelRegistry(
             whisper_models_config=whisper_config.get('models', {}),

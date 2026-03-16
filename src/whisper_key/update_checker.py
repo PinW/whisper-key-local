@@ -50,7 +50,7 @@ def check_for_updates(config_manager, test_mode=False):
     update_config = config_manager.get_update_config()
 
     if update_config.get('mode') == 'auto':
-        run_update(latest)
+        run_update(latest, config_manager)
         return
 
     choice = prompt_choice("Update available: {} -> {}".format(version, latest), [
@@ -60,10 +60,10 @@ def check_for_updates(config_manager, test_mode=False):
     ])
 
     if choice == UPDATE_NOW:
-        run_update(latest)
+        run_update(latest, config_manager)
     elif choice == ALWAYS_UPDATE:
         config_manager.update_user_setting('update', 'mode', 'auto')
-        run_update(latest)
+        run_update(latest, config_manager)
     else:
         print()
 
@@ -73,12 +73,17 @@ BOLD_RED = "\x1b[1;31m"
 RESET = "\x1b[0m"
 
 
-def run_update(version):
+def run_update(version, config_manager=None):
     print(f"\n{BOLD_GREEN}Whisper Key {version} available. Downloading and installing update...{RESET}\n")
     result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "whisper-key-local"])
     if result.returncode != 0:
         print(f"\n{BOLD_RED}Update failed. Please try again later.{RESET}\n")
         return
+
+    if config_manager:
+        from .onboarding import restore_gpu_packages
+        restore_gpu_packages(config_manager)
+
     pyapp_exe = os.environ.get('PYAPP', '')
     if os.path.isfile(pyapp_exe):
         print(f"\n{BOLD_GREEN}Whisper Key {version} installed. Restarting...{RESET}\n")

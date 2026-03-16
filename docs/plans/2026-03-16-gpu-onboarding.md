@@ -197,12 +197,20 @@ subprocess.run(
   - ✅ `gpu: pending` and `gpu_class: null` defaults added
 
 3. Create onboarding module
-- [ ] Create `src/whisper_key/onboarding.py`
-- [ ] Implement decision tree
-- [ ] Implement prompt using `terminal_ui.prompt_choice`
-- [ ] Implement pip install flow per GPU class
-- [ ] Implement config updates (device, compute_type, onboarding status)
-- [ ] Define `get_ct2_wheel_url(gpu_class)` for use by both onboarding and update_checker
+- [x] Create `src/whisper_key/onboarding.py`
+- [x] Implement decision tree
+  - ✅ Skips if gpu status is complete/skipped
+  - ✅ Auto-sets integrated_cpu + skipped when no GPU
+  - ✅ Auto-completes when GPU already working (ct2_works + device=cuda)
+  - ✅ Prompts user when GPU found but not set up
+- [x] Implement prompt using `terminal_ui.prompt_choice`
+- [x] Implement pip install flow per GPU class
+  - ✅ NVIDIA: installs CUDA runtime packages
+  - ✅ AMD: installs ROCm packages + CT2 wheel
+  - ✅ Sets device=cuda, compute_type=float16 on success
+  - ✅ Exits for restart after install
+- [x] Implement config updates (device, compute_type, onboarding status)
+- [x] Define `get_ct2_wheel_url(gpu_class)` for use by both onboarding and update_checker
 
 4. Define GPU package lists
 - [ ] Research and pin exact NVIDIA CUDA pip packages + versions
@@ -212,8 +220,11 @@ subprocess.run(
 - [ ] Document download and installed sizes per GPU class
 
 5. Wire into main.py
-- [ ] Call `onboarding.check_gpu()` after `detect_and_print()`, before component setup
-- [ ] Pass detection tuple and `config_manager`
+- [x] Call `onboarding.check_gpu()` after `detect_and_print()`, before component setup
+- [x] Pass detection tuple and `config_manager`
+- [x] Wire `restore_gpu_packages()` into `update_checker.run_update()`
+  - ✅ Added `config_manager` param to `run_update()`
+  - ✅ Calls `restore_gpu_packages()` after pip upgrade, before restart
 
 6. Test
 - [ ] NVIDIA: install flow end-to-end
