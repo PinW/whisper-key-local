@@ -51,7 +51,8 @@
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
   - As a *new user* I want **model selection** so I can choose a Whisper model that balances speed vs accuracy without editing YAML
-  - As a *new user* I want **auto GPU detection** so CUDA/ROCm mode is enabled automatically when a compatible GPU is available
+  - ~~As a *new user* I want **auto GPU detection** so CUDA/ROCm mode is enabled automatically when a compatible GPU is available~~ ✅
+  - As a *new user* I want **CPU detection at startup** so the system check section shows hardware info even when no GPU is present
   - As a *new user* I want **settings overview** so I can see default settings and change them if I want
     - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
     - As a *new user* I want **language selection** so I can set my transcription language without editing YAML
