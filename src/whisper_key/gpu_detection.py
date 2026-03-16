@@ -94,7 +94,7 @@ def _read_pe_imports(dll_path: pathlib.Path) -> list[str]:
 
         def rva_to_offset(rva):
             for va, vs, ro, rs in sections:
-                if va <= rva < va + rs:
+                if va <= rva < va + vs:
                     return ro + (rva - va)
             return None
 
