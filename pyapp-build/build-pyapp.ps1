@@ -1,9 +1,7 @@
-# pyapp-build/build-pyapp.ps1
 param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$AppName = "whisper-key",
-    [switch]$Clean,
-    [switch]$Test
+    [switch]$Clean
 )
 
 function Get-ResolvedPath {
@@ -14,14 +12,9 @@ function Get-ResolvedPath {
 function Get-ProjectVersion {
     param($ProjectRoot)
     $PyProjectFile = Join-Path $ProjectRoot "pyproject.toml"
-    if (-not (Test-Path $PyProjectFile)) {
-        Write-Host "Error: pyproject.toml not found at $PyProjectFile" -ForegroundColor Red
-        exit 1
-    }
-    $Content = Get-Content $PyProjectFile
-    foreach ($Line in $Content) {
-        if ($Line -match '^version\s*=\s*["''']([^"'']+)["''']') {
-            return $Matches[1]
+    foreach ($Line in (Get-Content $PyProjectFile)) {
+        if ($Line.StartsWith("version")) {
+            return $Line.Split("=")[1].Trim().Trim('"')
         }
     }
     Write-Host "Error: Could not find version in pyproject.toml" -ForegroundColor Red
@@ -31,7 +24,6 @@ function Get-ProjectVersion {
 $AppVersion = Get-ProjectVersion $ProjectRoot
 Write-Host "Version: $AppVersion" -ForegroundColor Cyan
 
-# Load build config
 $ConfigFile = Join-Path $PSScriptRoot "build-config.json"
 if (-not (Test-Path $ConfigFile)) {
     Write-Host "Error: Build config not found at $ConfigFile" -ForegroundColor Red
@@ -40,17 +32,12 @@ if (-not (Test-Path $ConfigFile)) {
 }
 
 $Config = Get-Content $ConfigFile | ConvertFrom-Json
-$PyAppSourcePath = Get-ResolvedPath ([Environment]::ExpandEnvironmentVariables($Config.pyapp_source_path)) $ProjectRoot
-$DistPath = Get-ResolvedPath ([Environment]::ExpandEnvironmentVariables($Config.dist_path)) $ProjectRoot
-
-if (-not (Test-Path $PyAppSourcePath)) {
-    Write-Host "Error: pyapp source not found at $PyAppSourcePath" -ForegroundColor Red
-    Write-Host "Download from: https://github.com/ofek/pyapp/releases/latest/download/source.tar.gz" -ForegroundColor Yellow
-    exit 1
-}
+$PyAppSourcePath = Get-ResolvedPath $Config.pyapp_source_path $ProjectRoot
+$DistPath = Get-ResolvedPath $Config.dist_path $ProjectRoot
 
 if (-not (Test-Path (Join-Path $PyAppSourcePath "Cargo.toml"))) {
-    Write-Host "Error: No Cargo.toml found in $PyAppSourcePath — is this the pyapp source directory?" -ForegroundColor Red
+    Write-Host "Error: No Cargo.toml found in $PyAppSourcePath" -ForegroundColor Red
+    Write-Host "Download from: https://github.com/ofek/pyapp/releases/latest/download/source.tar.gz" -ForegroundColor Yellow
     exit 1
 }
 
@@ -58,14 +45,12 @@ Write-Host "Starting pyapp build for $AppName v$AppVersion..." -ForegroundColor 
 Write-Host "PyApp source: $PyAppSourcePath" -ForegroundColor Gray
 Write-Host "Distribution: $DistPath" -ForegroundColor Gray
 
-# Set pyapp environment variables
 $env:PYAPP_PROJECT_NAME = "whisper-key-local"
 $env:PYAPP_PROJECT_VERSION = $AppVersion
 $env:PYAPP_PYTHON_VERSION = "3.12"
-$env:PYAPP_EXEC_CODE = "from whisper_key.main import main; main()"
+$env:PYAPP_EXEC_CODE = 'from whisper_key.main import main; main()'
 $env:PYAPP_SELF_COMMAND = "self"
 
-# Clean previous build if requested
 if ($Clean) {
     $TargetDir = Join-Path $PyAppSourcePath "target"
     if (Test-Path $TargetDir) {
@@ -74,7 +59,6 @@ if ($Clean) {
     }
 }
 
-# Build
 Set-Location $PyAppSourcePath
 Write-Host "Running cargo build --release..." -ForegroundColor Yellow
 cargo build --release
@@ -83,7 +67,6 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Copy binary to dist
 if (-not (Test-Path $DistPath)) {
     New-Item -ItemType Directory -Path $DistPath -Force | Out-Null
 }
@@ -95,19 +78,10 @@ Copy-Item $SourceExe $DestExe -Force
 $ExeSize = (Get-Item $DestExe).Length / 1MB
 Write-Host "Build successful!" -ForegroundColor Green
 Write-Host "Executable: $DestExe" -ForegroundColor Green
-Write-Host "Size: $([math]::Round($ExeSize, 2)) MB" -ForegroundColor Green
+Write-Host ("Size: {0:N2} MB" -f $ExeSize) -ForegroundColor Green
 
-# Clean up env vars
 Remove-Item Env:\PYAPP_PROJECT_NAME -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_PROJECT_VERSION -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_PYTHON_VERSION -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_EXEC_CODE -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_SELF_COMMAND -ErrorAction SilentlyContinue
-
-# Play victory sound
-try {
-    $TadaSound = "$env:WINDIR\Media\tada.wav"
-    if (Test-Path $TadaSound) {
-        (New-Object System.Media.SoundPlayer $TadaSound).PlaySync()
-    }
-} catch {}

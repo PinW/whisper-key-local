@@ -1,4 +1,4 @@
-# py-build/build-windows.ps1
+# pyinstaller-build/build-windows.ps1
 param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$AppName = "whisper-key",
