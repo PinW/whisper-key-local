@@ -46,12 +46,11 @@ def check_gpu(gpu_class, gpu_name, ct2_works, configured_device, config_manager)
     onboarding_config = config_manager.config.get('onboarding', {})
     gpu_status = onboarding_config.get('gpu', 'pending')
 
-    if gpu_status in ('complete', 'skipped'):
+    if gpu_status in ('complete', 'skipped', 'no_gpu'):
         return
 
     if not gpu_class:
-        config_manager.update_user_setting('onboarding', 'gpu_class', 'integrated_cpu')
-        config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
+        config_manager.update_user_setting('onboarding', 'gpu', 'no_gpu')
         return
 
     if ct2_works and configured_device == 'cuda':
