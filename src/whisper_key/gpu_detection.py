@@ -246,6 +246,9 @@ def _gpu_status(msg, level='info'):
 
 
 def print_gpu_status(gpu, runtime, ct2, ct2_gpu_works, configured_device):
+    if not gpu.name:
+        return
+
     _gpu_status("🖥️ System check...")
     if gpu.name:
         _gpu_status(f"   ✓ Detected {gpu.name}")
