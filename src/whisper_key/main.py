@@ -152,6 +152,15 @@ def setup_system_tray(tray_config, config_manager, state_manager, model_registry
         model_registry=model_registry
     )
 
+def run_gpu_onboarding(config_manager, whisper_config):
+    gpu_status = config_manager.config.get('onboarding', {}).get('gpu', 'pending')
+    if gpu_status != 'pending':
+        return whisper_config
+    gpu_class, gpu_name, ct2_works = detect_hardware(whisper_config['device'])
+    check_gpu(gpu_class, gpu_name, ct2_works, whisper_config['device'], config_manager)
+    return config_manager.get_whisper_config()
+
+
 def setup_signal_handlers(shutdown_event):
     def signal_handler(signum, frame):
         shutdown_event.set()
@@ -220,8 +229,7 @@ def main():
         log_config = config_manager.get_logging_config()
         log_transcriptions = log_config.get('log_transcriptions', False)
 
-        gpu_class, gpu_name, ct2_works = detect_hardware(whisper_config['device'])
-        check_gpu(gpu_class, gpu_name, ct2_works, whisper_config['device'], config_manager)
+        whisper_config = run_gpu_onboarding(config_manager, whisper_config)
 
         model_registry = ModelRegistry(
             whisper_models_config=whisper_config.get('models', {}),

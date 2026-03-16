@@ -60,36 +60,50 @@ def check_gpu(gpu_class, gpu_name, ct2_works, configured_device, config_manager)
     _prompt_and_install(gpu_class, gpu_name, config_manager)
 
 
+RUNTIME_LABELS = {
+    'nvidia': 'CUDA',
+    'amd_rdna2+': 'ROCm 7.2',
+}
+
+
 def _prompt_and_install(gpu_class, gpu_name, config_manager):
     sizes = GPU_SIZES.get(gpu_class, {'download': '1 GB', 'disk': '1 GB'})
+    runtime = RUNTIME_LABELS.get(gpu_class, 'GPU')
 
     choice = prompt_choice(
-        f"{gpu_name} — GPU acceleration available",
+        "GPU acceleration available",
         [
             (
-                "Install GPU acceleration",
+                f"Setup GPU, install {runtime}",
                 f"{sizes['download']} download, {sizes['disk']} disk space"
             ),
             (
-                "Use CPU for now",
-                "Continue without GPU (asked again next launch)"
+                "Skip for now",
+                "Use CPU this session"
             ),
             (
-                "Don't use GPU acceleration",
-                "Never ask again"
+                "Use CPU only",
+                "Don't ask again"
             ),
-        ]
+        ],
+        subtitle=f"Use {gpu_name} for fast transcription?",
     )
+
+    print()
 
     if choice == INSTALL_GPU:
         _install_gpu_packages(gpu_class, gpu_name, config_manager)
     elif choice == USE_CPU:
-        if config_manager.config.get('whisper', {}).get('device') == 'cuda':
-            config_manager.update_user_setting('whisper', 'device', 'cpu')
-            config_manager.update_user_setting('whisper', 'compute_type', 'int8')
+        _ensure_cpu_config(config_manager)
     elif choice == NEVER_ASK:
+        _ensure_cpu_config(config_manager)
         config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
         config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
+
+
+def _ensure_cpu_config(config_manager):
+    config_manager.update_user_setting('whisper', 'device', 'cpu')
+    config_manager.update_user_setting('whisper', 'compute_type', 'int8')
 
 
 def _install_gpu_packages(gpu_class, gpu_name, config_manager):

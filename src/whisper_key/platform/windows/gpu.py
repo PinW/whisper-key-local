@@ -53,11 +53,8 @@ def detect_and_print(configured_device):
     else:
         _status("   ✗ CTranslate2 not installed", 'warning')
 
-    if configured_device != 'cuda' or ct2_variant == 'not_installed' or not reqs:
-        ct2_works = False
-        if ct2_variant != 'not_installed' and reqs:
-            ct2_works = _test_ct2_gpu(ct2_variant)
-        return (gpu_class, gpu_name, ct2_works)
+    if ct2_variant == 'not_installed' or not reqs:
+        return (gpu_class, gpu_name, False)
 
     if ct2_variant != reqs['ct2_variant']:
         expected = 'ROCm' if reqs['ct2_variant'] == 'rocm' else 'CUDA'
