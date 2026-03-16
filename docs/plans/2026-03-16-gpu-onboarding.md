@@ -37,55 +37,61 @@ GPU acceleration makes transcription dramatically faster and enables larger, mor
 ```
 detect_and_print()          ← already exists, runs on startup, prints status
     |
-    v
+    v  returns (gpu_class, gpu_name, ct2_works)
+    |
 onboarding.check_gpu()      ← NEW, reads detection results, decides whether to prompt
     |
     v
 prompt_choice()             ← terminal_ui prompt if action needed
     |
     v
-pip install ...             ← install packages, configure app, restart
+pip install ...             ← install packages, configure app, exit
 ```
 
 ### Detection API changes
 
-`detect_and_print()` currently prints and returns nothing. It needs to return structured results so the onboarding module can consume them:
+`detect_and_print()` currently prints and returns nothing. It needs to return a tuple so the onboarding module can consume the results:
 
 ```python
-@dataclass
-class GpuDetectionResult:
-    vendor: str | None        # "nvidia", "amd"
-    name: str | None          # "NVIDIA GeForce RTX 4080"
-    gpu_class: str | None     # "nvidia", "amd_rdna2+", "amd_rdna1"
-    runtime_found: bool
-    runtime_version: str | None
-    ct2_variant: str | None   # "cuda", "rocm", "not_installed"
-    ct2_works: bool           # _test_ct2_gpu() result
+def detect_and_print(configured_device) -> tuple[str | None, str | None, bool]:
+    # ... existing detection and printing logic ...
+    return (gpu_class, gpu_name, ct2_works)
 ```
 
-### Config state
+Returns `(None, None, False)` when no GPU detected. macOS stub returns the same.
+
+### Config
 
 ```yaml
-gpu_onboarding:
-  status: pending       # pending | no_gpu_found | complete | skipped
-  gpu_class: null       # nvidia | amd_rdna2+ | amd_rdna1 (set after install)
+onboarding:
+  gpu: pending          # pending | complete | skipped
+  gpu_class: null       # nvidia | amd_rdna2+ | amd_rdna1 | integrated_cpu | null
 ```
 
-Status values:
-- `pending` — default, run the check
-- `no_gpu_found` — no discrete GPU detected. Re-check when we add Apple Metal / iGPU support.
-- `complete` — GPU acceleration fully configured and working
-- `skipped` — user explicitly said "don't ask again"
+- `gpu: pending` — default, run the check
+- `gpu: complete` — GPU acceleration configured and working
+- `gpu: skipped` — user explicitly said "don't ask again"
+- `gpu_class` — records what hardware was found. Used by `update_checker.py` to restore AMD CT2 wheels after upgrade. Extensible to `apple_silicon`, etc. when we add more engines.
+
+When no GPU is detected, set `gpu_class: integrated_cpu` and `gpu: skipped`. Later when we add Metal/iGPU engine support, we can reset `gpu: pending` for `integrated_cpu` users.
 
 ### Update integration
 
-For AMD users, `pip install --upgrade whisper-key-local` (from auto-update) replaces the ROCm CT2 wheel with the standard CUDA build from PyPI. The `update_checker.py` module reads `gpu_onboarding.gpu_class` from config and re-installs the correct CT2 wheel after upgrading.
+For AMD users, `pip install --upgrade whisper-key-local` (from auto-update) replaces the ROCm CT2 wheel with the standard CUDA build from PyPI. The `update_checker.py` module reads `onboarding.gpu_class` from config and re-installs the correct CT2 wheel after upgrading.
+
+The CT2 wheel URL mapping lives in `onboarding.py` and is imported by `update_checker.py`:
 
 ```python
 # In update_checker.py, after pip upgrade
-gpu_class = config_manager.get_setting('gpu_onboarding', 'gpu_class')
+from .onboarding import get_ct2_wheel_url
+
+gpu_class = config_manager.get_setting('onboarding', 'gpu_class')
 if gpu_class and gpu_class.startswith('amd'):
-    reinstall_rocm_ct2(gpu_class)
+    ct2_url = get_ct2_wheel_url(gpu_class)
+    print("   Restoring GPU packages...")
+    result = subprocess.run([sys.executable, "-m", "pip", "install", "--force-reinstall", "--no-deps", ct2_url])
+    if result.returncode != 0:
+        print("   ✗ Failed to restore GPU packages. GPU acceleration may need to be re-installed.")
 ```
 
 ## Onboarding Flow
@@ -95,22 +101,21 @@ if gpu_class and gpu_class.startswith('amd'):
 ```
 App starts → detect_and_print() → onboarding.check_gpu()
 
-1. status == "complete"?
-   → Verify still working (_test_ct2_gpu + device:cuda)
-   → If broken: reset status to "pending", continue below
-   → If working: skip
+gpu_class, gpu_name, ct2_works = detection result
 
-2. status == "skipped"?
+1. config gpu == "complete" or "skipped"?
+   → Skip (no detection cost)
+
+2. gpu_class is None? (no discrete GPU)
+   → Set gpu_class: integrated_cpu, gpu: skipped
    → Skip
 
-3. status == "no_gpu_found"?
-   → Skip (until we add Metal/iGPU support)
+3. ct2_works and device == "cuda"?
+   → Set gpu: complete, gpu_class: <detected>
+   → Skip (already working, auto-configure)
 
-4. status == "pending"?
-   → Run detection
-   → No GPU found? → Set status: "no_gpu_found", skip
-   → GPU found + everything working? → Set status: "complete", skip
-   → GPU found + not fully set up? → Show prompt
+4. GPU found + not fully set up
+   → Show prompt
 ```
 
 ### The prompt
@@ -147,12 +152,16 @@ One prompt. Non-technical. Shows what they have, what's needed, and why.
 3. pip install runtime packages (CUDA or ROCm depending on gpu_class)
 4. If AMD: pip install --force-reinstall CT2 ROCm wheel
 5. Set config: device: cuda, compute_type: float16
-6. Set config: gpu_onboarding.status: complete, gpu_onboarding.gpu_class: <class>
+6. Set config: onboarding.gpu: complete, onboarding.gpu_class: <class>
 7. Print "   GPU acceleration installed. Please restart Whisper Key."
 8. sys.exit(0)
 ```
 
-User relaunches → detection confirms everything works → `complete` status → skips onboarding.
+User relaunches → detection confirms everything works → skips onboarding.
+
+### "Use CPU for now" (option 2)
+
+If config already has `device: cuda` from a previous broken setup, reset to `device: cpu` to prevent crash. Leave `onboarding.gpu` as `pending` so user is prompted again next launch.
 
 ### Progress display
 
@@ -168,21 +177,21 @@ subprocess.run(
 ## Implementation Plan
 
 1. Refactor detection to return results
-- [ ] Add `GpuDetectionResult` dataclass to `platform/windows/gpu.py`
-- [ ] Make `detect_and_print()` return `GpuDetectionResult`
+- [ ] Make `detect_and_print()` return `(gpu_class, gpu_name, ct2_works)` tuple
 - [ ] Update `hardware_detection.py` wrapper to pass through the return value
+- [ ] macOS stub returns `(None, None, False)`
 - [ ] Update `main.py` to capture the result
 
 2. Add onboarding config
-- [ ] Add `gpu_onboarding` section to `config.defaults.yaml`
-- [ ] Add `get_gpu_onboarding_config()` to `ConfigManager`
+- [ ] Add `onboarding` section to `config.defaults.yaml`
 
-3. Create GPU onboarding module
+3. Create onboarding module
 - [ ] Create `src/whisper_key/onboarding.py`
-- [ ] Implement decision tree (check status, detection results)
+- [ ] Implement decision tree
 - [ ] Implement prompt using `terminal_ui.prompt_choice`
 - [ ] Implement pip install flow per GPU class
 - [ ] Implement config updates (device, compute_type, onboarding status)
+- [ ] Define `get_ct2_wheel_url(gpu_class)` for use by both onboarding and update_checker
 
 4. Define GPU package lists
 - [ ] Research and pin exact NVIDIA CUDA pip packages + versions
@@ -193,35 +202,28 @@ subprocess.run(
 
 5. Wire into main.py
 - [ ] Call `onboarding.check_gpu()` after `detect_and_print()`, before component setup
-- [ ] Pass `GpuDetectionResult` and `config_manager`
+- [ ] Pass detection tuple and `config_manager`
 
-6. Update auto-update flow
-- [ ] After pip upgrade in `update_checker.py`, check `gpu_onboarding.gpu_class`
-- [ ] If AMD: re-install correct CT2 ROCm wheel
-
-7. Test
+6. Test
 - [ ] NVIDIA: install flow end-to-end
 - [ ] AMD RDNA2+: install flow end-to-end (primary PC, RX 9070 XT)
 - [ ] AMD RDNA1: install flow end-to-end (secondary PC, RX 5700 XT)
-- [ ] No GPU: auto-skips, sets no_gpu_found
+- [ ] No GPU: auto-skips, sets integrated_cpu
 - [ ] Already working: auto-skips, sets complete
 - [ ] "Don't use GPU" persists skip
-- [ ] "Use CPU for now" prompts again next launch
-- [ ] After self update: AMD CT2 wheel re-installed automatically
+- [ ] "Use CPU for now" prompts again next launch, resets device to cpu if needed
+- [ ] After app update: AMD CT2 wheel re-installed automatically
 - [ ] macOS: skips entirely (no-op stub)
+- [ ] pip install failure: clear error message, user re-prompted next launch
 
 ## Scope
 
 | File | Changes |
 |------|---------|
-| `platform/windows/gpu.py` | Add `GpuDetectionResult`, return from `detect_and_print()` |
-| `platform/macos/gpu.py` | Return `None` or empty result from `detect_and_print()` |
-| `hardware_detection.py` | Pass through return value |
-| `config.defaults.yaml` | Add `gpu_onboarding` section |
-| `config_manager.py` | Add `get_gpu_onboarding_config()` |
-| `onboarding.py` | New module — decision tree, prompt, install, config |
+| `platform/windows/gpu.py` | Return `(gpu_class, gpu_name, ct2_works)` from `detect_and_print()` |
+| `onboarding.py` | New module — decision tree, prompt, install, config, `get_ct2_wheel_url()` |
 | `main.py` | Capture detection result, call `onboarding.check_gpu()` |
-| `update_checker.py` | Re-install AMD CT2 wheel after upgrade |
+| `config.defaults.yaml` | Add `onboarding` section |
 
 ## Success Criteria
 
@@ -229,10 +231,11 @@ subprocess.run(
 - [ ] NVIDIA: runtime packages installed, device:cuda set, transcription works on GPU
 - [ ] AMD RDNA2+: ROCm packages + CT2 wheel installed, transcription works on GPU
 - [ ] AMD RDNA1: ROCm 6.2 packages + custom CT2 wheel installed, transcription works on GPU
-- [ ] No GPU detected → never prompted
-- [ ] Already working → never prompted
+- [ ] No GPU detected → never prompted, gpu_class set to integrated_cpu
+- [ ] Already working → never prompted, auto-configured as complete
 - [ ] "Don't use GPU" → never prompted again
-- [ ] "Use CPU for now" → prompted again next launch
+- [ ] "Use CPU for now" → prompted again next launch, device reset to cpu
 - [ ] pip progress visible during download
+- [ ] pip install failure shows clear error, re-prompts next launch
 - [ ] Auto-update preserves GPU setup for AMD users
 - [ ] macOS: no errors, no prompts
