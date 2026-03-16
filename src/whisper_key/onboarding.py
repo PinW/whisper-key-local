@@ -24,7 +24,6 @@ _CT2_RDNA2_BASE = "https://github.com/PinW/ctranslate2-rocm/releases/download/v4
 
 ROCM_72_PACKAGES = [
     f"{_ROCM_72_BASE}/rocm_sdk_core-7.2.0.dev0-py3-none-win_amd64.whl",
-    f"{_ROCM_72_BASE}/rocm_sdk_devel-7.2.0.dev0-py3-none-win_amd64.whl",
     f"{_ROCM_72_BASE}/rocm_sdk_libraries_custom-7.2.0.dev0-py3-none-win_amd64.whl",
     f"{_ROCM_72_BASE}/rocm-7.2.0.dev0.tar.gz",
 ]
@@ -37,7 +36,7 @@ RDNA1_SETUP_URL = "https://github.com/PinW/ctranslate2-rocm-rdna1"
 
 DOWNLOAD_SIZES = {
     'nvidia': '~1.2 GB',
-    'amd_rdna2+': '~2.5 GB',
+    'amd_rdna2+': '~1.1 GB',
 }
 
 
