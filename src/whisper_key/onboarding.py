@@ -113,10 +113,6 @@ def _ensure_cpu_config(config_manager):
 
 
 def _install_gpu_packages(gpu_class, gpu_name, config_manager):
-    if gpu_class == 'amd_rdna1':
-        _show_rdna1_instructions(gpu_name, config_manager)
-        return
-
     runtime = RUNTIME_LABELS.get(gpu_class, 'GPU')
     print(f"{BOLD_GREEN}Installing {runtime} to enable GPU acceleration for {gpu_name}...{RESET}\n")
 
@@ -140,8 +136,6 @@ def _install_gpu_packages(gpu_class, gpu_name, config_manager):
 
     config_manager.update_user_setting('whisper', 'device', 'cuda')
     config_manager.update_user_setting('whisper', 'compute_type', 'float16')
-    config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
-    config_manager.update_user_setting('onboarding', 'gpu', 'complete')
 
     print(f"\n{BOLD_GREEN}GPU acceleration installed. Please restart Whisper Key.{RESET}\n")
     sys.exit(0)
@@ -170,8 +164,6 @@ def _prompt_rdna1(gpu_name, config_manager):
     print()
 
     if choice == INSTALL_GPU:
-        config_manager.update_user_setting('onboarding', 'gpu_class', 'amd_rdna1')
-        config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
         webbrowser.open(RDNA1_SETUP_URL)
         print(f"   Setup guide: {RDNA1_SETUP_URL}")
         print()
