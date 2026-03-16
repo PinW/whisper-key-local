@@ -311,9 +311,3 @@ voice_commands: # Voice Command Settings
   # false = disable voice commands entirely
   # Define commands in commands.yaml (same folder as user_settings.yaml)
   enabled: true
-
-console: # Console Visibility Settings
-
-  # Start with console hidden to system tray
-  # Note: This setting is ignored in CLI mode
-  start_hidden: false

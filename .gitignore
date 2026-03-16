@@ -29,7 +29,7 @@ MANIFEST
 *.manifest
 *.spec
 # Exception: Keep our custom build spec files
-!py-build/*.spec
+!pyinstaller-build/*.spec
 
 # Installer logs
 pip-log.txt
@@ -119,9 +119,10 @@ dmypy.json
 user-testing/
 
 # Build configuration (user-specific paths)
-py-build/build-config*.json
-!py-build/build-config.example.json
-src/whisper_key/assets/version.txt
+pyinstaller-build/build-config*.json
+!pyinstaller-build/build-config.example.json
+pyapp-build/build-config.json
+!pyapp-build/build-config.example.json
 
 # Temporary working files
 .temp/

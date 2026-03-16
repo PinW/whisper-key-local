@@ -193,13 +193,6 @@ class SystemTray:
                 pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_sub_menu_items)),
             ]
 
-            is_executable = self.state_manager.console_manager.is_executable_mode
-            if is_executable:
-                menu_items.extend([
-                    pystray.Menu.SEPARATOR,
-                    pystray.MenuItem("Show Console", self._show_console, default=True),
-                ])
-
             menu_items.extend([
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Exit", self._quit_application_from_tray)
@@ -212,9 +205,6 @@ class SystemTray:
         except Exception as e:
             self.logger.error(f"Error in _create_menu: {e}")
             raise
-
-    def _show_console(self, icon=None, item=None):
-        self.state_manager.show_console()
 
     def _open_config_folder(self, icon=None, item=None):
         try:

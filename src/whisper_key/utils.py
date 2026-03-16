@@ -43,18 +43,14 @@ def open_file(path):
     paths.open_file(path)
 
 def resolve_asset_path(relative_path: str) -> str:
-    
     if not relative_path or os.path.isabs(relative_path):
         return relative_path
-    
-    if getattr(sys, 'frozen', False): # PyInstaller
-        return str(Path(sys._MEIPASS) / relative_path)
-    
-    if is_installed_package(): # pip / pipx
+
+    if is_installed_package():
         files = importlib.resources.files("whisper_key")
         return str(files / relative_path)
-    
-    return str(Path(__file__).parent / relative_path) # Development
+
+    return str(Path(__file__).parent / relative_path)
 
 def setup_portaudio_path():
     # Called first in main.py - platform module imports break WASAPI
@@ -65,16 +61,10 @@ def setup_portaudio_path():
         os.environ['PATH'] = str(assets_dir) + os.pathsep + os.environ.get('PATH', '')
 
 def get_version():
-    if getattr(sys, 'frozen', False): # PyInstaller
-        version_file = resolve_asset_path("assets/version.txt")
-        with open(version_file, 'r') as f:
-            return f.read().strip()
-
-    if is_installed_package(): # pip
+    if is_installed_package():
         import importlib.metadata
         return importlib.metadata.version("whisper-key-local")
 
-    # Development
     pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
     with open(pyproject_path, 'rb') as f:
         data = tomllib.load(f)

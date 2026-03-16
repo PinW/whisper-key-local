@@ -11,12 +11,13 @@ FILES_TO_SYMLINK = [
 ]
 
 FILES_TO_COPY = [
-    "py-build/build-config.json",  # Windows PowerShell can't follow Linux symlinks
-    "py-build/build-config-rocm.json",
+    "pyinstaller-build/build-config.json",  # Windows PowerShell can't follow Linux symlinks
+    "pyinstaller-build/build-config-rocm.json",
+    "pyapp-build/build-config.json",
 ]
 
 DIRS_TO_COPY = [
-    "py-build/wheels",
+    "pyinstaller-build/wheels",
 ]
 
 def main():

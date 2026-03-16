@@ -1,1 +1,1 @@
-from . import instance_lock, console, keyboard, hotkeys, paths, permissions
+from . import instance_lock, keyboard, hotkeys, paths, permissions
