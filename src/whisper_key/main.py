@@ -100,16 +100,18 @@ def setup_streaming(streaming_config, model_registry):
         model_registry=model_registry
     )
 
-def setup_whisper_engine(whisper_config, vad_manager, model_registry):
+def setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions=False):
     return WhisperEngine(
         model_key=whisper_config['model'],
         device=whisper_config['device'],
         compute_type=whisper_config['compute_type'],
         language=whisper_config['language'],
         beam_size=whisper_config['beam_size'],
+        initial_prompt=whisper_config.get('initial_prompt', ''),
         hotwords=whisper_config.get('hotwords', []),
         vad_manager=vad_manager,
-        model_registry=model_registry
+        model_registry=model_registry,
+        log_transcriptions=log_transcriptions
     )
 
 def setup_clipboard_manager(clipboard_config):
@@ -136,10 +138,11 @@ def setup_audio_feedback(audio_feedback_config):
         transcription_complete_sound=audio_feedback_config['transcription_complete_sound']
     )
 
-def setup_voice_commands(voice_commands_config, clipboard_manager):
+def setup_voice_commands(voice_commands_config, clipboard_manager, log_transcriptions=False):
     return VoiceCommandManager(
         enabled=voice_commands_config['enabled'],
-        clipboard_manager=clipboard_manager
+        clipboard_manager=clipboard_manager,
+        log_transcriptions=log_transcriptions
     )
 
 def setup_console_manager(console_config, is_executable_mode):
@@ -220,6 +223,8 @@ def main():
         console_config = config_manager.get_console_config()
         streaming_config = config_manager.get_streaming_config()
         voice_commands_config = config_manager.get_voice_commands_config()
+        log_config = config_manager.get_logging_config()
+        log_transcriptions = log_config.get('log_transcriptions', False)
 
         is_executable = is_built_executable()
         console_manager = setup_console_manager(console_config, is_executable)
@@ -230,11 +235,11 @@ def main():
         )
         vad_manager = setup_vad(vad_config)
         streaming_manager = setup_streaming(streaming_config, model_registry)
-        whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry)
+        whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions)
         streaming_manager.initialize()
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
-        voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager)
+        voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager, log_transcriptions)
 
         state_manager = StateManager(
             audio_recorder=None,

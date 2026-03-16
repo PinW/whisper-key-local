@@ -212,7 +212,11 @@ class StateManager:
                 self.system_tray.update_state("idle")
 
     def _handle_command_transcription(self, text: str, use_auto_enter: bool = False):
-        self.logger.info(f"Command mode transcription: '{text}'")
+        log_config = self.config_manager.get_logging_config()
+        if log_config.get('log_transcriptions', False):
+            self.logger.info(f"Command mode transcription: '{text}'")
+        else:
+            self.logger.info("Command mode transcription received")
 
         if not self.voice_command_manager.enabled:
             self.logger.warning("Voice commands disabled")
@@ -525,8 +529,8 @@ class StateManager:
         device_name = self._get_device_name(fallback_device_id)
         success = self.request_audio_device_change(fallback_device_id, device_name)
 
-        if success:
-            self.config_manager.update_user_setting('audio', 'input_device', fallback_device_id)
+        if not success:
+            self.logger.warning(f"Failed to switch to fallback device {fallback_device_id} for host {host_name}")
 
     def _device_matches_host(self, device_id: int, host_name: str) -> bool:
         try:

@@ -14,19 +14,23 @@ class WhisperEngine:
                  compute_type: str = "int8",
                  language: str = None,
                  beam_size: int = 5,
+                 initial_prompt: str = "",
                  hotwords: list = None,
                  vad_manager = None,
-                 model_registry = None):
+                 model_registry = None,
+                 log_transcriptions: bool = False):
 
         self.model_key = model_key
         self.device = device
         self.compute_type = compute_type
         self.language = None if language == 'auto' else language
         self.beam_size = beam_size
+        self.initial_prompt = initial_prompt or None
         self.hotwords = ", ".join(hotwords) if hotwords else None
         self.model = None
         self.logger = logging.getLogger(__name__)
         self.registry = model_registry
+        self.log_transcriptions = log_transcriptions
 
         self._loading_thread = None
         self._progress_callback = None
@@ -159,6 +163,8 @@ class WhisperEngine:
                 language=self.language,
                 condition_on_previous_text=False,
             )
+            if self.initial_prompt:
+                transcribe_kwargs["initial_prompt"] = self.initial_prompt
             if self.hotwords:
                 transcribe_kwargs["hotwords"] = self.hotwords
 
@@ -178,7 +184,10 @@ class WhisperEngine:
             detected_language = info.language
             confidence = info.language_probability
             self.logger.info(f"Transcription complete. Language: {detected_language} (confidence: {confidence:.2f}) - Time: {transcription_time:.2f}s")
-            self.logger.info(f"Transcribed text: '{transcribed_text}'")
+            if self.log_transcriptions:
+                self.logger.info(f"Transcribed text: '{transcribed_text}'")
+            else:
+                self.logger.info(f"Transcribed {len(transcribed_text)} chars")
             
             if transcribed_text:
                 print(f"   ✓ Transcribed: '{transcribed_text}'")
