@@ -5,12 +5,19 @@ import importlib.util
 import logging
 import os
 import pathlib
+import re
 import site
 import subprocess
 
 logger = logging.getLogger(__name__)
 
 _NO_WINDOW = {'creationflags': 0x08000000}
+
+_GPU_REQUIREMENTS = {
+    'nvidia': {'runtime_name': 'CUDA', 'runtime_version': (12,), 'ct2_variant': 'cuda'},
+    'amd_rdna2+': {'runtime_name': 'HIP', 'runtime_version': (7, 2), 'ct2_variant': 'rocm'},
+    'amd_rdna1': {'runtime_name': 'HIP', 'runtime_version': (6, 2), 'ct2_variant': 'rocm', 'ct2_custom': True},
+}
 
 
 def detect_and_print(configured_device):
@@ -20,6 +27,9 @@ def detect_and_print(configured_device):
 
     _status("🖥️ System check...")
     _status(f"   ✓ Detected {gpu_name}")
+
+    gpu_class = _classify_gpu(gpu_vendor, gpu_name)
+    reqs = _GPU_REQUIREMENTS.get(gpu_class)
 
     runtime_version = None
     if gpu_vendor == 'nvidia':
@@ -36,32 +46,51 @@ def detect_and_print(configured_device):
             _status("   ✗ AMD HIP runtime not found", 'warning')
 
     ct2_variant = _detect_ct2_variant()
+    ct2_version, ct2_is_custom = _detect_ct2_version()
     if ct2_variant != 'not_installed':
-        ct2_version = _detect_ct2_version()[0]
         variant_label = {'cuda': 'CUDA', 'rocm': 'ROCm'}.get(ct2_variant, ct2_variant)
         _status(f"   ✓ CTranslate2 {ct2_version} ({variant_label})")
     else:
         _status("   ✗ CTranslate2 not installed", 'warning')
 
-    if configured_device == 'cuda' and ct2_variant != 'not_installed':
-        if ct2_variant == 'rocm' and gpu_vendor == 'nvidia':
-            _status("   ✗ CTranslate2 is built for ROCm (AMD)", 'warning')
-        elif ct2_variant == 'cuda' and gpu_vendor == 'amd':
-            _status("   ✗ CTranslate2 is built for CUDA (NVIDIA)", 'warning')
-        elif not runtime_version:
-            runtime_name = 'CUDA' if gpu_vendor == 'nvidia' else 'HIP'
-            _status(f"   ✗ {runtime_name} runtime required for GPU acceleration", 'warning')
-        elif not _check_runtime_compatibility(ct2_variant, runtime_version):
-            pass
-        elif not _test_ct2_gpu(ct2_variant):
-            _status("   ✗ GPU libraries found but failed to initialize", 'warning')
-        else:
-            _status("   ✓ GPU acceleration available")
+    if configured_device != 'cuda' or ct2_variant == 'not_installed' or not reqs:
+        return
+
+    if ct2_variant != reqs['ct2_variant']:
+        expected = 'ROCm' if reqs['ct2_variant'] == 'rocm' else 'CUDA'
+        actual = 'ROCm' if ct2_variant == 'rocm' else 'CUDA'
+        _status(f"   ✗ GPU requires {expected} CTranslate2, found {actual}", 'warning')
+    elif reqs.get('ct2_custom') and not ct2_is_custom:
+        _status(f"   ✗ {gpu_name} requires custom CTranslate2 wheel", 'warning')
+
+    if not runtime_version:
+        _status(f"   ✗ {reqs['runtime_name']} runtime required for GPU acceleration", 'warning')
+    else:
+        _check_runtime_compatibility(reqs, runtime_version)
+
+    if _test_ct2_gpu(ct2_variant):
+        _status("   ✓ GPU acceleration available")
+    else:
+        _status("   ✗ GPU acceleration failed", 'warning')
 
 
 def _status(msg, level='info'):
     print(msg)
     getattr(logger, level)(msg.strip())
+
+
+def _classify_gpu(gpu_vendor: str, gpu_name: str) -> str | None:
+    if gpu_vendor == 'nvidia':
+        return 'nvidia'
+    if gpu_vendor == 'amd':
+        match = re.search(r'RX\s+(\d)', gpu_name)
+        if match:
+            series = int(match.group(1))
+            if series == 5:
+                return 'amd_rdna1'
+            if series >= 6:
+                return 'amd_rdna2+'
+    return None
 
 
 def _detect_gpu() -> tuple[str | None, str | None]:
@@ -280,23 +309,16 @@ def _detect_ct2_version() -> tuple[str, bool]:
         return 'unknown', False
 
 
-_CT2_REQUIRED_VERSIONS = {
-    'cuda': 12,
-    'rocm': 7,
-}
+def _check_runtime_compatibility(reqs: dict, runtime_version: str) -> bool:
+    required = reqs['runtime_version']
+    parts = [int(x) for x in runtime_version.split('.')]
+    actual = tuple(parts[:len(required)])
 
-
-def _check_runtime_compatibility(ct2_variant: str, runtime_version: str) -> bool:
-    required_major = _CT2_REQUIRED_VERSIONS.get(ct2_variant)
-    if required_major is None:
-        return True
-
-    actual_major = int(runtime_version.split('.')[0])
-    if actual_major != required_major:
-        runtime_name = 'CUDA' if ct2_variant == 'cuda' else 'HIP'
+    if actual < required:
+        name = reqs['runtime_name']
+        required_str = '.'.join(str(x) for x in required)
         _status(
-            f"   ✗ CTranslate2 requires {runtime_name} {required_major}, "
-            f"found {runtime_name} {runtime_version}",
+            f"   ✗ GPU requires {name} {required_str}, found {name} {runtime_version}",
             'warning'
         )
         return False
