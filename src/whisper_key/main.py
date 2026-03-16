@@ -29,7 +29,7 @@ from .instance_manager import guard_against_multiple_instances
 from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
-from .gpu_detection import detect_gpu, print_gpu_status
+from .gpu_detection import detect_gpu, detect_runtime, detect_ct2, test_ct2_gpu, print_gpu_status
 from .utils import get_user_app_data_path, get_version
 
 def is_built_executable():
@@ -199,7 +199,7 @@ def main():
     mutex_handle = guard_against_multiple_instances(instance_name)
 
     mode_label = " [TEST]" if args.test else ""
-    print(f"Starting Whisper Key [{get_version()}]{mode_label}... Local Speech-to-Text App...")
+    print(f"Starting Whisper Key [{get_version()}]{mode_label}...")
     
     shutdown_event = threading.Event()
     setup_signal_handlers(shutdown_event)
@@ -228,7 +228,10 @@ def main():
         log_transcriptions = log_config.get('log_transcriptions', False)
 
         gpu_info = detect_gpu()
-        print_gpu_status(gpu_info, whisper_config['device'])
+        runtime_info = detect_runtime(gpu_info)
+        ct2_info = detect_ct2()
+        ct2_gpu_works = test_ct2_gpu() if ct2_info.installed else False
+        print_gpu_status(gpu_info, runtime_info, ct2_info, ct2_gpu_works, whisper_config['device'])
 
         is_executable = is_built_executable()
         console_manager = setup_console_manager(console_config, is_executable)

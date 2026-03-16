@@ -15,18 +15,23 @@ _NO_WINDOW = {'creationflags': 0x08000000} if sys.platform == 'win32' else {}
 
 
 @dataclass
-class Ct2Info:
-    version: str
-    variant: str            # "cuda", "rocm", "not_installed"
-    is_custom: bool
-    runtime_available: bool
-
-
-@dataclass
 class GpuInfo:
     vendor: str | None
     name: str | None
-    ct2: Ct2Info
+
+
+@dataclass
+class RuntimeInfo:
+    cuda: str | None
+    rocm: str | None
+
+
+@dataclass
+class Ct2Info:
+    installed: bool
+    version: str | None
+    variant: str | None
+    is_custom: bool
 
 
 def _detect_nvidia_gpu() -> str | None:
@@ -151,7 +156,82 @@ def _detect_ct2_version() -> tuple[str, bool]:
         return 'unknown', False
 
 
-def _check_cuda_runtime() -> bool:
+def _find_cuda_runtime() -> str | None:
+    cuda_path = os.environ.get('CUDA_PATH')
+    if cuda_path and os.path.isfile(os.path.join(cuda_path, 'bin', 'cublas64_12.dll')):
+        return '12'
+
+    for sp in site.getsitepackages():
+        cublas_bin = os.path.join(sp, 'nvidia', 'cublas', 'bin')
+        if os.path.isdir(cublas_bin) and any(pathlib.Path(cublas_bin).glob('cublas64_12*')):
+            return '12'
+
+    for d in os.environ.get('PATH', '').split(os.pathsep):
+        if os.path.isfile(os.path.join(d, 'cublas64_12.dll')):
+            return '12'
+
+    return None
+
+
+def _find_rocm_runtime() -> str | None:
+    def _hip_version() -> str:
+        try:
+            version = importlib.metadata.version('rocm-sdk-core')
+            return '.'.join(version.split('.')[:2])
+        except importlib.metadata.PackageNotFoundError:
+            return '7'
+
+    for var in ('HIP_PATH', 'HIP_DIR'):
+        hip_path = os.environ.get(var)
+        if hip_path and os.path.isfile(os.path.join(hip_path, 'bin', 'amdhip64_7.dll')):
+            return _hip_version()
+
+    spec = importlib.util.find_spec('_rocm_sdk_core')
+    if spec and spec.submodule_search_locations:
+        core_bin = os.path.join(spec.submodule_search_locations[0], 'bin')
+        if os.path.isfile(os.path.join(core_bin, 'amdhip64_7.dll')):
+            return _hip_version()
+
+    for d in os.environ.get('PATH', '').split(os.pathsep):
+        if os.path.isfile(os.path.join(d, 'amdhip64_7.dll')):
+            return _hip_version()
+
+    return None
+
+
+# Stage 1: Hardware detection (no dependencies)
+def detect_gpu() -> GpuInfo:
+    nvidia_name = _detect_nvidia_gpu()
+    if nvidia_name:
+        return GpuInfo(vendor="nvidia", name=nvidia_name)
+
+    amd_name = _detect_amd_gpu()
+    if amd_name:
+        return GpuInfo(vendor="amd", name=amd_name)
+
+    return GpuInfo(vendor=None, name=None)
+
+
+# Stage 2: Runtime detection (no dependencies)
+def detect_runtime(gpu: GpuInfo) -> RuntimeInfo:
+    if gpu.vendor == 'nvidia':
+        return RuntimeInfo(cuda=_find_cuda_runtime(), rocm=None)
+    if gpu.vendor == 'amd':
+        return RuntimeInfo(cuda=None, rocm=_find_rocm_runtime())
+    return RuntimeInfo(cuda=None, rocm=None)
+
+
+# Stage 3: CT2 wheel analysis (requires ctranslate2 installed)
+def detect_ct2() -> Ct2Info:
+    variant = _detect_ct2_variant()
+    if variant == 'not_installed':
+        return Ct2Info(installed=False, version=None, variant=None, is_custom=False)
+    version, is_custom = _detect_ct2_version()
+    return Ct2Info(installed=True, version=version, variant=variant, is_custom=is_custom)
+
+
+# Stage 4: CT2 GPU verification (requires ctranslate2 loaded)
+def test_ct2_gpu() -> bool:
     try:
         import ctranslate2
         supported = ctranslate2.get_supported_compute_types('cuda')
@@ -160,93 +240,46 @@ def _check_cuda_runtime() -> bool:
         return False
 
 
-def _find_cuda_runtime() -> bool:
-    cuda_path = os.environ.get('CUDA_PATH')
-    if cuda_path and os.path.isfile(os.path.join(cuda_path, 'bin', 'cublas64_12.dll')):
-        return True
-
-    for sp in site.getsitepackages():
-        cublas_bin = os.path.join(sp, 'nvidia', 'cublas', 'bin')
-        if os.path.isdir(cublas_bin) and any(pathlib.Path(cublas_bin).glob('cublas64_12*')):
-            return True
-
-    for d in os.environ.get('PATH', '').split(os.pathsep):
-        if os.path.isfile(os.path.join(d, 'cublas64_12.dll')):
-            return True
-
-    return False
-
-
-def _find_rocm_runtime() -> bool:
-    for var in ('HIP_PATH', 'HIP_DIR'):
-        hip_path = os.environ.get(var)
-        if hip_path and os.path.isfile(os.path.join(hip_path, 'bin', 'amdhip64_7.dll')):
-            return True
-
-    spec = importlib.util.find_spec('_rocm_sdk_core')
-    if spec and spec.submodule_search_locations:
-        core_bin = os.path.join(spec.submodule_search_locations[0], 'bin')
-        if os.path.isfile(os.path.join(core_bin, 'amdhip64_7.dll')):
-            return True
-
-    for d in os.environ.get('PATH', '').split(os.pathsep):
-        if os.path.isfile(os.path.join(d, 'amdhip64_7.dll')):
-            return True
-
-    return False
-
-
-def _detect_ct2() -> Ct2Info:
-    variant = _detect_ct2_variant()
-    version, is_custom = _detect_ct2_version()
-    runtime_available = _check_cuda_runtime() if variant != 'not_installed' else False
-    return Ct2Info(version=version, variant=variant, is_custom=is_custom, runtime_available=runtime_available)
-
-
-def detect_gpu() -> GpuInfo:
-    ct2 = _detect_ct2()
-
-    nvidia_name = _detect_nvidia_gpu()
-    if nvidia_name:
-        return GpuInfo(vendor="nvidia", name=nvidia_name, ct2=ct2)
-
-    amd_name = _detect_amd_gpu()
-    if amd_name:
-        return GpuInfo(vendor="amd", name=amd_name, ct2=ct2)
-
-    return GpuInfo(vendor=None, name=None, ct2=ct2)
-
-
 def _gpu_status(msg, level='info'):
     print(msg)
     getattr(logger, level)(msg.strip())
 
 
-def print_gpu_status(gpu_info: GpuInfo, configured_device: str):
-    ct2 = gpu_info.ct2
+def print_gpu_status(gpu, runtime, ct2, ct2_gpu_works, configured_device):
+    _gpu_status("🖥️ System check...")
+    if gpu.name:
+        _gpu_status(f"   ✓ Detected {gpu.name}")
 
-    if gpu_info.name:
-        _gpu_status(f"   ✓ Detected {gpu_info.name}")
+    if runtime.cuda:
+        _gpu_status(f"   ✓ NVIDIA CUDA {runtime.cuda} runtime available")
+    if runtime.rocm:
+        _gpu_status(f"   ✓ AMD ROCm HIP {runtime.rocm} runtime available")
+
+    if ct2.installed:
+        variant_label = {'cuda': 'CUDA', 'rocm': 'ROCm'}.get(ct2.variant, ct2.variant)
+        _gpu_status(f"   ✓ CTranslate2 {ct2.version} ({variant_label})")
+    elif gpu.name:
+        _gpu_status("   ✗ CTranslate2 not installed", 'warning')
 
     if configured_device == 'cuda':
-        if not gpu_info.name:
-            _gpu_status("   ⚠ device: cuda but no GPU detected — transcription may fail", 'warning')
-        elif ct2.variant == 'not_installed':
-            _gpu_status("   ⚠ ctranslate2 not found", 'warning')
-        elif ct2.variant == 'rocm' and gpu_info.vendor == 'nvidia':
-            _gpu_status("   ⚠ ctranslate2 is built for ROCm — install the standard wheel (see docs/gpu-setup.md)", 'warning')
-        elif ct2.variant == 'cuda' and gpu_info.vendor == 'amd':
-            _gpu_status("   ⚠ ctranslate2 is built for CUDA — install the ROCm wheel (see docs/gpu-setup.md)", 'warning')
-        elif not ct2.runtime_available:
-            if gpu_info.vendor == 'nvidia':
-                if _find_cuda_runtime():
-                    _gpu_status("   ⚠ CUDA libraries found but failed to initialize — see docs/gpu-setup.md", 'warning')
+        if not gpu.name:
+            _gpu_status("   ✗ device: cuda but no GPU detected", 'warning')
+        elif not ct2.installed:
+            _gpu_status("   ✗ ctranslate2 not found", 'warning')
+        elif ct2.variant == 'rocm' and gpu.vendor == 'nvidia':
+            _gpu_status("   ✗ ctranslate2 is built for ROCm (AMD)", 'warning')
+        elif ct2.variant == 'cuda' and gpu.vendor == 'amd':
+            _gpu_status("   ✗ ctranslate2 is built for CUDA (NVIDIA)", 'warning')
+        elif not ct2_gpu_works:
+            if gpu.vendor == 'nvidia':
+                if runtime.cuda:
+                    _gpu_status("   ✗ CUDA libraries found but failed to initialize", 'warning')
                 else:
-                    _gpu_status("   ⚠ CUDA Toolkit 12 not found — see docs/gpu-setup.md", 'warning')
+                    _gpu_status("   ✗ CUDA Toolkit 12 not found", 'warning')
             else:
-                if _find_rocm_runtime():
-                    _gpu_status("   ⚠ ROCm libraries found but failed to initialize — see docs/gpu-setup.md", 'warning')
+                if runtime.rocm:
+                    _gpu_status("   ✗ ROCm libraries found but failed to initialize", 'warning')
                 else:
-                    _gpu_status("   ⚠ ROCm SDK not found — see docs/gpu-setup.md", 'warning')
-    elif gpu_info.name and ct2.runtime_available:
-        _gpu_status("   ℹ GPU ready — set device: cuda in settings for faster transcription")
+                    _gpu_status("   ✗ ROCm SDK not found", 'warning')
+        else:
+            _gpu_status("   ✓ GPU acceleration enabled")
