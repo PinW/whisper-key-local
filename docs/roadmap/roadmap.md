@@ -2,7 +2,7 @@
 @completed.md
 
 ## Next
-- As a *user* I want an optional **"transcription complete" sound** so I get an audible cue when the result is ready after clicking away — configurable sound path ([#35](https://github.com/PinW/whisper-key-local/pull/35))
+-
 
 ## Bugs
 - **No download progress shown** - HuggingFace model download doesn't display any state or progress to the user
@@ -47,7 +47,6 @@
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
   - As a *new user* I want **model selection** so I can choose a Whisper model that balances speed vs accuracy without editing YAML
-  - ~~As a *new user* I want **auto GPU detection** so CUDA/ROCm mode is enabled automatically when a compatible GPU is available~~ ✅
   - As a *new user* I want **CPU detection at startup** so the system check section shows hardware info even when no GPU is present
   - As a *new user* I want **settings overview** so I can see default settings and change them if I want
     - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
@@ -63,7 +62,6 @@
 - As a *user* I want **guided GPU setup** so drivers and dependencies are auto-detected, downloaded, and installed through an in-app UI instead of manual steps
 
 ### Packaging & Updates
-- As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 - As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 
 ### macOS
