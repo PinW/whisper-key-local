@@ -31,6 +31,6 @@ Installs current worktree (or specified path) as editable into the pyapp venv.
 ### reset
 Nukes the pyapp venv so next launch re-creates it from PyPI.
 1. Confirm with user before proceeding
-2. Read `pyapp-build/build-config.json` to get dist_path for the exe location
-3. Run: `"<exe-wsl-path>" self restore`
-4. Report completion
+2. Delete the venv: `powershell.exe -Command 'Remove-Item -Path "$env:LOCALAPPDATA\pyapp\data\whisper-key-local" -Recurse -Force'`
+3. Verify deleted: `powershell.exe -Command 'Test-Path "$env:LOCALAPPDATA\pyapp\data\whisper-key-local"'` should return False
+4. Report completion — next exe launch will bootstrap fresh
