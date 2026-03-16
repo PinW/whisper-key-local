@@ -79,19 +79,26 @@ When no GPU is detected, set `gpu_class: integrated_cpu` and `gpu: skipped`. Lat
 
 For AMD users, `pip install --upgrade whisper-key-local` (from auto-update) replaces the ROCm CT2 wheel with the standard CUDA build from PyPI. The `update_checker.py` module reads `onboarding.gpu_class` from config and re-installs the correct CT2 wheel after upgrading.
 
-The CT2 wheel URL mapping lives in `onboarding.py` and is imported by `update_checker.py`:
+The CT2 wheel URL mapping lives in `onboarding.py` and is imported by `update_checker.py`. Note: `run_update(version)` currently only takes `version` — needs `config_manager` added as a parameter. GPU restore must happen after pip upgrade but before the pyapp restart (`subprocess.Popen`):
 
 ```python
-# In update_checker.py, after pip upgrade
-from .onboarding import get_ct2_wheel_url
+# In update_checker.py run_update(), after pip upgrade, before restart
+from .onboarding import restore_gpu_packages
 
-gpu_class = config_manager.get_setting('onboarding', 'gpu_class')
-if gpu_class and gpu_class.startswith('amd'):
+restore_gpu_packages(config_manager)
+```
+
+```python
+# In onboarding.py
+def restore_gpu_packages(config_manager):
+    gpu_class = config_manager.get_setting('onboarding', 'gpu_class')
+    if not gpu_class or not gpu_class.startswith('amd'):
+        return
     ct2_url = get_ct2_wheel_url(gpu_class)
     print("   Restoring GPU packages...")
     result = subprocess.run([sys.executable, "-m", "pip", "install", "--force-reinstall", "--no-deps", ct2_url])
     if result.returncode != 0:
-        print("   ✗ Failed to restore GPU packages. GPU acceleration may need to be re-installed.")
+        print("   Failed to restore GPU packages. GPU acceleration may need to be re-installed.")
 ```
 
 ## Onboarding Flow
@@ -221,8 +228,9 @@ subprocess.run(
 | File | Changes |
 |------|---------|
 | `platform/windows/gpu.py` | Return `(gpu_class, gpu_name, ct2_works)` from `detect_and_print()` |
-| `onboarding.py` | New module — decision tree, prompt, install, config, `get_ct2_wheel_url()` |
-| `main.py` | Capture detection result, call `onboarding.check_gpu()` |
+| `onboarding.py` | New module — decision tree, prompt, install, config, `get_ct2_wheel_url()`, `restore_gpu_packages()` |
+| `update_checker.py` | Add `config_manager` param to `run_update()`, call `restore_gpu_packages()` before restart |
+| `main.py` | Capture detection result, call `onboarding.check_gpu()`, pass `config_manager` to update checker |
 | `config.defaults.yaml` | Add `onboarding` section |
 
 ## Success Criteria
