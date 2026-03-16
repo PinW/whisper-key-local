@@ -217,31 +217,36 @@ def detect_gpu() -> GpuInfo:
     return GpuInfo(vendor=None, name=None, ct2=ct2)
 
 
+def _gpu_status(msg, level='info'):
+    print(msg)
+    getattr(logger, level)(msg.strip())
+
+
 def print_gpu_status(gpu_info: GpuInfo, configured_device: str):
     ct2 = gpu_info.ct2
 
     if gpu_info.name:
-        print(f"   ✓ Detected {gpu_info.name}")
+        _gpu_status(f"   ✓ Detected {gpu_info.name}")
 
     if configured_device == 'cuda':
         if not gpu_info.name:
-            print("   ⚠ device: cuda but no GPU detected — transcription may fail")
+            _gpu_status("   ⚠ device: cuda but no GPU detected — transcription may fail", 'warning')
         elif ct2.variant == 'not_installed':
-            print("   ⚠ ctranslate2 not found")
+            _gpu_status("   ⚠ ctranslate2 not found", 'warning')
         elif ct2.variant == 'rocm' and gpu_info.vendor == 'nvidia':
-            print("   ⚠ ctranslate2 is built for ROCm — install the standard wheel (see docs/gpu-setup.md)")
+            _gpu_status("   ⚠ ctranslate2 is built for ROCm — install the standard wheel (see docs/gpu-setup.md)", 'warning')
         elif ct2.variant == 'cuda' and gpu_info.vendor == 'amd':
-            print("   ⚠ ctranslate2 is built for CUDA — install the ROCm wheel (see docs/gpu-setup.md)")
+            _gpu_status("   ⚠ ctranslate2 is built for CUDA — install the ROCm wheel (see docs/gpu-setup.md)", 'warning')
         elif not ct2.runtime_available:
             if gpu_info.vendor == 'nvidia':
                 if _find_cuda_runtime():
-                    print("   ⚠ CUDA libraries found but failed to initialize — see docs/gpu-setup.md")
+                    _gpu_status("   ⚠ CUDA libraries found but failed to initialize — see docs/gpu-setup.md", 'warning')
                 else:
-                    print("   ⚠ CUDA Toolkit 12 not found — see docs/gpu-setup.md")
+                    _gpu_status("   ⚠ CUDA Toolkit 12 not found — see docs/gpu-setup.md", 'warning')
             else:
                 if _find_rocm_runtime():
-                    print("   ⚠ ROCm libraries found but failed to initialize — see docs/gpu-setup.md")
+                    _gpu_status("   ⚠ ROCm libraries found but failed to initialize — see docs/gpu-setup.md", 'warning')
                 else:
-                    print("   ⚠ ROCm SDK not found — see docs/gpu-setup.md")
+                    _gpu_status("   ⚠ ROCm SDK not found — see docs/gpu-setup.md", 'warning')
     elif gpu_info.name and ct2.runtime_available:
-        print("   ℹ GPU ready — set device: cuda in settings for faster transcription")
+        _gpu_status("   ℹ GPU ready — set device: cuda in settings for faster transcription")

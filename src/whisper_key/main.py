@@ -152,13 +152,12 @@ def setup_console_manager(console_config, is_executable_mode):
         is_executable_mode=is_executable_mode
     )
 
-def setup_system_tray(tray_config, config_manager, state_manager, model_registry, gpu_info=None):
+def setup_system_tray(tray_config, config_manager, state_manager, model_registry):
     return SystemTray(
         state_manager=state_manager,
         tray_config=tray_config,
         config_manager=config_manager,
-        model_registry=model_registry,
-        gpu_info=gpu_info
+        model_registry=model_registry
     )
 
 def setup_signal_handlers(shutdown_event):
@@ -258,7 +257,7 @@ def main():
             voice_command_manager=voice_command_manager
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
-        system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry, gpu_info)
+        system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager, voice_commands_config['enabled'])
