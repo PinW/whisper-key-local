@@ -67,13 +67,11 @@
 - As a *user* I want **guided GPU setup** so drivers and dependencies are auto-detected, downloaded, and installed through an in-app UI instead of manual steps
 
 ### Packaging & Updates
-- As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
-  - As a *developer*, I want **pyapp** so I can avoid PyInstaller's fragile build process and hidden import headaches
-- As a *user*, I want **overlay config** so my settings file only contains my customizations and new defaults are picked up automatically on app updates — switch from full-copy to diff-based save with config versioning and migration framework ([plan](../plans/2026-03-08-0952-overlay-config.md))
-- As a *user*, I want **automatic updates** to get new features
+- As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 - As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 
 ### macOS
+- As a *mac user*, I want **pyapp build for macOS** so Mac users get the same single-binary packaging experience as Windows
 - As a *mac user*, I want **better default hotkey** so fn doesn't conflict with emoji picker
 - As a *mac user*, I want **CGEventTap hotkeys** so I can use ESC or Cmd+. to cancel recording
 - As a *mac user*, I want **monochrome menu bar icons** so the app conforms to Apple's template icon guidelines

@@ -29,6 +29,7 @@ from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
 from .hardware_detection import detect_and_print as detect_hardware
+from .update_checker import check_for_updates
 from .utils import get_user_app_data_path, get_version
 
 def setup_logging(config_manager: ConfigManager):
@@ -203,7 +204,9 @@ def main():
         setup_logging(config_manager)
         logger = logging.getLogger(__name__)
         setup_exception_handler()
-        
+
+        check_for_updates(config_manager, test_mode=args.test)
+
         whisper_config = config_manager.get_whisper_config()
         audio_config = config_manager.get_audio_config()
         hotkey_config = config_manager.get_hotkey_config()

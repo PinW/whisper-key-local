@@ -304,6 +304,13 @@ system_tray: # System Tray Settings
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
 
+update: # Update Settings
+
+  # How to handle available updates
+  # "prompt" = ask user before updating
+  # "auto" = update silently without asking
+  mode: prompt
+
 voice_commands: # Voice Command Settings
 
   # Enable/disable voice commands feature

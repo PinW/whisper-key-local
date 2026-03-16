@@ -40,6 +40,9 @@
 
 - As a *new user* I want **auto GPU detection** so CUDA/ROCm mode is enabled automatically when a compatible GPU is available
 - As a *user* I want **voice command hotkey** so I can choose between transcription/command
+- As a *user*, I want [**pyapp**](https://github.com/ofek/pyapp) so I can install without worrying about python/pip/etc
+- As a *user*, I want **overlay config** so my settings file only contains my customizations and new defaults are picked up automatically on app updates
+- As a *user*, I want **automatic updates** to get new features
 - As a *user* I want **voice-triggered hotkeys** so I can send keyboard shortcuts hands-free by speaking a trigger phrase
 
 ## Resolved Bugs

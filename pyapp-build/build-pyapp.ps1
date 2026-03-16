@@ -89,6 +89,7 @@ $env:PYAPP_PROJECT_VERSION = $AppVersion
 $env:PYAPP_PYTHON_VERSION = "3.12"
 $env:PYAPP_EXEC_CODE = 'from whisper_key.main import main; main()'
 $env:PYAPP_SELF_COMMAND = "self"
+$env:PYAPP_PASS_LOCATION = "true"
 
 if ($Clean) {
     $TargetDir = Join-Path $PyAppSourcePath "target"
@@ -125,3 +126,4 @@ Remove-Item Env:\PYAPP_PROJECT_VERSION -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_PYTHON_VERSION -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_EXEC_CODE -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_SELF_COMMAND -ErrorAction SilentlyContinue
+Remove-Item Env:\PYAPP_PASS_LOCATION -ErrorAction SilentlyContinue
