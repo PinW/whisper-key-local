@@ -220,9 +220,9 @@ subprocess.run(
   - ✅ ROCm 6.2: direct URLs from repo.radeon.com/rocm/windows/rocm-rel-6.2/
 - [x] Research and pin CT2 ROCm wheel URLs for RDNA2+ and RDNA1
   - ✅ RDNA2+: PinW/ctranslate2-rocm per Python version (cp311/cp312/cp313)
-  - ✅ RDNA1: PinW/ctranslate2-rocm-rdna1 per Python version
-  - ⚠️ **ACTION NEEDED:** Upload individual wheel files to these repos for cp311, cp312, cp313
-- [ ] Verify all wheels exist for Python 3.11, 3.12, 3.13
+  - ✅ RDNA1: manual setup only (HIP SDK 6.2 + community rocBLAS, no pip packages available)
+  - ⚠️ **ACTION NEEDED:** Upload RDNA2+ CT2 wheel files to PinW/ctranslate2-rocm for cp311, cp312, cp313
+- [ ] Verify all wheels exist for Python 3.11, 3.12, 3.13 (RDNA2+ only)
 - [x] Document download and installed sizes per GPU class
   - ✅ NVIDIA: ~2 GB, AMD: ~3 GB
 

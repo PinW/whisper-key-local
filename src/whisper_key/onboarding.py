@@ -19,33 +19,25 @@ NVIDIA_PACKAGES = [
     "nvidia-cudnn-cu12",
 ]
 
-_ROCM_BASE = "https://repo.radeon.com/rocm/windows/rocm-rel-{ver}"
+_ROCM_72_BASE = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2"
 _CT2_RDNA2_BASE = "https://github.com/PinW/ctranslate2-rocm/releases/download/v4.7.1-rocm72"
-_CT2_RDNA1_BASE = "https://github.com/PinW/ctranslate2-rocm-rdna1/releases/download/v4.7.1-rocm62-gfx1010"
 
 ROCM_72_PACKAGES = [
-    f"{_ROCM_BASE.format(ver='7.2')}/rocm_sdk_core-7.2.0.dev0-py3-none-win_amd64.whl",
-    f"{_ROCM_BASE.format(ver='7.2')}/rocm_sdk_devel-7.2.0.dev0-py3-none-win_amd64.whl",
-    f"{_ROCM_BASE.format(ver='7.2')}/rocm_sdk_libraries_custom-7.2.0.dev0-py3-none-win_amd64.whl",
-    f"{_ROCM_BASE.format(ver='7.2')}/rocm-7.2.0.dev0.tar.gz",
-]
-
-ROCM_62_PACKAGES = [
-    f"{_ROCM_BASE.format(ver='6.2')}/rocm_sdk_core-6.2.0.dev0-py3-none-win_amd64.whl",
-    f"{_ROCM_BASE.format(ver='6.2')}/rocm_sdk_devel-6.2.0.dev0-py3-none-win_amd64.whl",
-    f"{_ROCM_BASE.format(ver='6.2')}/rocm_sdk_libraries_custom-6.2.0.dev0-py3-none-win_amd64.whl",
-    f"{_ROCM_BASE.format(ver='6.2')}/rocm-6.2.0.dev0.tar.gz",
+    f"{_ROCM_72_BASE}/rocm_sdk_core-7.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_72_BASE}/rocm_sdk_devel-7.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_72_BASE}/rocm_sdk_libraries_custom-7.2.0.dev0-py3-none-win_amd64.whl",
+    f"{_ROCM_72_BASE}/rocm-7.2.0.dev0.tar.gz",
 ]
 
 CT2_WHEEL_URLS = {
     'amd_rdna2+': f"{_CT2_RDNA2_BASE}/ctranslate2-4.7.1+rocm72-{_PY_TAG}-{_PY_TAG}-win_amd64.whl",
-    'amd_rdna1': f"{_CT2_RDNA1_BASE}/ctranslate2-4.7.1+rocm62.gfx1010-{_PY_TAG}-{_PY_TAG}-win_amd64.whl",
 }
+
+RDNA1_SETUP_URL = "https://github.com/PinW/ctranslate2-rocm-rdna1"
 
 DOWNLOAD_SIZES = {
     'nvidia': '~2 GB',
     'amd_rdna2+': '~3 GB',
-    'amd_rdna1': '~3 GB',
 }
 
 
@@ -102,15 +94,18 @@ def _prompt_and_install(gpu_class, gpu_name, config_manager):
 
 
 def _install_gpu_packages(gpu_class, gpu_name, config_manager):
+    if gpu_class == 'amd_rdna1':
+        _show_rdna1_instructions(gpu_name, config_manager)
+        return
+
     print(f"\n{BOLD_GREEN}Installing GPU acceleration for {gpu_name}...{RESET}")
 
     success = True
 
     if gpu_class == 'nvidia':
         success = _pip_install(NVIDIA_PACKAGES)
-    elif gpu_class in ('amd_rdna2+', 'amd_rdna1'):
-        packages = ROCM_72_PACKAGES if gpu_class == 'amd_rdna2+' else ROCM_62_PACKAGES
-        success = _pip_install(packages)
+    elif gpu_class == 'amd_rdna2+':
+        success = _pip_install(ROCM_72_PACKAGES)
         if success:
             ct2_url = get_ct2_wheel_url(gpu_class)
             if ct2_url:
@@ -130,6 +125,14 @@ def _install_gpu_packages(gpu_class, gpu_name, config_manager):
 
     print(f"\n{BOLD_GREEN}GPU acceleration installed. Please restart Whisper Key.{RESET}\n")
     sys.exit(0)
+
+
+def _show_rdna1_instructions(gpu_name, config_manager):
+    print(f"\n   {gpu_name} requires manual setup (HIP SDK 6.2 + community rocBLAS).")
+    print(f"   Instructions: {RDNA1_SETUP_URL}")
+    print()
+    config_manager.update_user_setting('onboarding', 'gpu_class', 'amd_rdna1')
+    config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
 
 
 def _pip_install(packages):
