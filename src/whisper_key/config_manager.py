@@ -6,22 +6,22 @@ from io import StringIO
 
 from ruamel.yaml import YAML
 
-from .utils import resolve_asset_path, beautify_hotkey, get_user_app_data_path
+from .utils import resolve_asset_path, beautify_hotkey, get_user_app_data_path, get_version
 from .platform import IS_MACOS
 
+REPO_URL = "https://github.com/PinW/whisper-key-local"
 
-USER_SETTINGS_HEADER = (
-    "# Whisper Key - User Settings\n"
-    "# Only values here override defaults. See config.defaults.yaml for all options.\n"
-)
 
-STARTER_FILE = (
-    USER_SETTINGS_HEADER +
-    "#\n"
-    "# whisper:\n"
-    "#   model: tiny\n"
-    "#   device: cpu\n"
-)
+def _build_settings_header():
+    version = get_version()
+    ref = "master" if version.endswith("-dev") else f"v{version}"
+    return (
+        f"# Whisper Key {version} - User Settings\n"
+        "#\n"
+        f"# Available settings: {REPO_URL}/tree/{ref}?tab=readme-ov-file#%EF%B8%8F-configuration\n"
+        f"# Defaults reference: {REPO_URL}/blob/{ref}/src/whisper_key/config.defaults.yaml\n"
+        "\n"
+    )
 
 EXTENSIBLE_PATHS = {'whisper.models', 'streaming.models'}
 
@@ -114,8 +114,8 @@ class ConfigManager:
 
         if not os.path.exists(self.user_settings_path):
             with open(self.user_settings_path, 'w', encoding='utf-8') as f:
-                f.write(STARTER_FILE)
-            self.logger.info(f"Created starter user settings at {self.user_settings_path}")
+                f.write(_build_settings_header())
+            self.logger.info(f"Created user settings at {self.user_settings_path}")
     
     def _remove_unused_keys_from_user_config(self, user_config: Dict[str, Any], default_config: Dict[str, Any]):
 
@@ -207,7 +207,7 @@ class ConfigManager:
         yaml.dump(_to_plain(user_config), body)
 
         with open(self.user_settings_path, 'w', encoding='utf-8') as f:
-            f.write(USER_SETTINGS_HEADER)
+            f.write(_build_settings_header())
             f.write(body.getvalue())
 
     def _print_config_status(self):
