@@ -128,6 +128,8 @@ def _find_cuda_runtime() -> str | None:
 def _get_cuda_version_from_dll(dll_path: str) -> str | None:
     try:
         cudart = ctypes.CDLL(dll_path)
+        cudart.cudaRuntimeGetVersion.restype = ctypes.c_int
+        cudart.cudaRuntimeGetVersion.argtypes = [ctypes.POINTER(ctypes.c_int)]
         version = ctypes.c_int(0)
         if cudart.cudaRuntimeGetVersion(ctypes.byref(version)) == 0:
             v = version.value
@@ -290,7 +292,7 @@ def _check_runtime_compatibility(ct2_variant: str, runtime_version: str) -> bool
         return True
 
     actual_major = int(runtime_version.split('.')[0])
-    if actual_major != required_major:
+    if actual_major < required_major:
         runtime_name = 'CUDA' if ct2_variant == 'cuda' else 'HIP'
         _status(
             f"   ✗ CTranslate2 requires {runtime_name} {required_major}, "
