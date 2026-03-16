@@ -151,8 +151,6 @@ Delete this file and restart app to reset to defaults.
 | `system_tray.tooltip` | `Whisper Key` | Hover text |
 | **Voice Commands** |||
 | `voice_commands.enabled` | `true` | Enable voice command mode |
-| **Console** |||
-| `console.start_hidden` | `false` | Start minimized to tray |
 
 ## 📁 Model Cache
 

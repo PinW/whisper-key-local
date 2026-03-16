@@ -24,15 +24,11 @@ from .clipboard_manager import ClipboardManager
 from .state_manager import StateManager
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
-from .console_manager import ConsoleManager
 from .instance_manager import guard_against_multiple_instances
 from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
 from .utils import get_user_app_data_path, get_version
-
-def is_built_executable():
-    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
 def setup_logging(config_manager: ConfigManager):
     log_config = config_manager.get_logging_config()
@@ -145,12 +141,6 @@ def setup_voice_commands(voice_commands_config, clipboard_manager, log_transcrip
         log_transcriptions=log_transcriptions
     )
 
-def setup_console_manager(console_config, is_executable_mode):
-    return ConsoleManager(
-        config=console_config,
-        is_executable_mode=is_executable_mode
-    )
-
 def setup_system_tray(tray_config, config_manager, state_manager, model_registry):
     return SystemTray(
         state_manager=state_manager,
@@ -220,14 +210,10 @@ def main():
         tray_config = config_manager.get_system_tray_config()
         audio_feedback_config = config_manager.get_audio_feedback_config()
         vad_config = config_manager.get_vad_config()
-        console_config = config_manager.get_console_config()
         streaming_config = config_manager.get_streaming_config()
         voice_commands_config = config_manager.get_voice_commands_config()
         log_config = config_manager.get_logging_config()
         log_transcriptions = log_config.get('log_transcriptions', False)
-
-        is_executable = is_built_executable()
-        console_manager = setup_console_manager(console_config, is_executable)
 
         model_registry = ModelRegistry(
             whisper_models_config=whisper_config.get('models', {}),
@@ -245,7 +231,6 @@ def main():
             audio_recorder=None,
             whisper_engine=whisper_engine,
             clipboard_manager=clipboard_manager,
-            console_manager=console_manager,
             system_tray=None,
             config_manager=config_manager,
             audio_feedback=audio_feedback,

@@ -21,6 +21,37 @@ function Get-ProjectVersion {
     exit 1
 }
 
+function Patch-IconSupport {
+    param($PyAppSourcePath, $IconPath)
+
+    $IconDest = Join-Path $PyAppSourcePath "icon.ico"
+    Copy-Item $IconPath $IconDest -Force
+
+    $CargoToml = Join-Path $PyAppSourcePath "Cargo.toml"
+    $CargoContent = Get-Content $CargoToml -Raw
+    if ($CargoContent -notmatch "winresource") {
+        $CargoContent = $CargoContent -replace '\[build-dependencies\]', "[build-dependencies]`nwinresource = `"0.1`""
+        Set-Content $CargoToml $CargoContent -NoNewline
+        Write-Host "Patched Cargo.toml with winresource dependency" -ForegroundColor Gray
+    }
+
+    $BuildRs = Join-Path $PyAppSourcePath "build.rs"
+    $BuildContent = Get-Content $BuildRs -Raw
+    if ($BuildContent -notmatch "winresource") {
+        $IconPatch = @'
+
+    if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows" {
+        let mut res = winresource::WindowsResource::new();
+        res.set_icon("icon.ico");
+        res.compile().expect("Failed to compile Windows resources");
+    }
+'@
+        $BuildContent = $BuildContent -replace '(fn main\(\) \{)', "`$1$IconPatch"
+        Set-Content $BuildRs $BuildContent -NoNewline
+        Write-Host "Patched build.rs with icon embedding" -ForegroundColor Gray
+    }
+}
+
 $AppVersion = Get-ProjectVersion $ProjectRoot
 Write-Host "Version: $AppVersion" -ForegroundColor Cyan
 
@@ -39,6 +70,14 @@ if (-not (Test-Path (Join-Path $PyAppSourcePath "Cargo.toml"))) {
     Write-Host "Error: No Cargo.toml found in $PyAppSourcePath" -ForegroundColor Red
     Write-Host "Download from: https://github.com/ofek/pyapp/releases/latest/download/source.tar.gz" -ForegroundColor Yellow
     exit 1
+}
+
+$IconPath = Join-Path $ProjectRoot "src\whisper_key\platform\windows\assets\whisperkey-icon.ico"
+if (Test-Path $IconPath) {
+    Write-Host "Patching icon support..." -ForegroundColor Yellow
+    Patch-IconSupport $PyAppSourcePath $IconPath
+} else {
+    Write-Host "Warning: Icon not found at $IconPath, building without icon" -ForegroundColor Yellow
 }
 
 Write-Host "Starting pyapp build for $AppName v$AppVersion..." -ForegroundColor Green

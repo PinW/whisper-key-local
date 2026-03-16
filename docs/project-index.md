@@ -17,7 +17,6 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+ and 
 | **Hotkey Detection** | `hotkey_listener.py` | Global hotkey monitoring | global-hotkeys (Win), NSEvent (Mac) |
 | **Configuration** | `config_manager.py` | YAML settings management & validation | ruamel.yaml |
 | **System Integration** | `system_tray.py` | System tray icon & menu interface | pystray, Pillow |
-| **Console Management** | `console_manager.py` | Console window visibility control (exe only) | win32console (Win) |
 | **Instance Management** | `instance_manager.py` | Single instance enforcement | win32event (Win), fcntl (Mac) |
 | **Voice Commands** | `voice_commands.py` | Trigger matching & command execution | subprocess |
 | **Platform Abstraction** | `platform/` | OS-specific implementations | pywin32 (Win), pyobjc (Mac) |
@@ -57,7 +56,6 @@ whisper-key-local/
 │       ├── audio_recorder.py          # Sounddevice audio capture
 │       ├── clipboard_manager.py       # Clipboard & auto-paste operations
 │       ├── config_manager.py          # YAML configuration management
-│       ├── console_manager.py         # Console window visibility control
 │       ├── hotkey_listener.py         # Global hotkey detection
 │       ├── instance_manager.py        # Single instance enforcement
 │       ├── model_registry.py          # Whisper model registry & caching
