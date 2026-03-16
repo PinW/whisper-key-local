@@ -99,12 +99,12 @@ def _prompt_and_install(gpu_class, gpu_name, config_manager):
 
     if choice == INSTALL_GPU:
         _install_gpu_packages(gpu_class, gpu_name, config_manager)
-    elif choice == USE_CPU:
-        _ensure_cpu_config(config_manager)
     elif choice == NEVER_ASK:
         _ensure_cpu_config(config_manager)
         config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
         config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
+    else:
+        _ensure_cpu_config(config_manager)
 
 
 def _ensure_cpu_config(config_manager):
@@ -178,12 +178,12 @@ def _prompt_rdna1(gpu_name, config_manager):
         print("   Press any key to exit...", end="", flush=True)
         app.getch()
         sys.exit(0)
-    elif choice == USE_CPU:
-        _ensure_cpu_config(config_manager)
     elif choice == NEVER_ASK:
         _ensure_cpu_config(config_manager)
         config_manager.update_user_setting('onboarding', 'gpu_class', 'amd_rdna1')
         config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
+    else:
+        _ensure_cpu_config(config_manager)
 
 
 def _pip_install(packages):
