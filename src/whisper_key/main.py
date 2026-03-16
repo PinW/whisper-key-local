@@ -28,6 +28,7 @@ from .instance_manager import guard_against_multiple_instances
 from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
+from .hardware_detection import detect_and_print as detect_hardware
 from .utils import get_user_app_data_path, get_version
 
 def setup_logging(config_manager: ConfigManager):
@@ -188,7 +189,7 @@ def main():
     mutex_handle = guard_against_multiple_instances(instance_name)
 
     mode_label = " [TEST]" if args.test else ""
-    print(f"Starting Whisper Key [{get_version()}]{mode_label}... Local Speech-to-Text App...")
+    print(f"Starting Whisper Key [{get_version()}]{mode_label}...")
     
     shutdown_event = threading.Event()
     setup_signal_handlers(shutdown_event)
@@ -214,6 +215,9 @@ def main():
         voice_commands_config = config_manager.get_voice_commands_config()
         log_config = config_manager.get_logging_config()
         log_transcriptions = log_config.get('log_transcriptions', False)
+
+        detect_hardware(whisper_config['device'])
+
 
         model_registry = ModelRegistry(
             whisper_models_config=whisper_config.get('models', {}),

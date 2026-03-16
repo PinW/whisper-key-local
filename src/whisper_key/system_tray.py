@@ -51,7 +51,7 @@ class SystemTray:
             self.available = False
 
         return self.available
-    
+
     def _load_icons_to_cache(self):
         try:
             self.icons = icons.get_tray_icons()
