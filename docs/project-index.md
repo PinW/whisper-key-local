@@ -80,7 +80,8 @@ whisper-key-local/
 │   └── ...
 │
 ├── .temp/                             # Temporary working files (gitignored)
-└── py-build/                          # PyInstaller scripts and config
+├── pyinstaller-build/                 # PyInstaller build scripts and config
+└── pyapp-build/                       # pyapp build script and config
 ```
 
 ---

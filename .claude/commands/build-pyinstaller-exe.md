@@ -5,7 +5,7 @@ allowed-tools: Bash(powershell.exe:*), Bash(whisper-key.exe:*)
 ---
 [FLAGS]=$ARGUMENTS
 
-1. Build: `powershell.exe -ExecutionPolicy Bypass -File py-build/build-windows.ps1` (pass through flags from [FLAGS])
+1. Build: `powershell.exe -ExecutionPolicy Bypass -File pyinstaller-build/build-windows.ps1` (pass through flags from [FLAGS])
    - `-Variant rocm`: Build ROCm version (separate venv, ROCm CTranslate2 wheel, runtime hook)
    - `-NoZip`: Skip zip creation (use this by default unless releasing)
 2. Watch for "Build successful!" message

@@ -30,7 +30,7 @@ Produces a small Rust binary that on first run:
 - [ ] Test GPU detection (CUDA) with user-installed drivers
 
 ### Phase 2: Build & release integration
-- [ ] Create pyapp build script (replaces `py-build/build-windows.ps1`)
+- [x] Create pyapp build script (`pyapp-build/build-pyapp.ps1`)
 - [ ] Update release skill to build pyapp binaries instead of PyInstaller
 - [ ] Test auto-update flow (`self update`)
 - [ ] Update README with new install instructions
