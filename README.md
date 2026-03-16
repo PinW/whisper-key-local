@@ -50,7 +50,9 @@ python whisper-key.py
 
 ## ⚡ GPU Acceleration
 
-Whisper Key detects your GPU on first launch and offers one-press setup. Supports **NVIDIA** (CUDA) and **AMD** (ROCm). See the **[GPU Setup Guide](docs/gpu-setup.md)** for details.
+Whisper Key detects your GPU on first launch and offers one-press setup. Supports **NVIDIA** (CUDA) and **AMD** (ROCm).
+
+See the **[GPU Setup Guide](docs/gpu-setup.md)** for details.
 
 ## 🎤 Basic Usage
 
