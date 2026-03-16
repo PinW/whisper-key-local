@@ -20,6 +20,9 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+ and 
 | **Instance Management** | `instance_manager.py` | Single instance enforcement | win32event (Win), fcntl (Mac) |
 | **Voice Commands** | `voice_commands.py` | Trigger matching & command execution | subprocess |
 | **Platform Abstraction** | `platform/` | OS-specific implementations | pywin32 (Win), pyobjc (Mac) |
+| **Update Checker** | `update_checker.py` | PyPI version check & auto-update | urllib, subprocess |
+| **Hardware Detection** | `hardware_detection.py` | Platform GPU detection wrapper | - |
+| **Terminal UI** | `terminal_ui.py` | Interactive terminal prompts | - |
 | **Utilities** | `utils.py` | Common utility functions | - |
 
 ## Project Structure
@@ -44,12 +47,13 @@ whisper-key-local/
 │       │   ├── __init__.py            # Platform detection & import routing
 │       │   └── {macos,windows}/       # Platform-specific implementations
 │       │       ├── assets/            # Platform-specific assets
-│       │       ├── app.py             # Thread requirements
+│       │       ├── app.py             # Thread requirements, getch()
 │       │       ├── hotkeys.py         # Hotkey detection
 │       │       ├── icons.py           # Tray icons
 │       │       ├── instance_lock.py   # Instance control
 │       │       ├── keyboard.py        # Key simulation
 │       │       ├── paths.py           # Path management
+│       │       ├── gpu.py              # GPU detection (Windows)
 │       │       └── permissions.py     # Permission management
 │       ├── audio_feedback.py          # Audio feedback for recording events
 │       ├── audio_recorder.py          # Sounddevice audio capture
@@ -63,6 +67,9 @@ whisper-key-local/
 │       ├── utils.py                   # Common utility functions
 │       ├── voice_activity_detection.py # Voice activity detection
 │       ├── voice_commands.py          # Voice command matching & execution
+│       ├── hardware_detection.py       # Platform GPU detection wrapper
+│       ├── terminal_ui.py             # Interactive terminal prompts
+│       ├── update_checker.py          # PyPI version check & auto-update
 │       └── whisper_engine.py          # Faster-whisper transcription
 │
 ├── docs/                              # Project documentation
@@ -77,10 +84,9 @@ whisper-key-local/
 │   └── ...
 │
 ├── .temp/                             # Temporary working files (gitignored)
-├── pyinstaller-build/                 # PyInstaller build scripts and config
 └── pyapp-build/                       # pyapp build script and config
 ```
 
 ---
 
-*Last Updated: 2026-02-27 | Project Status: Active Development*
+*Last Updated: 2026-03-16 | Project Status: Active Development*
