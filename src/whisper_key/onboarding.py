@@ -34,9 +34,9 @@ CT2_WHEEL_URLS = {
 
 RDNA1_SETUP_URL = "https://github.com/PinW/ctranslate2-rocm-rdna1"
 
-DOWNLOAD_SIZES = {
-    'nvidia': '~1.2 GB',
-    'amd_rdna2+': '~1.1 GB',
+GPU_SIZES = {
+    'nvidia': {'download': '1.2 GB', 'disk': '1.2 GB'},
+    'amd_rdna2+': {'download': '1.1 GB', 'disk': '3.3 GB'},
 }
 
 
@@ -61,14 +61,14 @@ def check_gpu(gpu_class, gpu_name, ct2_works, configured_device, config_manager)
 
 
 def _prompt_and_install(gpu_class, gpu_name, config_manager):
-    download_size = DOWNLOAD_SIZES.get(gpu_class, '~2 GB')
+    sizes = GPU_SIZES.get(gpu_class, {'download': '1 GB', 'disk': '1 GB'})
 
     choice = prompt_choice(
         f"{gpu_name} — GPU acceleration available",
         [
             (
                 "Install GPU acceleration",
-                f"One-time download ({download_size}) for {gpu_name}"
+                f"{sizes['download']} download, {sizes['disk']} disk space"
             ),
             (
                 "Use CPU for now",
