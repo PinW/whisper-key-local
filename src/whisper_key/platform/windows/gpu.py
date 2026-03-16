@@ -71,12 +71,12 @@ def detect_and_print(configured_device):
     if _test_ct2_gpu(ct2_variant):
         _status("   ✓ GPU acceleration available")
     else:
-        _status("   ✗ GPU acceleration failed", 'warning')
+        _status("   ✗ GPU acceleration test failed", 'warning')
 
 
 def _status(msg, level='info'):
     print(msg)
-    getattr(logger, level)(msg.strip())
+    logger.log(logging.DEBUG, msg.strip())
 
 
 def _classify_gpu(gpu_vendor: str, gpu_name: str) -> str | None:

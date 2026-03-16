@@ -1,26 +1,9 @@
-import sys
+from .platform import app
 
 CYAN = "\x1b[36m"
 BOLD_CYAN = "\x1b[1;36m"
 DIM = "\x1b[2m"
 RESET = "\x1b[0m"
-
-
-def getch():
-    try:
-        import tty
-        import termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(fd)
-            ch = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
-    except Exception:
-        line = input()
-        return line[0] if line else '\n'
 
 
 def prompt_choice(title: str, options: list[tuple[str, str]]) -> int:
@@ -59,7 +42,7 @@ def prompt_choice(title: str, options: list[tuple[str, str]]) -> int:
 
     while True:
         try:
-            ch = getch()
+            ch = app.getch()
             if ch in valid_choices:
                 print(ch)
                 return valid_choices[ch]

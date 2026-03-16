@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import urllib.request
@@ -49,7 +50,7 @@ def check_for_updates(config_manager, test_mode=False):
     update_config = config_manager.get_update_config()
 
     if update_config.get('mode') == 'auto':
-        run_update()
+        run_update(latest)
         return
 
     choice = prompt_choice("Update available: {} -> {}".format(version, latest), [
@@ -59,17 +60,29 @@ def check_for_updates(config_manager, test_mode=False):
     ])
 
     if choice == UPDATE_NOW:
-        run_update()
+        run_update(latest)
     elif choice == ALWAYS_UPDATE:
         config_manager.update_user_setting('update', 'mode', 'auto')
-        run_update()
+        run_update(latest)
+    else:
+        print()
 
 
-def run_update():
-    print("   Updating...")
+BOLD_GREEN = "\x1b[1;32m"
+BOLD_RED = "\x1b[1;31m"
+RESET = "\x1b[0m"
+
+
+def run_update(version):
+    print(f"\n{BOLD_GREEN}Whisper Key {version} available. Downloading and installing update...{RESET}\n")
     result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "whisper-key-local"])
     if result.returncode != 0:
-        print("   Update failed. Please try again later.")
+        print(f"\n{BOLD_RED}Update failed. Please try again later.{RESET}\n")
         return
-    print("   Update installed. Please restart Whisper Key.")
+    pyapp_exe = os.environ.get('PYAPP', '')
+    if os.path.isfile(pyapp_exe):
+        print(f"\n{BOLD_GREEN}Whisper Key {version} installed. Restarting...{RESET}\n")
+        subprocess.Popen([pyapp_exe], creationflags=subprocess.CREATE_NEW_CONSOLE)
+    else:
+        print(f"\n{BOLD_GREEN}Whisper Key {version} installed. Please relaunch the app.{RESET}\n")
     sys.exit(0)

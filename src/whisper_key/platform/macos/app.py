@@ -14,6 +14,19 @@ def setup():
     _delegate = AppDelegate.alloc().init()
     app.setDelegate_(_delegate)
 
+def getch():
+    import tty
+    import termios
+    import sys
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
 def run_event_loop(shutdown_event):
     app = NSApplication.sharedApplication()
     while not shutdown_event.is_set():
