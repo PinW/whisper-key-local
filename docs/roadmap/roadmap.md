@@ -63,6 +63,7 @@
 
 ### macOS
 - As a *mac user*, I want **pyapp build for macOS** so Mac users get the same single-binary packaging experience as Windows
+  - As a *mac user*, I want **`restart_or_exit` to work on macOS** so auto-update and GPU onboarding restart correctly (`CREATE_NEW_CONSOLE` is Windows-only)
 - As a *mac user*, I want **better default hotkey** so fn doesn't conflict with emoji picker
 - As a *mac user*, I want **CGEventTap hotkeys** so I can use ESC or Cmd+. to cancel recording
 - As a *mac user*, I want **monochrome menu bar icons** so the app conforms to Apple's template icon guidelines

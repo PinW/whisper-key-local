@@ -314,11 +314,11 @@ update: # Update Settings
 onboarding: # First-run setup state (managed automatically)
 
   # GPU acceleration setup status
-  # pending = check on startup, complete = configured, skipped = don't ask
+  # pending | no_gpu | skipped | complete
   gpu: pending
 
   # Detected GPU class (set automatically)
-  # nvidia | amd_rdna2+ | amd_rdna1 | integrated_cpu | null
+  # nvidia | amd_rdna2+ | amd_rdna1 | null
   gpu_class: null
 
 voice_commands: # Voice Command Settings
