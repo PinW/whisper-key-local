@@ -189,18 +189,3 @@ def get_ct2_wheel_url(gpu_class):
     return CT2_WHEEL_URLS.get(gpu_class)
 
 
-def restore_gpu_packages(config_manager):
-    gpu_class = config_manager.config.get('onboarding', {}).get('gpu_class')
-    if not gpu_class or not gpu_class.startswith('amd'):
-        return
-
-    ct2_url = get_ct2_wheel_url(gpu_class)
-    if not ct2_url:
-        return
-
-    print("   Restoring GPU packages...")
-    result = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "--force-reinstall", "--no-deps", ct2_url]
-    )
-    if result.returncode != 0:
-        print("   Failed to restore GPU packages. GPU acceleration may need to be re-installed.")
