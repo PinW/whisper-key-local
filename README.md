@@ -35,7 +35,7 @@ Then run: `whisper-key` (or `wk` for short)
 ### Windows App
 
 1. Download `whisper-key.exe` from the [latest release](https://github.com/PinW/whisper-key-local/releases/latest)
-2. Run and follow the on-screen instructions
+2. Run `whisper-key.exe`
 
 ### From Source
 
