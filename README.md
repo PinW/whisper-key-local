@@ -46,12 +46,6 @@ pip install -e .
 python whisper-key.py
 ```
 
-## ⚡ GPU Acceleration
-
-Whisper Key detects your GPU on first launch and offers one-press install of the required runtime libraries. Supports **NVIDIA** (CUDA) and **AMD** (ROCm).
-
-For manual setup or troubleshooting, see the **[GPU Setup Guide](docs/gpu-setup.md)**.
-
 ## 🎤 Basic Usage
 
 | Hotkey | Windows | macOS |
@@ -87,6 +81,12 @@ commands:
 ```
 
 See the **[Voice Commands Guide](docs/voice-commands.md)** for full details.
+
+## ⚡ GPU Acceleration
+
+Whisper Key detects your GPU on first launch and offers one-press install of the required runtime libraries. Supports **NVIDIA** (CUDA) and **AMD** (ROCm).
+
+For manual setup or troubleshooting, see the **[GPU Setup Guide](docs/gpu-setup.md)**.
 
 ## ⚙️ Configuration
 
