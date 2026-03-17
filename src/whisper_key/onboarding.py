@@ -93,8 +93,7 @@ def _prompt_enable_manually_installed_gpu(gpu_class, gpu_name, config_manager):
         config_manager.update_user_setting('whisper', 'compute_type', 'float16')
         config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
         config_manager.update_user_setting('onboarding', 'gpu', 'complete')
-        print(f"{BOLD_GREEN}GPU acceleration enabled. Please restart Whisper Key.{RESET}\n")
-        sys.exit(0)
+        print(f"{BOLD_GREEN}GPU acceleration enabled.{RESET}\n")
     elif choice == NEVER_ASK:
         _ensure_cpu_config(config_manager)
         config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
