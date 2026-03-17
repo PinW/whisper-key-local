@@ -5,6 +5,7 @@
 -
 
 ## Bugs
+- **Silent close when already running** - `.exe` users see the app instantly close with no message when another instance is already running
 - **No download progress shown** - HuggingFace model download doesn't display any state or progress to the user
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
