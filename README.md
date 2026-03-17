@@ -32,12 +32,9 @@ pip install whisper-key-local
 
 Then run: `whisper-key` (or `wk` for short)
 
-### Portable App (Windows Only)
+### Windows App
 
-1. [Download the latest release](https://github.com/PinW/whisper-key-local/releases/latest):
-   - NVIDIA or CPU — `windows.zip`
-   - AMD GPU — `windows-amd-gpu-rocm.zip` ([ROCm prerequisites](docs/gpu-setup.md#amd--rdna-2-rocm) required)
-2. Extract and run `whisper-key.exe`
+[Download `whisper-key.exe`](https://github.com/PinW/whisper-key-local/releases/latest) from the latest release and run it.
 
 ### From Source
 
@@ -50,9 +47,9 @@ python whisper-key.py
 
 ## ⚡ GPU Acceleration
 
-Whisper Key detects your GPU on first launch and offers one-press setup. Supports **NVIDIA** (CUDA) and **AMD** (ROCm).
+Whisper Key detects your GPU on first launch and offers one-press install of the required runtime libraries. Supports **NVIDIA** (CUDA) and **AMD** (ROCm).
 
-See the **[GPU Setup Guide](docs/gpu-setup.md)** for details and manual setup.
+For manual setup or troubleshooting, see the **[GPU Setup Guide](docs/gpu-setup.md)**.
 
 ## 🎤 Basic Usage
 
