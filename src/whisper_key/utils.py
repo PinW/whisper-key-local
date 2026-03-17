@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import importlib.resources
 import tomllib
@@ -59,6 +60,16 @@ def setup_portaudio_path():
     assets_dir = Path(resolve_asset_path('platform/windows/assets'))
     if assets_dir.exists():
         os.environ['PATH'] = str(assets_dir) + os.pathsep + os.environ.get('PATH', '')
+
+def restart_or_exit(message_restart, message_exit):
+    pyapp_exe = os.environ.get('PYAPP', '')
+    if os.path.isfile(pyapp_exe):
+        print(message_restart)
+        subprocess.Popen([pyapp_exe], creationflags=subprocess.CREATE_NEW_CONSOLE)
+    else:
+        print(message_exit)
+    sys.exit(0)
+
 
 def get_version():
     if is_installed_package():

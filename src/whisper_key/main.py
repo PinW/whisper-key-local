@@ -29,6 +29,7 @@ from .model_registry import ModelRegistry
 from .streaming_manager import StreamingManager
 from .voice_commands import VoiceCommandManager
 from .hardware_detection import detect_and_print as detect_hardware
+from .onboarding import check_gpu
 from .update_checker import check_for_updates
 from .utils import get_user_app_data_path, get_version
 
@@ -151,6 +152,15 @@ def setup_system_tray(tray_config, config_manager, state_manager, model_registry
         model_registry=model_registry
     )
 
+def run_gpu_onboarding(config_manager, whisper_config):
+    gpu_status = config_manager.config.get('onboarding', {}).get('gpu', 'pending')
+    if gpu_status != 'pending':
+        return whisper_config
+    gpu_class, gpu_name, ct2_works = detect_hardware(whisper_config['device'])
+    check_gpu(gpu_class, gpu_name, ct2_works, whisper_config['device'], config_manager)
+    return config_manager.get_whisper_config()
+
+
 def setup_signal_handlers(shutdown_event):
     def signal_handler(signum, frame):
         shutdown_event.set()
@@ -219,8 +229,7 @@ def main():
         log_config = config_manager.get_logging_config()
         log_transcriptions = log_config.get('log_transcriptions', False)
 
-        detect_hardware(whisper_config['device'])
-
+        whisper_config = run_gpu_onboarding(config_manager, whisper_config)
 
         model_registry = ModelRegistry(
             whisper_models_config=whisper_config.get('models', {}),

@@ -1,13 +1,17 @@
 from .platform import app
 
+BOLD_GREEN = "\x1b[1;32m"
+BOLD_RED = "\x1b[1;31m"
 CYAN = "\x1b[36m"
 BOLD_CYAN = "\x1b[1;36m"
 DIM = "\x1b[2m"
 RESET = "\x1b[0m"
 
 
-def prompt_choice(title: str, options: list[tuple[str, str]]) -> int:
+def prompt_choice(title: str, options: list[tuple[str, str]], subtitle: str = None) -> int:
     all_texts = [title]
+    if subtitle:
+        all_texts.append(subtitle)
     for main_text, desc in options:
         all_texts.append(main_text)
         if desc:
@@ -27,6 +31,8 @@ def prompt_choice(title: str, options: list[tuple[str, str]]) -> int:
     print()
     print(f"{CYAN}  ┌{'─' * (width + 2)}┐{RESET}")
     print(f"{CYAN}  │{RESET} {BOLD_CYAN}{pad(title)}{RESET} {CYAN}│{RESET}")
+    if subtitle:
+        print(line(subtitle))
 
     for i, (main_text, desc) in enumerate(options, 1):
         print(line())

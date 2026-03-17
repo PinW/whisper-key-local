@@ -15,7 +15,7 @@ requires-python = ">=3.11"
 dependencies = [
     # Cross-platform
     "faster-whisper>=1.2.1",
-    "ctranslate2>=4.6.3",
+    "ctranslate2==4.7.1",
     "numpy>=1.24.0",
     "soxr>=0.3.0",
     "sherpa-onnx>=1.11.3",

@@ -79,19 +79,26 @@ When no GPU is detected, set `gpu_class: integrated_cpu` and `gpu: skipped`. Lat
 
 For AMD users, `pip install --upgrade whisper-key-local` (from auto-update) replaces the ROCm CT2 wheel with the standard CUDA build from PyPI. The `update_checker.py` module reads `onboarding.gpu_class` from config and re-installs the correct CT2 wheel after upgrading.
 
-The CT2 wheel URL mapping lives in `onboarding.py` and is imported by `update_checker.py`:
+The CT2 wheel URL mapping lives in `onboarding.py` and is imported by `update_checker.py`. Note: `run_update(version)` currently only takes `version` — needs `config_manager` added as a parameter. GPU restore must happen after pip upgrade but before the pyapp restart (`subprocess.Popen`):
 
 ```python
-# In update_checker.py, after pip upgrade
-from .onboarding import get_ct2_wheel_url
+# In update_checker.py run_update(), after pip upgrade, before restart
+from .onboarding import restore_gpu_packages
 
-gpu_class = config_manager.get_setting('onboarding', 'gpu_class')
-if gpu_class and gpu_class.startswith('amd'):
+restore_gpu_packages(config_manager)
+```
+
+```python
+# In onboarding.py
+def restore_gpu_packages(config_manager):
+    gpu_class = config_manager.get_setting('onboarding', 'gpu_class')
+    if not gpu_class or not gpu_class.startswith('amd'):
+        return
     ct2_url = get_ct2_wheel_url(gpu_class)
     print("   Restoring GPU packages...")
     result = subprocess.run([sys.executable, "-m", "pip", "install", "--force-reinstall", "--no-deps", ct2_url])
     if result.returncode != 0:
-        print("   ✗ Failed to restore GPU packages. GPU acceleration may need to be re-installed.")
+        print("   Failed to restore GPU packages. GPU acceleration may need to be re-installed.")
 ```
 
 ## Onboarding Flow
@@ -177,32 +184,54 @@ subprocess.run(
 ## Implementation Plan
 
 1. Refactor detection to return results
-- [ ] Make `detect_and_print()` return `(gpu_class, gpu_name, ct2_works)` tuple
-- [ ] Update `hardware_detection.py` wrapper to pass through the return value
-- [ ] macOS stub returns `(None, None, False)`
-- [ ] Update `main.py` to capture the result
+- [x] Make `detect_and_print()` return `(gpu_class, gpu_name, ct2_works)` tuple
+  - ✅ Returns `(None, None, False)` when no GPU detected
+  - ✅ Quiet GPU test when device != cuda (for onboarding auto-detection)
+  - ✅ Full status printing preserved when device == cuda
+- [x] Update `hardware_detection.py` wrapper to pass through the return value
+- [x] macOS stub returns `(None, None, False)`
+- [x] Update `main.py` to capture the result
 
 2. Add onboarding config
-- [ ] Add `onboarding` section to `config.defaults.yaml`
+- [x] Add `onboarding` section to `config.defaults.yaml`
+  - ✅ `gpu: pending` and `gpu_class: null` defaults added
 
 3. Create onboarding module
-- [ ] Create `src/whisper_key/onboarding.py`
-- [ ] Implement decision tree
-- [ ] Implement prompt using `terminal_ui.prompt_choice`
-- [ ] Implement pip install flow per GPU class
-- [ ] Implement config updates (device, compute_type, onboarding status)
-- [ ] Define `get_ct2_wheel_url(gpu_class)` for use by both onboarding and update_checker
+- [x] Create `src/whisper_key/onboarding.py`
+- [x] Implement decision tree
+  - ✅ Skips if gpu status is complete/skipped
+  - ✅ Auto-sets integrated_cpu + skipped when no GPU
+  - ✅ Auto-completes when GPU already working (ct2_works + device=cuda)
+  - ✅ Prompts user when GPU found but not set up
+- [x] Implement prompt using `terminal_ui.prompt_choice`
+- [x] Implement pip install flow per GPU class
+  - ✅ NVIDIA: installs CUDA runtime packages
+  - ✅ AMD: installs ROCm packages + CT2 wheel
+  - ✅ Sets device=cuda, compute_type=float16 on success
+  - ✅ Exits for restart after install
+- [x] Implement config updates (device, compute_type, onboarding status)
+- [x] Define `get_ct2_wheel_url(gpu_class)` for use by both onboarding and update_checker
 
 4. Define GPU package lists
-- [ ] Research and pin exact NVIDIA CUDA pip packages + versions
-- [ ] Research and pin exact AMD ROCm pip packages + versions + URLs
-- [ ] Research and pin CT2 ROCm wheel URLs for RDNA2+ and RDNA1
-- [ ] Verify all wheels exist for Python 3.12 (pyapp's Python version)
-- [ ] Document download and installed sizes per GPU class
+- [x] Research and pin exact NVIDIA CUDA pip packages + versions
+  - ✅ nvidia-cuda-runtime-cu12, nvidia-cublas-cu12, nvidia-cudnn-cu12
+- [x] Research and pin exact AMD ROCm pip packages + versions + URLs
+  - ✅ ROCm 7.2: direct URLs from repo.radeon.com/rocm/windows/rocm-rel-7.2/
+  - ✅ ROCm 6.2: direct URLs from repo.radeon.com/rocm/windows/rocm-rel-6.2/
+- [x] Research and pin CT2 ROCm wheel URLs for RDNA2+ and RDNA1
+  - ✅ RDNA2+: PinW/ctranslate2-rocm per Python version (cp311/cp312/cp313)
+  - ✅ RDNA1: manual setup only (HIP SDK 6.2 + community rocBLAS, no pip packages available)
+  - ⚠️ **ACTION NEEDED:** Upload RDNA2+ CT2 wheel files to PinW/ctranslate2-rocm for cp311, cp312, cp313
+- [ ] Verify all wheels exist for Python 3.11, 3.12, 3.13 (RDNA2+ only)
+- [x] Document download and installed sizes per GPU class
+  - ✅ NVIDIA: ~2 GB, AMD: ~3 GB
 
 5. Wire into main.py
-- [ ] Call `onboarding.check_gpu()` after `detect_and_print()`, before component setup
-- [ ] Pass detection tuple and `config_manager`
+- [x] Call `onboarding.check_gpu()` after `detect_and_print()`, before component setup
+- [x] Pass detection tuple and `config_manager`
+- [x] Wire `restore_gpu_packages()` into `update_checker.run_update()`
+  - ✅ Added `config_manager` param to `run_update()`
+  - ✅ Calls `restore_gpu_packages()` after pip upgrade, before restart
 
 6. Test
 - [ ] NVIDIA: install flow end-to-end
@@ -221,8 +250,9 @@ subprocess.run(
 | File | Changes |
 |------|---------|
 | `platform/windows/gpu.py` | Return `(gpu_class, gpu_name, ct2_works)` from `detect_and_print()` |
-| `onboarding.py` | New module — decision tree, prompt, install, config, `get_ct2_wheel_url()` |
-| `main.py` | Capture detection result, call `onboarding.check_gpu()` |
+| `onboarding.py` | New module — decision tree, prompt, install, config, `get_ct2_wheel_url()`, `restore_gpu_packages()` |
+| `update_checker.py` | Add `config_manager` param to `run_update()`, call `restore_gpu_packages()` before restart |
+| `main.py` | Capture detection result, call `onboarding.check_gpu()`, pass `config_manager` to update checker |
 | `config.defaults.yaml` | Add `onboarding` section |
 
 ## Success Criteria

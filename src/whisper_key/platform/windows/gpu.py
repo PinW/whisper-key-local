@@ -23,7 +23,7 @@ _GPU_REQUIREMENTS = {
 def detect_and_print(configured_device):
     gpu_vendor, gpu_name = _detect_gpu()
     if not gpu_name:
-        return
+        return (None, None, False)
 
     _status("🖥️ System check...")
     _status(f"   ✓ Detected {gpu_name}")
@@ -53,8 +53,8 @@ def detect_and_print(configured_device):
     else:
         _status("   ✗ CTranslate2 not installed", 'warning')
 
-    if configured_device != 'cuda' or ct2_variant == 'not_installed' or not reqs:
-        return
+    if ct2_variant == 'not_installed' or not reqs:
+        return (gpu_class, gpu_name, False)
 
     if ct2_variant != reqs['ct2_variant']:
         expected = 'ROCm' if reqs['ct2_variant'] == 'rocm' else 'CUDA'
@@ -68,13 +68,17 @@ def detect_and_print(configured_device):
     else:
         _check_runtime_compatibility(reqs, runtime_version)
 
-    if _test_ct2_gpu(ct2_variant):
+    ct2_works = _test_ct2_gpu(ct2_variant)
+    if ct2_works:
         _status("   ✓ GPU acceleration available")
     else:
         _status("   ✗ GPU acceleration test failed", 'warning')
 
+    return (gpu_class, gpu_name, ct2_works)
+
 
 def _status(msg, level='info'):
+    # Always DEBUG — level param reserved for future use (avoid console spam during testing)
     print(msg)
     logger.log(logging.DEBUG, msg.strip())
 

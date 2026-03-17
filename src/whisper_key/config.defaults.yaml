@@ -311,6 +311,16 @@ update: # Update Settings
   # "auto" = update silently without asking
   mode: prompt
 
+onboarding: # First-run setup state (managed automatically)
+
+  # GPU acceleration setup status
+  # pending | no_gpu | skipped | complete
+  gpu: pending
+
+  # Detected GPU class (set automatically)
+  # nvidia | amd_rdna2+ | amd_rdna1 | null
+  gpu_class: null
+
 voice_commands: # Voice Command Settings
 
   # Enable/disable voice commands feature
