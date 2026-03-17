@@ -2,6 +2,23 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.8.0] - 2026-03-17
+
+### Added
+- **GPU onboarding** - Detects your GPU on first launch and offers one-press install of CUDA or ROCm runtime libraries. Supports NVIDIA, AMD RDNA 2+, and RDNA 1 (manual setup) (#44)
+- **Auto-update** - Checks PyPI for new versions on startup with option to update in-place (#43)
+- **GPU and runtime detection** - Shows GPU model and runtime status on startup (#41)
+- **Overlay config** - Config updates now merge cleanly without overwriting user comments or structure (#40)
+- `initial_prompt` config option to bias Whisper transcription toward expected content (#39)
+- `log_transcriptions` config option (default: off) for privacy
+
+### Changed
+- **Replaced PyInstaller with pyapp** - Windows exe is now a single `whisper-key.exe` that bootstraps its own Python environment. No more zip extraction or separate AMD variant (#42)
+- Updated README for new install flow
+
+### Removed
+- PyInstaller build system and related runtime hooks
+
 ## [0.7.1] - 2026-03-08
 
 ### Added

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "whisper-key-local"
-version = "0.7.1"
+version = "0.8.0"
 description = "Global hotkeys to record speech and transcribe directly to your cursor"
 readme = "README.md"
 license = "MIT"
