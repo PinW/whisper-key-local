@@ -44,6 +44,9 @@
 - As a *user*, I want **overlay config** so my settings file only contains my customizations and new defaults are picked up automatically on app updates
 - As a *user*, I want **automatic updates** to get new features
 - As a *user* I want **voice-triggered hotkeys** so I can send keyboard shortcuts hands-free by speaking a trigger phrase
+- As a *user* I want **voice commands** so I can quickly activate tasks
+- As a *user* I want **transcription preset commands** so I can instantly deliver pre-written phrases without recording or transcribing
+- As a *user* I want **hotkey-activated commands** so I can bind specific voice commands to custom hotkeys and skip the speech step entirely
 
 ## Resolved Bugs
 

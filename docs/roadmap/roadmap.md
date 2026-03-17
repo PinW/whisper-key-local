@@ -2,7 +2,7 @@
 @completed.md
 
 ## Next
-- As a *user* I want an optional **"transcription complete" sound** so I get an audible cue when the result is ready after clicking away — configurable sound path ([#35](https://github.com/PinW/whisper-key-local/pull/35))
+-
 
 ## Bugs
 - **No download progress shown** - HuggingFace model download doesn't display any state or progress to the user
@@ -13,9 +13,6 @@
 ## Backlog
 
 ### Voice Commands
-- As a *user* I want **voice commands** so I can quickly activate tasks
-- As a *user* I want **transcription preset commands** so I can instantly deliver pre-written phrases without recording or transcribing
-- As a *user* I want **hotkey-activated commands** so I can bind specific voice commands to custom hotkeys and skip the speech step entirely
 - As a *user* I want **command aliases** so I can define multiple trigger phrases for the same command (e.g., "open browser", "launch chrome", and "start browser" all execute the same action)
 - As a *user* I want **semantic command matching** so commands are matched intelligently instead of requiring exact phrases (e.g., "open up chrome" still matches "open browser")
 - As a *user* I want **parameterized commands** so I can define command templates with variables that are extracted from speech (e.g., "open {filename}" or "search for {query}")
@@ -47,7 +44,6 @@
 ### Onboarding
 - As a *new user* I want **first-run onboarding** so I can configure model, audio device, and auto-paste without editing YAML
   - As a *new user* I want **model selection** so I can choose a Whisper model that balances speed vs accuracy without editing YAML
-  - ~~As a *new user* I want **auto GPU detection** so CUDA/ROCm mode is enabled automatically when a compatible GPU is available~~ ✅
   - As a *new user* I want **CPU detection at startup** so the system check section shows hardware info even when no GPU is present
   - As a *new user* I want **settings overview** so I can see default settings and change them if I want
     - As a *new user* I want **audio device selection** so I can pick my preferred microphone from a list of detected devices
@@ -63,7 +59,6 @@
 - As a *user* I want **guided GPU setup** so drivers and dependencies are auto-detected, downloaded, and installed through an in-app UI instead of manual steps
 
 ### Packaging & Updates
-- As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 - As a *user*, I want **config version tracking with auto-reset on breaking changes** so my settings don't cause errors after major updates ([#22](https://github.com/PinW/whisper-key-local/issues/22))
 
 ### macOS
@@ -101,6 +96,7 @@
 - As a *user*, I want to see my **transcription history** so I can search through it
 
 ### Recording
+- As a *user* I want **push-to-talk mode** so I can hold the hotkey to record and release to stop, as a configurable alternative to toggle mode
 - As a *user* I want **hotkey-per-audio-source bindings** so I can quickly switch between microphone input and speaker/system audio capture
 - As a *user*, I want **real-time transcription** so that I can get immediate feedback
 
