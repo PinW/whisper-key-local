@@ -49,6 +49,10 @@ def check_gpu(gpu_class, gpu_name, ct2_works, configured_device, config_manager)
         config_manager.update_user_setting('onboarding', 'gpu', 'complete')
         return
 
+    if ct2_works:
+        _prompt_enable_manually_installed_gpu(gpu_class, gpu_name, config_manager)
+        return
+
     if gpu_class == 'amd_rdna1':
         _prompt_rdna1(gpu_name, config_manager)
         return
@@ -60,6 +64,41 @@ RUNTIME_LABELS = {
     'nvidia': 'CUDA',
     'amd_rdna2+': 'ROCm 7.2',
 }
+
+
+def _prompt_enable_manually_installed_gpu(gpu_class, gpu_name, config_manager):
+    choice = prompt_choice(
+        "GPU acceleration available",
+        [
+            (
+                "Enable GPU in config",
+                "Use manually installed GPU setup"
+            ),
+            (
+                "Skip for now",
+                "Use CPU this session"
+            ),
+            (
+                "Use CPU only",
+                "Don't ask again"
+            ),
+        ],
+        subtitle=f"Use {gpu_name} for fast transcription?",
+    )
+
+    print()
+
+    if choice == INSTALL_GPU:
+        config_manager.update_user_setting('whisper', 'device', 'cuda')
+        config_manager.update_user_setting('whisper', 'compute_type', 'float16')
+        config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
+        config_manager.update_user_setting('onboarding', 'gpu', 'complete')
+        print(f"{BOLD_GREEN}GPU acceleration enabled. Please restart Whisper Key.{RESET}\n")
+        sys.exit(0)
+    elif choice == NEVER_ASK:
+        _ensure_cpu_config(config_manager)
+        config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
+        config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
 
 
 def _prompt_and_install(gpu_class, gpu_name, config_manager):
