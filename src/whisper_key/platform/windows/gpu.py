@@ -78,6 +78,7 @@ def detect_and_print(configured_device):
 
 
 def _status(msg, level='info'):
+    # Always DEBUG — level param reserved for future use (avoid console spam during testing)
     print(msg)
     logger.log(logging.DEBUG, msg.strip())
 

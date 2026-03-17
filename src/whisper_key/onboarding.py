@@ -3,15 +3,12 @@ import sys
 import webbrowser
 
 from .platform import app
-from .terminal_ui import prompt_choice
+from .terminal_ui import BOLD_GREEN, BOLD_RED, RESET, prompt_choice
+from .utils import restart_or_exit
 
 INSTALL_GPU = 1
 USE_CPU = 2
 NEVER_ASK = 3
-
-BOLD_GREEN = "\x1b[1;32m"
-BOLD_RED = "\x1b[1;31m"
-RESET = "\x1b[0m"
 
 _PY_TAG = f"cp{sys.version_info.major}{sys.version_info.minor}"
 
@@ -43,12 +40,6 @@ GPU_SIZES = {
 
 
 def check_gpu(gpu_class, gpu_name, ct2_works, configured_device, config_manager):
-    onboarding_config = config_manager.config.get('onboarding', {})
-    gpu_status = onboarding_config.get('gpu', 'pending')
-
-    if gpu_status in ('complete', 'skipped', 'no_gpu'):
-        return
-
     if not gpu_class:
         config_manager.update_user_setting('onboarding', 'gpu', 'no_gpu')
         return
@@ -136,8 +127,10 @@ def _install_gpu_packages(gpu_class, gpu_name, config_manager):
     config_manager.update_user_setting('whisper', 'device', 'cuda')
     config_manager.update_user_setting('whisper', 'compute_type', 'float16')
 
-    print(f"\n{BOLD_GREEN}GPU acceleration installed. Please restart Whisper Key.{RESET}\n")
-    sys.exit(0)
+    restart_or_exit(
+        f"\n{BOLD_GREEN}GPU acceleration installed. Restarting...{RESET}\n",
+        f"\n{BOLD_GREEN}GPU acceleration installed. Please restart Whisper Key.{RESET}\n",
+    )
 
 
 def _prompt_rdna1(gpu_name, config_manager):

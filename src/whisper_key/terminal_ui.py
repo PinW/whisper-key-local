@@ -1,5 +1,7 @@
 from .platform import app
 
+BOLD_GREEN = "\x1b[1;32m"
+BOLD_RED = "\x1b[1;31m"
 CYAN = "\x1b[36m"
 BOLD_CYAN = "\x1b[1;36m"
 DIM = "\x1b[2m"
