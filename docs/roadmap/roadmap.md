@@ -98,7 +98,6 @@
 - As a *user*, I want to see my **transcription history** so I can search through it
 
 ### Recording
-- As a *user* I want **push-to-talk mode** so I can hold the hotkey to record and release to stop, as a configurable alternative to toggle mode
 - As a *user* I want **hotkey-per-audio-source bindings** so I can quickly switch between microphone input and speaker/system audio capture
 - As a *user*, I want **real-time transcription** so that I can get immediate feedback
 

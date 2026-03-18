@@ -47,6 +47,7 @@
 - As a *user* I want **voice commands** so I can quickly activate tasks
 - As a *user* I want **transcription preset commands** so I can instantly deliver pre-written phrases without recording or transcribing
 - As a *user* I want **hotkey-activated commands** so I can bind specific voice commands to custom hotkeys and skip the speech step entirely
+- As a *user* I want **push-to-talk mode** so I can hold the hotkey to record and release to stop, as a configurable alternative to toggle mode ([#45](https://github.com/PinW/whisper-key-local/pull/45))
 
 ## Resolved Bugs
 
