@@ -239,6 +239,12 @@ class ConfigManager:
         return beautify_hotkey(self.config['hotkey']['stop_key'])
 
     def print_stop_instructions_based_on_config(self):
+        recording_mode = self.config['hotkey'].get('recording_mode', 'toggle')
+
+        if recording_mode == 'push_to_talk':
+            print("   Release key to stop and transcribe")
+            return
+
         stop_key = self._get_stop_key_display()
         auto_paste_enabled = self.config['clipboard']['auto_paste']
         auto_send_key = self.config['hotkey'].get('auto_send_key', '')
@@ -253,7 +259,9 @@ class ConfigManager:
 
     def print_startup_hotkey_instructions(self):
         recording_hotkey = beautify_hotkey(self.config['hotkey']['recording_hotkey'])
-        print(f"   [{recording_hotkey}] for transcription")
+        recording_mode = self.config['hotkey'].get('recording_mode', 'toggle')
+        mode_hint = " (hold to record)" if recording_mode == "push_to_talk" else ""
+        print(f"   [{recording_hotkey}] for transcription{mode_hint}")
 
         if self.get_voice_commands_config().get('enabled', True):
             command_hotkey = self.config['hotkey'].get('command_hotkey')
@@ -397,6 +405,10 @@ def validate_config(config, default_config, logger):
     _validate_numeric_range(config, default_config, 'vad.vad_offset_threshold', logger, min_val=0.0, max_val=1.0)
     _validate_numeric_range(config, default_config, 'vad.vad_min_speech_duration', logger, min_val=0.001, max_val=5.0)
     _validate_numeric_range(config, default_config, 'vad.vad_silence_timeout_seconds', logger, min_val=1.0, max_val=36000.0)
+
+    recording_mode = _get_config_value_at_path(config, 'hotkey.recording_mode')
+    if recording_mode not in ('toggle', 'push_to_talk'):
+        _set_to_default(config, default_config, 'hotkey.recording_mode', recording_mode, logger)
 
     stop_key = _get_config_value_at_path(config, 'hotkey.stop_key')
     auto_send_key = _get_config_value_at_path(config, 'hotkey.auto_send_key')

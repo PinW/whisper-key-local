@@ -6,13 +6,14 @@ from .state_manager import StateManager
 class HotkeyListener:
     def __init__(self, state_manager: StateManager, recording_hotkey: str, stop_key: str,
                  auto_send_key: str = None, cancel_combination: str = None,
-                 command_hotkey: str = None):
+                 command_hotkey: str = None, recording_mode: str = "toggle"):
         self.state_manager = state_manager
         self.recording_hotkey = recording_hotkey
         self.stop_key = stop_key
         self.auto_send_key = auto_send_key
         self.cancel_combination = cancel_combination
         self.command_hotkey = command_hotkey
+        self.recording_mode = recording_mode
         self.keys_armed = True
         self.is_listening = False
         self.logger = logging.getLogger(__name__)
@@ -24,11 +25,19 @@ class HotkeyListener:
     def _setup_hotkeys(self):
         hotkey_configs = []
 
-        hotkey_configs.append({
-            'combination': self.recording_hotkey,
-            'callback': self._standard_hotkey_pressed,
-            'name': 'standard'
-        })
+        if self.recording_mode == "push_to_talk":
+            hotkey_configs.append({
+                'combination': self.recording_hotkey,
+                'callback': self._standard_hotkey_pressed,
+                'release_callback': self._push_to_talk_released,
+                'name': 'standard (push-to-talk)'
+            })
+        else:
+            hotkey_configs.append({
+                'combination': self.recording_hotkey,
+                'callback': self._standard_hotkey_pressed,
+                'name': 'standard'
+            })
 
         hotkey_configs.append({
             'combination': self.stop_key,
@@ -82,6 +91,10 @@ class HotkeyListener:
         self.logger.info(f"Standard hotkey pressed: {self.recording_hotkey}")
         self.keys_armed = False
         self.state_manager.start_recording()
+
+    def _push_to_talk_released(self):
+        self.logger.info("Push-to-talk key released")
+        self.state_manager.stop_recording()
 
     def _stop_key_pressed(self):
         self.logger.debug(f"Stop key pressed: {self.stop_key}, keys_armed={self.keys_armed}")
@@ -146,7 +159,7 @@ class HotkeyListener:
             self.logger.error(f"Error stopping hotkey listener: {e}")
 
     def change_hotkey_config(self, setting: str, value):
-        valid_settings = ['recording_hotkey', 'stop_key', 'auto_send_key', 'cancel_combination', 'command_hotkey']
+        valid_settings = ['recording_hotkey', 'stop_key', 'auto_send_key', 'cancel_combination', 'command_hotkey', 'recording_mode']
 
         if setting not in valid_settings:
             raise ValueError(f"Invalid setting '{setting}'. Valid options: {valid_settings}")

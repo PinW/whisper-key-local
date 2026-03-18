@@ -152,6 +152,11 @@ hotkey: # Hotkey Configuration
   # Note: On macOS, ESC is system-reserved
   cancel_combination: "esc | macos: shift"
 
+  # Recording mode
+  # "toggle" = press hotkey to start, press stop key to stop (default)
+  # "push_to_talk" = hold hotkey to record, release to stop and transcribe
+  recording_mode: toggle
+
   # Key combination for voice command mode
   # Records speech and matches against user-defined commands
   command_hotkey: "alt+win | macos: fn+command"
