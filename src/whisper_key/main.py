@@ -175,7 +175,8 @@ def setup_hotkey_listener(hotkey_config, state_manager, voice_commands_enabled=T
         stop_key=hotkey_config['stop_key'],
         auto_send_key=hotkey_config.get('auto_send_key'),
         cancel_combination=hotkey_config.get('cancel_combination'),
-        command_hotkey=hotkey_config.get('command_hotkey') if voice_commands_enabled else None
+        command_hotkey=hotkey_config.get('command_hotkey') if voice_commands_enabled else None,
+        recording_mode=hotkey_config.get('recording_mode', 'toggle')
     )
 
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
