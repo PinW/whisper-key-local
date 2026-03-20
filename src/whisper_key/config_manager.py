@@ -310,6 +310,15 @@ class ConfigManager:
     def get_streaming_config(self) -> Dict[str, Any]:
         return self.config.get('streaming', {}).copy()
 
+    def get_listening_config(self) -> dict:
+        return self.config.get('listening', {}).copy()
+
+    def update_listening_mode(self, mode: str):
+        self.update_user_setting('listening', 'mode', mode)
+
+    def update_listening_preview(self, enabled: bool):
+        self.update_user_setting('listening', 'preview_enabled', enabled)
+
     def get_log_file_path(self) -> str:
         log_filename = self.config['logging']['file']['filename']
         return os.path.join(get_user_app_data_path(), log_filename)

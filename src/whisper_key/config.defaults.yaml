@@ -342,3 +342,13 @@ voice_commands: # Voice Command Settings
   # false = disable voice commands entirely
   # Define commands in commands.yaml (same folder as user_settings.yaml)
   enabled: true
+
+listening:
+  mode: hotkey
+  preview_enabled: false
+  preview_interval_sec: 1.5
+  preview_max_audio_seconds: 30.0
+  pre_buffer_duration_sec: 0.3
+  post_speech_silence_ms: 800
+  max_speech_duration_sec: 60.0
+  min_speech_duration_sec: 0.5

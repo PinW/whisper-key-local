@@ -168,6 +168,38 @@ class SystemTray:
 
             model_sub_menu_items = self._build_model_menu_items(current_model, is_model_loading)
 
+            mode_info = self.state_manager.get_mode_info()
+            current_listening_mode = mode_info["mode"]
+            preview_on = mode_info["preview"]
+
+            def make_mode_selector(mode):
+                return lambda icon, item: self._select_listening_mode(mode)
+
+            def make_is_mode(mode_value):
+                return lambda item: current_listening_mode == mode_value
+
+            from .state_manager import ListeningMode
+            listening_mode_items = [
+                pystray.MenuItem(
+                    "Hotkey",
+                    make_mode_selector(ListeningMode.HOTKEY),
+                    radio=True,
+                    checked=make_is_mode("hotkey"),
+                ),
+                pystray.MenuItem(
+                    "Continuous",
+                    make_mode_selector(ListeningMode.CONTINUOUS),
+                    radio=True,
+                    checked=make_is_mode("continuous"),
+                ),
+                pystray.MenuItem(
+                    "Wake Word",
+                    make_mode_selector(ListeningMode.WAKE_WORD),
+                    radio=True,
+                    checked=make_is_mode("wake_word"),
+                ),
+            ]
+
             voice_commands_enabled = self.config_manager.get_setting('voice_commands', 'enabled')
 
             menu_items = [
@@ -191,6 +223,16 @@ class SystemTray:
                 pystray.MenuItem("Copy to clipboard", lambda icon, item: self._set_transcription_mode(False), radio=True, checked=lambda item: not auto_paste_enabled),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_sub_menu_items)),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem(
+                    "Listening Mode",
+                    pystray.Menu(*listening_mode_items),
+                ),
+                pystray.MenuItem(
+                    "Preview",
+                    lambda icon, item: self._toggle_preview(),
+                    checked=lambda item: preview_on,
+                ),
             ]
 
             menu_items.extend([
@@ -266,6 +308,21 @@ class SystemTray:
 
         except Exception as e:
             self.logger.error(f"Error selecting model {model_key}: {e}")
+
+    def _select_listening_mode(self, mode):
+        try:
+            self.state_manager.set_listening_mode(mode)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error selecting listening mode {mode.value}: {e}")
+
+    def _toggle_preview(self):
+        try:
+            new_state = not self.state_manager.preview_enabled
+            self.state_manager.set_preview_enabled(new_state)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error toggling preview: {e}")
 
     def _select_audio_host(self, host_name: str):
         try:

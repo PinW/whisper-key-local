@@ -1,20 +1,9 @@
-"""
-HTTP Trigger for Whisper Key
-Provides a simple HTTP API to control recording via the StateManager.
-
-Endpoints:
-    GET /record   - Start recording
-    GET /stop     - Stop recording (transcribe + clipboard)
-    GET /toggle   - Toggle recording (start if idle, stop if recording)
-    GET /cancel   - Cancel active recording
-    GET /command  - Start voice command recording
-    GET /status   - Get current state (idle/recording/processing/model_loading)
-"""
-
 import json
 import logging
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
+from .state_manager import ListeningMode
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +52,18 @@ class _TriggerHandler(BaseHTTPRequestHandler):
             self._handle_command(sm)
         elif path == "/status":
             self._handle_status(sm)
+        elif path == "/mode":
+            self._handle_mode_info(sm)
+        elif path == "/mode/hotkey":
+            self._handle_set_mode(sm, ListeningMode.HOTKEY)
+        elif path == "/mode/continuous":
+            self._handle_set_mode(sm, ListeningMode.CONTINUOUS)
+        elif path == "/mode/wake_word":
+            self._handle_set_mode(sm, ListeningMode.WAKE_WORD)
+        elif path == "/mode/preview/on":
+            self._handle_set_preview(sm, True)
+        elif path == "/mode/preview/off":
+            self._handle_set_preview(sm, False)
         else:
             self._error(404, f"Unknown endpoint: {path}")
 
@@ -115,7 +116,22 @@ class _TriggerHandler(BaseHTTPRequestHandler):
 
     def _handle_status(self, sm):
         state = sm.get_current_state()
-        self._ok(state, state=state)
+        mode_info = sm.get_mode_info()
+        self._ok(state, state=state, **mode_info)
+
+    def _handle_mode_info(self, sm):
+        mode_info = sm.get_mode_info()
+        self._json_response(200, {"ok": True, **mode_info})
+
+    def _handle_set_mode(self, sm, mode: ListeningMode):
+        sm.set_listening_mode(mode)
+        mode_info = sm.get_mode_info()
+        self._json_response(200, {"ok": True, **mode_info})
+
+    def _handle_set_preview(self, sm, enabled: bool):
+        sm.set_preview_enabled(enabled)
+        mode_info = sm.get_mode_info()
+        self._json_response(200, {"ok": True, **mode_info})
 
 
 class HttpTrigger:

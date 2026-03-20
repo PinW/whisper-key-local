@@ -2,6 +2,7 @@ import logging
 import time
 import threading
 import platform
+from enum import Enum
 from typing import Optional
 
 import sounddevice as sd
@@ -15,6 +16,12 @@ from .audio_feedback import AudioFeedback
 from .utils import OptionalComponent
 from .voice_activity_detection import VadEvent, VadManager
 from .voice_commands import VoiceCommandManager
+
+
+class ListeningMode(Enum):
+    HOTKEY = "hotkey"
+    CONTINUOUS = "continuous"
+    WAKE_WORD = "wake_word"
 
 class StateManager:
     def __init__(self,
@@ -44,6 +51,10 @@ class StateManager:
         self._command_mode = False
         self._state_lock = threading.Lock()
         self._streaming_display_active = False
+
+        listening_config = self.config_manager.get_listening_config()
+        self.listening_mode = ListeningMode(listening_config.get('mode', 'hotkey'))
+        self.preview_enabled = listening_config.get('preview_enabled', False)
 
         self.logger = logging.getLogger(__name__)
         self._current_audio_host = None
@@ -225,13 +236,29 @@ class StateManager:
         else:
             print("   ✗ No matching command found")
 
+    def set_listening_mode(self, mode: ListeningMode):
+        self.listening_mode = mode
+        self.config_manager.update_listening_mode(mode.value)
+        self.logger.info(f"Listening mode changed to {mode.value}")
+
+    def set_preview_enabled(self, enabled: bool):
+        self.preview_enabled = enabled
+        self.config_manager.update_listening_preview(enabled)
+        self.logger.info(f"Preview {'enabled' if enabled else 'disabled'}")
+
+    def get_mode_info(self) -> dict:
+        return {
+            "mode": self.listening_mode.value,
+            "preview": self.preview_enabled,
+        }
+
     def get_application_state(self) -> dict:
         status = {
             "recording": self.audio_recorder.get_recording_status(),
             "processing": self.is_processing,
             "model_loading": self.is_model_loading,
         }
-        
+
         return status
     
     def manual_transcribe_test(self, duration_seconds: int = 5):

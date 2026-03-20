@@ -54,3 +54,15 @@ commands:
     run: 'snippingtool'
   - trigger: "lock screen"
     run: 'rundll32.exe user32.dll,LockWorkStation'
+
+  # Listening mode commands
+  - trigger: "hotkey mode"
+    run: 'curl -s http://localhost:5757/mode/hotkey'
+  - trigger: "continuous mode"
+    run: 'curl -s http://localhost:5757/mode/continuous'
+  - trigger: "wake word mode"
+    run: 'curl -s http://localhost:5757/mode/wake_word'
+  - trigger: "preview on"
+    run: 'curl -s http://localhost:5757/mode/preview/on'
+  - trigger: "preview off"
+    run: 'curl -s http://localhost:5757/mode/preview/off'

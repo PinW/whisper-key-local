@@ -21,7 +21,7 @@ from .hotkey_listener import HotkeyListener
 from .whisper_engine import WhisperEngine
 from .voice_activity_detection import VadManager
 from .clipboard_manager import ClipboardManager
-from .state_manager import StateManager
+from .state_manager import StateManager, ListeningMode
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .instance_manager import guard_against_multiple_instances
@@ -195,6 +195,8 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='Run as separate test instance')
+    parser.add_argument('--mode', choices=['hotkey', 'continuous', 'wake_word'], default=None)
+    parser.add_argument('--preview', action='store_true', default=None)
     args = parser.parse_args()
 
     instance_name = "WhisperKeyLocal_test" if args.test else "WhisperKeyLocal"
@@ -258,6 +260,11 @@ def main():
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
 
+        if args.mode is not None:
+            state_manager.set_listening_mode(ListeningMode(args.mode))
+        if args.preview is True:
+            state_manager.set_preview_enabled(True)
+
         http_trigger_config = config_manager.config.get('http_trigger', {})
         if http_trigger_config.get('enabled', True):
             http_host = http_trigger_config.get('host', '0.0.0.0')
@@ -286,6 +293,9 @@ def main():
         config_manager.print_startup_hotkey_instructions()
         if http_trigger:
             print(f"   [HTTP] trigger on http://{http_host}:{http_port}")
+        mode_info = state_manager.get_mode_info()
+        preview_label = "on" if mode_info["preview"] else "off"
+        print(f"   [MODE] {mode_info['mode']} (preview: {preview_label})")
         print("   [CTRL+C] to quit", flush=True)
 
         app.run_event_loop(shutdown_event)
