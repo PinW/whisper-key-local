@@ -19,6 +19,7 @@ from .voice_activity_detection import VadEvent, VadManager
 from .voice_commands import VoiceCommandManager
 from .continuous_listener import ContinuousListener
 from .realtime_preview import RealtimePreview
+from .wake_word import WakeWordManager
 
 
 class ListeningMode(Enum):
@@ -50,6 +51,7 @@ class StateManager:
         self.audio_stream_manager = audio_stream_manager
         self.continuous_listener = continuous_listener
         self.realtime_preview = None
+        self.wake_word_manager: Optional[WakeWordManager] = None
 
         self.is_processing = False
         self.is_model_loading = False
@@ -79,6 +81,10 @@ class StateManager:
         self._transcription_pipeline(audio_data, use_auto_enter=False)
         if self.listening_mode == ListeningMode.CONTINUOUS:
             print("   [CONTINUOUS] listening for speech...")
+
+    def handle_wake_word(self):
+        self.logger.info("Wake word triggered — starting recording")
+        self.start_recording()
 
     def is_busy(self) -> bool:
         with self._state_lock:
@@ -265,6 +271,18 @@ class StateManager:
             elif old_mode == ListeningMode.CONTINUOUS:
                 self.continuous_listener.deactivate()
 
+        if self.wake_word_manager:
+            if mode == ListeningMode.WAKE_WORD:
+                self.wake_word_manager.activate()
+            elif old_mode == ListeningMode.WAKE_WORD:
+                self.wake_word_manager.deactivate()
+
+        if mode == ListeningMode.WAKE_WORD and not self.wake_word_manager:
+            self.logger.warning("Wake word mode requested but no engine available; falling back to hotkey")
+            self.listening_mode = ListeningMode.HOTKEY
+            self.config_manager.update_listening_mode(ListeningMode.HOTKEY.value)
+            print("   [WAKE WORD] engine not available — falling back to hotkey mode")
+
     def set_preview_enabled(self, enabled: bool):
         old = self.preview_enabled
         self.preview_enabled = enabled
@@ -312,6 +330,9 @@ class StateManager:
 
         if self.continuous_listener:
             self.continuous_listener.deactivate()
+
+        if self.wake_word_manager:
+            self.wake_word_manager.cleanup()
 
         if self.audio_recorder.get_recording_status():
             self.audio_recorder.stop_recording()

@@ -313,6 +313,9 @@ class ConfigManager:
     def get_listening_config(self) -> dict:
         return self.config.get('listening', {}).copy()
 
+    def get_wake_word_config(self) -> dict:
+        return self.config.get('wake_word', {}).copy()
+
     def update_listening_mode(self, mode: str):
         self.update_user_setting('listening', 'mode', mode)
 
