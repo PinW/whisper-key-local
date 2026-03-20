@@ -11,4 +11,8 @@
 - continuous_listener.py (VAD state machine, pre-buffer, min/max guards)
 - realtime_preview.py (timer-driven, single-model, transcribe_lock)
 - Integration in StateManager + main.py
-### Phase 4: Wake Word Detection — PENDING
+### Phase 4: Wake Word Detection — DONE (a84cc45)
+- wake_word.py (ABC + OpenWakeWord + Porcupine + WakeWordManager)
+- Pre-Wake-VAD, cooldown, graceful degradation, chunk accumulation
+
+## ALLE PHASEN ABGESCHLOSSEN
