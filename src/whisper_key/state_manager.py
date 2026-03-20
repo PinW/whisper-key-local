@@ -8,7 +8,7 @@ from typing import Optional
 import sounddevice as sd
 
 from .audio_recorder import AudioRecorder
-from .audio_stream import AudioStreamManager
+from .audio_stream import AudioStreamManager, WHISPER_SAMPLE_RATE
 from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
@@ -17,6 +17,8 @@ from .audio_feedback import AudioFeedback
 from .utils import OptionalComponent
 from .voice_activity_detection import VadEvent, VadManager
 from .voice_commands import VoiceCommandManager
+from .continuous_listener import ContinuousListener
+from .realtime_preview import RealtimePreview
 
 
 class ListeningMode(Enum):
@@ -34,7 +36,8 @@ class StateManager:
                  system_tray: Optional[SystemTray] = None,
                  audio_feedback: Optional[AudioFeedback] = None,
                  voice_command_manager: Optional[VoiceCommandManager] = None,
-                 audio_stream_manager: Optional[AudioStreamManager] = None):
+                 audio_stream_manager: Optional[AudioStreamManager] = None,
+                 continuous_listener: Optional[ContinuousListener] = None):
 
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
@@ -45,6 +48,8 @@ class StateManager:
         self.vad_manager = vad_manager
         self.voice_command_manager = voice_command_manager
         self.audio_stream_manager = audio_stream_manager
+        self.continuous_listener = continuous_listener
+        self.realtime_preview = None
 
         self.is_processing = False
         self.is_model_loading = False
@@ -70,6 +75,15 @@ class StateManager:
         self.system_tray = OptionalComponent(system_tray)
         self._ensure_audio_device_for_host(self._current_audio_host)
     
+    def handle_continuous_audio(self, audio_data):
+        self._transcription_pipeline(audio_data, use_auto_enter=False)
+        if self.listening_mode == ListeningMode.CONTINUOUS:
+            print("   [CONTINUOUS] listening for speech...")
+
+    def is_busy(self) -> bool:
+        with self._state_lock:
+            return self.is_processing or self.is_model_loading or self.audio_recorder.get_recording_status()
+
     def handle_max_recording_duration_reached(self, audio_data):
         self.logger.info("Max recording duration reached - starting transcription")
         self._transcription_pipeline(audio_data, use_auto_enter=False)
@@ -175,7 +189,7 @@ class StateManager:
             if audio_data is None:
                 return
 
-            duration = self.audio_recorder.get_audio_duration(audio_data)
+            duration = len(audio_data) / WHISPER_SAMPLE_RATE
             print(f"   ✓ Recorded {duration:.1f} seconds, transcribing...")
 
             self.system_tray.update_state("processing")
@@ -240,14 +254,27 @@ class StateManager:
             print("   ✗ No matching command found")
 
     def set_listening_mode(self, mode: ListeningMode):
+        old_mode = self.listening_mode
         self.listening_mode = mode
         self.config_manager.update_listening_mode(mode.value)
         self.logger.info(f"Listening mode changed to {mode.value}")
 
+        if self.continuous_listener:
+            if mode == ListeningMode.CONTINUOUS:
+                self.continuous_listener.activate()
+            elif old_mode == ListeningMode.CONTINUOUS:
+                self.continuous_listener.deactivate()
+
     def set_preview_enabled(self, enabled: bool):
+        old = self.preview_enabled
         self.preview_enabled = enabled
         self.config_manager.update_listening_preview(enabled)
         self.logger.info(f"Preview {'enabled' if enabled else 'disabled'}")
+        if self.realtime_preview:
+            if enabled and not old:
+                self.realtime_preview.activate()
+            elif not enabled and old:
+                self.realtime_preview.deactivate()
 
     def get_mode_info(self) -> dict:
         return {
@@ -282,6 +309,9 @@ class StateManager:
     
     def shutdown(self):
         print("Whisper Key is shutting down... goodbye!")
+
+        if self.continuous_listener:
+            self.continuous_listener.deactivate()
 
         if self.audio_recorder.get_recording_status():
             self.audio_recorder.stop_recording()

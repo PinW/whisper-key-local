@@ -23,6 +23,8 @@ from .whisper_engine import WhisperEngine
 from .voice_activity_detection import VadManager
 from .clipboard_manager import ClipboardManager
 from .state_manager import StateManager, ListeningMode
+from .continuous_listener import ContinuousListener
+from .realtime_preview import RealtimePreview
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .instance_manager import guard_against_multiple_instances
@@ -246,6 +248,7 @@ def main():
         voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager, log_transcriptions)
 
         audio_stream_manager = AudioStreamManager(device=audio_config['input_device'])
+        listening_config = config_manager.get_listening_config()
 
         state_manager = StateManager(
             audio_recorder=None,
@@ -258,6 +261,28 @@ def main():
             voice_command_manager=voice_command_manager,
             audio_stream_manager=audio_stream_manager,
         )
+
+        continuous_listener = ContinuousListener(
+            audio_stream_manager=audio_stream_manager,
+            vad_manager=vad_manager,
+            on_speech_audio=state_manager.handle_continuous_audio,
+            is_busy=state_manager.is_busy,
+            pre_buffer_duration_sec=listening_config.get('pre_buffer_duration_sec', 0.3),
+            post_speech_silence_ms=listening_config.get('post_speech_silence_ms', 800),
+            max_speech_duration_sec=listening_config.get('max_speech_duration_sec', 60.0),
+            min_speech_duration_sec=listening_config.get('min_speech_duration_sec', 0.5),
+        )
+        state_manager.continuous_listener = continuous_listener
+
+        realtime_preview = RealtimePreview(
+            whisper_engine=whisper_engine,
+            audio_stream_manager=audio_stream_manager,
+            on_preview_text=state_manager.handle_streaming_result,
+            preview_interval_sec=listening_config.get('preview_interval_sec', 1.5),
+            preview_max_audio_seconds=listening_config.get('preview_max_audio_seconds', 30.0),
+        )
+        state_manager.realtime_preview = realtime_preview
+
         audio_recorder = setup_audio_recorder(audio_config, audio_stream_manager, state_manager, vad_manager, streaming_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
@@ -292,6 +317,12 @@ def main():
                 clipboard_manager.update_auto_paste(False)
 
         audio_stream_manager.start()
+
+        if state_manager.listening_mode == ListeningMode.CONTINUOUS:
+            continuous_listener.activate()
+
+        if state_manager.preview_enabled:
+            realtime_preview.activate()
 
         print("🚀 Whisper Key ready!")
         config_manager.print_startup_hotkey_instructions()
