@@ -8,6 +8,7 @@ from typing import Optional
 import sounddevice as sd
 
 from .audio_recorder import AudioRecorder
+from .audio_stream import AudioStreamManager
 from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
@@ -32,7 +33,8 @@ class StateManager:
                  vad_manager: VadManager,
                  system_tray: Optional[SystemTray] = None,
                  audio_feedback: Optional[AudioFeedback] = None,
-                 voice_command_manager: Optional[VoiceCommandManager] = None):
+                 voice_command_manager: Optional[VoiceCommandManager] = None,
+                 audio_stream_manager: Optional[AudioStreamManager] = None):
 
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
@@ -42,6 +44,7 @@ class StateManager:
         self.audio_feedback = OptionalComponent(audio_feedback)
         self.vad_manager = vad_manager
         self.voice_command_manager = voice_command_manager
+        self.audio_stream_manager = audio_stream_manager
 
         self.is_processing = False
         self.is_model_loading = False
@@ -277,12 +280,15 @@ class StateManager:
             self.logger.error(f"Manual test failed: {e}")
             print(f"❌ Test failed: {e}")
     
-    def shutdown(self):        
+    def shutdown(self):
         print("Whisper Key is shutting down... goodbye!")
 
         if self.audio_recorder.get_recording_status():
             self.audio_recorder.stop_recording()
-        
+
+        if self.audio_stream_manager:
+            self.audio_stream_manager.stop()
+
         self.system_tray.stop()
     
     def set_model_loading(self, loading: bool):
@@ -371,10 +377,10 @@ class StateManager:
 
     def get_available_audio_devices(self, host_filter: Optional[str] = None):
         host_name = host_filter if host_filter is not None else self._current_audio_host
-        return AudioRecorder.get_available_audio_devices(host_name)
+        return AudioStreamManager.get_available_audio_devices(host_name)
 
     def get_current_audio_device_id(self):
-        return self.audio_recorder.get_device_id()
+        return self.audio_stream_manager.get_device_id()
 
     def get_available_audio_hosts(self):
         try:
@@ -434,7 +440,7 @@ class StateManager:
     def request_audio_device_change(self, device_id: int, device_name: str):
         current_state = self.get_current_state()
 
-        if device_id == self.audio_recorder.device:
+        if device_id == self.audio_stream_manager.device:
             return True
 
         if current_state == "recording":
@@ -458,31 +464,10 @@ class StateManager:
     def _execute_audio_device_change(self, device_id: int, device_name: str):
         try:
             print(f"🎤 Switching to: {device_name}")
-
-            channels = self.audio_recorder.channels
-            dtype = self.audio_recorder.dtype
-            max_duration = self.audio_recorder.max_duration
-            on_max_duration = self.audio_recorder.on_max_duration_reached
-            vad_manager = self.audio_recorder.vad_manager
-            streaming_manager = self.audio_recorder.streaming_manager
-            on_streaming_result = self.audio_recorder.on_streaming_result
-
-            new_recorder = AudioRecorder(
-                on_vad_event=self.handle_vad_event,
-                channels=channels,
-                dtype=dtype,
-                max_duration=max_duration,
-                on_max_duration_reached=on_max_duration,
-                vad_manager=vad_manager,
-                streaming_manager=streaming_manager,
-                on_streaming_result=on_streaming_result,
+            self.audio_stream_manager.restart_stream(
                 device=device_id if device_id != -1 else None
             )
-
-            self.audio_recorder = new_recorder
-
             print(f"✅ Successfully switched audio device to: {device_name}")
-
         except Exception as e:
             self.logger.error(f"Failed to change audio device: {e}")
             print(f"❌ Failed to switch audio device: {e}")
@@ -530,11 +515,11 @@ class StateManager:
         return None
 
     def _ensure_audio_device_for_host(self, host_name: Optional[str]):
-        if not host_name or not self.audio_recorder:
+        if not host_name or not self.audio_stream_manager:
             return
 
         try:
-            current_device_id = self.audio_recorder.get_device_id()
+            current_device_id = self.audio_stream_manager.get_device_id()
         except Exception as e:
             self.logger.error(f"Unable to read current audio device: {e}")
             return

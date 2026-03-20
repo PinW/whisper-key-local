@@ -16,6 +16,7 @@ sys.stdout.flush()
 
 from .platform import app, permissions
 from .config_manager import ConfigManager
+from .audio_stream import AudioStreamManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
 from .whisper_engine import WhisperEngine
@@ -70,17 +71,15 @@ def setup_exception_handler():
     
     sys.excepthook = exception_handler
 
-def setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager):
+def setup_audio_recorder(audio_config, audio_stream_manager, state_manager, vad_manager, streaming_manager):
     return AudioRecorder(
-        channels=audio_config['channels'],
-        dtype=audio_config['dtype'],
+        audio_stream_manager=audio_stream_manager,
         max_duration=audio_config['max_duration'],
         on_max_duration_reached=state_manager.handle_max_recording_duration_reached,
         on_vad_event=state_manager.handle_vad_event,
         vad_manager=vad_manager,
         streaming_manager=streaming_manager,
         on_streaming_result=state_manager.handle_streaming_result,
-        device=audio_config['input_device']
     )
 
 def setup_vad(vad_config):
@@ -246,6 +245,8 @@ def main():
         audio_feedback = setup_audio_feedback(audio_feedback_config)
         voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager, log_transcriptions)
 
+        audio_stream_manager = AudioStreamManager(device=audio_config['input_device'])
+
         state_manager = StateManager(
             audio_recorder=None,
             whisper_engine=whisper_engine,
@@ -254,9 +255,10 @@ def main():
             config_manager=config_manager,
             audio_feedback=audio_feedback,
             vad_manager=vad_manager,
-            voice_command_manager=voice_command_manager
+            voice_command_manager=voice_command_manager,
+            audio_stream_manager=audio_stream_manager,
         )
-        audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
+        audio_recorder = setup_audio_recorder(audio_config, audio_stream_manager, state_manager, vad_manager, streaming_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
 
@@ -288,6 +290,8 @@ def main():
                     app.run_event_loop(shutdown_event)
                     return
                 clipboard_manager.update_auto_paste(False)
+
+        audio_stream_manager.start()
 
         print("🚀 Whisper Key ready!")
         config_manager.print_startup_hotkey_instructions()
