@@ -348,6 +348,8 @@ voice_commands: # Voice Command Settings
 listening:
   mode: hotkey
   preview_enabled: false
+  preview_show_tooltip: true
+  preview_show_overlay: false
   preview_interval_sec: 1.5
   preview_max_audio_seconds: 30.0
   pre_buffer_duration_sec: 0.3

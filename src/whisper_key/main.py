@@ -36,6 +36,7 @@ from .onboarding import check_gpu
 from .update_checker import check_for_updates
 from .http_trigger import HttpTrigger
 from .wake_word import HAS_OPENWAKEWORD, HAS_PORCUPINE, OpenWakeWordEngine, PorcupineEngine, WakeWordManager
+from .preview_overlay import PreviewOverlay
 from .utils import get_user_app_data_path, get_version
 
 def setup_logging(config_manager: ConfigManager):
@@ -323,6 +324,13 @@ def main():
             preview_max_audio_seconds=listening_config.get('preview_max_audio_seconds', 30.0),
         )
         state_manager.realtime_preview = realtime_preview
+
+        if listening_config.get('preview_show_overlay', False):
+            try:
+                preview_overlay = PreviewOverlay()
+                state_manager.preview_overlay = preview_overlay
+            except Exception as e:
+                logger.warning(f"Failed to create preview overlay: {e}")
 
         wake_word_config = config_manager.get_wake_word_config()
         wake_word_engine = setup_wake_word_engine(wake_word_config, logger)

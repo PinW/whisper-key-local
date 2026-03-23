@@ -358,6 +358,19 @@ class SystemTray:
         except Exception as e:
             self.logger.error(f"Failed to update tray icon: {e}")
 
+    def update_tooltip_preview(self, text):
+        if not TRAY_AVAILABLE or not self.is_running or not self.icon:
+            return
+
+        try:
+            if text:
+                truncated = text[:120]
+                self.icon.title = f"Whisper Key: {truncated}"
+            else:
+                self.icon.title = "Whisper Key"
+        except Exception as e:
+            self.logger.error(f"Failed to update tooltip: {e}")
+
     def refresh_menu(self):
         if not self.icon:
             return

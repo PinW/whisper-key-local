@@ -61,10 +61,15 @@ class StateManager:
         self._command_mode = False
         self._state_lock = threading.Lock()
         self._streaming_display_active = False
+        self._last_preview_text = ""
+        self._preview_active = False
+        self.preview_overlay = None
 
         listening_config = self.config_manager.get_listening_config()
         self.listening_mode = ListeningMode(listening_config.get('mode', 'hotkey'))
         self.preview_enabled = listening_config.get('preview_enabled', False)
+        self.preview_show_tooltip = listening_config.get('preview_show_tooltip', True)
+        self.preview_show_overlay = listening_config.get('preview_show_overlay', False)
 
         self.logger = logging.getLogger(__name__)
         self._current_audio_host = None
@@ -105,13 +110,32 @@ class StateManager:
 
     def handle_streaming_result(self, text: str, is_final: bool):
         if is_final:
+            self._last_preview_text = text
+            self._preview_active = False
             if self._streaming_display_active:
                 print(f"\r   {text:<70}")
                 self._streaming_display_active = False
+            if self.preview_show_tooltip:
+                self.system_tray.update_tooltip_preview(None)
+            if self.preview_show_overlay and self.preview_overlay:
+                self.preview_overlay.update_text(text)
+                threading.Timer(2.0, self.preview_overlay.hide).start()
         else:
+            self._last_preview_text = text
+            self._preview_active = True
             display_text = text if len(text) < 67 else "..." + text[-64:]
             print(f"\r   {display_text:<70}", end="", flush=True)
             self._streaming_display_active = True
+            if self.preview_show_tooltip:
+                self.system_tray.update_tooltip_preview(text)
+            if self.preview_show_overlay and self.preview_overlay:
+                self.preview_overlay.update_text(text)
+
+    def get_last_preview_text(self) -> dict:
+        return {
+            "text": self._last_preview_text,
+            "active": self._preview_active,
+        }
 
     def _clear_streaming_display(self):
         if self._streaming_display_active:

@@ -64,6 +64,8 @@ class _TriggerHandler(BaseHTTPRequestHandler):
             self._handle_set_preview(sm, True)
         elif path == "/mode/preview/off":
             self._handle_set_preview(sm, False)
+        elif path == "/preview":
+            self._handle_preview(sm)
         else:
             self._error(404, f"Unknown endpoint: {path}")
 
@@ -132,6 +134,10 @@ class _TriggerHandler(BaseHTTPRequestHandler):
         sm.set_preview_enabled(enabled)
         mode_info = sm.get_mode_info()
         self._json_response(200, {"ok": True, **mode_info})
+
+    def _handle_preview(self, sm):
+        preview = sm.get_last_preview_text()
+        self._json_response(200, {"ok": True, **preview})
 
 
 class HttpTrigger:
