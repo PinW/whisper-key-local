@@ -181,9 +181,12 @@ class _TriggerHandler(BaseHTTPRequestHandler):
             except ValueError:
                 self._error(400, f"Invalid monitor value: {value}")
                 return
-        sm.set_overlay_monitor(monitor_value)
-        sm.system_tray.refresh_menu()
-        self._ok(f"Monitor set to {monitor_value}", monitor=monitor_value)
+        try:
+            sm.set_overlay_monitor(monitor_value)
+            sm.system_tray.refresh_menu()
+        except Exception as e:
+            logger.warning(f"Overlay monitor update: {e}")
+        self._ok(f"Monitor set to {monitor_value}", monitor=str(monitor_value))
 
     def _handle_overlay_position(self, sm, value: str):
         VALID_POSITIONS = {
@@ -193,8 +196,11 @@ class _TriggerHandler(BaseHTTPRequestHandler):
         if value not in VALID_POSITIONS:
             self._error(400, f"Invalid position: {value}")
             return
-        sm.set_overlay_position(value)
-        sm.system_tray.refresh_menu()
+        try:
+            sm.set_overlay_position(value)
+            sm.system_tray.refresh_menu()
+        except Exception as e:
+            logger.warning(f"Overlay position update: {e}")
         self._ok(f"Position set to {value}", position=value)
 
 

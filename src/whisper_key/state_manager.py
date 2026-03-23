@@ -324,7 +324,7 @@ class StateManager:
         self.logger.info(f"Overlay {'enabled' if enabled else 'disabled'}")
         if self.preview_overlay:
             if enabled:
-                self.preview_overlay.update_config()
+                self.preview_overlay.update_config(self.config_manager.get_overlay_config())
             else:
                 self.preview_overlay.hide()
 
@@ -332,13 +332,13 @@ class StateManager:
         self.config_manager.update_overlay_setting('monitor', value)
         self.logger.info(f"Overlay monitor set to {value}")
         if self.preview_overlay and self.preview_show_overlay:
-            self.preview_overlay.update_config()
+            self.preview_overlay.update_config(self.config_manager.get_overlay_config())
 
     def set_overlay_position(self, value: str):
         self.config_manager.update_overlay_setting('position', value)
         self.logger.info(f"Overlay position set to {value}")
         if self.preview_overlay and self.preview_show_overlay:
-            self.preview_overlay.update_config()
+            self.preview_overlay.update_config(self.config_manager.get_overlay_config())
 
     def get_overlay_config(self) -> dict:
         overlay = self.config_manager.get_overlay_config()
