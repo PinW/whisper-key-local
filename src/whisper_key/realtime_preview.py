@@ -91,7 +91,7 @@ class RealtimePreview:
             text = self.whisper_engine.transcribe_preview(snapshot)
 
             if text and self.on_preview_text and self._active:
-                self.on_preview_text(text)
+                self.on_preview_text(text, False)
 
         except Exception as e:
             self.logger.error(f"Preview cycle failed: {e}")

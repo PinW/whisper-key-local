@@ -190,10 +190,18 @@ class ContinuousVoiceDetector:
 
         try:
             audio_int16 = convert_audio_for_ten_vad(audio_chunk)
-            probability, _ = self.ten_vad.process(audio_int16)
-            speech_detected = self.hysteresis.detect_speech(probability)
-            self.probability_buffer.append(probability)
-            return self._update_state(speech_detected)
+            last_event = VadEvent.NO_EVENT
+            for i in range(0, len(audio_int16), VAD_CHUNK_SIZE):
+                sub_chunk = audio_int16[i:i + VAD_CHUNK_SIZE]
+                if len(sub_chunk) < VAD_CHUNK_SIZE:
+                    sub_chunk = np.pad(sub_chunk, (0, VAD_CHUNK_SIZE - len(sub_chunk)), mode='constant')
+                probability, _ = self.ten_vad.process(sub_chunk)
+                speech_detected = self.hysteresis.detect_speech(probability)
+                self.probability_buffer.append(probability)
+                event = self._update_state(speech_detected)
+                if event != VadEvent.NO_EVENT:
+                    last_event = event
+            return last_event
 
         except Exception as e:
             self.logger.error(f"Error processing VAD chunk: {e}")

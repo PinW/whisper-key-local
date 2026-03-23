@@ -139,6 +139,8 @@ hotkey: # Hotkey Configuration
   #   - "ctrl+shift+f12"
   recording_hotkey: "ctrl+win | macos: fn+ctrl"
 
+  recording_mode: toggle
+
   # Key to stop recording (shared between transcription and command modes)
   stop_key: "ctrl | macos: fn"
 
