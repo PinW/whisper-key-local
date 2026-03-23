@@ -360,6 +360,7 @@ listening:
     opacity: 0.85
     bg_color: "#1a1a2e"
     text_color: "#ffffff"
+    hide_after_sec: 3.0
   preview_max_audio_seconds: 30.0
   pre_buffer_duration_sec: 0.3
   post_speech_silence_ms: 800

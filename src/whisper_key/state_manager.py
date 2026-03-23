@@ -121,7 +121,9 @@ class StateManager:
                 self.system_tray.update_tooltip_preview(None)
             if self.preview_show_overlay and self.preview_overlay:
                 self.preview_overlay.update_text(text)
-                threading.Timer(2.0, self.preview_overlay.hide).start()
+                hide_delay = self.config_manager.get_overlay_config().get('hide_after_sec', 3.0)
+                if hide_delay > 0:
+                    threading.Timer(hide_delay, self.preview_overlay.hide).start()
         else:
             self._last_preview_text = text
             self._preview_active = True
