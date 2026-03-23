@@ -395,9 +395,6 @@ def main():
                 logger.warning("Wake word mode configured but engine unavailable; falling back to hotkey")
                 state_manager.listening_mode = ListeningMode.HOTKEY
 
-        if state_manager.preview_enabled:
-            realtime_preview.activate()
-
         print("🚀 Whisper Key ready!")
         config_manager.print_startup_hotkey_instructions()
         if http_trigger:

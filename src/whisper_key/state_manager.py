@@ -83,6 +83,8 @@ class StateManager:
         self._ensure_audio_device_for_host(self._current_audio_host)
     
     def handle_continuous_audio(self, audio_data):
+        if self.realtime_preview:
+            self.realtime_preview.deactivate()
         self._transcription_pipeline(audio_data, use_auto_enter=False)
         if self.listening_mode == ListeningMode.CONTINUOUS:
             print("   [CONTINUOUS] listening for speech...")
@@ -146,6 +148,8 @@ class StateManager:
         currently_recording = self.audio_recorder.get_recording_status()
 
         if currently_recording:
+            if self.realtime_preview:
+                self.realtime_preview.deactivate()
             self._clear_streaming_display()
             audio_data = self.audio_recorder.stop_recording()
             self._transcription_pipeline(audio_data, use_auto_enter)
@@ -154,6 +158,8 @@ class StateManager:
             return False
     
     def cancel_active_recording(self):
+        if self.realtime_preview:
+            self.realtime_preview.deactivate()
         self._clear_streaming_display()
         self._command_mode = False
         self.audio_recorder.cancel_recording()
@@ -206,6 +212,8 @@ class StateManager:
             self.config_manager.print_stop_instructions_based_on_config()
             self.audio_feedback.play_start_sound()
             self.system_tray.update_state("recording")
+            if self.preview_enabled and self.realtime_preview:
+                self.realtime_preview.activate()
     
     def _transcription_pipeline(self, audio_data, use_auto_enter: bool = False):
         try:
@@ -308,15 +316,11 @@ class StateManager:
             print("   [WAKE WORD] engine not available — falling back to hotkey mode")
 
     def set_preview_enabled(self, enabled: bool):
-        old = self.preview_enabled
         self.preview_enabled = enabled
         self.config_manager.update_listening_preview(enabled)
         self.logger.info(f"Preview {'enabled' if enabled else 'disabled'}")
-        if self.realtime_preview:
-            if enabled and not old:
-                self.realtime_preview.activate()
-            elif not enabled and old:
-                self.realtime_preview.deactivate()
+        if self.realtime_preview and not enabled:
+            self.realtime_preview.deactivate()
 
     def set_overlay_enabled(self, enabled: bool):
         self.preview_show_overlay = enabled
