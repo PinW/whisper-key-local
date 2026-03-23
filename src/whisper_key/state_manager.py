@@ -99,14 +99,18 @@ class StateManager:
 
     def handle_max_recording_duration_reached(self, audio_data):
         self.logger.info("Max recording duration reached - starting transcription")
+        if self.realtime_preview:
+            self.realtime_preview.deactivate()
         self._transcription_pipeline(audio_data, use_auto_enter=False)
 
     def handle_vad_event(self, event: VadEvent):
         if event == VadEvent.SILENCE_TIMEOUT:
             self.logger.info("VAD silence timeout detected - stopping recording")
             timeout_seconds = int(self.vad_manager.vad_silence_timeout_seconds)
-            self._clear_streaming_display()
             print(f"⏰ Stopping recording after {timeout_seconds} seconds of silence...")
+            if self.realtime_preview:
+                self.realtime_preview.deactivate()
+            self._clear_streaming_display()
             audio_data = self.audio_recorder.stop_recording()
             self._transcription_pipeline(audio_data, use_auto_enter=False)
 
@@ -250,6 +254,11 @@ class StateManager:
             if success:
                 self.last_transcription = transcribed_text
                 self.audio_feedback.play_transcription_complete_sound()
+                if self.preview_show_overlay and self.preview_overlay:
+                    self.preview_overlay.update_text(transcribed_text)
+                    hide_delay = self.config_manager.get_overlay_config().get('hide_after_sec', 3.0)
+                    if hide_delay > 0:
+                        threading.Timer(hide_delay, self.preview_overlay.hide).start()
             
         except Exception as e:
             self.logger.error(f"Error in processing workflow: {e}")
