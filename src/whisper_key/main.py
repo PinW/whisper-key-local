@@ -256,6 +256,9 @@ def main():
     logger = None
     
     try:
+        from .platform import monitors
+        monitors.set_dpi_awareness()
+
         config_manager = ConfigManager()
         setup_logging(config_manager)
         logger = logging.getLogger(__name__)
@@ -325,9 +328,10 @@ def main():
         )
         state_manager.realtime_preview = realtime_preview
 
+        overlay_config = config_manager.get_overlay_config()
         if listening_config.get('preview_show_overlay', False):
             try:
-                preview_overlay = PreviewOverlay()
+                preview_overlay = PreviewOverlay(overlay_config)
                 state_manager.preview_overlay = preview_overlay
             except Exception as e:
                 logger.warning(f"Failed to create preview overlay: {e}")

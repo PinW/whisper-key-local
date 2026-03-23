@@ -8,6 +8,12 @@ from .utils import open_file
 from .platform import permissions, icons
 
 try:
+    from .platform import monitors as _monitors
+    _MONITORS_AVAILABLE = True
+except ImportError:
+    _MONITORS_AVAILABLE = False
+
+try:
     import pystray
     from PIL import Image
     TRAY_AVAILABLE = True
@@ -202,6 +208,8 @@ class SystemTray:
 
             voice_commands_enabled = self.config_manager.get_setting('voice_commands', 'enabled')
 
+            preview_submenu = self._build_preview_submenu(preview_on)
+
             menu_items = [
                 pystray.MenuItem("Open log file...", self._open_log_file),
                 pystray.MenuItem("Open model cache...", self._open_model_cache),
@@ -230,8 +238,7 @@ class SystemTray:
                 ),
                 pystray.MenuItem(
                     "Preview",
-                    lambda icon, item: self._toggle_preview(),
-                    checked=lambda item: preview_on,
+                    pystray.Menu(*preview_submenu),
                 ),
             ]
 
@@ -323,6 +330,106 @@ class SystemTray:
             self.icon.menu = self._create_menu()
         except Exception as e:
             self.logger.error(f"Error toggling preview: {e}")
+
+    def _build_preview_submenu(self, preview_on: bool) -> list:
+        overlay_config = self.config_manager.get_overlay_config()
+        show_overlay = self.state_manager.preview_show_overlay
+        current_monitor = overlay_config.get('monitor', 'follow_focus')
+        current_position = overlay_config.get('position', 'bottom_center')
+
+        items = [
+            pystray.MenuItem(
+                "Enabled",
+                lambda icon, item: self._toggle_preview(),
+                checked=lambda item: self.state_manager.preview_enabled,
+            ),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem(
+                "Overlay",
+                pystray.Menu(*self._build_overlay_submenu(show_overlay, current_monitor, current_position)),
+            ),
+        ]
+        return items
+
+    def _build_overlay_submenu(self, show_overlay: bool, current_monitor, current_position: str) -> list:
+        def make_monitor_selector(value):
+            return lambda icon, item: self._set_overlay_monitor(value)
+
+        def make_is_monitor(value):
+            return lambda item: current_monitor == value
+
+        def make_position_selector(value):
+            return lambda icon, item: self._set_overlay_position(value)
+
+        def make_is_position(value):
+            return lambda item: current_position == value
+
+        monitor_items = [
+            pystray.MenuItem("Follow Focus", make_monitor_selector("follow_focus"), radio=True, checked=make_is_monitor("follow_focus")),
+            pystray.MenuItem("Cursor Position", make_monitor_selector("cursor"), radio=True, checked=make_is_monitor("cursor")),
+            pystray.MenuItem("Primary Monitor", make_monitor_selector("primary"), radio=True, checked=make_is_monitor("primary")),
+            pystray.MenuItem("All Monitors", make_monitor_selector("all"), radio=True, checked=make_is_monitor("all")),
+        ]
+
+        if _MONITORS_AVAILABLE:
+            try:
+                hw_monitors = _monitors.enumerate_monitors()
+                if len(hw_monitors) > 1:
+                    monitor_items.append(pystray.Menu.SEPARATOR)
+                    for m in hw_monitors:
+                        label = f"Monitor {m.index} ({m.name})" if m.name else f"Monitor {m.index}"
+                        monitor_items.append(pystray.MenuItem(
+                            label,
+                            make_monitor_selector(m.index),
+                            radio=True,
+                            checked=make_is_monitor(m.index),
+                        ))
+            except Exception as e:
+                self.logger.debug(f"Could not enumerate monitors for tray: {e}")
+
+        position_choices = [
+            ("Bottom Center", "bottom_center"),
+            ("Top Center", "top_center"),
+            ("Bottom Left", "bottom_left"),
+            ("Bottom Right", "bottom_right"),
+        ]
+        position_items = [
+            pystray.MenuItem(label, make_position_selector(value), radio=True, checked=make_is_position(value))
+            for label, value in position_choices
+        ]
+
+        return [
+            pystray.MenuItem(
+                "Show Overlay",
+                lambda icon, item: self._toggle_overlay(),
+                checked=lambda item: self.state_manager.preview_show_overlay,
+            ),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Monitor", pystray.Menu(*monitor_items)),
+            pystray.MenuItem("Position", pystray.Menu(*position_items)),
+        ]
+
+    def _toggle_overlay(self):
+        try:
+            new_state = not self.state_manager.preview_show_overlay
+            self.state_manager.set_overlay_enabled(new_state)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error toggling overlay: {e}")
+
+    def _set_overlay_monitor(self, value):
+        try:
+            self.state_manager.set_overlay_monitor(value)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error setting overlay monitor: {e}")
+
+    def _set_overlay_position(self, value: str):
+        try:
+            self.state_manager.set_overlay_position(value)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error setting overlay position: {e}")
 
     def _select_audio_host(self, host_name: str):
         try:

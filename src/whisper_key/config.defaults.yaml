@@ -351,6 +351,15 @@ listening:
   preview_show_tooltip: true
   preview_show_overlay: false
   preview_interval_sec: 1.5
+
+  overlay:
+    monitor: follow_focus
+    position: bottom_center
+    margin: 80
+    font_size: 18
+    opacity: 0.85
+    bg_color: "#1a1a2e"
+    text_color: "#ffffff"
   preview_max_audio_seconds: 30.0
   pre_buffer_duration_sec: 0.3
   post_speech_silence_ms: 800

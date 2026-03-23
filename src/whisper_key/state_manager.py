@@ -318,10 +318,39 @@ class StateManager:
             elif not enabled and old:
                 self.realtime_preview.deactivate()
 
+    def set_overlay_enabled(self, enabled: bool):
+        self.preview_show_overlay = enabled
+        self.config_manager.update_user_setting('listening', 'preview_show_overlay', enabled)
+        self.logger.info(f"Overlay {'enabled' if enabled else 'disabled'}")
+        if self.preview_overlay:
+            if enabled:
+                self.preview_overlay.update_config()
+            else:
+                self.preview_overlay.hide()
+
+    def set_overlay_monitor(self, value):
+        self.config_manager.update_overlay_setting('monitor', value)
+        self.logger.info(f"Overlay monitor set to {value}")
+        if self.preview_overlay and self.preview_show_overlay:
+            self.preview_overlay.update_config()
+
+    def set_overlay_position(self, value: str):
+        self.config_manager.update_overlay_setting('position', value)
+        self.logger.info(f"Overlay position set to {value}")
+        if self.preview_overlay and self.preview_show_overlay:
+            self.preview_overlay.update_config()
+
+    def get_overlay_config(self) -> dict:
+        overlay = self.config_manager.get_overlay_config()
+        overlay['overlay_enabled'] = self.preview_show_overlay
+        return overlay
+
     def get_mode_info(self) -> dict:
         return {
             "mode": self.listening_mode.value,
             "preview": self.preview_enabled,
+            "overlay": self.preview_show_overlay,
+            "overlay_monitor": self.config_manager.get_overlay_config().get('monitor', 'follow_focus'),
         }
 
     def get_application_state(self) -> dict:
