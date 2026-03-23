@@ -1,3 +1,5 @@
+import ctypes
+import ctypes.wintypes
 import logging
 import threading
 
@@ -46,14 +48,36 @@ class PreviewOverlay:
             self.logger.error(f"Preview overlay failed: {e}")
             self._ready.set()
 
+    def _get_active_monitor(self):
+        try:
+            import ctypes
+            point = ctypes.wintypes.POINT()
+            ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
+
+            class MONITORINFO(ctypes.Structure):
+                _fields_ = [
+                    ("cbSize", ctypes.wintypes.DWORD),
+                    ("rcMonitor", ctypes.wintypes.RECT),
+                    ("rcWork", ctypes.wintypes.RECT),
+                    ("dwFlags", ctypes.wintypes.DWORD),
+                ]
+
+            monitor = ctypes.windll.user32.MonitorFromPoint(point, 2)
+            info = MONITORINFO()
+            info.cbSize = ctypes.sizeof(MONITORINFO)
+            ctypes.windll.user32.GetMonitorInfoW(monitor, ctypes.byref(info))
+            r = info.rcWork
+            return r.left, r.top, r.right - r.left, r.bottom - r.top
+        except Exception:
+            return 0, 0, self._root.winfo_screenwidth(), self._root.winfo_screenheight()
+
     def _position_bottom_center(self):
         self._root.update_idletasks()
-        screen_w = self._root.winfo_screenwidth()
-        screen_h = self._root.winfo_screenheight()
+        mon_x, mon_y, mon_w, mon_h = self._get_active_monitor()
         win_w = self._root.winfo_reqwidth()
         win_h = self._root.winfo_reqheight()
-        x = (screen_w - win_w) // 2
-        y = screen_h - win_h - 80
+        x = mon_x + (mon_w - win_w) // 2
+        y = mon_y + mon_h - win_h - 80
         self._root.geometry(f"+{x}+{y}")
 
     def update_text(self, text):
