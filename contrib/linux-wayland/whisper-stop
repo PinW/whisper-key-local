@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# whisper-stop: Stop recording, get transcription, paste text
+set -euo pipefail
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/whisper-key/config"
+[[ -f "$CONFIG" ]] && source "$CONFIG"
+
+HOST="${WHISPER_HOST:-localhost}"
+PORT="${WHISPER_PORT:-5757}"
+SOUND="${SOUND_ENABLED:-true}"
+NOTIFY="${NOTIFY_ENABLED:-true}"
+
+play_sound() { [[ "$SOUND" == "true" ]] && paplay "$1" & }
+notify() { [[ "$NOTIFY" == "true" ]] && notify-send -a "Whisper" -t 2000 -e "$@" & }
+
+response=$(curl -s --connect-timeout 3 --max-time 30 "http://${HOST}:${PORT}/stop" 2>&1) \
+    || { play_sound /usr/share/sounds/freedesktop/stereo/dialog-error.oga; notify -u critical "Whisper Error" "Host unreachable"; exit 1; }
+
+ok=$(echo "$response" | jq -r '.ok // empty' 2>/dev/null)
+if [[ "$ok" != "true" ]]; then
+    err=$(echo "$response" | jq -r '.error // "Unknown error"')
+    play_sound /usr/share/sounds/freedesktop/stereo/dialog-error.oga
+    notify -u critical "Whisper Error" "$err"
+    exit 1
+fi
+
+text=$(echo "$response" | jq -r '.text // empty')
+if [[ -z "$text" ]]; then
+    play_sound /usr/share/sounds/freedesktop/stereo/dialog-error.oga
+    notify -u critical "Whisper Error" "No text in response"
+    exit 1
+fi
+
+echo -n "$text" | wl-copy
+sleep 0.1
+ydotool key 29:1 47:1 47:0 29:0
+
+play_sound /usr/share/sounds/freedesktop/stereo/complete.oga
+preview="${text:0:100}"
+[[ ${#text} -gt 100 ]] && preview="${preview}..."
+notify -i edit-paste "Text pasted" "$preview"
