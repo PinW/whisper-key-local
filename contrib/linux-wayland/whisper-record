@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# whisper-record: Start recording on whisper-key host
+set -euo pipefail
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/whisper-key/config"
+[[ -f "$CONFIG" ]] && source "$CONFIG"
+
+HOST="${WHISPER_HOST:-localhost}"
+PORT="${WHISPER_PORT:-5757}"
+SOUND="${SOUND_ENABLED:-true}"
+NOTIFY="${NOTIFY_ENABLED:-true}"
+
+play_sound() { [[ "$SOUND" == "true" ]] && paplay "$1" & }
+notify() { [[ "$NOTIFY" == "true" ]] && notify-send -a "Whisper" -t 2000 -e "$@" & }
+
+response=$(curl -s --connect-timeout 3 "http://${HOST}:${PORT}/record" 2>&1) \
+    || { play_sound /usr/share/sounds/freedesktop/stereo/dialog-error.oga; notify -u critical "Whisper Error" "Host unreachable"; exit 1; }
+
+ok=$(echo "$response" | jq -r '.ok // empty' 2>/dev/null)
+if [[ "$ok" == "true" ]]; then
+    play_sound /usr/share/sounds/freedesktop/stereo/device-added.oga
+    notify -i audio-input-microphone "Recording started" "Speak now..."
+else
+    err=$(echo "$response" | jq -r '.error // "Unknown error"')
+    play_sound /usr/share/sounds/freedesktop/stereo/dialog-error.oga
+    notify -u critical "Whisper Error" "$err"
+    exit 1
+fi

@@ -31,6 +31,7 @@ from .voice_commands import VoiceCommandManager
 from .hardware_detection import detect_and_print as detect_hardware
 from .onboarding import check_gpu
 from .update_checker import check_for_updates
+from .http_trigger import HttpTrigger
 from .utils import get_user_app_data_path, get_version
 
 def setup_logging(config_manager: ConfigManager):
@@ -175,8 +176,7 @@ def setup_hotkey_listener(hotkey_config, state_manager, voice_commands_enabled=T
         stop_key=hotkey_config['stop_key'],
         auto_send_key=hotkey_config.get('auto_send_key'),
         cancel_combination=hotkey_config.get('cancel_combination'),
-        command_hotkey=hotkey_config.get('command_hotkey') if voice_commands_enabled else None,
-        recording_mode=hotkey_config.get('recording_mode', 'toggle')
+        command_hotkey=hotkey_config.get('command_hotkey') if voice_commands_enabled else None
     )
 
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
@@ -257,7 +257,20 @@ def main():
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
-        
+
+        http_trigger_config = config_manager.config.get('http_trigger', {})
+        if http_trigger_config.get('enabled', True):
+            http_host = http_trigger_config.get('host', '0.0.0.0')
+            http_port = http_trigger_config.get('port', 5757)
+            try:
+                http_trigger = HttpTrigger(state_manager, host=http_host, port=http_port)
+                http_trigger.start()
+            except Exception as e:
+                logger.warning(f"Failed to start HTTP trigger: {e}")
+                http_trigger = None
+        else:
+            http_trigger = None
+
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager, voice_commands_config['enabled'])
 
         system_tray.start()
@@ -271,6 +284,8 @@ def main():
 
         print("🚀 Whisper Key ready!")
         config_manager.print_startup_hotkey_instructions()
+        if http_trigger:
+            print(f"   [HTTP] trigger on http://{http_host}:{http_port}")
         print("   [CTRL+C] to quit", flush=True)
 
         app.run_event_loop(shutdown_event)

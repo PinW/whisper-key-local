@@ -152,11 +152,6 @@ hotkey: # Hotkey Configuration
   # Note: On macOS, ESC is system-reserved
   cancel_combination: "esc | macos: shift"
 
-  # Recording mode
-  # "toggle" = press hotkey to start, press stop key to stop (default)
-  # "push_to_talk" = hold hotkey to record, release to stop and transcribe
-  recording_mode: toggle
-
   # Key combination for voice command mode
   # Records speech and matches against user-defined commands
   command_hotkey: "alt+win | macos: fn+command"
@@ -325,6 +320,20 @@ onboarding: # First-run setup state (managed automatically)
   # Detected GPU class (set automatically)
   # nvidia | amd_rdna2+ | amd_rdna1 | null
   gpu_class: null
+
+http_trigger: # HTTP Trigger API
+
+  # Enable/disable HTTP trigger server
+  # Allows controlling Whisper Key via HTTP requests (e.g. curl localhost:5757/toggle)
+  enabled: true
+
+  # Port number for the HTTP trigger server
+  port: 5757
+
+  # Bind address
+  # "0.0.0.0" = accept connections from any interface
+  # "127.0.0.1" = localhost only (more secure)
+  host: "0.0.0.0"
 
 voice_commands: # Voice Command Settings
 
