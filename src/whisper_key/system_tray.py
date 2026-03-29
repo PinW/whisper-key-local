@@ -298,7 +298,7 @@ class SystemTray:
         console.show()
 
     def apply_console_settings(self):
-        if not console.owns_console():
+        if not console.owns_console() or not self.available:
             return
         if self.console_config.get('start_hidden', False):
             console.hide()
