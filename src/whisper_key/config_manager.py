@@ -304,6 +304,9 @@ class ConfigManager:
     def get_voice_commands_config(self) -> Dict[str, Any]:
         return self.config.get('voice_commands', {}).copy()
 
+    def get_console_config(self) -> Dict[str, Any]:
+        return self.config.get('console', {}).copy()
+
     def get_update_config(self) -> Dict[str, Any]:
         return self.config.get('update', {}).copy()
 
