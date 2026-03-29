@@ -309,6 +309,11 @@ system_tray: # System Tray Settings
   # Tooltip text when hovering over tray icon
   tooltip: Whisper Key
 
+console: # Console Window Management (exe mode only)
+
+  # Hide console window after startup (requires system tray)
+  start_hidden: false
+
 update: # Update Settings
 
   # How to handle available updates
