@@ -26,7 +26,7 @@ Requires Python 3.11-3.13
 # With pipx (isolated environment)
 pipx install whisper-key-local
 
-# Or with pip (simpler)
+# Or with pip
 pip install whisper-key-local
 ```
 
