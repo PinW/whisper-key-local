@@ -8,6 +8,12 @@ from .utils import open_file
 from .platform import permissions, icons
 
 try:
+    from .platform import monitors as _monitors
+    _MONITORS_AVAILABLE = True
+except ImportError:
+    _MONITORS_AVAILABLE = False
+
+try:
     import pystray
     from PIL import Image
     TRAY_AVAILABLE = True
@@ -168,7 +174,41 @@ class SystemTray:
 
             model_sub_menu_items = self._build_model_menu_items(current_model, is_model_loading)
 
+            mode_info = self.state_manager.get_mode_info()
+            current_listening_mode = mode_info["mode"]
+            preview_on = mode_info["preview"]
+
+            def make_mode_selector(mode):
+                return lambda icon, item: self._select_listening_mode(mode)
+
+            def make_is_mode(mode_value):
+                return lambda item: current_listening_mode == mode_value
+
+            from .state_manager import ListeningMode
+            listening_mode_items = [
+                pystray.MenuItem(
+                    "Hotkey",
+                    make_mode_selector(ListeningMode.HOTKEY),
+                    radio=True,
+                    checked=make_is_mode("hotkey"),
+                ),
+                pystray.MenuItem(
+                    "Continuous",
+                    make_mode_selector(ListeningMode.CONTINUOUS),
+                    radio=True,
+                    checked=make_is_mode("continuous"),
+                ),
+                pystray.MenuItem(
+                    "Wake Word",
+                    make_mode_selector(ListeningMode.WAKE_WORD),
+                    radio=True,
+                    checked=make_is_mode("wake_word"),
+                ),
+            ]
+
             voice_commands_enabled = self.config_manager.get_setting('voice_commands', 'enabled')
+
+            preview_submenu = self._build_preview_submenu(preview_on)
 
             menu_items = [
                 pystray.MenuItem("Open log file...", self._open_log_file),
@@ -191,6 +231,15 @@ class SystemTray:
                 pystray.MenuItem("Copy to clipboard", lambda icon, item: self._set_transcription_mode(False), radio=True, checked=lambda item: not auto_paste_enabled),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_sub_menu_items)),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem(
+                    "Listening Mode",
+                    pystray.Menu(*listening_mode_items),
+                ),
+                pystray.MenuItem(
+                    "Preview",
+                    pystray.Menu(*preview_submenu),
+                ),
             ]
 
             menu_items.extend([
@@ -267,6 +316,121 @@ class SystemTray:
         except Exception as e:
             self.logger.error(f"Error selecting model {model_key}: {e}")
 
+    def _select_listening_mode(self, mode):
+        try:
+            self.state_manager.set_listening_mode(mode)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error selecting listening mode {mode.value}: {e}")
+
+    def _toggle_preview(self):
+        try:
+            new_state = not self.state_manager.preview_enabled
+            self.state_manager.set_preview_enabled(new_state)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error toggling preview: {e}")
+
+    def _build_preview_submenu(self, preview_on: bool) -> list:
+        overlay_config = self.config_manager.get_overlay_config()
+        show_overlay = self.state_manager.preview_show_overlay
+        current_monitor = overlay_config.get('monitor', 'follow_focus')
+        current_position = overlay_config.get('position', 'bottom_center')
+
+        items = [
+            pystray.MenuItem(
+                "Enabled",
+                lambda icon, item: self._toggle_preview(),
+                checked=lambda item: self.state_manager.preview_enabled,
+            ),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem(
+                "Overlay",
+                pystray.Menu(*self._build_overlay_submenu(show_overlay, current_monitor, current_position)),
+            ),
+        ]
+        return items
+
+    def _build_overlay_submenu(self, show_overlay: bool, current_monitor, current_position: str) -> list:
+        def make_monitor_selector(value):
+            return lambda icon, item: self._set_overlay_monitor(value)
+
+        def make_is_monitor(value):
+            return lambda item: current_monitor == value
+
+        def make_position_selector(value):
+            return lambda icon, item: self._set_overlay_position(value)
+
+        def make_is_position(value):
+            return lambda item: current_position == value
+
+        monitor_items = [
+            pystray.MenuItem("Follow Focus", make_monitor_selector("follow_focus"), radio=True, checked=make_is_monitor("follow_focus")),
+            pystray.MenuItem("Cursor Position", make_monitor_selector("cursor"), radio=True, checked=make_is_monitor("cursor")),
+            pystray.MenuItem("Primary Monitor", make_monitor_selector("primary"), radio=True, checked=make_is_monitor("primary")),
+            pystray.MenuItem("All Monitors", make_monitor_selector("all"), radio=True, checked=make_is_monitor("all")),
+        ]
+
+        if _MONITORS_AVAILABLE:
+            try:
+                hw_monitors = _monitors.enumerate_monitors()
+                if len(hw_monitors) > 1:
+                    monitor_items.append(pystray.Menu.SEPARATOR)
+                    for m in hw_monitors:
+                        label = f"Monitor {m.index} ({m.name})" if m.name else f"Monitor {m.index}"
+                        monitor_items.append(pystray.MenuItem(
+                            label,
+                            make_monitor_selector(m.index),
+                            radio=True,
+                            checked=make_is_monitor(m.index),
+                        ))
+            except Exception as e:
+                self.logger.debug(f"Could not enumerate monitors for tray: {e}")
+
+        position_choices = [
+            ("Bottom Center", "bottom_center"),
+            ("Top Center", "top_center"),
+            ("Bottom Left", "bottom_left"),
+            ("Bottom Right", "bottom_right"),
+        ]
+        position_items = [
+            pystray.MenuItem(label, make_position_selector(value), radio=True, checked=make_is_position(value))
+            for label, value in position_choices
+        ]
+
+        return [
+            pystray.MenuItem(
+                "Show Overlay",
+                lambda icon, item: self._toggle_overlay(),
+                checked=lambda item: self.state_manager.preview_show_overlay,
+            ),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Monitor", pystray.Menu(*monitor_items)),
+            pystray.MenuItem("Position", pystray.Menu(*position_items)),
+        ]
+
+    def _toggle_overlay(self):
+        try:
+            new_state = not self.state_manager.preview_show_overlay
+            self.state_manager.set_overlay_enabled(new_state)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error toggling overlay: {e}")
+
+    def _set_overlay_monitor(self, value):
+        try:
+            self.state_manager.set_overlay_monitor(value)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error setting overlay monitor: {e}")
+
+    def _set_overlay_position(self, value: str):
+        try:
+            self.state_manager.set_overlay_position(value)
+            self.icon.menu = self._create_menu()
+        except Exception as e:
+            self.logger.error(f"Error setting overlay position: {e}")
+
     def _select_audio_host(self, host_name: str):
         try:
             success = self.state_manager.set_audio_host(host_name)
@@ -300,6 +464,19 @@ class SystemTray:
             self.icon.menu = self._create_menu()
         except Exception as e:
             self.logger.error(f"Failed to update tray icon: {e}")
+
+    def update_tooltip_preview(self, text):
+        if not TRAY_AVAILABLE or not self.is_running or not self.icon:
+            return
+
+        try:
+            if text:
+                truncated = text[:120]
+                self.icon.title = f"Whisper Key: {truncated}"
+            else:
+                self.icon.title = "Whisper Key"
+        except Exception as e:
+            self.logger.error(f"Failed to update tooltip: {e}")
 
     def refresh_menu(self):
         if not self.icon:

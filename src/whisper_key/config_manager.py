@@ -310,6 +310,41 @@ class ConfigManager:
     def get_streaming_config(self) -> Dict[str, Any]:
         return self.config.get('streaming', {}).copy()
 
+    def get_listening_config(self) -> dict:
+        return self.config.get('listening', {}).copy()
+
+    def get_wake_word_config(self) -> dict:
+        return self.config.get('wake_word', {}).copy()
+
+    def get_overlay_config(self) -> Dict[str, Any]:
+        defaults = {
+            'monitor': 'follow_focus',
+            'position': 'bottom_center',
+            'margin': 80,
+            'font_size': 18,
+            'opacity': 0.85,
+            'bg_color': '#1a1a2e',
+            'text_color': '#ffffff',
+        }
+        overlay = self.config.get('listening', {}).get('overlay', {})
+        merged = {**defaults, **overlay}
+        return merged
+
+    def update_overlay_setting(self, key: str, value):
+        overlay = self.config.get('listening', {}).get('overlay', {})
+        if overlay.get(key) == value:
+            return
+        overlay[key] = value
+        self.config['listening']['overlay'] = overlay
+        self._save_user_overrides()
+        self.logger.debug(f"Updated overlay setting {key}: {value}")
+
+    def update_listening_mode(self, mode: str):
+        self.update_user_setting('listening', 'mode', mode)
+
+    def update_listening_preview(self, enabled: bool):
+        self.update_user_setting('listening', 'preview_enabled', enabled)
+
     def get_log_file_path(self) -> str:
         log_filename = self.config['logging']['file']['filename']
         return os.path.join(get_user_app_data_path(), log_filename)

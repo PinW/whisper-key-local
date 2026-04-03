@@ -139,6 +139,8 @@ hotkey: # Hotkey Configuration
   #   - "ctrl+shift+f12"
   recording_hotkey: "ctrl+win | macos: fn+ctrl"
 
+  recording_mode: toggle
+
   # Key to stop recording (shared between transcription and command modes)
   stop_key: "ctrl | macos: fn"
 
@@ -151,11 +153,6 @@ hotkey: # Hotkey Configuration
   # Examples: "esc", "ctrl+c", "shift+esc"
   # Note: On macOS, ESC is system-reserved
   cancel_combination: "esc | macos: shift"
-
-  # Recording mode
-  # "toggle" = press hotkey to start, press stop key to stop (default)
-  # "push_to_talk" = hold hotkey to record, release to stop and transcribe
-  recording_mode: toggle
 
   # Key combination for voice command mode
   # Records speech and matches against user-defined commands
@@ -326,6 +323,20 @@ onboarding: # First-run setup state (managed automatically)
   # nvidia | amd_rdna2+ | amd_rdna1 | null
   gpu_class: null
 
+http_trigger: # HTTP Trigger API
+
+  # Enable/disable HTTP trigger server
+  # Allows controlling Whisper Key via HTTP requests (e.g. curl localhost:5757/toggle)
+  enabled: true
+
+  # Port number for the HTTP trigger server
+  port: 5757
+
+  # Bind address
+  # "0.0.0.0" = accept connections from any interface
+  # "127.0.0.1" = localhost only (more secure)
+  host: "0.0.0.0"
+
 voice_commands: # Voice Command Settings
 
   # Enable/disable voice commands feature
@@ -333,3 +344,38 @@ voice_commands: # Voice Command Settings
   # false = disable voice commands entirely
   # Define commands in commands.yaml (same folder as user_settings.yaml)
   enabled: true
+
+listening:
+  mode: hotkey
+  preview_enabled: false
+  preview_show_tooltip: true
+  preview_show_overlay: false
+  preview_interval_sec: 1.5
+
+  overlay:
+    monitor: follow_focus
+    position: bottom_center
+    margin: 80
+    font_size: 18
+    opacity: 0.85
+    bg_color: "#1a1a2e"
+    text_color: "#ffffff"
+    hide_after_sec: 3.0
+  preview_max_audio_seconds: 30.0
+  pre_buffer_duration_sec: 0.3
+  post_speech_silence_ms: 800
+  max_speech_duration_sec: 60.0
+  min_speech_duration_sec: 0.5
+
+wake_word:
+  engine: openwakeword
+  cooldown_sec: 2.0
+  vad_pre_filter: true
+  openwakeword:
+    model_paths: []
+    threshold: 0.5
+  porcupine:
+    access_key: ""
+    keyword_paths: []
+    keywords: []
+    sensitivities: []

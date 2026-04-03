@@ -16,12 +16,15 @@ sys.stdout.flush()
 
 from .platform import app, permissions
 from .config_manager import ConfigManager
+from .audio_stream import AudioStreamManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
 from .whisper_engine import WhisperEngine
 from .voice_activity_detection import VadManager
 from .clipboard_manager import ClipboardManager
-from .state_manager import StateManager
+from .state_manager import StateManager, ListeningMode
+from .continuous_listener import ContinuousListener
+from .realtime_preview import RealtimePreview
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .instance_manager import guard_against_multiple_instances
@@ -31,6 +34,9 @@ from .voice_commands import VoiceCommandManager
 from .hardware_detection import detect_and_print as detect_hardware
 from .onboarding import check_gpu
 from .update_checker import check_for_updates
+from .http_trigger import HttpTrigger
+from .wake_word import HAS_OPENWAKEWORD, HAS_PORCUPINE, OpenWakeWordEngine, PorcupineEngine, WakeWordManager
+from .preview_overlay import PreviewOverlay
 from .utils import get_user_app_data_path, get_version
 
 def setup_logging(config_manager: ConfigManager):
@@ -69,17 +75,15 @@ def setup_exception_handler():
     
     sys.excepthook = exception_handler
 
-def setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager):
+def setup_audio_recorder(audio_config, audio_stream_manager, state_manager, vad_manager, streaming_manager):
     return AudioRecorder(
-        channels=audio_config['channels'],
-        dtype=audio_config['dtype'],
+        audio_stream_manager=audio_stream_manager,
         max_duration=audio_config['max_duration'],
         on_max_duration_reached=state_manager.handle_max_recording_duration_reached,
         on_vad_event=state_manager.handle_vad_event,
         vad_manager=vad_manager,
         streaming_manager=streaming_manager,
         on_streaming_result=state_manager.handle_streaming_result,
-        device=audio_config['input_device']
     )
 
 def setup_vad(vad_config):
@@ -152,6 +156,46 @@ def setup_system_tray(tray_config, config_manager, state_manager, model_registry
         model_registry=model_registry
     )
 
+def setup_wake_word_engine(wake_word_config, logger):
+    engine_name = wake_word_config.get('engine', 'openwakeword')
+
+    if engine_name == 'openwakeword':
+        if not HAS_OPENWAKEWORD:
+            logger.warning("openwakeword not installed — wake word unavailable")
+            return None
+        try:
+            oww_config = wake_word_config.get('openwakeword', {})
+            model_paths = oww_config.get('model_paths', []) or None
+            threshold = oww_config.get('threshold', 0.5)
+            return OpenWakeWordEngine(model_paths=model_paths, threshold=threshold)
+        except Exception as e:
+            logger.error(f"Failed to initialize OpenWakeWord engine: {e}")
+            return None
+
+    elif engine_name == 'porcupine':
+        if not HAS_PORCUPINE:
+            logger.warning("pvporcupine not installed — wake word unavailable")
+            return None
+        try:
+            pv_config = wake_word_config.get('porcupine', {})
+            access_key = pv_config.get('access_key', '')
+            if not access_key:
+                logger.warning("Porcupine access_key not configured — wake word unavailable")
+                return None
+            return PorcupineEngine(
+                access_key=access_key,
+                keyword_paths=pv_config.get('keyword_paths', []) or None,
+                keywords=pv_config.get('keywords', []) or None,
+                sensitivities=pv_config.get('sensitivities', []) or None,
+            )
+        except Exception as e:
+            logger.error(f"Failed to initialize Porcupine engine: {e}")
+            return None
+
+    else:
+        logger.warning(f"Unknown wake word engine: {engine_name}")
+        return None
+
 def run_gpu_onboarding(config_manager, whisper_config):
     gpu_status = config_manager.config.get('onboarding', {}).get('gpu', 'pending')
     if gpu_status != 'pending':
@@ -175,8 +219,7 @@ def setup_hotkey_listener(hotkey_config, state_manager, voice_commands_enabled=T
         stop_key=hotkey_config['stop_key'],
         auto_send_key=hotkey_config.get('auto_send_key'),
         cancel_combination=hotkey_config.get('cancel_combination'),
-        command_hotkey=hotkey_config.get('command_hotkey') if voice_commands_enabled else None,
-        recording_mode=hotkey_config.get('recording_mode', 'toggle')
+        command_hotkey=hotkey_config.get('command_hotkey') if voice_commands_enabled else None
     )
 
 def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, logger: logging.Logger):
@@ -195,6 +238,8 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='Run as separate test instance')
+    parser.add_argument('--mode', choices=['hotkey', 'continuous', 'wake_word'], default=None)
+    parser.add_argument('--preview', action='store_true', default=None)
     args = parser.parse_args()
 
     instance_name = "WhisperKeyLocal_test" if args.test else "WhisperKeyLocal"
@@ -211,6 +256,9 @@ def main():
     logger = None
     
     try:
+        from .platform import monitors
+        monitors.set_dpi_awareness()
+
         config_manager = ConfigManager()
         setup_logging(config_manager)
         logger = logging.getLogger(__name__)
@@ -244,6 +292,9 @@ def main():
         audio_feedback = setup_audio_feedback(audio_feedback_config)
         voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager, log_transcriptions)
 
+        audio_stream_manager = AudioStreamManager(device=audio_config['input_device'])
+        listening_config = config_manager.get_listening_config()
+
         state_manager = StateManager(
             audio_recorder=None,
             whisper_engine=whisper_engine,
@@ -252,12 +303,75 @@ def main():
             config_manager=config_manager,
             audio_feedback=audio_feedback,
             vad_manager=vad_manager,
-            voice_command_manager=voice_command_manager
+            voice_command_manager=voice_command_manager,
+            audio_stream_manager=audio_stream_manager,
         )
-        audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
+
+        continuous_listener = ContinuousListener(
+            audio_stream_manager=audio_stream_manager,
+            vad_manager=vad_manager,
+            on_speech_audio=state_manager.handle_continuous_audio,
+            is_busy=state_manager.is_busy,
+            pre_buffer_duration_sec=listening_config.get('pre_buffer_duration_sec', 0.3),
+            post_speech_silence_ms=listening_config.get('post_speech_silence_ms', 800),
+            max_speech_duration_sec=listening_config.get('max_speech_duration_sec', 60.0),
+            min_speech_duration_sec=listening_config.get('min_speech_duration_sec', 0.5),
+        )
+        state_manager.continuous_listener = continuous_listener
+
+        realtime_preview = RealtimePreview(
+            whisper_engine=whisper_engine,
+            audio_stream_manager=audio_stream_manager,
+            on_preview_text=state_manager.handle_streaming_result,
+            preview_interval_sec=listening_config.get('preview_interval_sec', 1.5),
+            preview_max_audio_seconds=listening_config.get('preview_max_audio_seconds', 30.0),
+        )
+        state_manager.realtime_preview = realtime_preview
+
+        overlay_config = config_manager.get_overlay_config()
+        if listening_config.get('preview_show_overlay', False):
+            try:
+                preview_overlay = PreviewOverlay(overlay_config)
+                state_manager.preview_overlay = preview_overlay
+            except Exception as e:
+                logger.warning(f"Failed to create preview overlay: {e}")
+
+        wake_word_config = config_manager.get_wake_word_config()
+        wake_word_engine = setup_wake_word_engine(wake_word_config, logger)
+        if wake_word_engine:
+            wake_word_manager = WakeWordManager(
+                audio_stream_manager=audio_stream_manager,
+                vad_manager=vad_manager,
+                engine=wake_word_engine,
+                on_wake_word=state_manager.handle_wake_word,
+                is_busy=state_manager.is_busy,
+                cooldown_sec=wake_word_config.get('cooldown_sec', 2.0),
+                vad_pre_filter=wake_word_config.get('vad_pre_filter', True),
+            )
+            state_manager.wake_word_manager = wake_word_manager
+
+        audio_recorder = setup_audio_recorder(audio_config, audio_stream_manager, state_manager, vad_manager, streaming_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
         state_manager.attach_components(audio_recorder, system_tray)
-        
+
+        if args.mode is not None:
+            state_manager.set_listening_mode(ListeningMode(args.mode))
+        if args.preview is True:
+            state_manager.set_preview_enabled(True)
+
+        http_trigger_config = config_manager.config.get('http_trigger', {})
+        if http_trigger_config.get('enabled', True):
+            http_host = http_trigger_config.get('host', '0.0.0.0')
+            http_port = http_trigger_config.get('port', 5757)
+            try:
+                http_trigger = HttpTrigger(state_manager, host=http_host, port=http_port)
+                http_trigger.start()
+            except Exception as e:
+                logger.warning(f"Failed to start HTTP trigger: {e}")
+                http_trigger = None
+        else:
+            http_trigger = None
+
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager, voice_commands_config['enabled'])
 
         system_tray.start()
@@ -269,8 +383,25 @@ def main():
                     return
                 clipboard_manager.update_auto_paste(False)
 
+        audio_stream_manager.start()
+
+        if state_manager.listening_mode == ListeningMode.CONTINUOUS:
+            continuous_listener.activate()
+
+        if state_manager.listening_mode == ListeningMode.WAKE_WORD:
+            if state_manager.wake_word_manager:
+                state_manager.wake_word_manager.activate()
+            else:
+                logger.warning("Wake word mode configured but engine unavailable; falling back to hotkey")
+                state_manager.listening_mode = ListeningMode.HOTKEY
+
         print("🚀 Whisper Key ready!")
         config_manager.print_startup_hotkey_instructions()
+        if http_trigger:
+            print(f"   [HTTP] trigger on http://{http_host}:{http_port}")
+        mode_info = state_manager.get_mode_info()
+        preview_label = "on" if mode_info["preview"] else "off"
+        print(f"   [MODE] {mode_info['mode']} (preview: {preview_label})")
         print("   [CTRL+C] to quit", flush=True)
 
         app.run_event_loop(shutdown_event)

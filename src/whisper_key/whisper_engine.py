@@ -34,6 +34,7 @@ class WhisperEngine:
 
         self._loading_thread = None
         self._progress_callback = None
+        self._transcribe_lock = threading.Lock()
 
         self.vad_manager = vad_manager
 
@@ -136,69 +137,97 @@ class WhisperEngine:
                          audio_data: np.ndarray) -> Optional[str]:
         if self.model is None:
             return None
-        
+
         if audio_data is None or len(audio_data) == 0:
             self.logger.warning("No audio data to transcribe")
             return None
-        
-        try:
-            speech_detected = True
-            if self.vad_manager and self.vad_manager.is_available():
-                speech_detected = self.vad_manager.check_audio_for_speech(audio_data)
-            
-            if not speech_detected:
-                print("   ✗ No speech detected, skipping transcription")
+
+        with self._transcribe_lock:
+            try:
+                speech_detected = True
+                if self.vad_manager and self.vad_manager.is_available():
+                    speech_detected = self.vad_manager.check_audio_for_speech(audio_data)
+
+                if not speech_detected:
+                    print("   ✗ No speech detected, skipping transcription")
+                    return None
+
+                start_time = time.time()
+
+                if len(audio_data.shape) > 1:
+                    audio_data = audio_data.flatten()
+
+                audio_data = audio_data.astype(np.float32)
+
+                transcribe_kwargs = dict(
+                    beam_size=self.beam_size,
+                    language=self.language,
+                    condition_on_previous_text=False,
+                )
+                if self.initial_prompt:
+                    transcribe_kwargs["initial_prompt"] = self.initial_prompt
+                if self.hotwords:
+                    transcribe_kwargs["hotwords"] = self.hotwords
+
+                segments, info = self.model.transcribe(audio_data, **transcribe_kwargs)
+
+                transcribed_text = ""
+                for segment in segments:
+                    transcribed_text += segment.text
+
+                transcribed_text = transcribed_text.strip()
+
+                end_time = time.time()
+                transcription_time = end_time - start_time
+                print(f"   ✓ Transcription completed in {transcription_time:.1f} seconds")
+
+                detected_language = info.language
+                confidence = info.language_probability
+                self.logger.info(f"Transcription complete. Language: {detected_language} (confidence: {confidence:.2f}) - Time: {transcription_time:.2f}s")
+                if self.log_transcriptions:
+                    self.logger.info(f"Transcribed text: '{transcribed_text}'")
+                else:
+                    self.logger.info(f"Transcribed {len(transcribed_text)} chars")
+
+                if transcribed_text:
+                    print(f"   ✓ Transcribed: '{transcribed_text}'")
+                    return transcribed_text
+                else:
+                    self.logger.info("Transcription was empty")
+                    return None
+
+            except Exception as e:
+                self.logger.error(f"Transcription failed: {e}")
                 return None
-                       
-            start_time = time.time() # Time transcription for user feedback
-            
-            # Prep audio for faster-whisper
+
+    def transcribe_preview(self, audio_data: np.ndarray) -> Optional[str]:
+        if self.model is None:
+            return None
+
+        acquired = self._transcribe_lock.acquire(timeout=0.1)
+        if not acquired:
+            return None
+
+        try:
             if len(audio_data.shape) > 1:
                 audio_data = audio_data.flatten()
-            
             audio_data = audio_data.astype(np.float32)
-            
-            transcribe_kwargs = dict(
-                beam_size=self.beam_size,
+
+            segments, _ = self.model.transcribe(
+                audio_data,
+                beam_size=1,
                 language=self.language,
                 condition_on_previous_text=False,
             )
-            if self.initial_prompt:
-                transcribe_kwargs["initial_prompt"] = self.initial_prompt
-            if self.hotwords:
-                transcribe_kwargs["hotwords"] = self.hotwords
 
-            segments, info = self.model.transcribe(audio_data, **transcribe_kwargs)
-            
-            transcribed_text = ""
-            for segment in segments:
-                transcribed_text += segment.text
-            
-            transcribed_text = transcribed_text.strip()
-            
-            end_time = time.time()
-            transcription_time = end_time - start_time
-            print(f"   ✓ Transcription completed in {transcription_time:.1f} seconds")
-            
-            # Log some info about what we transcribed
-            detected_language = info.language
-            confidence = info.language_probability
-            self.logger.info(f"Transcription complete. Language: {detected_language} (confidence: {confidence:.2f}) - Time: {transcription_time:.2f}s")
-            if self.log_transcriptions:
-                self.logger.info(f"Transcribed text: '{transcribed_text}'")
-            else:
-                self.logger.info(f"Transcribed {len(transcribed_text)} chars")
-            
-            if transcribed_text:
-                print(f"   ✓ Transcribed: '{transcribed_text}'")
-                return transcribed_text
-            else:
-                self.logger.info("Transcription was empty")
-                return None
-                
+            text = "".join(segment.text for segment in segments).strip()
+            return text if text else None
+
         except Exception as e:
-            self.logger.error(f"Transcription failed: {e}")
+            self.logger.error(f"Preview transcription failed: {e}")
             return None
+        finally:
+            self._transcribe_lock.release()
     
     
     def change_model(self,

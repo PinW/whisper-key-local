@@ -2,11 +2,13 @@ import logging
 import time
 import threading
 import platform
+from enum import Enum
 from typing import Optional
 
 import sounddevice as sd
 
 from .audio_recorder import AudioRecorder
+from .audio_stream import AudioStreamManager, WHISPER_SAMPLE_RATE
 from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
@@ -15,6 +17,15 @@ from .audio_feedback import AudioFeedback
 from .utils import OptionalComponent
 from .voice_activity_detection import VadEvent, VadManager
 from .voice_commands import VoiceCommandManager
+from .continuous_listener import ContinuousListener
+from .realtime_preview import RealtimePreview
+from .wake_word import WakeWordManager
+
+
+class ListeningMode(Enum):
+    HOTKEY = "hotkey"
+    CONTINUOUS = "continuous"
+    WAKE_WORD = "wake_word"
 
 class StateManager:
     def __init__(self,
@@ -25,7 +36,9 @@ class StateManager:
                  vad_manager: VadManager,
                  system_tray: Optional[SystemTray] = None,
                  audio_feedback: Optional[AudioFeedback] = None,
-                 voice_command_manager: Optional[VoiceCommandManager] = None):
+                 voice_command_manager: Optional[VoiceCommandManager] = None,
+                 audio_stream_manager: Optional[AudioStreamManager] = None,
+                 continuous_listener: Optional[ContinuousListener] = None):
 
         self.audio_recorder = audio_recorder
         self.whisper_engine = whisper_engine
@@ -35,6 +48,10 @@ class StateManager:
         self.audio_feedback = OptionalComponent(audio_feedback)
         self.vad_manager = vad_manager
         self.voice_command_manager = voice_command_manager
+        self.audio_stream_manager = audio_stream_manager
+        self.continuous_listener = continuous_listener
+        self.realtime_preview = None
+        self.wake_word_manager: Optional[WakeWordManager] = None
 
         self.is_processing = False
         self.is_model_loading = False
@@ -44,6 +61,15 @@ class StateManager:
         self._command_mode = False
         self._state_lock = threading.Lock()
         self._streaming_display_active = False
+        self._last_preview_text = ""
+        self._preview_active = False
+        self.preview_overlay = None
+
+        listening_config = self.config_manager.get_listening_config()
+        self.listening_mode = ListeningMode(listening_config.get('mode', 'hotkey'))
+        self.preview_enabled = listening_config.get('preview_enabled', False)
+        self.preview_show_tooltip = listening_config.get('preview_show_tooltip', True)
+        self.preview_show_overlay = listening_config.get('preview_show_overlay', False)
 
         self.logger = logging.getLogger(__name__)
         self._current_audio_host = None
@@ -56,28 +82,68 @@ class StateManager:
         self.system_tray = OptionalComponent(system_tray)
         self._ensure_audio_device_for_host(self._current_audio_host)
     
+    def handle_continuous_audio(self, audio_data):
+        if self.realtime_preview:
+            self.realtime_preview.deactivate()
+        self._transcription_pipeline(audio_data, use_auto_enter=False)
+        if self.listening_mode == ListeningMode.CONTINUOUS:
+            print("   [CONTINUOUS] listening for speech...")
+
+    def handle_wake_word(self):
+        self.logger.info("Wake word triggered — starting recording")
+        self.start_recording()
+
+    def is_busy(self) -> bool:
+        with self._state_lock:
+            return self.is_processing or self.is_model_loading or self.audio_recorder.get_recording_status()
+
     def handle_max_recording_duration_reached(self, audio_data):
         self.logger.info("Max recording duration reached - starting transcription")
+        if self.realtime_preview:
+            self.realtime_preview.deactivate()
         self._transcription_pipeline(audio_data, use_auto_enter=False)
 
     def handle_vad_event(self, event: VadEvent):
         if event == VadEvent.SILENCE_TIMEOUT:
             self.logger.info("VAD silence timeout detected - stopping recording")
             timeout_seconds = int(self.vad_manager.vad_silence_timeout_seconds)
-            self._clear_streaming_display()
             print(f"⏰ Stopping recording after {timeout_seconds} seconds of silence...")
+            if self.realtime_preview:
+                self.realtime_preview.deactivate()
+            self._clear_streaming_display()
             audio_data = self.audio_recorder.stop_recording()
             self._transcription_pipeline(audio_data, use_auto_enter=False)
 
     def handle_streaming_result(self, text: str, is_final: bool):
         if is_final:
+            self._last_preview_text = text
+            self._preview_active = False
             if self._streaming_display_active:
                 print(f"\r   {text:<70}")
                 self._streaming_display_active = False
+            if self.preview_show_tooltip:
+                self.system_tray.update_tooltip_preview(None)
+            if self.preview_show_overlay and self.preview_overlay:
+                self.preview_overlay.update_text(text)
+                hide_delay = self.config_manager.get_overlay_config().get('hide_after_sec', 3.0)
+                if hide_delay > 0:
+                    threading.Timer(hide_delay, self.preview_overlay.hide).start()
         else:
+            self._last_preview_text = text
+            self._preview_active = True
             display_text = text if len(text) < 67 else "..." + text[-64:]
             print(f"\r   {display_text:<70}", end="", flush=True)
             self._streaming_display_active = True
+            if self.preview_show_tooltip:
+                self.system_tray.update_tooltip_preview(text)
+            if self.preview_show_overlay and self.preview_overlay:
+                self.preview_overlay.update_text(text)
+
+    def get_last_preview_text(self) -> dict:
+        return {
+            "text": self._last_preview_text,
+            "active": self._preview_active,
+        }
 
     def _clear_streaming_display(self):
         if self._streaming_display_active:
@@ -88,6 +154,8 @@ class StateManager:
         currently_recording = self.audio_recorder.get_recording_status()
 
         if currently_recording:
+            if self.realtime_preview:
+                self.realtime_preview.deactivate()
             self._clear_streaming_display()
             audio_data = self.audio_recorder.stop_recording()
             self._transcription_pipeline(audio_data, use_auto_enter)
@@ -96,6 +164,8 @@ class StateManager:
             return False
     
     def cancel_active_recording(self):
+        if self.realtime_preview:
+            self.realtime_preview.deactivate()
         self._clear_streaming_display()
         self._command_mode = False
         self.audio_recorder.cancel_recording()
@@ -148,6 +218,8 @@ class StateManager:
             self.config_manager.print_stop_instructions_based_on_config()
             self.audio_feedback.play_start_sound()
             self.system_tray.update_state("recording")
+            if self.preview_enabled and self.realtime_preview:
+                self.realtime_preview.activate()
     
     def _transcription_pipeline(self, audio_data, use_auto_enter: bool = False):
         try:
@@ -161,7 +233,7 @@ class StateManager:
             if audio_data is None:
                 return
 
-            duration = self.audio_recorder.get_audio_duration(audio_data)
+            duration = len(audio_data) / WHISPER_SAMPLE_RATE
             print(f"   ✓ Recorded {duration:.1f} seconds, transcribing...")
 
             self.system_tray.update_state("processing")
@@ -182,6 +254,11 @@ class StateManager:
             if success:
                 self.last_transcription = transcribed_text
                 self.audio_feedback.play_transcription_complete_sound()
+                if self.preview_show_overlay and self.preview_overlay:
+                    self.preview_overlay.update_text(transcribed_text)
+                    hide_delay = self.config_manager.get_overlay_config().get('hide_after_sec', 3.0)
+                    if hide_delay > 0:
+                        threading.Timer(hide_delay, self.preview_overlay.hide).start()
             
         except Exception as e:
             self.logger.error(f"Error in processing workflow: {e}")
@@ -225,13 +302,79 @@ class StateManager:
         else:
             print("   ✗ No matching command found")
 
+    def set_listening_mode(self, mode: ListeningMode):
+        old_mode = self.listening_mode
+        self.listening_mode = mode
+        self.config_manager.update_listening_mode(mode.value)
+        self.logger.info(f"Listening mode changed to {mode.value}")
+
+        if self.continuous_listener:
+            if mode == ListeningMode.CONTINUOUS:
+                self.continuous_listener.activate()
+            elif old_mode == ListeningMode.CONTINUOUS:
+                self.continuous_listener.deactivate()
+
+        if self.wake_word_manager:
+            if mode == ListeningMode.WAKE_WORD:
+                self.wake_word_manager.activate()
+            elif old_mode == ListeningMode.WAKE_WORD:
+                self.wake_word_manager.deactivate()
+
+        if mode == ListeningMode.WAKE_WORD and not self.wake_word_manager:
+            self.logger.warning("Wake word mode requested but no engine available; falling back to hotkey")
+            self.listening_mode = ListeningMode.HOTKEY
+            self.config_manager.update_listening_mode(ListeningMode.HOTKEY.value)
+            print("   [WAKE WORD] engine not available — falling back to hotkey mode")
+
+    def set_preview_enabled(self, enabled: bool):
+        self.preview_enabled = enabled
+        self.config_manager.update_listening_preview(enabled)
+        self.logger.info(f"Preview {'enabled' if enabled else 'disabled'}")
+        if self.realtime_preview and not enabled:
+            self.realtime_preview.deactivate()
+
+    def set_overlay_enabled(self, enabled: bool):
+        self.preview_show_overlay = enabled
+        self.config_manager.update_user_setting('listening', 'preview_show_overlay', enabled)
+        self.logger.info(f"Overlay {'enabled' if enabled else 'disabled'}")
+        if self.preview_overlay:
+            if enabled:
+                self.preview_overlay.update_config(self.config_manager.get_overlay_config())
+            else:
+                self.preview_overlay.hide()
+
+    def set_overlay_monitor(self, value):
+        self.config_manager.update_overlay_setting('monitor', value)
+        self.logger.info(f"Overlay monitor set to {value}")
+        if self.preview_overlay and self.preview_show_overlay:
+            self.preview_overlay.update_config(self.config_manager.get_overlay_config())
+
+    def set_overlay_position(self, value: str):
+        self.config_manager.update_overlay_setting('position', value)
+        self.logger.info(f"Overlay position set to {value}")
+        if self.preview_overlay and self.preview_show_overlay:
+            self.preview_overlay.update_config(self.config_manager.get_overlay_config())
+
+    def get_overlay_config(self) -> dict:
+        overlay = self.config_manager.get_overlay_config()
+        overlay['overlay_enabled'] = self.preview_show_overlay
+        return overlay
+
+    def get_mode_info(self) -> dict:
+        return {
+            "mode": self.listening_mode.value,
+            "preview": self.preview_enabled,
+            "overlay": self.preview_show_overlay,
+            "overlay_monitor": self.config_manager.get_overlay_config().get('monitor', 'follow_focus'),
+        }
+
     def get_application_state(self) -> dict:
         status = {
             "recording": self.audio_recorder.get_recording_status(),
             "processing": self.is_processing,
             "model_loading": self.is_model_loading,
         }
-        
+
         return status
     
     def manual_transcribe_test(self, duration_seconds: int = 5):
@@ -250,12 +393,21 @@ class StateManager:
             self.logger.error(f"Manual test failed: {e}")
             print(f"❌ Test failed: {e}")
     
-    def shutdown(self):        
+    def shutdown(self):
         print("Whisper Key is shutting down... goodbye!")
+
+        if self.continuous_listener:
+            self.continuous_listener.deactivate()
+
+        if self.wake_word_manager:
+            self.wake_word_manager.cleanup()
 
         if self.audio_recorder.get_recording_status():
             self.audio_recorder.stop_recording()
-        
+
+        if self.audio_stream_manager:
+            self.audio_stream_manager.stop()
+
         self.system_tray.stop()
     
     def set_model_loading(self, loading: bool):
@@ -344,10 +496,10 @@ class StateManager:
 
     def get_available_audio_devices(self, host_filter: Optional[str] = None):
         host_name = host_filter if host_filter is not None else self._current_audio_host
-        return AudioRecorder.get_available_audio_devices(host_name)
+        return AudioStreamManager.get_available_audio_devices(host_name)
 
     def get_current_audio_device_id(self):
-        return self.audio_recorder.get_device_id()
+        return self.audio_stream_manager.get_device_id()
 
     def get_available_audio_hosts(self):
         try:
@@ -407,7 +559,7 @@ class StateManager:
     def request_audio_device_change(self, device_id: int, device_name: str):
         current_state = self.get_current_state()
 
-        if device_id == self.audio_recorder.device:
+        if device_id == self.audio_stream_manager.device:
             return True
 
         if current_state == "recording":
@@ -431,31 +583,10 @@ class StateManager:
     def _execute_audio_device_change(self, device_id: int, device_name: str):
         try:
             print(f"🎤 Switching to: {device_name}")
-
-            channels = self.audio_recorder.channels
-            dtype = self.audio_recorder.dtype
-            max_duration = self.audio_recorder.max_duration
-            on_max_duration = self.audio_recorder.on_max_duration_reached
-            vad_manager = self.audio_recorder.vad_manager
-            streaming_manager = self.audio_recorder.streaming_manager
-            on_streaming_result = self.audio_recorder.on_streaming_result
-
-            new_recorder = AudioRecorder(
-                on_vad_event=self.handle_vad_event,
-                channels=channels,
-                dtype=dtype,
-                max_duration=max_duration,
-                on_max_duration_reached=on_max_duration,
-                vad_manager=vad_manager,
-                streaming_manager=streaming_manager,
-                on_streaming_result=on_streaming_result,
+            self.audio_stream_manager.restart_stream(
                 device=device_id if device_id != -1 else None
             )
-
-            self.audio_recorder = new_recorder
-
             print(f"✅ Successfully switched audio device to: {device_name}")
-
         except Exception as e:
             self.logger.error(f"Failed to change audio device: {e}")
             print(f"❌ Failed to switch audio device: {e}")
@@ -503,11 +634,11 @@ class StateManager:
         return None
 
     def _ensure_audio_device_for_host(self, host_name: Optional[str]):
-        if not host_name or not self.audio_recorder:
+        if not host_name or not self.audio_stream_manager:
             return
 
         try:
-            current_device_id = self.audio_recorder.get_device_id()
+            current_device_id = self.audio_stream_manager.get_device_id()
         except Exception as e:
             self.logger.error(f"Unable to read current audio device: {e}")
             return
