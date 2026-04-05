@@ -19,7 +19,9 @@ def register(bindings: list):
     normalized = []
     for binding in bindings:
         hotkey_str = binding[0]
-        normalized_binding = [_normalize_hotkey(hotkey_str)] + binding[1:]
+        press_callback = binding[1]
+        release_callback = binding[2] if len(binding) > 2 else None
+        normalized_binding = [_normalize_hotkey(hotkey_str), press_callback, release_callback]
         normalized.append(normalized_binding)
     register_hotkeys(normalized)
 
