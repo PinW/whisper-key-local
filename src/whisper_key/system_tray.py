@@ -5,7 +5,7 @@ from typing import Optional, TYPE_CHECKING
 from pathlib import Path
 
 from .utils import open_file
-from .platform import permissions, icons
+from .platform import permissions, icons, console
 
 try:
     import pystray
@@ -25,12 +25,14 @@ class SystemTray:
                  state_manager: 'StateManager',
                  tray_config: dict = None,
                  config_manager: Optional['ConfigManager'] = None,
-                 model_registry = None):
+                 model_registry = None,
+                 console_config: dict = None):
 
         self.state_manager = state_manager
         self.tray_config = tray_config or {}
         self.config_manager = config_manager
         self.model_registry = model_registry
+        self.console_config = console_config or {}
         self.logger = logging.getLogger(__name__)
                
         self.icon = None  # pystray object, holds menu, state, etc.
@@ -170,7 +172,13 @@ class SystemTray:
 
             voice_commands_enabled = self.config_manager.get_setting('voice_commands', 'enabled')
 
-            menu_items = [
+            menu_items = []
+
+            if console.owns_console():
+                menu_items.append(pystray.MenuItem("Show Console", self._show_console, default=True))
+                menu_items.append(pystray.Menu.SEPARATOR)
+
+            menu_items += [
                 pystray.MenuItem("Open log file...", self._open_log_file),
                 pystray.MenuItem("Open model cache...", self._open_model_cache),
                 pystray.Menu.SEPARATOR,
@@ -285,6 +293,16 @@ class SystemTray:
             self.icon.menu = self._create_menu()
         else:
             self.logger.warning(f"Request to change audio device to {device_id} was not accepted")
+
+    def _show_console(self, icon=None, item=None):
+        console.show()
+
+    def apply_console_settings(self):
+        if not console.owns_console() or not self.available:
+            return
+        if self.console_config.get('start_hidden', False):
+            console.hide()
+        console.start_minimize_monitor(console.hide)
 
     def _quit_application_from_tray(self, icon=None, item=None):        
         os.kill(os.getpid(), signal.SIGINT)

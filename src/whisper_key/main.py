@@ -10,11 +10,7 @@ import signal
 import sys
 import threading
 
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-sys.stdout.write("\033]0;Whisper Key\007")
-sys.stdout.flush()
-
-from .platform import app, permissions
+from .platform import app, permissions, console
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
@@ -144,12 +140,13 @@ def setup_voice_commands(voice_commands_config, clipboard_manager, log_transcrip
         log_transcriptions=log_transcriptions
     )
 
-def setup_system_tray(tray_config, config_manager, state_manager, model_registry):
+def setup_system_tray(tray_config, config_manager, state_manager, model_registry, console_config=None):
     return SystemTray(
         state_manager=state_manager,
         tray_config=tray_config,
         config_manager=config_manager,
-        model_registry=model_registry
+        model_registry=model_registry,
+        console_config=console_config
     )
 
 def run_gpu_onboarding(config_manager, whisper_config):
@@ -191,6 +188,10 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
         state_manager.shutdown()
 
 def main():
+    console.setup()
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.write("\033]0;Whisper Key\007")
+    sys.stdout.flush()
     app.setup()
 
     parser = argparse.ArgumentParser()
@@ -227,6 +228,7 @@ def main():
         vad_config = config_manager.get_vad_config()
         streaming_config = config_manager.get_streaming_config()
         voice_commands_config = config_manager.get_voice_commands_config()
+        console_config = config_manager.get_console_config()
         log_config = config_manager.get_logging_config()
         log_transcriptions = log_config.get('log_transcriptions', False)
 
@@ -255,7 +257,7 @@ def main():
             voice_command_manager=voice_command_manager
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
-        system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry)
+        system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry, console_config)
         state_manager.attach_components(audio_recorder, system_tray)
         
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager, voice_commands_config['enabled'])
@@ -272,6 +274,8 @@ def main():
         print("🚀 Whisper Key ready!")
         config_manager.print_startup_hotkey_instructions()
         print("   [CTRL+C] to quit", flush=True)
+
+        system_tray.apply_console_settings()
 
         app.run_event_loop(shutdown_event)
             
