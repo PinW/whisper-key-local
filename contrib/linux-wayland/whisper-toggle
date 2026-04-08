@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# whisper-toggle: Toggle recording on whisper-key host, paste transcribed text
+set -euo pipefail
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/whisper-key/config"
+[[ -f "$CONFIG" ]] && source "$CONFIG"
+
+HOST="${WHISPER_HOST:-localhost}"
+PORT="${WHISPER_PORT:-5757}"
+SOUND="${SOUND_ENABLED:-true}"
+NOTIFY="${NOTIFY_ENABLED:-true}"
+BASE_URL="http://${HOST}:${PORT}"
+
+SND_START="/usr/share/sounds/freedesktop/stereo/device-added.oga"
+SND_DONE="/usr/share/sounds/freedesktop/stereo/complete.oga"
+SND_ERROR="/usr/share/sounds/freedesktop/stereo/dialog-error.oga"
+
+play_sound() {
+    [[ "$SOUND" == "true" ]] && paplay "$1" &
+}
+
+notify() {
+    [[ "$NOTIFY" == "true" ]] && notify-send -a "Whisper" -t 2000 -e "$@" &
+}
+
+error_exit() {
+    play_sound "$SND_ERROR"
+    notify -u critical "Whisper Error" "$1"
+    echo "ERROR: $1" >&2
+    exit 1
+}
+
+# Call toggle endpoint
+response=$(curl -s --connect-timeout 3 --max-time 30 "${BASE_URL}/toggle" 2>&1) \
+    || error_exit "Host unreachable (${HOST}:${PORT})"
+
+ok=$(echo "$response" | jq -r '.ok // empty' 2>/dev/null) \
+    || error_exit "Invalid response: $response"
+
+[[ "$ok" != "true" ]] && error_exit "$(echo "$response" | jq -r '.error // "Unknown error"')"
+
+action=$(echo "$response" | jq -r '.action')
+
+case "$action" in
+    record)
+        play_sound "$SND_START"
+        notify -i audio-input-microphone "Recording started" "Speak now..."
+        ;;
+    stop)
+        text=$(echo "$response" | jq -r '.text // empty')
+        if [[ -z "$text" ]]; then
+            error_exit "No text in response"
+        fi
+        echo -n "$text" | wl-copy
+        sleep 0.1
+        ydotool key 29:1 47:1 47:0 29:0
+        play_sound "$SND_DONE"
+        # Truncate for notification
+        preview="${text:0:100}"
+        [[ ${#text} -gt 100 ]] && preview="${preview}..."
+        notify -i edit-paste "Text pasted" "$preview"
+        ;;
+    *)
+        error_exit "Unknown action: $action"
+        ;;
+esac
