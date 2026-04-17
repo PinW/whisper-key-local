@@ -2,6 +2,17 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.8.1] - 2026-04-18
+
+### Added
+- **Push-to-talk mode** - New `hotkey.recording_mode` config: hold the recording hotkey to record, release to stop and transcribe (#45)
+- **Console window management** - Two exe variants:
+  - `whisper-key.exe` - runs in Windows Terminal with full color (same as before)
+  - `whisper-key-hideable.exe` - conhost with hide-to-tray support (`console.start_hidden` config option) (#50)
+
+### Fixed
+- Stop key requiring two presses in toggle mode (#54)
+
 ## [0.8.0] - 2026-03-17
 
 ### Added
