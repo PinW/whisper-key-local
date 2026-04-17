@@ -12,4 +12,4 @@ allowed-tools: Bash(git *), Bash(gh *)
 7. Build for PyPI: `powershell.exe -Command "cd [WSL_PROJECT_PATH]; python -m build"`
 8. Upload to PyPI: `powershell.exe -Command "twine upload [WSL_PROJECT_PATH]\\dist\\*"`
 9. Build pyapp exe: `/build-pyapp-exe` (depends on PyPI package being available)
-10. Upload exe to release: `gh release upload [VERSION] [PATH_TO_EXE]`
+10. Upload both exes to release: `gh release upload [VERSION] [PATH_TO_WHISPER_KEY_EXE] [PATH_TO_WHISPER_KEY_HIDEABLE_EXE]`
