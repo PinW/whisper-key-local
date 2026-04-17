@@ -99,31 +99,44 @@ if ($Clean) {
     }
 }
 
-Push-Location $PyAppSourcePath
-Write-Host "Running cargo build --release..." -ForegroundColor Yellow
-cargo build --release
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Build failed!" -ForegroundColor Red
-    exit 1
-}
-
 if (-not (Test-Path $DistPath)) {
     New-Item -ItemType Directory -Path $DistPath -Force | Out-Null
 }
 
-$SourceExe = Join-Path $PyAppSourcePath "target\release\pyapp.exe"
-$DestExe = Join-Path $DistPath "$AppName.exe"
-Copy-Item $SourceExe $DestExe -Force
+$Builds = @(
+    @{ Name = "$AppName";      IsGui = $false; Label = "console" },
+    @{ Name = "$AppName-hideable"; IsGui = $true;  Label = "hideable (GUI subsystem)" }
+)
 
-$ExeSize = (Get-Item $DestExe).Length / 1MB
-Write-Host "Build successful!" -ForegroundColor Green
-Write-Host "Executable: $DestExe" -ForegroundColor Green
-Write-Host ("Size: {0:N2} MB" -f $ExeSize) -ForegroundColor Green
+Push-Location $PyAppSourcePath
+
+foreach ($Build in $Builds) {
+    Write-Host "`nBuilding $($Build.Label): $($Build.Name).exe..." -ForegroundColor Yellow
+
+    if ($Build.IsGui) { $env:PYAPP_IS_GUI = "true" }
+    else { Remove-Item Env:\PYAPP_IS_GUI -ErrorAction SilentlyContinue }
+
+    cargo build --release
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Build failed for $($Build.Name)!" -ForegroundColor Red
+        exit 1
+    }
+
+    $SourceExe = Join-Path $PyAppSourcePath "target\release\pyapp.exe"
+    $DestExe = Join-Path $DistPath "$($Build.Name).exe"
+    Copy-Item $SourceExe $DestExe -Force
+
+    $ExeSize = (Get-Item $DestExe).Length / 1MB
+    Write-Host ("  -> $DestExe ({0:N2} MB)" -f $ExeSize) -ForegroundColor Green
+}
 
 Pop-Location
+Write-Host "`nBuild complete!" -ForegroundColor Green
+
 Remove-Item Env:\PYAPP_PROJECT_NAME -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_PROJECT_VERSION -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_PYTHON_VERSION -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_EXEC_CODE -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_SELF_COMMAND -ErrorAction SilentlyContinue
 Remove-Item Env:\PYAPP_PASS_LOCATION -ErrorAction SilentlyContinue
+Remove-Item Env:\PYAPP_IS_GUI -ErrorAction SilentlyContinue
