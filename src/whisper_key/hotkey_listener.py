@@ -36,6 +36,7 @@ class HotkeyListener:
             hotkey_configs.append({
                 'combination': self.recording_hotkey,
                 'callback': self._standard_hotkey_pressed,
+                'release_callback': self._arm_keys_on_release,
                 'name': 'standard'
             })
 
