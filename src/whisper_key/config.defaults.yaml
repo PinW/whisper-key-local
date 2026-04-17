@@ -9,332 +9,318 @@
 # macOS: ~/.whisperkey/user_settings.yaml
 
 whisper: # Whisper AI Model Settings
+    # Model selection
+    # See "models" below for more information
+    model: tiny
 
-  # Model selection
-  # See "models" below for more information
-  model: tiny
-  
-  # Transcription device
-  # Options: cpu, cuda (for both NVIDIA and AMD)
-  # For GPU setup, see https://github.com/PinW/whisper-key-local/blob/master/docs/gpu-setup.md
-  device: cpu
+    # Transcription device
+    # Options: cpu, cuda (for both NVIDIA and AMD)
+    # For GPU setup, see https://github.com/PinW/whisper-key-local/blob/master/docs/gpu-setup.md
+    device: cpu
 
-  # Compute Precision
-  # Options: int8, float16, float32
-  compute_type: int8
-  
-  # Language detection
-  # Options: auto (auto-detect), en, es, fr, de, etc.
-  # Set to specific language code to force language, or auto for auto-detection
-  language: auto
-  
-  # Transcription quality settings
-  beam_size: 5  # Higher = more accurate but slower (1-10)
+    # Compute Precision
+    # Options: int8, float16, float32
+    compute_type: int8
 
-  # Initial prompt to guide transcription style, language variant, or script
-  initial_prompt: ""
+    # Language detection
+    # Options: auto (auto-detect), en, es, fr, de, etc.
+    # Set to specific language code to force language, or auto for auto-detection
+    language: auto
 
-  # Custom hotwords — words the model should favor during transcription
-  # Useful for names, technical terms, or domain-specific vocabulary
-  # Example: ["CTranslate2", "PyInstaller", "Whisper Key"]
-  hotwords: []
+    # Transcription quality settings
+    beam_size: 5 # Higher = more accurate but slower (1-10)
 
-  # Available models (set enabled: false to hide from menu)
-  # To add custom models (CTranslate2 format), add entry with source (HuggingFace or local path)
-  # Example: my-model: {source: "username/repo-ct2", label: "My Model", group: custom}
-  models:
-    # Official whisper models
-    tiny:
-      label: "Tiny (75MB)"
-      group: official
-      enabled: true
-    base:
-      label: "Base (141MB)"
-      group: official
-      enabled: true
-    small:
-      label: "Small (464MB)"
-      group: official
-      enabled: true
-    medium:
-      label: "Medium (1.4GB)"
-      group: official
-      enabled: true
-    large: # Uses the large-v3 version
-      label: "Large (2.9GB)"
-      group: official
-      enabled: true
-    large-v3-turbo: # 8x faster and only slightly less accurate (transcription optimized)
-      label: "Large-V3-Turbo (1.5GB)"
-      group: official
-      enabled: true
+    # Initial prompt to guide transcription style, language variant, or script
+    initial_prompt: ""
 
-    # English-only models — same architecture as above, trained exclusively on English
-    tiny.en:
-      label: "Tiny.En (English, 74MB)"
-      group: custom
-      enabled: true
-    base.en:
-      label: "Base.En (English, 141MB)"
-      group: custom
-      enabled: true
-    small.en:
-      label: "Small.En (English, 464MB)"
-      group: custom
-      enabled: true
-    medium.en:
-      label: "Medium.En (English, 1.5GB)"
-      group: custom
-      enabled: true
+    # Custom hotwords — words the model should favor during transcription
+    # Useful for names, technical terms, or domain-specific vocabulary
+    # Example: ["CTranslate2", "PyInstaller", "Whisper Key"]
+    hotwords: []
 
-    # Distilled models — smaller and faster than standard Whisper, English only
-    distil-small.en:
-      source: Systran/faster-distil-whisper-small.en
-      label: "Distil-Small.En (English, 320MB)"
-      group: custom
-      enabled: true
-    distil-medium.en:
-      source: Systran/faster-distil-whisper-medium.en
-      label: "Distil-Medium.En (English, 755MB)"
-      group: custom
-      enabled: true
-    distil-large-v3.5: # ~1.5x faster than Large-V3-Turbo with comparable accuracy
-      source: distil-whisper/distil-large-v3.5-ct2
-      label: "Distil-Large-V3.5 (English, 1.4GB)"
-      group: custom
-      enabled: true
+    # Available models (set enabled: false to hide from menu)
+    # To add custom models (CTranslate2 format), add entry with source (HuggingFace or local path)
+    # Example: my-model: {source: "username/repo-ct2", label: "My Model", group: custom}
+    models:
+        # Official whisper models
+        tiny:
+            label: "Tiny (75MB)"
+            group: official
+            enabled: true
+        base:
+            label: "Base (141MB)"
+            group: official
+            enabled: true
+        small:
+            label: "Small (464MB)"
+            group: official
+            enabled: true
+        medium:
+            label: "Medium (1.4GB)"
+            group: official
+            enabled: true
+        large: # Uses the large-v3 version
+            label: "Large (2.9GB)"
+            group: official
+            enabled: true
+        large-v3-turbo: # 8x faster and only slightly less accurate (transcription optimized)
+            label: "Large-V3-Turbo (1.5GB)"
+            group: official
+            enabled: true
+
+        # English-only models — same architecture as above, trained exclusively on English
+        tiny.en:
+            label: "Tiny.En (English, 74MB)"
+            group: custom
+            enabled: true
+        base.en:
+            label: "Base.En (English, 141MB)"
+            group: custom
+            enabled: true
+        small.en:
+            label: "Small.En (English, 464MB)"
+            group: custom
+            enabled: true
+        medium.en:
+            label: "Medium.En (English, 1.5GB)"
+            group: custom
+            enabled: true
+
+        # Distilled models — smaller and faster than standard Whisper, English only
+        distil-small.en:
+            source: Systran/faster-distil-whisper-small.en
+            label: "Distil-Small.En (English, 320MB)"
+            group: custom
+            enabled: true
+        distil-medium.en:
+            source: Systran/faster-distil-whisper-medium.en
+            label: "Distil-Medium.En (English, 755MB)"
+            group: custom
+            enabled: true
+        distil-large-v3.5: # ~1.5x faster than Large-V3-Turbo with comparable accuracy
+            source: distil-whisper/distil-large-v3.5-ct2
+            label: "Distil-Large-V3.5 (English, 1.4GB)"
+            group: custom
+            enabled: true
 
 streaming: # Real-time STT (Experimental, speech preview only)
+    # Real-time streaming speech recognition using sherpa-onnx
+    streaming_enabled: false
 
-  # Real-time streaming speech recognition using sherpa-onnx
-  streaming_enabled: false
+    # Streaming model type
+    streaming_model: zipformer.tiny.en
 
-  # Streaming model type
-  streaming_model: zipformer.tiny.en
-
-  # Available streaming models
-  # Requires sherpa-onnx streaming transducer models (e.g., Zipformer)
-  # Browse models: https://k2-fsa.github.io/sherpa/onnx/pretrained_models/index.html
-  models:
-    zipformer.tiny.en:
-      source: csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17
-      label: "Zipformer English Tiny (20MB)"
-      files:
-        encoder: encoder-epoch-99-avg-1.int8.onnx
-        decoder: decoder-epoch-99-avg-1.int8.onnx
-        joiner: joiner-epoch-99-avg-1.int8.onnx
-        tokens: tokens.txt
+    # Available streaming models
+    # Requires sherpa-onnx streaming transducer models (e.g., Zipformer)
+    # Browse models: https://k2-fsa.github.io/sherpa/onnx/pretrained_models/index.html
+    models:
+        zipformer.tiny.en:
+            source: csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17
+            label: "Zipformer English Tiny (20MB)"
+            files:
+                encoder: encoder-epoch-99-avg-1.int8.onnx
+                decoder: decoder-epoch-99-avg-1.int8.onnx
+                joiner: joiner-epoch-99-avg-1.int8.onnx
+                tokens: tokens.txt
 
 hotkey: # Hotkey Configuration
+    # Key combination to start recording
+    # Format: modifier+modifier+key (use lowercase)
+    # Windows modifiers: ctrl, shift, alt, win
+    # macOS modifiers: cmd, ctrl, shift, option, fn
+    # Examples:
+    #   - "ctrl+win"      (Windows default)
+    #   - "fn+ctrl"       (macOS default)
+    #   - "ctrl+alt+r"
+    #   - "win+v"
+    #   - "ctrl+shift+f12"
+    recording_hotkey: "ctrl+win | macos: fn+ctrl"
 
-  # Key combination to start recording
-  # Format: modifier+modifier+key (use lowercase)
-  # Windows modifiers: ctrl, shift, alt, win
-  # macOS modifiers: cmd, ctrl, shift, option, fn
-  # Examples:
-  #   - "ctrl+win"      (Windows default)
-  #   - "fn+ctrl"       (macOS default)
-  #   - "ctrl+alt+r"
-  #   - "win+v"
-  #   - "ctrl+shift+f12"
-  recording_hotkey: "ctrl+win | macos: fn+ctrl"
+    # Key to stop recording (shared between transcription and command modes)
+    stop_key: "ctrl | macos: fn"
 
-  # Key to stop recording (shared between transcription and command modes)
-  stop_key: "ctrl | macos: fn"
+    # Alternative stop key that also sends ENTER after pasting
+    # Only works when auto-paste is enabled
+    auto_send_key: "alt | macos: option"
 
-  # Alternative stop key that also sends ENTER after pasting
-  # Only works when auto-paste is enabled
-  auto_send_key: "alt | macos: option"
-  
-  # Key combination to cancel recording
-  # Format: modifier+modifier+key (use lowercase) or single key
-  # Examples: "esc", "ctrl+c", "shift+esc"
-  # Note: On macOS, ESC is system-reserved
-  cancel_combination: "esc | macos: shift"
+    # Key combination to cancel recording
+    # Format: modifier+modifier+key (use lowercase) or single key
+    # Examples: "esc", "ctrl+c", "shift+esc"
+    # Note: On macOS, ESC is system-reserved
+    cancel_combination: "esc | macos: shift"
 
-  # Recording mode
-  # "toggle" = press hotkey to start, press stop key to stop (default)
-  # "push_to_talk" = hold hotkey to record, release to stop and transcribe
-  recording_mode: toggle
+    # Recording mode
+    # "toggle" = press hotkey to start, press stop key to stop (default)
+    # "push_to_talk" = hold hotkey to record, release to stop and transcribe
+    recording_mode: toggle
 
-  # Key combination for voice command mode
-  # Records speech and matches against user-defined commands
-  command_hotkey: "alt+win | macos: fn+command"
+    # Key combination for voice command mode
+    # Records speech and matches against user-defined commands
+    command_hotkey: "alt+win | macos: fn+command"
 
 vad: # Voice Activity Detection (VAD)
+    # Voice Activity Detection (VAD) Pre-check
+    # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
+    # NOTE: This is separate from faster-whisper's built-in VAD
+    vad_precheck_enabled: true
 
-  # Voice Activity Detection (VAD) Pre-check
-  # Uses TEN VAD to detect speech before transcription (prevents hallucinations on silence)
-  # NOTE: This is separate from faster-whisper's built-in VAD
-  vad_precheck_enabled: true
+    # TEN VAD Hysteresis Thresholds (prevent flickering on borderline audio)
+    vad_onset_threshold: 0.7 # Probability to START detecting speech (0.0-1.0)
+    vad_offset_threshold: 0.55 # Probability to STOP detecting speech (0.0-1.0)
 
-  # TEN VAD Hysteresis Thresholds (prevent flickering on borderline audio)
-  vad_onset_threshold: 0.7    # Probability to START detecting speech (0.0-1.0)
-  vad_offset_threshold: 0.55  # Probability to STOP detecting speech (0.0-1.0)
+    # Minimum Duration Filtering
+    vad_min_speech_duration: 0.1 # Minimum speech segment length in seconds (filters brief noise)
 
-  # Minimum Duration Filtering
-  vad_min_speech_duration: 0.1  # Minimum speech segment length in seconds (filters brief noise)
-
-  # Real-time VAD monitoring during recording
-  vad_realtime_enabled: true  # Enables continuous silence detection and automatic recording stop
-  vad_silence_timeout_seconds: 30.0  # Auto-stop recording after this many seconds of silence
+    # Real-time VAD monitoring during recording
+    vad_realtime_enabled: true # Enables continuous silence detection and automatic recording stop
+    vad_silence_timeout_seconds: 30.0 # Auto-stop recording after this many seconds of silence
 
 audio: # Audio Recording Settings
+    # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
 
-  # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
+    # Audio host API selection
+    # null = let Whisper Key choose the best option (WASAPI on Windows, first available elsewhere)
+    # e.g., "WASAPI", "MME", "DirectSound", "Core Audio"
+    host: null
 
-  # Audio host API selection
-  # null = let Whisper Key choose the best option (WASAPI on Windows, first available elsewhere)
-  # e.g., "WASAPI", "MME", "DirectSound", "Core Audio"
-  host: null
+    # Audio channels
+    # 1 = mono (recommended for speech)
+    # 2 = stereo
+    channels: 1
 
-  # Audio channels
-  # 1 = mono (recommended for speech)
-  # 2 = stereo
-  channels: 1
+    # Recording format
+    # Options: "float32", "int16", "int24", "int32"
+    # float32 recommended for best quality
+    dtype: float32
 
-  # Recording format
-  # Options: "float32", "int16", "int24", "int32"
-  # float32 recommended for best quality
-  dtype: float32
+    # Maximum recording duration (seconds)
+    # Set to 0 for unlimited recording
+    max_duration: 900
 
-  # Maximum recording duration (seconds)
-  # Set to 0 for unlimited recording
-  max_duration: 900
-
-  # Audio input device selection
-  # "default" = Use system default microphone (default behavior)
-  # <device_id> = Specific device ID number (set automatically when changed via system tray)
-  #
-  # Note: Device IDs are assigned by the operating system and may change if devices
-  # are plugged/unplugged. Use system tray to select device - it will save the ID here.
-  input_device: "default"
+    # Audio input device selection
+    # "default" = Use system default microphone (default behavior)
+    # <device_id> = Specific device ID number (set automatically when changed via system tray)
+    #
+    # Note: Device IDs are assigned by the operating system and may change if devices
+    # are plugged/unplugged. Use system tray to select device - it will save the ID here.
+    input_device: "default"
 
 clipboard: # Clipboard Behavior
+    # Automatically paste after transcription
+    # true = paste immediately to active window
+    # false = only copy to clipboard (paste manually)
+    auto_paste: true
 
-  # Automatically paste after transcription
-  # true = paste immediately to active window
-  # false = only copy to clipboard (paste manually)
-  auto_paste: true
+    # Delivery method for auto-paste
+    # "paste" = clipboard copy + simulated Ctrl+V paste
+    # "type" = direct text injection (Windows only)
+    #     Avoids clipboard manipulation and sends keys individually
+    delivery_method: "paste"
 
-  # Delivery method for auto-paste
-  # "paste" = clipboard copy + simulated Ctrl+V paste
-  # "type" = direct text injection (Windows only)
-  #     Avoids clipboard manipulation and sends keys individually
-  delivery_method: "paste"
+    # Key combination to simulate paste (only used when delivery_method is "paste")
+    # Format: modifier+key (use lowercase)
+    # Examples:
+    #   - "ctrl+v"         (standard paste)
+    #   - "ctrl+shift+v"   (plain text paste in some apps)
+    #   - "shift+insert"   (terminal paste)
+    paste_hotkey: "ctrl+v | macos: cmd+v"
 
-  # Key combination to simulate paste (only used when delivery_method is "paste")
-  # Format: modifier+key (use lowercase)
-  # Examples:
-  #   - "ctrl+v"         (standard paste)
-  #   - "ctrl+shift+v"   (plain text paste in some apps)
-  #   - "shift+insert"   (terminal paste)
-  paste_hotkey: "ctrl+v | macos: cmd+v"
+    # Delay after clipboard copy, before sending paste hotkey (seconds, paste mode)
+    # Lets clipboard listeners (e.g. Windows Clipboard History) finish reading
+    paste_pre_paste_delay: 0.05
 
-  # Delay after clipboard copy, before sending paste hotkey (seconds, paste mode)
-  # Lets clipboard listeners (e.g. Windows Clipboard History) finish reading
-  paste_pre_paste_delay: 0.05
+    # Restore original clipboard contents after delivery (paste mode)
+    paste_preserve_clipboard: true
 
-  # Restore original clipboard contents after delivery (paste mode)
-  paste_preserve_clipboard: true
+    # Delay before clipboard restore (seconds, paste mode)
+    paste_clipboard_restore_delay: 0.5
 
-  # Delay before clipboard restore (seconds, paste mode)
-  paste_clipboard_restore_delay: 0.5
+    # Also copy transcription to clipboard after delivery (type mode)
+    type_also_copy_to_clipboard: false
 
-  # Also copy transcription to clipboard after delivery (type mode)
-  type_also_copy_to_clipboard: false
+    # Delay before sending ENTER key after text injection (seconds, type mode)
+    # Terminal apps need time to process typed characters before Enter submits
+    # Total delay = type_auto_enter_delay + (characters / 100 * type_auto_enter_delay_per_100_chars)
+    type_auto_enter_delay: 0.15
+    type_auto_enter_delay_per_100_chars: 0.1
 
-  # Delay before sending ENTER key after text injection (seconds, type mode)
-  # Terminal apps need time to process typed characters before Enter submits
-  # Total delay = type_auto_enter_delay + (characters / 100 * type_auto_enter_delay_per_100_chars)
-  type_auto_enter_delay: 0.15
-  type_auto_enter_delay_per_100_chars: 0.1
-
-  # Delay for key simulation operations (seconds)
-  # Small delay ensures operations complete reliably (macOS only)
-  macos_key_simulation_delay: 0.05
+    # Delay for key simulation operations (seconds)
+    # Small delay ensures operations complete reliably (macOS only)
+    macos_key_simulation_delay: 0.05
 
 logging: # Logging Configuration
+    # Log level - how much detail to log
+    # Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+    # - DEBUG: Very detailed (for troubleshooting)
+    # - INFO: General information (recommended)
+    # - WARNING: Only warnings and errors
+    # - ERROR: Only errors
+    level: INFO
 
-  # Log level - how much detail to log
-  # Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
-  # - DEBUG: Very detailed (for troubleshooting)
-  # - INFO: General information (recommended)
-  # - WARNING: Only warnings and errors
-  # - ERROR: Only errors
-  level: INFO
-  
-  # Log file settings
-  file:
-    enabled: true
-    filename: app.log
-  
-  # Log transcription text content to log file
-  # false = only log metadata (char count, language, timing) for privacy
-  # true = include actual transcribed text in log entries
-  log_transcriptions: false
+    # Log file settings
+    file:
+        enabled: true
+        filename: app.log
 
-  # Console output
-  console:
-    enabled: true
-    level: WARNING  # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
+    # Log transcription text content to log file
+    # false = only log metadata (char count, language, timing) for privacy
+    # true = include actual transcribed text in log entries
+    log_transcriptions: false
 
+    # Console output
+    console:
+        enabled: true
+        level: WARNING # Console log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - WARNING shows important messages only
 
 audio_feedback: # Audio Feedback Settings
+    # Enable/disable audio feedback sounds
+    # true = play sounds when recording starts/stops
+    # false = silent operation
+    enabled: true
 
-  # Enable/disable audio feedback sounds
-  # true = play sounds when recording starts/stops
-  # false = silent operation
-  enabled: true
+    # Enable/disable audio feedback sounds when transcription stops
+    # true = play sounds when transcription stops
+    # false = silent operation
+    transcription_complete_enabled: false
 
-  # Enable/disable audio feedback sounds when transcription stops
-  # true = play sounds when transcription stops
-  # false = silent operation
-  transcription_complete_enabled: false
-
-  # Sound file paths (relative to project root or absolute paths)
-  # Use .wav files for best Windows compatibility
-  start_sound: assets/sounds/record_start.wav
-  stop_sound: assets/sounds/record_stop.wav
-  cancel_sound: assets/sounds/record_cancel.wav
-  transcription_complete_sound: assets/sounds/transcription_complete.wav
+    # Sound file paths (relative to project root or absolute paths)
+    # Use .wav files for best Windows compatibility
+    start_sound: assets/sounds/record_start.wav
+    stop_sound: assets/sounds/record_stop.wav
+    cancel_sound: assets/sounds/record_cancel.wav
+    transcription_complete_sound: assets/sounds/transcription_complete.wav
 
 system_tray: # System Tray Settings
+    # Enable/disable system tray icon
+    # true = show icon in system tray with status and menu
+    # false = run without system tray (console mode only)
+    enabled: true
 
-  # Enable/disable system tray icon
-  # true = show icon in system tray with status and menu
-  # false = run without system tray (console mode only)
-  enabled: true
+    # Tooltip text when hovering over tray icon
+    tooltip: Whisper Key
 
-  # Tooltip text when hovering over tray icon
-  tooltip: Whisper Key
-
-console: # Console Window Management (exe mode only)
-
-  # Hide console window after startup (requires system tray)
-  start_hidden: false
+console: # Console Window Management (whisper-key-hideable.exe only)
+    # Hide console window after startup (requires system tray)
+    start_hidden: false
 
 update: # Update Settings
-
-  # How to handle available updates
-  # "prompt" = ask user before updating
-  # "auto" = update silently without asking
-  mode: prompt
+    # How to handle available updates
+    # "prompt" = ask user before updating
+    # "auto" = update silently without asking
+    mode: prompt
 
 onboarding: # First-run setup state (managed automatically)
+    # GPU acceleration setup status
+    # pending | no_gpu | skipped | complete
+    gpu: pending
 
-  # GPU acceleration setup status
-  # pending | no_gpu | skipped | complete
-  gpu: pending
-
-  # Detected GPU class (set automatically)
-  # nvidia | amd_rdna2+ | amd_rdna1 | null
-  gpu_class: null
+    # Detected GPU class (set automatically)
+    # nvidia | amd_rdna2+ | amd_rdna1 | null
+    gpu_class: null
 
 voice_commands: # Voice Command Settings
-
-  # Enable/disable voice commands feature
-  # true = register command hotkey and load commands file
-  # false = disable voice commands entirely
-  # Define commands in commands.yaml (same folder as user_settings.yaml)
-  enabled: true
+    # Enable/disable voice commands feature
+    # true = register command hotkey and load commands file
+    # false = disable voice commands entirely
+    # Define commands in commands.yaml (same folder as user_settings.yaml)
+    enabled: true
