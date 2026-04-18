@@ -39,6 +39,29 @@ GPU_SIZES = {
 }
 
 
+def handle_gpu_failure(error, config_manager):
+    import logging
+    logging.getLogger(__name__).error(f"GPU model load failed: {error}")
+    print(f"\n{BOLD_RED}GPU acceleration failed:{RESET} {error}\n")
+
+    choice = prompt_choice(
+        "GPU recovery",
+        [
+            ("Re-run GPU setup", "Reinstall GPU packages and restart"),
+            ("Fall back to CPU", "Continue this session using CPU"),
+        ],
+    )
+
+    if choice == INSTALL_GPU:
+        config_manager.update_user_setting('onboarding', 'gpu', 'pending')
+        restart_or_exit(
+            f"\n{BOLD_GREEN}Restarting for GPU setup...{RESET}\n",
+            f"\n{BOLD_GREEN}Please restart Whisper Key to re-run GPU setup.{RESET}\n",
+        )
+
+    print(f"\n{BOLD_GREEN}Falling back to CPU for this session.{RESET}\n")
+
+
 def check_gpu(gpu_class, gpu_name, ct2_works, configured_device, config_manager):
     if not gpu_class:
         config_manager.update_user_setting('onboarding', 'gpu', 'no_gpu')

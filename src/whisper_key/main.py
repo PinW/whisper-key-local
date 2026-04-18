@@ -95,19 +95,24 @@ def setup_streaming(streaming_config, model_registry):
         model_registry=model_registry
     )
 
-def setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions=False):
-    return WhisperEngine(
-        model_key=whisper_config['model'],
-        device=whisper_config['device'],
-        compute_type=whisper_config['compute_type'],
-        language=whisper_config['language'],
-        beam_size=whisper_config['beam_size'],
-        initial_prompt=whisper_config.get('initial_prompt', ''),
-        hotwords=whisper_config.get('hotwords', []),
-        vad_manager=vad_manager,
-        model_registry=model_registry,
-        log_transcriptions=log_transcriptions
-    )
+def setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions=False, config_manager=None):
+    try:
+        return WhisperEngine(
+            model_key=whisper_config['model'],
+            device=whisper_config['device'],
+            compute_type=whisper_config['compute_type'],
+            language=whisper_config['language'],
+            beam_size=whisper_config['beam_size'],
+            initial_prompt=whisper_config.get('initial_prompt', ''),
+            hotwords=whisper_config.get('hotwords', []),
+            vad_manager=vad_manager,
+            model_registry=model_registry,
+            log_transcriptions=log_transcriptions
+        )
+    except RuntimeError as e:
+        if whisper_config['device'] != 'cuda' or not config_manager:
+            raise
+        return _handle_gpu_failure(e, whisper_config, vad_manager, model_registry, log_transcriptions, config_manager)
 
 def setup_clipboard_manager(clipboard_config):
     return ClipboardManager(
@@ -156,6 +161,14 @@ def run_gpu_onboarding(config_manager, whisper_config):
     gpu_class, gpu_name, ct2_works = detect_hardware(whisper_config['device'])
     check_gpu(gpu_class, gpu_name, ct2_works, whisper_config['device'], config_manager)
     return config_manager.get_whisper_config()
+
+
+def _handle_gpu_failure(error, whisper_config, vad_manager, model_registry, log_transcriptions, config_manager):
+    from .onboarding import handle_gpu_failure
+    handle_gpu_failure(error, config_manager)
+    whisper_config['device'] = 'cpu'
+    whisper_config['compute_type'] = 'int8'
+    return setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions)
 
 
 def setup_signal_handlers(shutdown_event):
@@ -240,7 +253,7 @@ def main():
         )
         vad_manager = setup_vad(vad_config)
         streaming_manager = setup_streaming(streaming_config, model_registry)
-        whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions)
+        whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions, config_manager)
         streaming_manager.initialize()
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
