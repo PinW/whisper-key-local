@@ -5,6 +5,7 @@
 -
 
 ## Bugs
+- **CUDA version forward-compatibility** - onboarding GPU detection doesn't recognize newer CUDA versions (e.g. CUDA 13.x), and CTranslate2 requires `cublas64_12.dll` which isn't present when only CUDA 13+ is installed. Workaround: manually copy CUDA 12 cuBLAS/cuDNN libs into CUDA 13 bin directory. Need to detect newer CUDA versions and guide users to install the required CUDA 12 compatibility libs
 - **Silent close when already running** - `.exe` users see the app instantly close with no message when another instance is already running
 - **No download progress shown** - HuggingFace model download doesn't display any state or progress to the user
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
