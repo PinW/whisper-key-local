@@ -216,4 +216,37 @@ class WhisperEngine:
             return
         
         self._load_model_async(new_model_key, progress_callback)
-    
+
+
+def create_whisper_engine(engine_type: str, whisper_config: dict, vad_manager,
+                          model_registry, log_transcriptions=False, config_manager=None):
+
+    if engine_type == "whisper_cpp":
+        from .whisper_cpp_engine import WhisperCppEngine
+        return WhisperCppEngine(
+            model_key=whisper_config['model'],
+            language=whisper_config['language'],
+            beam_size=whisper_config['beam_size'],
+            initial_prompt=whisper_config.get('initial_prompt', ''),
+            hotwords=whisper_config.get('hotwords', []),
+            strip_trailing_period=whisper_config.get('strip_trailing_period', False),
+            vad_manager=vad_manager,
+            model_registry=model_registry,
+            log_transcriptions=log_transcriptions,
+            binary_path=whisper_config.get('cpp_binary'),
+            model_dir=whisper_config.get('cpp_model_dir'),
+        )
+
+    return WhisperEngine(
+        model_key=whisper_config['model'],
+        device=whisper_config['device'],
+        compute_type=whisper_config['compute_type'],
+        language=whisper_config['language'],
+        beam_size=whisper_config['beam_size'],
+        initial_prompt=whisper_config.get('initial_prompt', ''),
+        hotwords=whisper_config.get('hotwords', []),
+        strip_trailing_period=whisper_config.get('strip_trailing_period', False),
+        vad_manager=vad_manager,
+        model_registry=model_registry,
+        log_transcriptions=log_transcriptions,
+    )

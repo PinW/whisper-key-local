@@ -276,6 +276,9 @@ class ConfigManager:
     
     def get_whisper_config(self) -> Dict[str, Any]:
         return self.config['whisper'].copy()
+
+    def get_engine_type(self) -> str:
+        return self.config['whisper'].get('engine_type', 'faster_whisper')
     
     def get_hotkey_config(self) -> Dict[str, Any]:
         return self.config['hotkey'].copy()

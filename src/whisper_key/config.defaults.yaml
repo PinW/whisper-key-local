@@ -9,18 +9,28 @@
 # macOS: ~/.whisperkey/user_settings.yaml
 
 whisper: # Whisper AI Model Settings
+    # Engine backend
+    # Options: faster_whisper (default, uses CTranslate2), whisper_cpp (uses whisper-cli.exe with Vulkan)
+    engine_type: faster_whisper
+
     # Model selection
     # See "models" below for more information
     model: tiny
 
-    # Transcription device
+    # Transcription device (only for faster_whisper engine)
     # Options: cpu, cuda (for both NVIDIA and AMD)
     # For GPU setup, see https://github.com/PinW/whisper-key-local/blob/master/docs/gpu-setup.md
     device: cpu
 
-    # Compute Precision
+    # Compute Precision (only for faster_whisper engine)
     # Options: int8, float16, float32
     compute_type: int8
+
+    # whisper.cpp engine settings
+    # Custom path to whisper-cli.exe (auto-detected if not set)
+    cpp_binary: ""
+    # Custom path to ggml model directory (auto-detected if not set)
+    cpp_model_dir: ""
 
     # Language detection
     # Options: auto (auto-detect), en, es, fr, de, etc.

@@ -14,7 +14,7 @@ from .platform import app, permissions, console
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
 from .hotkey_listener import HotkeyListener
-from .whisper_engine import WhisperEngine
+from .whisper_engine import create_whisper_engine
 from .voice_activity_detection import VadManager
 from .clipboard_manager import ClipboardManager
 from .state_manager import StateManager
@@ -96,24 +96,20 @@ def setup_streaming(streaming_config, model_registry):
     )
 
 def setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions=False, config_manager=None):
+    engine_type = config_manager.get_engine_type() if config_manager else whisper_config.get('engine_type', 'faster_whisper')
     try:
-        return WhisperEngine(
-            model_key=whisper_config['model'],
-            device=whisper_config['device'],
-            compute_type=whisper_config['compute_type'],
-            language=whisper_config['language'],
-            beam_size=whisper_config['beam_size'],
-            initial_prompt=whisper_config.get('initial_prompt', ''),
-            hotwords=whisper_config.get('hotwords', []),
-            strip_trailing_period=whisper_config.get('strip_trailing_period', False),
+        return create_whisper_engine(
+            engine_type=engine_type,
+            whisper_config=whisper_config,
             vad_manager=vad_manager,
             model_registry=model_registry,
-            log_transcriptions=log_transcriptions
+            log_transcriptions=log_transcriptions,
+            config_manager=config_manager,
         )
     except RuntimeError as e:
-        if whisper_config['device'] != 'cuda' or not config_manager:
-            raise
-        return _handle_gpu_failure(e, whisper_config, vad_manager, model_registry, log_transcriptions, config_manager)
+        if engine_type == 'faster_whisper' and whisper_config.get('device') == 'cuda' and config_manager:
+            return _handle_gpu_failure(e, whisper_config, vad_manager, model_registry, log_transcriptions, config_manager)
+        raise
 
 def setup_clipboard_manager(clipboard_config):
     return ClipboardManager(
@@ -159,7 +155,48 @@ def run_gpu_onboarding(config_manager, whisper_config):
     gpu_status = config_manager.config.get('onboarding', {}).get('gpu', 'pending')
     if gpu_status != 'pending':
         return whisper_config
+
     gpu_class, gpu_name, ct2_works = detect_hardware(whisper_config['device'])
+
+    if gpu_class and gpu_class.startswith('amd') and not ct2_works:
+        from .terminal_ui import BOLD_GREEN, RESET, prompt_choice
+
+        INSTALL_ROCM = 0
+        USE_WHISPER_CPP = 1
+        SKIP = 2
+        CPU_ONLY = 3
+
+        choice = prompt_choice(
+            "GPU acceleration available",
+            [
+                ("Setup GPU with ROCm (faster_whisper)", "Install ROCm packages"),
+                ("Use whisper.cpp with Vulkan", "Auto-detects GPU, no extra install"),
+                ("Skip for now", "Use CPU this session"),
+                ("Use CPU only", "Don't ask again"),
+            ],
+            subtitle=f"Detected {gpu_name}. Choose transcription engine:",
+        )
+        print()
+
+        if choice == INSTALL_ROCM:
+            check_gpu(gpu_class, gpu_name, ct2_works, whisper_config['device'], config_manager)
+            return config_manager.get_whisper_config()
+
+        if choice == USE_WHISPER_CPP:
+            config_manager.update_user_setting('whisper', 'engine_type', 'whisper_cpp')
+            config_manager.update_user_setting('onboarding', 'gpu', 'complete')
+            config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
+            print(f"{BOLD_GREEN}whisper.cpp engine selected. Vulkan GPU detection is automatic.{RESET}\n")
+            return config_manager.get_whisper_config()
+
+        if choice == CPU_ONLY:
+            config_manager.update_user_setting('whisper', 'device', 'cpu')
+            config_manager.update_user_setting('whisper', 'compute_type', 'int8')
+            config_manager.update_user_setting('onboarding', 'gpu_class', gpu_class)
+            config_manager.update_user_setting('onboarding', 'gpu', 'skipped')
+
+        return whisper_config
+
     check_gpu(gpu_class, gpu_name, ct2_works, whisper_config['device'], config_manager)
     return config_manager.get_whisper_config()
 
