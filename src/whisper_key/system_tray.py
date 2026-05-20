@@ -113,6 +113,27 @@ class SystemTray:
 
         return items
 
+    def _make_history_callback(self, text: str):
+        return lambda icon, item: self.state_manager.copy_text_to_clipboard(text)
+
+    def _build_history_menu_items(self) -> list:
+        history = self.state_manager.get_transcription_history()
+        self.logger.info(f"HISTORY: building menu, entries={len(history)}")
+        items = []
+        if history:
+            for entry in history:
+                text = entry['text']
+                preview = text[:37].replace('\n', ' ').strip()
+                if len(text) > 37:
+                    preview += "..."
+                items.append(pystray.MenuItem(
+                    f"[{entry['timestamp']}] {preview}",
+                    self._make_history_callback(text)
+                ))
+        else:
+            items.append(pystray.MenuItem("(no history)", None, enabled=False))
+        return items
+
     def _create_menu(self):
         try:
             app_state = self.state_manager.get_application_state()
@@ -200,6 +221,9 @@ class SystemTray:
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(f"Model: {current_model.title()}", pystray.Menu(*model_sub_menu_items)),
             ]
+
+            history_items = self._build_history_menu_items()
+            menu_items.append(pystray.MenuItem("History", pystray.Menu(*history_items)))
 
             menu_items.extend([
                 pystray.Menu.SEPARATOR,

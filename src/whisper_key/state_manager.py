@@ -39,6 +39,7 @@ class StateManager:
         self.is_processing = False
         self.is_model_loading = False
         self.last_transcription = None
+        self._transcription_history: list[dict] = []
         self._pending_model_change = None
         self._pending_device_change = None
         self._command_mode = False
@@ -171,6 +172,9 @@ class StateManager:
             if not transcribed_text:
                 return
 
+            self.last_transcription = transcribed_text
+            self._add_to_history(transcribed_text)
+
             if command_mode:
                 self._handle_command_transcription(transcribed_text, use_auto_enter)
                 return
@@ -180,7 +184,6 @@ class StateManager:
             )
 
             if success:
-                self.last_transcription = transcribed_text
                 self.audio_feedback.play_transcription_complete_sound()
             
         except Exception as e:
@@ -224,6 +227,23 @@ class StateManager:
             self.voice_command_manager.execute_command(matched, use_auto_enter)
         else:
             print("   ✗ No matching command found")
+
+    def _add_to_history(self, text: str):
+        from datetime import datetime
+        entry = {
+            "text": text,
+            "timestamp": datetime.now().strftime("%H:%M"),
+        }
+        self._transcription_history.insert(0, entry)
+        if len(self._transcription_history) > 10:
+            self._transcription_history.pop()
+        self.logger.info(f"HISTORY: added entry, total={len(self._transcription_history)}")
+
+    def get_transcription_history(self) -> list[dict]:
+        return list(self._transcription_history)
+
+    def copy_text_to_clipboard(self, text: str):
+        self.clipboard_manager.copy_with_notification(text)
 
     def get_application_state(self) -> dict:
         status = {
