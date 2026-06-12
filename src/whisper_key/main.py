@@ -116,10 +116,7 @@ def setup_whisper_engine(whisper_config, vad_manager, model_registry, config_man
         return _handle_gpu_failure(e, whisper_config, vad_manager, model_registry, config_manager)
 
 def setup_terminal_title(terminal_title_config):
-    return TerminalTitle(
-        idle_microphone=terminal_title_config.get('idle_microphone', False),
-        processing_animation=terminal_title_config.get('processing_animation', False)
-    )
+    return TerminalTitle(frames_config=terminal_title_config)
 
 def setup_text_postprocessor(post_processing_config):
     return TextPostProcessor(

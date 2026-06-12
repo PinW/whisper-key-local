@@ -1,22 +1,29 @@
+import logging
 import sys
 import threading
 
-_RECORDING_FRAMES = [("🔴 Whisper Key", 1.5), ("⠀⠀ Whisper Key", 1.0)]
-_PROCESSING_FRAMES = [("⠂ Whisper Key", 0.25), ("⠐ Whisper Key", 0.25)]
+_APP_TITLE = "Whisper Key"
+_STATIC_SECONDS = 60.0
+_DEFAULTS = {
+    "idle":       "",
+    "recording":  [["🔴", 1.5], ["⠀⠀", 1.0]],
+    "processing": "",
+}
+
+
+def _compose_title(prefix) -> str:
+    prefix = str(prefix)
+    return f"{prefix} {_APP_TITLE}" if prefix else _APP_TITLE
 
 
 class TerminalTitle:
-    def __init__(self, idle_microphone: bool = False, processing_animation: bool = False):
+    def __init__(self, frames_config: dict = None):
+        self.logger = logging.getLogger(__name__)
         try:
             self._enabled = sys.stdout is not None and sys.stdout.isatty()
         except (ValueError, OSError):
             self._enabled = False
-        idle_frames = [("🎤 Whisper Key" if idle_microphone else "Whisper Key", 60.0)]
-        self._frames = {
-            "idle": idle_frames,
-            "recording": _RECORDING_FRAMES,
-            "processing": _PROCESSING_FRAMES if processing_animation else idle_frames,
-        }
+        self._frames = self._parse_frames(frames_config)
         self._state = "idle"
         self._frame_index = 0
         self._lock = threading.Lock()
@@ -24,7 +31,34 @@ class TerminalTitle:
         self._stop = threading.Event()
         self._thread = None
         if self._enabled:
-            self._emit(idle_frames[0][0])
+            self._emit(self._frames["idle"][0][0])
+
+    def _parse_frames(self, frames_config: dict) -> dict:
+        if not isinstance(frames_config, dict):
+            frames_config = {}
+        frames = {}
+        for state, default_value in _DEFAULTS.items():
+            value = frames_config.get(state, default_value)
+            frames[state] = self._parse_state(state, value, default_value)
+        return frames
+
+    def _parse_state(self, state: str, value, default_value) -> list:
+        if value is None or isinstance(value, (str, int, float)):
+            return [(_compose_title(value if value is not None else ""), _STATIC_SECONDS)]
+        parsed = []
+        if isinstance(value, list):
+            for entry in value:
+                try:
+                    prefix, seconds = entry
+                    seconds = float(seconds)
+                    if seconds > 0:
+                        parsed.append((_compose_title(prefix), seconds))
+                except (TypeError, ValueError):
+                    pass
+        if parsed:
+            return parsed
+        self.logger.warning(f"Invalid terminal_title frames for '{state}', using default")
+        return self._parse_state(state, default_value, default_value)
 
     def start(self):
         if not self._enabled:

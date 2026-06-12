@@ -313,13 +313,19 @@ system_tray: # System Tray Settings
     tooltip: Whisper Key
 
 terminal_title: # Terminal Tab Title Status
-    # Tab title always blinks a red dot while recording
-
-    # Show microphone emoji in tab title when idle
-    idle_microphone: false
-
-    # Animate dots in tab title while transcribing
-    processing_animation: false
+    # Tab title shows "<prefix> Whisper Key" based on app state
+    # Each state is a static prefix string, or a list of [prefix, seconds]
+    # frames cycled as an animation
+    # Examples:
+    #   idle: "🎤"
+    #   processing:
+    #       - ["⠂", 0.25]
+    #       - ["⠐", 0.25]
+    idle: ""
+    recording:
+        - ["🔴", 1.5]
+        - ["⠀⠀", 1.0]
+    processing: ""
 
 console: # Console Window Management (whisper-key-hideable.exe only)
     # Hide console window after startup (requires system tray)
