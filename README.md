@@ -156,6 +156,9 @@ Delete this file and restart app to reset to defaults.
 | **System Tray** |||
 | `system_tray.enabled` | `true` | Show tray icon |
 | `system_tray.tooltip` | `Whisper Key` | Hover text |
+| **Terminal Title** |||
+| `terminal_title.idle_microphone` | `false` | Show 🎤 in tab title when idle |
+| `terminal_title.processing_animation` | `false` | Animate dots in tab title while transcribing |
 | **Console** |||
 | `console.start_hidden` | `false` | Hide console after startup (whisper-key-hideable.exe only) |
 | **Update** |||

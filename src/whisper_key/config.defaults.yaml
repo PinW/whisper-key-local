@@ -312,6 +312,15 @@ system_tray: # System Tray Settings
     # Tooltip text when hovering over tray icon
     tooltip: Whisper Key
 
+terminal_title: # Terminal Tab Title Status
+    # Tab title always blinks a red dot while recording
+
+    # Show microphone emoji in tab title when idle
+    idle_microphone: false
+
+    # Animate dots in tab title while transcribing
+    processing_animation: false
+
 console: # Console Window Management (whisper-key-hideable.exe only)
     # Hide console window after startup (requires system tray)
     start_hidden: false

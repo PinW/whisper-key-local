@@ -115,6 +115,12 @@ def setup_whisper_engine(whisper_config, vad_manager, model_registry, config_man
             raise
         return _handle_gpu_failure(e, whisper_config, vad_manager, model_registry, config_manager)
 
+def setup_terminal_title(terminal_title_config):
+    return TerminalTitle(
+        idle_microphone=terminal_title_config.get('idle_microphone', False),
+        processing_animation=terminal_title_config.get('processing_animation', False)
+    )
+
 def setup_text_postprocessor(post_processing_config):
     return TextPostProcessor(
         strip_trailing_period=post_processing_config.get('strip_trailing_period', False),
@@ -211,7 +217,6 @@ def main():
     console.setup()
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     app.setup()
-    terminal_title = TerminalTitle()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='Run as separate test instance')
@@ -232,6 +237,7 @@ def main():
     
     try:
         config_manager = ConfigManager()
+        terminal_title = setup_terminal_title(config_manager.get_terminal_title_config())
         setup_logging(config_manager)
         logger = logging.getLogger(__name__)
         setup_exception_handler()

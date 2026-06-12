@@ -1,19 +1,22 @@
 import sys
 import threading
 
-_FRAMES = {
-    "idle":       [("Whisper Key", 60.0)],
-    "recording":  [("🔴 Whisper Key", 1.5), ("⠀⠀ Whisper Key", 1.0)],
-    "processing": [("⠁ Whisper Key", 0.25), ("⠃ Whisper Key", 0.25), ("⠇ Whisper Key", 0.25), ("⠃ Whisper Key", 0.25)],
-}
+_RECORDING_FRAMES = [("🔴 Whisper Key", 1.5), ("⠀⠀ Whisper Key", 1.0)]
+_PROCESSING_FRAMES = [("⠂ Whisper Key", 0.25), ("⠐ Whisper Key", 0.25)]
 
 
 class TerminalTitle:
-    def __init__(self):
+    def __init__(self, idle_microphone: bool = False, processing_animation: bool = False):
         try:
             self._enabled = sys.stdout is not None and sys.stdout.isatty()
         except (ValueError, OSError):
             self._enabled = False
+        idle_frames = [("🎤 Whisper Key" if idle_microphone else "Whisper Key", 60.0)]
+        self._frames = {
+            "idle": idle_frames,
+            "recording": _RECORDING_FRAMES,
+            "processing": _PROCESSING_FRAMES if processing_animation else idle_frames,
+        }
         self._state = "idle"
         self._frame_index = 0
         self._lock = threading.Lock()
@@ -21,7 +24,7 @@ class TerminalTitle:
         self._stop = threading.Event()
         self._thread = None
         if self._enabled:
-            self._emit(_FRAMES["idle"][0][0])
+            self._emit(idle_frames[0][0])
 
     def start(self):
         if not self._enabled:
@@ -51,7 +54,7 @@ class TerminalTitle:
     def _animation_loop(self):
         while not self._stop.is_set():
             with self._lock:
-                frames = _FRAMES.get(self._state, _FRAMES["idle"])
+                frames = self._frames.get(self._state, self._frames["idle"])
                 title, interval = frames[self._frame_index % len(frames)]
                 self._frame_index += 1
             self._emit(title)
