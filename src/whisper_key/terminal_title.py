@@ -21,6 +21,8 @@ class TerminalTitle:
         self._tick = threading.Event()
         self._stop = threading.Event()
         self._thread = None
+        if self._enabled:
+            self._emit(_FRAMES["idle"][0])
 
     def start(self):
         if not self._enabled:

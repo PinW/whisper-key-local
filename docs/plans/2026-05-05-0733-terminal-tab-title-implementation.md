@@ -88,15 +88,18 @@ The `OptionalComponent` wrapper means if `TerminalTitle` is disabled (non-TTY), 
   - ✅ Tested with fake TTY: frame sequences, state transitions, blank-title emit, non-TTY no-op all verified
 
 2. Wire into main.py
-- [ ] Delete the inline OSC write at `main.py:206`
-- [ ] Import and instantiate `TerminalTitle` after `console.setup()` / `app.setup()`
-- [ ] Pass to `StateManager` constructor (new kwarg)
-- [ ] Call `terminal_title.start()` after `system_tray.start()`
-- [ ] Call `terminal_title.stop()` from `shutdown_app()`
+- [x] Delete the inline OSC write at `main.py:206`
+  - ✅ Replaced by one-shot idle emit in `TerminalTitle.__init__` so the title still appears instantly at launch (before model load)
+- [x] Import and instantiate `TerminalTitle` after `console.setup()` / `app.setup()`
+- [x] Pass to `StateManager` constructor (new kwarg)
+- [x] Call `terminal_title.start()` after `system_tray.start()`
+- [x] Call `terminal_title.stop()` from `shutdown_app()`
+  - ✅ Moved to `StateManager.shutdown()` next to `system_tray.stop()` — symmetric component ownership, no `shutdown_app` signature change
 
 3. Wire into state_manager.py
-- [ ] Add `terminal_title` constructor parameter, wrap with `OptionalComponent`
-- [ ] Add `self.terminal_title.update_state(...)` next to each of the 7 existing tray `update_state` call sites:
+- [x] Add `terminal_title` constructor parameter, wrap with `OptionalComponent`
+- [x] Add `self.terminal_title.update_state(...)` next to each of the 7 existing tray `update_state` call sites:
+  - ✅ Implemented as `_update_ui_state()` helper fanning out to tray + title; all 7 sites converted to call it
   - `cancel_active_recording` → `idle`
   - `start_command_recording` → `recording`
   - `_begin_recording` → `recording`
@@ -106,9 +109,10 @@ The `OptionalComponent` wrapper means if `TerminalTitle` is disabled (non-TTY), 
   - `set_model_loading(False)` → `idle`
 
 4. Cross-platform sanity
-- [ ] Verify Windows Terminal renders the OSC sequence (existing `console.setup()` already enables VT — no extra work expected)
+- [x] Verify Windows Terminal renders the OSC sequence (existing `console.setup()` already enables VT — no extra work expected)
+  - ✅ App startup from Windows verified clean; interactive rendering check pending user test
 - [ ] Verify legacy `cmd.exe` / conhost gracefully ignores it (no stray bytes shown). If garbage appears, gate emission behind `console.supports_vt()` or similar
-- [ ] No platform-specific code expected; single module covers all OSes
+- [x] No platform-specific code expected; single module covers all OSes
 
 5. Manual testing
 - [ ] WezTerm (WSL): launch `wk`, observe `🎤 whisper key` on idle
@@ -118,11 +122,12 @@ The `OptionalComponent` wrapper means if `TerminalTitle` is disabled (non-TTY), 
 - [ ] Cancel mid-recording → title returns to idle without a frame stuck on red
 - [ ] Ctrl+C exit → title clears (or shell reclaims it on next prompt)
 - [ ] Windows Terminal: same checks as above
-- [ ] Pipe stdout to file (`wk > out.log`): no escape sequences appear in the log (TTY check works)
+- [x] Pipe stdout to file (`wk > out.log`): no escape sequences appear in the log (TTY check works)
+  - ✅ Verified: captured startup output contains zero OSC bytes (master leaked `]0;Whisper Key` here)
 
 6. Cleanup
-- [ ] If a wezterm.lua binding exists that pre-sets the title via `printf "\033]0;..."`, remove it (none found in current `~/.config/wezterm/wezterm.lua` — skip if absent)
-- [ ] Remove the now-superseded static `sys.stdout.write("\033]0;Whisper Key\007")` line in `main.py` (covered in phase 2)
+- [x] If a wezterm.lua binding exists that pre-sets the title via `printf "\033]0;..."`, remove it (none found in current `~/.config/wezterm/wezterm.lua` — skip if absent)
+- [x] Remove the now-superseded static `sys.stdout.write("\033]0;Whisper Key\007")` line in `main.py` (covered in phase 2)
 
 ## Code sketches
 

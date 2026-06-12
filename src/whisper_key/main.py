@@ -18,6 +18,7 @@ from .whisper_engine import WhisperEngine
 from .voice_activity_detection import VadManager
 from .clipboard_manager import ClipboardManager
 from .state_manager import StateManager
+from .terminal_title import TerminalTitle
 from .text_postprocessor import TextPostProcessor
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
@@ -209,9 +210,8 @@ def shutdown_app(hotkey_listener: HotkeyListener, state_manager: StateManager, l
 def main():
     console.setup()
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stdout.write("\033]0;Whisper Key\007")
-    sys.stdout.flush()
     app.setup()
+    terminal_title = TerminalTitle()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', help='Run as separate test instance')
@@ -276,7 +276,8 @@ def main():
             audio_feedback=audio_feedback,
             vad_manager=vad_manager,
             text_postprocessor=text_postprocessor,
-            voice_command_manager=voice_command_manager
+            voice_command_manager=voice_command_manager,
+            terminal_title=terminal_title
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry, console_config)
@@ -285,6 +286,7 @@ def main():
         hotkey_listener = setup_hotkey_listener(hotkey_config, state_manager, voice_commands_config['enabled'])
 
         system_tray.start()
+        terminal_title.start()
 
         if clipboard_config['auto_paste']:
             if not permissions.check_accessibility_permission():

@@ -25,6 +25,7 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+ and 
 | **GPU Onboarding** | `onboarding.py` | GPU setup prompt & package installation | subprocess |
 | **Hardware Detection** | `hardware_detection.py` | Platform GPU detection wrapper | - |
 | **Terminal UI** | `terminal_ui.py` | Interactive terminal prompts | - |
+| **Terminal Title** | `terminal_title.py` | Animated tab title status | threading, OSC 0 |
 | **Utilities** | `utils.py` | Common utility functions | - |
 
 ## Project Structure
@@ -67,6 +68,7 @@ whisper-key-local/
 │       ├── onboarding.py              # GPU setup prompt & installation
 │       ├── state_manager.py           # Component coordination & workflow
 │       ├── system_tray.py             # System tray icon & menu
+│       ├── terminal_title.py          # Animated terminal tab title status
 │       ├── text_postprocessor.py      # Transcription output corrections & cleanup
 │       ├── utils.py                   # Common utility functions
 │       ├── voice_activity_detection.py # Voice activity detection
