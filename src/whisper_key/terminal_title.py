@@ -2,11 +2,10 @@ import sys
 import threading
 
 _FRAMES = {
-    "idle":       ["🎤 whisper key"],
-    "recording":  ["🔴 whisper key", "   whisper key"],
-    "processing": ["●∙∙ whisper key", "∙●∙ whisper key", "∙∙● whisper key", "∙●∙ whisper key"],
+    "idle":       [("🎤 Whisper Key", 60.0)],
+    "recording":  [("🔴 Whisper Key", 1.0), ("   Whisper Key", 0.35)],
+    "processing": [("•∙∙ Whisper Key", 0.2), ("∙•∙ Whisper Key", 0.2), ("∙∙• Whisper Key", 0.2), ("∙•∙ Whisper Key", 0.2)],
 }
-_INTERVALS = {"idle": 60.0, "recording": 0.5, "processing": 0.2}
 
 
 class TerminalTitle:
@@ -22,7 +21,7 @@ class TerminalTitle:
         self._stop = threading.Event()
         self._thread = None
         if self._enabled:
-            self._emit(_FRAMES["idle"][0])
+            self._emit(_FRAMES["idle"][0][0])
 
     def start(self):
         if not self._enabled:
@@ -53,8 +52,7 @@ class TerminalTitle:
         while not self._stop.is_set():
             with self._lock:
                 frames = _FRAMES.get(self._state, _FRAMES["idle"])
-                interval = _INTERVALS.get(self._state, 60.0)
-                title = frames[self._frame_index % len(frames)]
+                title, interval = frames[self._frame_index % len(frames)]
                 self._frame_index += 1
             self._emit(title)
             self._tick.wait(timeout=interval)
