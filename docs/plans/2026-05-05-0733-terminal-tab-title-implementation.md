@@ -115,9 +115,11 @@ The `OptionalComponent` wrapper means if `TerminalTitle` is disabled (non-TTY), 
 - [x] No platform-specific code expected; single module covers all OSes
 
 5. Manual testing
-- [ ] WezTerm (WSL): launch `wk`, observe `🎤 whisper key` on idle
-- [ ] Hold/press hotkey: title flashes between `🔴 whisper key` and blank padding at ~500ms
-- [ ] Release hotkey: title shows bouncing dot during transcription, returns to idle when done
+- [x] WezTerm (WSL): launch `wk`, observe idle title
+  - ✅ Iterated extensively with user; final design: bare `Whisper Key` idle, 🔴 blink 1.5s/1.0s, animations user-configurable (default static)
+- [x] Hold/press hotkey: title flashes red dot
+  - ✅ Verified; braille-blank padding fixes leading-whitespace trim shifting text on blink-out
+- [x] Release hotkey: title animates during transcription, returns to idle when done
 - [ ] Switch model from tray → title shows processing animation during model load
 - [ ] Cancel mid-recording → title returns to idle without a frame stuck on red
 - [ ] Ctrl+C exit → title clears (or shell reclaims it on next prompt)
