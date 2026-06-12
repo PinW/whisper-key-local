@@ -8,15 +8,24 @@ class TextPostProcessor:
         self.logger = logging.getLogger(__name__)
         self.replacements = {}
         self.corrections_regex = None
-        if corrections:
+        if isinstance(corrections, dict):
             self._compile_corrections(corrections)
+        elif corrections:
+            self.logger.warning(f"Ignoring corrections config: expected a mapping, got {type(corrections).__name__}")
 
     def _compile_corrections(self, corrections: dict):
         for replacement, variants in corrections.items():
-            if isinstance(variants, str):
+            if variants is None:
+                continue
+            if not isinstance(variants, list):
                 variants = [variants]
             for variant in variants:
-                self.replacements[str(variant).lower()] = str(replacement)
+                variant = str(variant).strip()
+                if variant:
+                    self.replacements[variant.casefold()] = str(replacement)
+
+        if not self.replacements:
+            return
 
         variants_longest_first = sorted(self.replacements, key=len, reverse=True)
         pattern = "|".join(re.escape(variant) for variant in variants_longest_first)
@@ -24,7 +33,7 @@ class TextPostProcessor:
         self.logger.info(f"Loaded {len(self.replacements)} text corrections")
 
     def _lookup_replacement(self, match: re.Match) -> str:
-        return self.replacements[match.group().lower()]
+        return self.replacements.get(match.group().casefold(), match.group())
 
     def process(self, text: str) -> str:
         if self.corrections_regex:
