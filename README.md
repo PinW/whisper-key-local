@@ -106,8 +106,10 @@ Delete this file and restart app to reset to defaults.
 | `whisper.beam_size` | `5` | Higher = more accurate but slower (1-10) |
 | `whisper.initial_prompt` | `""` | Guide transcription style, language variant, or script |
 | `whisper.hotwords` | `[]` | Words the model should favor (names, technical terms) |
-| `whisper.strip_trailing_period` | `false` | Strip trailing period from output |
 | `whisper.models` | (see config) | Add custom HuggingFace or local models |
+| **Post-Processing** |||
+| `post_processing.strip_trailing_period` | `false` | Strip trailing period from output |
+| `post_processing.corrections` | `{}` | Fix recurring misheard words, e.g. `CAPEX: [cap x]` |
 | **Hotkeys** |||
 | `hotkey.recording_hotkey` | `ctrl+win` / `fn+ctrl` | Windows / macOS |
 | `hotkey.stop_key` | `ctrl` / `fn` | Stop recording |

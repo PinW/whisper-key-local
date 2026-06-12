@@ -18,6 +18,7 @@ from .whisper_engine import WhisperEngine
 from .voice_activity_detection import VadManager
 from .clipboard_manager import ClipboardManager
 from .state_manager import StateManager
+from .text_postprocessor import TextPostProcessor
 from .system_tray import SystemTray
 from .audio_feedback import AudioFeedback
 from .instance_manager import guard_against_multiple_instances
@@ -95,7 +96,7 @@ def setup_streaming(streaming_config, model_registry):
         model_registry=model_registry
     )
 
-def setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions=False, config_manager=None):
+def setup_whisper_engine(whisper_config, vad_manager, model_registry, config_manager=None):
     try:
         return WhisperEngine(
             model_key=whisper_config['model'],
@@ -105,15 +106,19 @@ def setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transc
             beam_size=whisper_config['beam_size'],
             initial_prompt=whisper_config.get('initial_prompt', ''),
             hotwords=whisper_config.get('hotwords', []),
-            strip_trailing_period=whisper_config.get('strip_trailing_period', False),
             vad_manager=vad_manager,
-            model_registry=model_registry,
-            log_transcriptions=log_transcriptions
+            model_registry=model_registry
         )
     except RuntimeError as e:
         if whisper_config['device'] != 'cuda' or not config_manager:
             raise
-        return _handle_gpu_failure(e, whisper_config, vad_manager, model_registry, log_transcriptions, config_manager)
+        return _handle_gpu_failure(e, whisper_config, vad_manager, model_registry, config_manager)
+
+def setup_text_postprocessor(post_processing_config):
+    return TextPostProcessor(
+        strip_trailing_period=post_processing_config.get('strip_trailing_period', False),
+        corrections=post_processing_config.get('corrections') or {}
+    )
 
 def setup_clipboard_manager(clipboard_config):
     return ClipboardManager(
@@ -164,12 +169,12 @@ def run_gpu_onboarding(config_manager, whisper_config):
     return config_manager.get_whisper_config()
 
 
-def _handle_gpu_failure(error, whisper_config, vad_manager, model_registry, log_transcriptions, config_manager):
+def _handle_gpu_failure(error, whisper_config, vad_manager, model_registry, config_manager):
     from .onboarding import handle_gpu_failure
     handle_gpu_failure(error, config_manager)
     whisper_config['device'] = 'cpu'
     whisper_config['compute_type'] = 'int8'
-    return setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions)
+    return setup_whisper_engine(whisper_config, vad_manager, model_registry)
 
 
 def setup_signal_handlers(shutdown_event):
@@ -242,6 +247,7 @@ def main():
         vad_config = config_manager.get_vad_config()
         streaming_config = config_manager.get_streaming_config()
         voice_commands_config = config_manager.get_voice_commands_config()
+        post_processing_config = config_manager.get_post_processing_config()
         console_config = config_manager.get_console_config()
         log_config = config_manager.get_logging_config()
         log_transcriptions = log_config.get('log_transcriptions', False)
@@ -254,11 +260,12 @@ def main():
         )
         vad_manager = setup_vad(vad_config)
         streaming_manager = setup_streaming(streaming_config, model_registry)
-        whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry, log_transcriptions, config_manager)
+        whisper_engine = setup_whisper_engine(whisper_config, vad_manager, model_registry, config_manager)
         streaming_manager.initialize()
         clipboard_manager = setup_clipboard_manager(clipboard_config)
         audio_feedback = setup_audio_feedback(audio_feedback_config)
         voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager, log_transcriptions)
+        text_postprocessor = setup_text_postprocessor(post_processing_config)
 
         state_manager = StateManager(
             audio_recorder=None,
@@ -268,6 +275,7 @@ def main():
             config_manager=config_manager,
             audio_feedback=audio_feedback,
             vad_manager=vad_manager,
+            text_postprocessor=text_postprocessor,
             voice_command_manager=voice_command_manager
         )
         audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)

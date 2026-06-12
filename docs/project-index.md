@@ -11,6 +11,7 @@ Local faster-whisper speech-to-text app with global hotkeys for Windows 10+ and 
 | **Audio Capture** | `audio_recorder.py` | Microphone recording & audio buffering | sounddevice, numpy |
 | **Audio Feedback** | `audio_feedback.py` | Recording event sound notifications | playsound3 |
 | **Speech Recognition** | `whisper_engine.py` | Audio transcription using AI | faster-whisper |
+| **Text Post-Processing** | `text_postprocessor.py` | Output text corrections & cleanup | re |
 | **Model Management** | `model_registry.py` | Whisper model registry & cache detection | faster-whisper |
 | **Voice Activity Detection** | `voice_activity_detection.py` | Continuous VAD monitoring & silence detection | ten-vad, threading |
 | **Clipboard Operations** | `clipboard_manager.py` | Text copying & auto-paste functionality | pyperclip, ctypes SendInput (Win), Quartz (Mac) |
@@ -66,6 +67,7 @@ whisper-key-local/
 │       ├── onboarding.py              # GPU setup prompt & installation
 │       ├── state_manager.py           # Component coordination & workflow
 │       ├── system_tray.py             # System tray icon & menu
+│       ├── text_postprocessor.py      # Transcription output corrections & cleanup
 │       ├── utils.py                   # Common utility functions
 │       ├── voice_activity_detection.py # Voice activity detection
 │       ├── voice_commands.py          # Voice command matching & execution

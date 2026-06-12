@@ -11,6 +11,7 @@ from .whisper_engine import WhisperEngine
 from .clipboard_manager import ClipboardManager
 from .system_tray import SystemTray
 from .config_manager import ConfigManager
+from .text_postprocessor import TextPostProcessor
 from .audio_feedback import AudioFeedback
 from .utils import OptionalComponent
 from .voice_activity_detection import VadEvent, VadManager
@@ -23,6 +24,7 @@ class StateManager:
                  clipboard_manager: ClipboardManager,
                  config_manager: ConfigManager,
                  vad_manager: VadManager,
+                 text_postprocessor: TextPostProcessor,
                  system_tray: Optional[SystemTray] = None,
                  audio_feedback: Optional[AudioFeedback] = None,
                  voice_command_manager: Optional[VoiceCommandManager] = None):
@@ -34,6 +36,7 @@ class StateManager:
         self.config_manager = config_manager
         self.audio_feedback = OptionalComponent(audio_feedback)
         self.vad_manager = vad_manager
+        self.text_postprocessor = text_postprocessor
         self.voice_command_manager = voice_command_manager
 
         self.is_processing = False
@@ -171,6 +174,10 @@ class StateManager:
             if not transcribed_text:
                 return
 
+            transcribed_text = self.text_postprocessor.process(transcribed_text)
+            print(f"   ✓ Transcribed: '{transcribed_text}'")
+            self._log_transcription(transcribed_text)
+
             if command_mode:
                 self._handle_command_transcription(transcribed_text, use_auto_enter)
                 return
@@ -208,13 +215,14 @@ class StateManager:
             if not (pending_device or pending_model):
                 self.system_tray.update_state("idle")
 
-    def _handle_command_transcription(self, text: str, use_auto_enter: bool = False):
+    def _log_transcription(self, text: str):
         log_config = self.config_manager.get_logging_config()
         if log_config.get('log_transcriptions', False):
-            self.logger.info(f"Command mode transcription: '{text}'")
+            self.logger.info(f"Transcribed text: '{text}'")
         else:
-            self.logger.info("Command mode transcription received")
+            self.logger.info(f"Transcribed {len(text)} chars")
 
+    def _handle_command_transcription(self, text: str, use_auto_enter: bool = False):
         if not self.voice_command_manager.enabled:
             self.logger.warning("Voice commands disabled")
             return

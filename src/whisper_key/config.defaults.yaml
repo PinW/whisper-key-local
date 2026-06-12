@@ -38,9 +38,6 @@ whisper: # Whisper AI Model Settings
     # Example: ["CTranslate2", "PyInstaller", "Whisper Key"]
     hotwords: []
 
-    # Strip a trailing period from transcription output
-    strip_trailing_period: false
-
     # Available models (set enabled: false to hide from menu)
     # To add custom models (CTranslate2 format), add entry with source (HuggingFace or local path)
     # Example: my-model: {source: "username/repo-ct2", label: "My Model", group: custom}
@@ -125,6 +122,19 @@ streaming: # Real-time STT (Experimental, speech preview only)
                 decoder: decoder-epoch-99-avg-1.int8.onnx
                 joiner: joiner-epoch-99-avg-1.int8.onnx
                 tokens: tokens.txt
+
+post_processing: # Text Post-Processing (applied to transcription output)
+    # Strip a trailing period from transcription output
+    strip_trailing_period: false
+
+    # Correct recurring misheard words after transcription
+    # Variants match case-insensitively; replaced with the key exactly as written
+    # Tip: try whisper.hotwords first — corrections are a deterministic backstop
+    # Example:
+    # corrections:
+    #     CAPEX: [cap x, copics]
+    #     amine absorber: [immune absorber]
+    corrections: {}
 
 hotkey: # Hotkey Configuration
     # Key combination to start recording
