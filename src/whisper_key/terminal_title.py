@@ -3,7 +3,7 @@ import threading
 
 _FRAMES = {
     "idle":       [("🎤 Whisper Key", 60.0)],
-    "recording":  [("🔻 Whisper Key", 1.5), ("   Whisper Key", 1.0)],
+    "recording":  [("• Whisper Key", 1.5), ("  Whisper Key", 1.0)],
     "processing": [("⠁ Whisper Key", 0.25), ("⠈ Whisper Key", 0.25)],
 }
 
