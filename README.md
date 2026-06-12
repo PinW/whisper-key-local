@@ -149,10 +149,12 @@ Delete this file and restart app to reset to defaults.
 | **Audio Feedback** |||
 | `audio_feedback.enabled` | `true` | Play sounds on record/stop |
 | `audio_feedback.transcription_complete_enabled` | `false` | Play sound on transcription complete |
+| `audio_feedback.ready_enabled` | `true` | Play sound when app finishes loading |
 | `audio_feedback.start_sound` | `assets/sounds/...` | Custom sound file path |
 | `audio_feedback.stop_sound` | `assets/sounds/...` | Custom sound file path |
 | `audio_feedback.cancel_sound` | `assets/sounds/...` | Custom sound file path |
 | `audio_feedback.transcription_complete_sound` | `assets/sounds/...` | Custom sound file path |
+| `audio_feedback.ready_sound` | `assets/sounds/...` | Custom sound file path |
 | **System Tray** |||
 | `system_tray.enabled` | `true` | Show tray icon |
 | `system_tray.tooltip` | `Whisper Key` | Hover text |

@@ -296,12 +296,16 @@ audio_feedback: # Audio Feedback Settings
     # false = silent operation
     transcription_complete_enabled: false
 
+    # Play a sound when the app finishes loading and is ready to use
+    ready_enabled: true
+
     # Sound file paths (relative to project root or absolute paths)
     # Use .wav files for best Windows compatibility
     start_sound: assets/sounds/record_start.wav
     stop_sound: assets/sounds/record_stop.wav
     cancel_sound: assets/sounds/record_cancel.wav
     transcription_complete_sound: assets/sounds/transcription_complete.wav
+    ready_sound: assets/sounds/app_ready.wav
 
 system_tray: # System Tray Settings
     # Enable/disable system tray icon

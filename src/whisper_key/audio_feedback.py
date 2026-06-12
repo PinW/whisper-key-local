@@ -10,15 +10,17 @@ SOUND_BACKEND = "winmm" if platform.system() == "Windows" else None
 from .utils import resolve_asset_path
 
 class AudioFeedback:
-    def __init__(self, enabled=True, transcription_complete_enabled=False, start_sound='', stop_sound='', cancel_sound='', transcription_complete_sound=''):
+    def __init__(self, enabled=True, transcription_complete_enabled=False, ready_enabled=True, start_sound='', stop_sound='', cancel_sound='', transcription_complete_sound='', ready_sound=''):
         self.enabled = enabled
         self.transcription_complete_enabled = transcription_complete_enabled
+        self.ready_enabled = ready_enabled
         self.logger = logging.getLogger(__name__)
 
         self.start_sound_path = resolve_asset_path(start_sound)
         self.stop_sound_path = resolve_asset_path(stop_sound)
         self.cancel_sound_path = resolve_asset_path(cancel_sound)
         self.transcription_complete_sound_path = resolve_asset_path(transcription_complete_sound)
+        self.ready_sound_path = resolve_asset_path(ready_sound)
 
         if not self.enabled:
             self.logger.info("Audio feedback disabled by configuration")
@@ -39,6 +41,9 @@ class AudioFeedback:
 
         if self.transcription_complete_sound_path and not os.path.isfile(self.transcription_complete_sound_path):
             self.logger.warning(f"Transcription complete sound file not found: {self.transcription_complete_sound_path}")
+
+        if self.ready_sound_path and not os.path.isfile(self.ready_sound_path):
+            self.logger.warning(f"Ready sound file not found: {self.ready_sound_path}")
 
     def _play_sound_file_async(self, file_path: str):
         def play():
@@ -64,3 +69,7 @@ class AudioFeedback:
     def play_transcription_complete_sound(self):
         if self.enabled and self.transcription_complete_enabled:
             self._play_sound_file_async(self.transcription_complete_sound_path)
+
+    def play_ready_sound(self):
+        if self.enabled and self.ready_enabled:
+            self._play_sound_file_async(self.ready_sound_path)
