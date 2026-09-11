@@ -48,7 +48,7 @@ class AudioFeedback:
     def _play_sound_file_async(self, file_path: str):
         def play():
             try:
-                playsound(file_path, block=False, backend=SOUND_BACKEND)
+                playsound(file_path, block=True, backend=SOUND_BACKEND)
             except Exception as e:
                 self.logger.warning(f"Failed to play sound file {file_path}: {e}")
 
