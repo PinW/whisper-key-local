@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from .utils import setup_portaudio_path
+from .utils import setup_portaudio_path, setup_nvidia_dll_path
 setup_portaudio_path()
+setup_nvidia_dll_path()
 
 import argparse
 import logging

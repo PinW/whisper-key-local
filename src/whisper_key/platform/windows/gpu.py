@@ -333,11 +333,29 @@ def _check_runtime_compatibility(reqs: dict, runtime_version: str) -> bool:
     return True
 
 
+_CUDA_INFERENCE_DLLS = ('cublas64_12.dll', 'cublasLt64_12.dll')
+
+
 def _test_ct2_gpu(ct2_variant: str) -> bool:
     try:
         import ctranslate2
-        device = 'cuda'
-        supported = ctranslate2.get_supported_compute_types(device)
-        return len(supported) > 0
+        if not ctranslate2.get_supported_compute_types('cuda'):
+            return False
     except Exception:
         return False
+
+    if ct2_variant != 'cuda':
+        return True
+
+    missing_dlls = []
+    for dll_name in _CUDA_INFERENCE_DLLS:
+        try:
+            # winmode=0 searches PATH like ctranslate2's lazy cuBLAS load; the default ignores PATH
+            ctypes.CDLL(dll_name, winmode=0)
+        except OSError:
+            missing_dlls.append(dll_name)
+
+    if missing_dlls:
+        _status(f"   ✗ Missing CUDA libraries: {', '.join(missing_dlls)}", 'warning')
+        return False
+    return True
