@@ -61,6 +61,22 @@ def setup_portaudio_path():
     if assets_dir.exists():
         os.environ['PATH'] = str(assets_dir) + os.pathsep + os.environ.get('PATH', '')
 
+def setup_nvidia_dll_path():
+    if sys.platform != 'win32':
+        return
+    import site
+    site_dirs = list(site.getsitepackages())
+    site_dirs.append(site.getusersitepackages())
+
+    nvidia_bin_dirs = []
+    for site_dir in site_dirs:
+        for bin_dir in sorted(Path(site_dir).glob('nvidia/*/bin')):
+            if bin_dir.is_dir() and str(bin_dir) not in nvidia_bin_dirs:
+                nvidia_bin_dirs.append(str(bin_dir))
+
+    if nvidia_bin_dirs:
+        os.environ['PATH'] = os.pathsep.join(nvidia_bin_dirs) + os.pathsep + os.environ.get('PATH', '')
+
 def restart_or_exit(message_restart, message_exit):
     pyapp_exe = os.environ.get('PYAPP', '')
     if os.path.isfile(pyapp_exe):

@@ -9,6 +9,8 @@ import re
 import site
 import subprocess
 
+import win32con
+
 logger = logging.getLogger(__name__)
 
 _NO_WINDOW = {'creationflags': 0x08000000}
@@ -333,11 +335,41 @@ def _check_runtime_compatibility(reqs: dict, runtime_version: str) -> bool:
     return True
 
 
+_CUDA_INFERENCE_DLLS = ('cublas64_12.dll', 'cublasLt64_12.dll')
+
+
+def _can_load_cuda_dll(dll_name: str) -> bool:
+    try:
+        # winmode=0 searches PATH like ctranslate2's lazy cuBLAS load; the default ignores PATH
+        ctypes.CDLL(dll_name, winmode=0)
+        return True
+    except OSError:
+        pass
+
+    cuda_path = os.environ.get('CUDA_PATH')
+    if not cuda_path:
+        return False
+    try:
+        ctypes.CDLL(os.path.join(cuda_path, 'bin', dll_name), winmode=win32con.LOAD_WITH_ALTERED_SEARCH_PATH)
+        return True
+    except OSError:
+        return False
+
+
 def _test_ct2_gpu(ct2_variant: str) -> bool:
     try:
         import ctranslate2
-        device = 'cuda'
-        supported = ctranslate2.get_supported_compute_types(device)
-        return len(supported) > 0
+        if not ctranslate2.get_supported_compute_types('cuda'):
+            return False
     except Exception:
         return False
+
+    if ct2_variant != 'cuda':
+        return True
+
+    missing_dlls = [dll_name for dll_name in _CUDA_INFERENCE_DLLS if not _can_load_cuda_dll(dll_name)]
+
+    if missing_dlls:
+        _status(f"   ✗ Missing CUDA libraries: {', '.join(missing_dlls)}", 'warning')
+        return False
+    return True
