@@ -13,7 +13,7 @@ Copy `build-config.example.json` to `build-config.json` and set paths:
 
 ## Build
 
-Use `/build-pyapp-exe` or run directly:
+Use `$build-pyapp-exe` or run directly:
 
 ```powershell
 powershell.exe -ExecutionPolicy Bypass -File pyapp-build/build-pyapp.ps1

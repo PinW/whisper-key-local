@@ -1,7 +1,7 @@
 ---
-description: Bump version number, commit, tag and push
+name: bump
+description: "Bump version number, commit, tag and push"
 argument-hint: "[M|m|f] - M (major), m (minor), f (patch)"
-allowed-tools: Edit(**/pyproject.toml), Bash(git add:*), Bash(git commit:*), Bash(git tag:*), Bash(git push:*)
 ---
 
 BUMP: $ARGUMENTS
@@ -14,6 +14,6 @@ BUMP: $ARGUMENTS
     - v0.x.x: minor = patch
 3. Ask user to confirm: "Bump version from [CURRENT VERSION] to [NEW VERSION]?"
 4. Update version in pyproject.toml
-5. Git commt
+5. Git commit
 6. Git tag
 7. Git push

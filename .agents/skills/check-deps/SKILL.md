@@ -1,6 +1,6 @@
 ---
-description: Check upstream dependencies for updates
-allowed-tools: Read, Bash(pip:*), WebFetch, WebSearch, Agent
+name: check-deps
+description: "Check upstream dependencies for updates"
 ---
 
 Check all dependencies in @pyproject.toml for upstream updates.

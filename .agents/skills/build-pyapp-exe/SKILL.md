@@ -1,7 +1,7 @@
 ---
-description: Build pyapp executable
-argument-hint: "[-Clean (clean Rust build)] [-Test (run exe after build)]"
-allowed-tools: Bash(powershell.exe:*), Bash(whisper-key.exe:*)
+name: build-pyapp-exe
+description: "Build pyapp executable"
+argument-hint: "[-Clean] [-Test]"
 ---
 [FLAGS]=$ARGUMENTS
 

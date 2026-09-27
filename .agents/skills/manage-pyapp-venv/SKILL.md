@@ -1,7 +1,7 @@
 ---
-description: Manage local pyapp venv (status, editable install, reset)
+name: manage-pyapp-venv
+description: "Manage local pyapp venv (status, editable install, reset)"
 argument-hint: "<status|install|reset> [worktree-path]"
-allowed-tools: Bash(powershell.exe:*), Bash(whisper-key.exe:*), Bash(ls:*), Bash(cat:*)
 ---
 [ACTION]=$ARGUMENTS
 

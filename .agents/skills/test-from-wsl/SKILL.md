@@ -1,6 +1,6 @@
 ---
-description: Test app startup from WSL
-allowed-tools: Bash(python.exe:*)
+name: test-from-wsl
+description: "Test app startup from WSL"
 ---
 
 Scope: Verify app launches without errors. No interaction testing (hotkeys, tray, etc).

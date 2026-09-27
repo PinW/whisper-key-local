@@ -1,8 +1,9 @@
 ---
-description: Triage GitHub PR review comments one by one
+name: triage-pr
+description: "Triage GitHub PR review comments one by one"
 ---
 
-Triage review comments from a GitHub PR. Argument: PR number or URL (e.g. `/triage-pr 42`).
+Triage review comments from a GitHub PR. Argument: PR number or URL.
 
 ## Steps
 
