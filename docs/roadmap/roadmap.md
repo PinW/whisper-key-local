@@ -3,6 +3,9 @@
 
 ## Next
 
+1. **Convert project to Codex setup** — symlink `CLAUDE.md` to `AGENTS.md`.
+2. **Upgrade CTranslate2 to [4.8.2](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.8.2)** — update matching ROCm wheels;
+
 ## Bugs
 - **CUDA version forward-compatibility** - onboarding GPU detection doesn't recognize newer CUDA versions (e.g. CUDA 13.x), and CTranslate2 requires `cublas64_12.dll` which isn't present when only CUDA 13+ is installed. Workaround: manually copy CUDA 12 cuBLAS/cuDNN libs into CUDA 13 bin directory. Need to detect newer CUDA versions and guide users to install the required CUDA 12 compatibility libs
 - **Silent close when already running** - `.exe` users see the app instantly close with no message when another instance is already running
@@ -10,7 +13,7 @@
 - **Ctrl+C doesn't work after HuggingFace download** - shutdown signal not caught
 - **(macOS) System freezes on transcription** - needs verification
 - **(macOS) Stop hotkey requires double-press** - remapping stop hotkey to Ctrl requires pressing it twice to stop recording. Default Fn key also conflicts with macOS language keyboard toggle
-- **GPU model switch crash** - upstream CT2 bug, `thread_local` GPU handles corrupt HIP/CUDA on Worker thread teardown ([faster-whisper #71](https://github.com/SYSTRAN/faster-whisper/issues/71)). Future option: auto-restart app on model switch in GPU mode
+- **GPU model switch crash** - upstream GPU thread teardown issue ([faster-whisper #71](https://github.com/SYSTRAN/faster-whisper/issues/71)). CT2 4.7.2 includes a potential fix ([#1912](https://github.com/OpenNMT/CTranslate2/pull/1912));
 
 ## Backlog
 
