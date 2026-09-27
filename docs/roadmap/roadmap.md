@@ -3,8 +3,7 @@
 
 ## Next
 
-1. **Convert project to Codex setup** — symlink `CLAUDE.md` to `AGENTS.md`.
-2. **Upgrade CTranslate2 to [4.8.2](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.8.2)** — update matching ROCm wheels;
+1. **Upgrade CTranslate2 to [4.8.2](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.8.2)** — update matching ROCm wheels;
 
 ## Bugs
 - **CUDA version forward-compatibility** - onboarding GPU detection doesn't recognize newer CUDA versions (e.g. CUDA 13.x), and CTranslate2 requires `cublas64_12.dll` which isn't present when only CUDA 13+ is installed. Workaround: manually copy CUDA 12 cuBLAS/cuDNN libs into CUDA 13 bin directory. Need to detect newer CUDA versions and guide users to install the required CUDA 12 compatibility libs
