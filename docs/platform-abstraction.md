@@ -1,7 +1,7 @@
 ## Structure
 
 ```
-platform/
+src/whisper_key/platform/
 ├── __init__.py        # sets `IS_MACOS` / `IS_WINDOWS` and imports
 └── {macos,windows}/
     ├── assets/        # platform-specific assets

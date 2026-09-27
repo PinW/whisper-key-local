@@ -28,7 +28,7 @@ On first launch, Whisper Key detects your GPU and offers to install the required
   Press a number to choose:
 ```
 
-# Manual Setup
+## Manual Setup
 
 If you prefer to install GPU dependencies yourself, have an [AMD RDNA 1 GPU](#amd--rdna-1-rocm-62), or need to troubleshoot, follow the instructions below.
 
@@ -95,9 +95,7 @@ Then install the ROCm CTranslate2 wheel:
 
 ### Portable exe
 
-1. Download `whisper-key-v*-windows-amd-gpu-rocm.zip` from the [latest release](https://github.com/PinW/whisper-key-local/releases/latest)
-2. Extract and run `whisper-key.exe`
-3. Set `device: cuda` and `compute_type: float16`
+Run `whisper-key.exe` and follow the [automatic GPU setup](#automatic-setup-recommended).
 
 ### pip
 

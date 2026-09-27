@@ -10,5 +10,6 @@ https://github.com/PinW/whisper-key-local
 
 - Test app startup: `$test-from-wsl` (launch only, no interaction)
 - Use explicit variable/function names
+- Keep docs concise
 - **AVOID COMMENTS** IF AT ALL POSSIBLE! DO NOT WRITE DOCSTRINGS!
 - **No backward compatibility** - Break old formats freely
