@@ -9,6 +9,8 @@ import re
 import site
 import subprocess
 
+import win32con
+
 logger = logging.getLogger(__name__)
 
 _NO_WINDOW = {'creationflags': 0x08000000}
@@ -334,7 +336,6 @@ def _check_runtime_compatibility(reqs: dict, runtime_version: str) -> bool:
 
 
 _CUDA_INFERENCE_DLLS = ('cublas64_12.dll', 'cublasLt64_12.dll')
-_LOAD_WITH_ALTERED_SEARCH_PATH = 0x8
 
 
 def _can_load_cuda_dll(dll_name: str) -> bool:
@@ -349,7 +350,7 @@ def _can_load_cuda_dll(dll_name: str) -> bool:
     if not cuda_path:
         return False
     try:
-        ctypes.CDLL(os.path.join(cuda_path, 'bin', dll_name), winmode=_LOAD_WITH_ALTERED_SEARCH_PATH)
+        ctypes.CDLL(os.path.join(cuda_path, 'bin', dll_name), winmode=win32con.LOAD_WITH_ALTERED_SEARCH_PATH)
         return True
     except OSError:
         return False
