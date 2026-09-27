@@ -2,6 +2,13 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [0.8.3] - 2026-09-27
+
+### Fixed
+- NVIDIA GPU setup now checks that cuBLAS libraries can load and finds pip-installed CUDA DLLs at startup (#68)
+- AMD GPU detection now recognizes Strix Halo APUs (8040S/8050S/8060S), handles RX names without spaces, and avoids misclassifying RX 580 cards
+- Added pipx-specific ROCm SDK installation instructions (#63)
+
 ## [0.8.2] - 2026-06-13
 
 ### Added
