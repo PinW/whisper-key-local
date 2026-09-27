@@ -1,6 +1,8 @@
 import logging
 import os
 import signal
+import sys
+import threading
 from typing import Optional, TYPE_CHECKING
 from pathlib import Path
 
@@ -19,6 +21,24 @@ except ImportError:
 if TYPE_CHECKING:
     from .state_manager import StateManager
     from .config_manager import ConfigManager
+
+
+if TRAY_AVAILABLE and sys.platform.startswith("linux"):
+    class _LinuxDaemonIcon(pystray.Icon):
+        def _start_setup(self, setup):
+            def setup_handler():
+                self._Icon__queue.get()
+                if setup:
+                    setup(self)
+                else:
+                    self.visible = True
+
+            self._setup_thread = threading.Thread(
+                target=setup_handler,
+                daemon=True,
+                name="pystray-setup",
+            )
+            self._setup_thread.start()
 
 class SystemTray:
     def __init__(self,
@@ -340,14 +360,27 @@ class SystemTray:
             idle_icon = self.icons.get("idle")
             menu = self._create_menu()
 
-            self.icon = pystray.Icon(
+            if sys.platform.startswith("linux"):
+                icon_class = _LinuxDaemonIcon
+            else:
+                icon_class = pystray.Icon
+
+            self.icon = icon_class(
                 name="whisper-key",
                 icon=idle_icon,
                 title="Whisper Key",
-                menu=menu
+                menu=menu,
             )
 
-            self.icon.run_detached()
+            if sys.platform.startswith("linux"):
+                self._tray_thread = threading.Thread(
+                    target=self.icon.run,
+                    daemon=True,
+                    name="pystray-linux",
+                )
+                self._tray_thread.start()
+            else:
+                self.icon.run_detached()
 
             self.is_running = True
             print("   ✓ System tray icon is running...")

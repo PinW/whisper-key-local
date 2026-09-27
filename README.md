@@ -12,7 +12,7 @@ Global hotkeys to record speech and transcribe directly to your cursor.
 - **Local/Offline**: Voice data never leaves your computer
 - **CPU Ready**: Small, efficient models available
 - **GPU Ready**: Support for both NVIDIA & AMD cards
-- **Cross-platform**: Works on Windows and macOS
+- **Cross-platform**: Works on Windows, macOS, and Linux (X11)
 - **Voice Commands**: Trigger shortcuts, text snippets, and shell commands by voice — [docs](docs/voice-commands.md)
 - **Configurable**: Customize hotkeys, models, and [much more](#️-configuration)
 
@@ -48,13 +48,13 @@ python whisper-key.py
 
 ## 🎤 Basic Usage
 
-| Hotkey | Windows | macOS |
-|--------|---------|-------|
-| Start recording | `Ctrl+Win` | `Fn+Ctrl` |
-| Stop & transcribe | `Ctrl` | `Fn` |
-| Stop & auto-send | `Alt` | `Option` |
-| Cancel recording | `Esc` | `Shift` |
-| Voice command mode | `Alt+Win` | `Fn+Command` |
+| Hotkey | Windows | macOS | Linux |
+|--------|---------|-------|-------|
+| Start recording | `Ctrl+Win` | `Fn+Ctrl` | `Ctrl+Super` |
+| Stop & transcribe | `Ctrl` | `Fn` | `Ctrl` |
+| Stop & auto-send | `Alt` | `Option` | `Alt` |
+| Cancel recording | `Esc` | `Shift` | `Esc` |
+| Voice command mode | `Alt+Win` | `Fn+Command` | `Alt+Super` |
 
 Open the system tray / menu bar icon to:
 - Toggle auto-paste vs clipboard-only
@@ -66,6 +66,7 @@ Open the system tray / menu bar icon to:
 Speak trigger phrases to run shell commands and more. Define in:
 - **Windows:** `%APPDATA%\whisperkey\commands.yaml`
 - **macOS:** `~/.whisperkey/commands.yaml`
+- **Linux:** `~/.whisperkey/commands.yaml`
 
 ```yaml
 commands:
@@ -93,6 +94,7 @@ For manual setup or troubleshooting, see the **[GPU Setup Guide](docs/gpu-setup.
 Local settings at:
 - **Windows:** `%APPDATA%\whisperkey\user_settings.yaml`
 - **macOS:** `~/.whisperkey/user_settings.yaml`
+- **Linux:** `~/.whisperkey/user_settings.yaml`
 
 Delete this file and restart app to reset to defaults.
 
@@ -111,12 +113,12 @@ Delete this file and restart app to reset to defaults.
 | `post_processing.strip_trailing_period` | `false` | Strip trailing period from output |
 | `post_processing.corrections` | `{}` | Fix recurring misheard words, e.g. `CAPEX: [cap x]` |
 | **Hotkeys** |||
-| `hotkey.recording_hotkey` | `ctrl+win` / `fn+ctrl` | Windows / macOS |
+| `hotkey.recording_hotkey` | `ctrl+win` / `fn+ctrl` / `ctrl+super` | Windows / macOS / Linux |
 | `hotkey.stop_key` | `ctrl` / `fn` | Stop recording |
 | `hotkey.auto_send_key` | `alt` / `option` | Stop + paste + Enter |
-| `hotkey.cancel_combination` | `esc` / `shift` | Cancel recording |
+| `hotkey.cancel_combination` | `esc` / `shift` / `escape` | Cancel recording |
 | `hotkey.recording_mode` | `toggle` | toggle or push_to_talk |
-| `hotkey.command_hotkey` | `alt+win` / `fn+command` | Voice command mode |
+| `hotkey.command_hotkey` | `alt+win` / `fn+command` / `alt+super` | Voice command mode |
 | **Voice Activity Detection** |||
 | `vad.vad_precheck_enabled` | `true` | Prevent hallucinations on silence |
 | `vad.vad_onset_threshold` | `0.7` | Speech detection start (0.0-1.0) |
@@ -174,6 +176,7 @@ Delete this file and restart app to reset to defaults.
 Default path for transcription models (via HuggingFace):
 - **Windows:** `%USERPROFILE%\.cache\huggingface\hub\`
 - **macOS:** `~/.cache/huggingface/hub/`
+- **Linux:** `~/.cache/huggingface/hub/`
 
 ## Contributing
 
@@ -187,3 +190,5 @@ Check the [roadmap](docs/roadmap/roadmap.md) for planned features and see [CONTR
 **Windows:** `global-hotkeys` · `pywin32`
 
 **macOS:** `pyobjc-framework-Quartz` · `pyobjc-framework-ApplicationServices`
+
+**Linux:** `python-xlib`
