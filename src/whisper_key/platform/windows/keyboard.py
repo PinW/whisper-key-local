@@ -4,8 +4,15 @@ import ctypes.wintypes as wintypes
 user32 = ctypes.windll.user32
 
 INPUT_KEYBOARD = 1
+KEYEVENTF_EXTENDEDKEY = 0x0001
 KEYEVENTF_KEYUP = 0x0002
 KEYEVENTF_UNICODE = 0x0004
+MAPVK_VK_TO_VSC = 0
+
+EXTENDED_VKS = {
+    0xA3, 0xA5, 0x5B, 0x5C, 0x2D, 0x2E, 0x24, 0x23,
+    0x21, 0x22, 0x25, 0x26, 0x27, 0x28,
+}
 
 VK_RETURN = 0x0D
 VK_TAB = 0x09
@@ -82,6 +89,9 @@ def _make_vk_input(vk, flags=0):
     inp = INPUT()
     inp.type = INPUT_KEYBOARD
     inp.ki.wVk = vk
+    inp.ki.wScan = user32.MapVirtualKeyW(vk, MAPVK_VK_TO_VSC)
+    if vk in EXTENDED_VKS:
+        flags |= KEYEVENTF_EXTENDEDKEY
     inp.ki.dwFlags = flags
     return inp
 
