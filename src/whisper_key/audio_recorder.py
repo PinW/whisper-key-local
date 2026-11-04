@@ -234,8 +234,8 @@ class AudioRecorder:
                     sd.sleep(self.RECORDING_SLEEP_INTERVAL)
 
         except Exception as e:
-            self.logger.error(f"Error during audio recording: {e}")
-            print(f"❌ Recording failed: {e}")
+            self.logger.error(f"Error during audio recording: {e}", extra={'console_handled': True})
+            print(f'   ✗ Recording failed: {e}')
             self.is_recording = False
             if self.on_recording_error:
                 self.on_recording_error()
