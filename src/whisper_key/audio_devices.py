@@ -53,9 +53,11 @@ class AudioDeviceManager:
         try:
             self._monitor = platform_audio_devices.DeviceChangeMonitor(self.request_refresh)
             self._monitor.start()
+            print('🎤 Audio device monitoring started.')
         except Exception as error:
             self.logger.warning(f"Audio device notifications unavailable; checking periodically: {error}")
             self._polling = True
+            print('🎤 Audio device notifications unavailable; checking every 5 seconds.')
         self.request_refresh()
 
     def stop(self):
@@ -83,6 +85,8 @@ class AudioDeviceManager:
     def observe_changes(self):
         if self._refresh_requested.is_set():
             self._refresh_requested.clear()
+            if self._refresh_deadline is None:
+                print('🎤 Audio device refresh queued; will refresh when audio is idle.')
             self._refresh_deadline = time.monotonic() + 0.5
 
     def update(self, allow_refresh=True):
@@ -97,11 +101,17 @@ class AudioDeviceManager:
         )
         try:
             if refresh_due and allow_refresh:
+                print('🎤 Refreshing audio devices...')
                 self.refresh()
                 self._initialize_selection()
                 self.device_id = self.resolve(self.selected_name, self.selected_host)
                 self._refresh_deadline = None
                 self._next_poll_at = now + 5.0 if self._polling else None
+                source_status = 'available' if self.device_id >= 0 else 'unavailable'
+                print(
+                    f'🎤 Audio devices refreshed: {len(self.input_devices())} inputs on {self.selected_host}. '
+                    f'Selected source: {self.selected_name} ({source_status}, ID {self.device_id}).'
+                )
                 return True
             if not self.refresh_pending and self.selection_pending:
                 self.device_id = self.resolve(self.selected_name, self.selected_host)
