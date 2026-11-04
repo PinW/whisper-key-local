@@ -1,6 +1,61 @@
 import ctypes
 import uuid
 
+import sounddevice as sd
+
+
+DEFAULT_HOST = 'Windows WASAPI'
+DEFAULT_SOURCES = {
+    'default_input': 'System default input',
+    'default_output': 'System default output',
+}
+
+
+def _device_endpoint_id(library, device_index):
+    device = ctypes.c_void_p()
+    result = library.PaWasapi_GetIMMDevice(device_index, ctypes.byref(device))
+    if result < 0:
+        raise OSError(f'Could not identify audio endpoint: {result}')
+    vtable = ctypes.cast(device, ctypes.POINTER(ctypes.POINTER(ctypes.c_void_p))).contents
+    get_id = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p))(vtable[5])
+    endpoint_id = ctypes.c_void_p()
+    result = get_id(device, ctypes.byref(endpoint_id))
+    if result < 0:
+        raise OSError(f'Could not read audio endpoint ID: {result}')
+    ole32 = ctypes.OleDLL('ole32')
+    ole32.CoTaskMemFree.argtypes = [ctypes.c_void_p]
+    ole32.CoTaskMemFree.restype = None
+    try:
+        return ctypes.wstring_at(endpoint_id)
+    finally:
+        ole32.CoTaskMemFree(endpoint_id)
+
+
+def resolve_default_device(source_mode, devices, hosts):
+    host_index = next((index for index, host in enumerate(hosts) if host['name'] == DEFAULT_HOST), None)
+    if host_index is None:
+        return -1
+    host = hosts[host_index]
+    if source_mode == 'default_input':
+        return host['default_input_device']
+    if source_mode != 'default_output':
+        return -1
+    output_index = host['default_output_device']
+    if output_index < 0:
+        return -1
+    library = ctypes.CDLL(sd._libname)
+    library.PaWasapi_GetIMMDevice.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_void_p)]
+    library.PaWasapi_GetIMMDevice.restype = ctypes.c_int
+    library.PaWasapi_IsLoopback.argtypes = [ctypes.c_int]
+    library.PaWasapi_IsLoopback.restype = ctypes.c_int
+    output_endpoint = _device_endpoint_id(library, output_index)
+    for index, device in enumerate(devices):
+        if device['hostapi'] != host_index or device['max_input_channels'] <= 0:
+            continue
+        if library.PaWasapi_IsLoopback(index) == 1 and _device_endpoint_id(library, index) == output_endpoint:
+            return index
+    return -1
+
 
 class Guid(ctypes.Structure):
     _fields_ = [
@@ -24,8 +79,9 @@ class NotificationClient(ctypes.Structure):
 
 
 class DeviceChangeMonitor:
-    def __init__(self, on_change):
+    def __init__(self, on_change, on_default_change):
         self.on_change = on_change
+        self.on_default_change = on_default_change
         self._enumerator = ctypes.c_void_p()
         self._registered = False
         self._com_initialized = False
@@ -77,6 +133,8 @@ class DeviceChangeMonitor:
         return 0
 
     def _default_changed(self, instance, flow, role, device_id):
+        if role == 1 and flow in (0, 1):
+            self.on_default_change('default_input' if flow == 1 else 'default_output')
         return 0
 
     def _property_changed(self, instance, device_id, property_key):

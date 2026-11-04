@@ -191,8 +191,10 @@ vad: # Voice Activity Detection (VAD)
 audio: # Audio Recording Settings
     # Sample rate is fixed at 16000 Hz for optimal Whisper and TEN VAD performance
 
-    # Audio host API selection
-    # null = let Whisper Key choose the best option (WASAPI on Windows, first available elsewhere)
+    source: default_input
+
+    # Audio host API for a specific device (source: device)
+    # Default input/output sources choose their host automatically
     # e.g., "Windows WASAPI", "MME", "Windows DirectSound", "Core Audio"
     host: null
 
@@ -212,7 +214,7 @@ audio: # Audio Recording Settings
 
     # Audio input device selection
     # Exact device name, matched together with audio.host
-    # null = select and remember the first available input on that host
+    # Used only with source: device; missing selection uses default_input
     input_device: null
 
 clipboard: # Clipboard Behavior

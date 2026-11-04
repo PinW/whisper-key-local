@@ -284,6 +284,7 @@ def main():
         voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager, log_transcriptions)
         text_postprocessor = setup_text_postprocessor(post_processing_config)
         audio_devices = AudioDeviceManager(
+            source_mode=audio_config['source'],
             host_name=audio_config['host'],
             device_name=audio_config['input_device'],
             on_selection_changed=config_manager.update_audio_source,

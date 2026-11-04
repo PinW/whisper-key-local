@@ -125,11 +125,12 @@ Delete this file and restart app to reset to defaults.
 | `vad.vad_realtime_enabled` | `true` | Auto-stop on silence |
 | `vad.vad_silence_timeout_seconds` | `30.0` | Seconds before auto-stop |
 | **Audio** |||
-| `audio.host` | `null` | Audio API (WASAPI, Core Audio, etc.) |
+| `audio.source` | `default_input` | `default_input` = system default microphone; `default_output` = system playback (Windows only); `device` = specific device |
+| `audio.host` | `null` | Audio backend for a specific device, e.g. `Windows WASAPI` or `Core Audio` |
 | `audio.channels` | `1` | 1 = mono, 2 = stereo |
 | `audio.dtype` | `float32` | float32/int16/int24/int32 |
 | `audio.max_duration` | `900` | Max recording seconds (0 = unlimited) |
-| `audio.input_device` | `default` | Device ID or "default" |
+| `audio.input_device` | `null` | Name of specific device to record from |
 | **Clipboard** |||
 | `clipboard.auto_paste` | `true` | false = clipboard only |
 | `clipboard.delivery_method` | `paste` | paste (Ctrl+V) or type (direct injection) |

@@ -158,6 +158,10 @@ class ConfigManager:
                 if user_config is None:
                     user_config = {}
 
+                audio_config = user_config.get('audio', {})
+                if 'source' not in audio_config and audio_config.get('input_device') is not None:
+                    audio_config['source'] = 'device'
+
                 self._remove_unused_keys_from_user_config(user_config, default_config)
                 merged_config = deep_merge_config(default_config, user_config)
                 resolved_config = _resolve_platform_values(merged_config)
@@ -338,14 +342,17 @@ class ConfigManager:
     def update_audio_host(self, host_name: Optional[str]):
         self.update_user_setting('audio', 'host', host_name)
 
-    def update_audio_source(self, host_name: Optional[str], device_name: Optional[str]):
+    def update_audio_source(self, source_mode: str, host_name: Optional[str], device_name: Optional[str]):
+        previous_source = self.config['audio']['source']
         previous_host = self.config['audio']['host']
         previous_device = self.config['audio']['input_device']
+        self.config['audio']['source'] = source_mode
         self.config['audio']['host'] = host_name
         self.config['audio']['input_device'] = device_name
         try:
             self._save_user_overrides()
         except Exception:
+            self.config['audio']['source'] = previous_source
             self.config['audio']['host'] = previous_host
             self.config['audio']['input_device'] = previous_device
             raise
@@ -421,6 +428,10 @@ def _resolve_hotkey_conflicts(config, default_config, stop_key, auto_send_key, r
 
 def validate_config(config, default_config, logger):
     _validate_numeric_range(config, default_config, 'audio.max_duration', logger, min_val=0)
+
+    source_mode = _get_config_value_at_path(config, 'audio.source')
+    if source_mode not in ('default_input', 'default_output', 'device'):
+        _set_to_default(config, default_config, 'audio.source', source_mode, logger)
 
     _validate_numeric_range(config, default_config, 'vad.vad_onset_threshold', logger, min_val=0.0, max_val=1.0)
     _validate_numeric_range(config, default_config, 'vad.vad_offset_threshold', logger, min_val=0.0, max_val=1.0)

@@ -84,6 +84,7 @@ class StateManager:
                 return
             self.audio_devices.observe_changes()
             if self._audio_busy():
+                self.audio_devices.announce_deferred_change()
                 return
             if self._recording_failed.is_set():
                 self._recording_failed.clear()
@@ -430,6 +431,16 @@ class StateManager:
 
     def get_current_audio_host(self) -> Optional[str]:
         return self.audio_devices.selected_host
+
+    def get_audio_source_selection(self):
+        with self._audio_lock:
+            return self.audio_devices.source_mode, self.audio_devices.selected_host, self.audio_devices.selected_name
+
+    def get_default_audio_sources(self):
+        return self.audio_devices.default_sources()
+
+    def request_default_audio_source(self, source_mode):
+        return self._request_audio_change(self.audio_devices.select_default, source_mode)
 
     def _apply_audio_selection(self, allow_refresh=True):
         if not self.audio_devices.update(allow_refresh=allow_refresh):

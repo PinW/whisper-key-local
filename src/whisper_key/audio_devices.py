@@ -1,5 +1,4 @@
 import logging
-import platform
 import threading
 import time
 
@@ -10,9 +9,10 @@ from .terminal_ui import print_error
 
 
 class AudioDeviceManager:
-    def __init__(self, host_name, device_name, on_selection_changed, on_source_status_changed):
+    def __init__(self, host_name, device_name, on_selection_changed, on_source_status_changed, source_mode):
         self.devices = []
         self.hosts = []
+        self.source_mode = source_mode
         self.selected_host = host_name
         self.selected_name = device_name
         self.device_id = -1
@@ -21,6 +21,9 @@ class AudioDeviceManager:
         self._on_source_status_changed = on_source_status_changed
         self._last_warning = None
         self._refresh_requested = threading.Event()
+        self._default_refresh_requested = threading.Event()
+        self._default_change_pending = False
+        self._deferred_notice_printed = False
         self._refresh_deadline = None
         self._next_poll_at = None
         self._polling = False
@@ -30,11 +33,16 @@ class AudioDeviceManager:
         self.logger = logging.getLogger(__name__)
         self.load()
         self._initialize_selection()
-        self.device_id = self.resolve(self.selected_name, self.selected_host, report=False)
+        self.device_id = self._resolve_selection(report=False)
+        self._applied_source_identity = self._source_identity()
 
     def print_startup_status(self):
         if self.device_id >= 0:
-            print(f'   ✓ Audio source {self._format_audio_source(self.selected_name, self.selected_host)}')
+            if self.source_mode == 'device':
+                print(f'   ✓ Audio source {self._format_audio_source(self.selected_name, self.selected_host)}')
+            else:
+                host_name = self.hosts[self.devices[self.device_id]['hostapi']]['name']
+                print(f'   ✓ Audio source using {self.default_source_label()} [{self._format_host(host_name)}]')
 
     def print_startup_warning(self):
         if self.device_id < 0:
@@ -62,7 +70,7 @@ class AudioDeviceManager:
         self._started = True
         self._polling = False
         try:
-            self._monitor = platform_audio_devices.DeviceChangeMonitor(self.request_refresh)
+            self._monitor = platform_audio_devices.DeviceChangeMonitor(self.request_refresh, self.request_default_refresh)
             self._monitor.start()
         except Exception as error:
             self.logger.warning(f"Audio device notifications unavailable; checking periodically: {error}")
@@ -72,6 +80,7 @@ class AudioDeviceManager:
     def stop(self):
         self._stopped = True
         self._refresh_requested.clear()
+        self._default_refresh_requested.clear()
         self._refresh_deadline = None
         self._next_poll_at = None
         if self._monitor:
@@ -87,6 +96,22 @@ class AudioDeviceManager:
         if not self._stopped:
             self._refresh_requested.set()
 
+    def request_default_refresh(self, source_mode):
+        if not self._stopped and self.source_mode == source_mode:
+            self._default_refresh_requested.set()
+            self.request_refresh()
+
+    def default_source_label(self):
+        return platform_audio_devices.DEFAULT_SOURCES.get(self.source_mode, self.source_mode.replace('_', ' ').capitalize())
+
+    def default_sources(self):
+        return list(platform_audio_devices.DEFAULT_SOURCES.items())
+
+    def announce_deferred_change(self):
+        if self.source_mode != 'device' and self._default_change_pending and not self._deferred_notice_printed:
+            print(f'🎤 {self.default_source_label()} changed; will switch after the current recording and transcription finish.')
+            self._deferred_notice_printed = True
+
     @property
     def refresh_pending(self):
         return self._refresh_requested.is_set() or self._refresh_deadline is not None
@@ -94,6 +119,9 @@ class AudioDeviceManager:
     def observe_changes(self):
         if self._refresh_requested.is_set():
             self._refresh_requested.clear()
+            if self._default_refresh_requested.is_set():
+                self._default_refresh_requested.clear()
+                self._default_change_pending = True
             self._refresh_deadline = time.monotonic() + 0.5
 
     def update(self, allow_refresh=True):
@@ -110,12 +138,14 @@ class AudioDeviceManager:
             if refresh_due and allow_refresh:
                 self.refresh()
                 self._initialize_selection()
-                self.device_id = self.resolve(self.selected_name, self.selected_host)
+                self.device_id = self._resolve_selection()
                 self._refresh_deadline = None
+                self._default_change_pending = False
+                self._deferred_notice_printed = False
                 self._next_poll_at = now + 5.0 if self._polling else None
                 return True
             if not self.refresh_pending and self.selection_pending:
-                self.device_id = self.resolve(self.selected_name, self.selected_host)
+                self.device_id = self._resolve_selection()
                 return True
         except Exception as error:
             self.change_failed(error)
@@ -131,16 +161,27 @@ class AudioDeviceManager:
     def selection_applied(self):
         if self.refresh_pending:
             return
-        if self.selection_pending and self.device_id >= 0:
+        source_identity = self._source_identity()
+        if self.source_mode != 'device' and source_identity and source_identity != self._applied_source_identity:
+            device = self.devices[self.device_id]
+            host_name = self.hosts[device['hostapi']]['name']
+            message = f"{self.default_source_label()} source changed: {self._format_audio_source(device['name'], host_name, bracket_device=False)}."
+            self.logger.info(message, extra={'console_handled': True})
+            print(f'✅ {message}')
+            if self._applied_source_identity is None:
+                self._on_source_status_changed()
+        elif self.selection_pending and self.device_id >= 0:
             device = self.devices[self.device_id]
             host_name = self.hosts[device['hostapi']]['name']
             message = f"Successfully switched audio device to: {self._format_audio_source(device['name'], host_name)}"
             self.logger.info(message)
             print(f'✅ {message}')
+        self._applied_source_identity = source_identity
         self.selection_pending = False
 
     def change_failed(self, error):
         self.device_id = -1
+        self._applied_source_identity = None
         self._refresh_deadline = time.monotonic() + 5.0
         self._next_poll_at = None
         self.logger.warning(f"Could not update audio source; retrying automatically: {error}")
@@ -148,20 +189,57 @@ class AudioDeviceManager:
             print(f'❌ Failed to switch audio device: {error}')
 
     def _initialize_selection(self):
+        if self.source_mode not in ('default_input', 'default_output', 'device'):
+            raise ValueError(f'Unknown audio source mode: {self.source_mode}')
+        source_mode = self.source_mode
+        if source_mode == 'device' and self.selected_name is None:
+            source_mode = 'default_input'
+        if source_mode != 'device':
+            if (source_mode, None, None) != (self.source_mode, self.selected_host, self.selected_name):
+                self._on_selection_changed(source_mode, None, None)
+            self.source_mode = source_mode
+            self.selected_host = None
+            self.selected_name = None
+            return
         host_name = self.canonical_host(self.selected_host)
         if not host_name:
-            preferred_host = 'Windows WASAPI' if platform.system() == 'Windows' else 'Core Audio'
+            preferred_host = platform_audio_devices.DEFAULT_HOST
             host_names = [host['name'] for host in self.available_hosts()]
             host_name = preferred_host if preferred_host in host_names else next(iter(host_names), None)
         device_name = self.selected_name
-        if device_name is None:
-            devices = self.input_devices(host_name)
-            if devices:
-                device_name = devices[0]['name']
         if (host_name, device_name) != (self.selected_host, self.selected_name):
-            self._on_selection_changed(host_name, device_name)
+            self._on_selection_changed('device', host_name, device_name)
             self.selected_host = host_name
             self.selected_name = device_name
+
+    def _source_identity(self):
+        if self.device_id < 0:
+            return None
+        device = self.devices[self.device_id]
+        return self.source_mode, self.hosts[device['hostapi']]['name'], device['name']
+
+    def _resolve_selection(self, report=True):
+        if self.source_mode == 'device':
+            return self.resolve(self.selected_name, self.selected_host, report=report)
+        device_id = platform_audio_devices.resolve_default_device(self.source_mode, self.devices, self.hosts)
+        if 0 <= device_id < len(self.devices) and self.devices[device_id]['max_input_channels'] > 0:
+            self._last_warning = None
+            return device_id
+        self._warn(f'{self.default_source_label()} source is unavailable; reconnect a device or select another source.', report=report)
+        return -1
+
+    def select_default(self, source_mode):
+        if self._stopped or source_mode not in platform_audio_devices.DEFAULT_SOURCES:
+            return False
+        if source_mode == self.source_mode:
+            return True
+        self._on_selection_changed(source_mode, None, None)
+        self.source_mode = source_mode
+        self.selected_host = None
+        self.selected_name = None
+        self.selection_pending = True
+        self.request_refresh()
+        return True
 
     def select_host(self, host_name):
         if self._stopped:
@@ -182,9 +260,10 @@ class AudioDeviceManager:
         if len(matches) != 1:
             self.logger.warning(f"Cannot select unavailable or ambiguous audio source {self._format_audio_source(device_name, host_name)}")
             return False
-        if (host_name, device_name) == (self.selected_host, self.selected_name) and matches[0]['id'] == self.device_id:
+        if self.source_mode == 'device' and (host_name, device_name) == (self.selected_host, self.selected_name) and matches[0]['id'] == self.device_id:
             return True
-        self._on_selection_changed(host_name, device_name)
+        self._on_selection_changed('device', host_name, device_name)
+        self.source_mode = 'device'
         self.selected_host = host_name
         self.selected_name = device_name
         self.selection_pending = True
@@ -237,11 +316,13 @@ class AudioDeviceManager:
         self._warn(warning, report=report)
         return -1
 
-    def _format_audio_source(self, device_name, host_name, *, bracket_device=True):
+    def _format_host(self, host_name):
         host_name = self.canonical_host(host_name)
-        display_host = 'WASAPI' if host_name == 'Windows WASAPI' else host_name
+        return 'WASAPI' if host_name == 'Windows WASAPI' else host_name
+
+    def _format_audio_source(self, device_name, host_name, *, bracket_device=True):
         display_device = f'[{device_name}]' if bracket_device else device_name
-        return f'{display_device} [{display_host}]'
+        return f'{display_device} [{self._format_host(host_name)}]'
 
     def _warn(self, message, *, report=True):
         if message and message != self._last_warning:
