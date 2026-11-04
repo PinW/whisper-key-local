@@ -10,6 +10,7 @@ from src.whisper_key.audio_devices import AudioDeviceManager
 from src.whisper_key.audio_recorder import AudioRecorder
 from src.whisper_key.config_manager import ConfigManager
 from src.whisper_key.state_manager import StateManager
+from src.whisper_key.system_tray import SystemTray
 from src.whisper_key.terminal_ui import BOLD_RED, RESET
 
 
@@ -28,6 +29,12 @@ class AudioDevicesTests(unittest.TestCase):
             {'name': 'Windows WASAPI', 'default_input_device': 2},
         ]
         patches = (
+            patch('src.whisper_key.audio_devices.platform_audio_devices.DEFAULT_HOST', 'Windows WASAPI'),
+            patch('src.whisper_key.audio_devices.platform_audio_devices.DEFAULT_SOURCES', {
+                'default_input': 'System default input', 'default_output': 'System default output',
+            }),
+            patch('src.whisper_key.audio_devices.platform_audio_devices.resolve_default_device',
+                  side_effect=lambda mode, devices, hosts: hosts[1]['default_input_device'] if mode == 'default_input' else -1),
             patch('src.whisper_key.audio_devices.sd.query_devices', side_effect=self.query_devices),
             patch('src.whisper_key.audio_devices.sd.query_hostapis', side_effect=self.query_hosts),
             patch('src.whisper_key.audio_devices.sd._initialized', 1),
@@ -37,7 +44,7 @@ class AudioDevicesTests(unittest.TestCase):
         self.audio_mocks = [item.start() for item in patches]
         for item in patches:
             self.addCleanup(item.stop)
-        self.settings = {'host': 'Windows WASAPI', 'input_device': 'Yeti'}
+        self.settings = {'source': 'device', 'host': 'Windows WASAPI', 'input_device': 'Yeti'}
         self.config = Mock()
         self.config.get_setting.side_effect = lambda section, key: self.settings[key]
         self.config.update_audio_source.side_effect = self.save_selection
@@ -45,6 +52,7 @@ class AudioDevicesTests(unittest.TestCase):
         self.audio_devices = AudioDeviceManager(
             self.settings['host'], self.settings['input_device'], self.config.update_audio_source,
             self.play_ready_sound,
+            source_mode=self.settings['source'],
         )
         self.recorder = AudioRecorder(on_vad_event=Mock(), vad_manager=Mock(is_available=lambda: False), device=1)
         self.manager = StateManager(
@@ -59,10 +67,11 @@ class AudioDevicesTests(unittest.TestCase):
     def query_hosts(self, index=None):
         return self.hosts if index is None else self.hosts[index]
 
-    def save_selection(self, host, name):
-        self.settings.update(host=host, input_device=name)
+    def save_selection(self, source, host, name):
+        self.settings.update(source=source, host=host, input_device=name)
 
     def refresh(self):
+        self.audio_devices.observe_changes()
         self.audio_devices._refresh_deadline = 0
         self.manager.refresh_audio_devices()
 
@@ -94,7 +103,7 @@ class AudioDevicesTests(unittest.TestCase):
     def test_startup_missing_source_prints_error_once_and_logs_warning(self):
         with patch('builtins.print') as output:
             with self.assertLogs('src.whisper_key.audio_devices', level='WARNING') as logs:
-                audio_devices = AudioDeviceManager('Windows WASAPI', 'Missing microphone', Mock(), self.play_ready_sound)
+                audio_devices = AudioDeviceManager('Windows WASAPI', 'Missing microphone', Mock(), self.play_ready_sound, 'device')
                 output.assert_not_called()
                 audio_devices.print_startup_status()
                 output.assert_not_called()
@@ -193,15 +202,219 @@ class AudioDevicesTests(unittest.TestCase):
         self.assertFalse(self.manager.set_audio_host('Empty host'))
         self.assertEqual(self.settings['host'], 'Windows WASAPI')
 
-    def test_initial_selection_remembers_first_input_within_selected_host(self):
+    def test_missing_named_selection_uses_default_input_without_pinning_it(self):
         self.settings['input_device'] = None
         self.audio_devices.selected_name = None
         self.refresh()
-        self.assertEqual(self.audio_devices.device_id, 1)
-        self.assertEqual(self.settings['input_device'], 'Yeti')
-        self.devices[1], self.devices[2] = self.devices[2], self.devices[1]
+        self.assertEqual(self.audio_devices.device_id, 2)
+        self.assertEqual(self.settings, {'source': 'default_input', 'host': None, 'input_device': None})
+        self.hosts[1]['default_input_device'] = 1
+        self.refresh()
+        self.assertEqual(self.recorder.device, 1)
+        self.assertIsNone(self.settings['input_device'])
+
+    def use_default_input(self):
+        self.assertTrue(self.manager.request_default_audio_source('default_input'))
+        self.refresh()
+        self.play_ready_sound.reset_mock()
+
+    def test_default_input_startup_uses_system_default_and_does_not_save_name(self):
+        save = Mock()
+        audio_devices = AudioDeviceManager(None, None, save, self.play_ready_sound, 'default_input')
+        self.assertEqual(audio_devices.device_id, 2)
+        save.assert_not_called()
+        with patch('builtins.print') as output:
+            audio_devices.print_startup_status()
+        output.assert_called_once_with('   ✓ Audio source using System default input [WASAPI]')
+
+    def test_default_mode_ignores_previously_selected_host(self):
+        self.assertTrue(self.manager.set_audio_host('MME'))
+        self.use_default_input()
+        self.assertEqual(self.recorder.device, 2)
+        self.assertEqual(self.settings, {'source': 'default_input', 'host': None, 'input_device': None})
+
+    def test_default_input_changes_without_saving_resolved_device(self):
+        self.use_default_input()
+        self.config.update_audio_source.reset_mock()
+        self.hosts[1]['default_input_device'] = 1
+        self.audio_devices.request_default_refresh('default_input')
+        with patch('builtins.print') as output:
+            self.refresh()
+            self.refresh()
+        self.assertEqual(self.recorder.device, 1)
+        self.config.update_audio_source.assert_not_called()
+        output.assert_called_once_with('✅ System default input source changed: Yeti [WASAPI].')
+        self.play_ready_sound.assert_not_called()
+
+    def test_default_output_follows_loopback_and_waits_until_recording_finishes(self):
+        self.devices.extend([input_device('Speakers [Loopback]'), input_device('Headphones [Loopback]')])
+        with patch('src.whisper_key.audio_devices.platform_audio_devices.resolve_default_device', side_effect=[3, 4]):
+            self.assertTrue(self.manager.request_default_audio_source('default_output'))
+            self.refresh()
+            self.assertEqual(self.recorder.device, 3)
+            self.assertEqual(self.settings, {'source': 'default_output', 'host': None, 'input_device': None})
+            self.audio_devices.request_default_refresh('default_input')
+            self.assertFalse(self.audio_devices.refresh_pending)
+            self.recorder.is_recording = True
+            self.audio_devices.request_default_refresh('default_output')
+            self.refresh()
+            self.assertEqual(self.recorder.device, 3)
+            self.recorder.is_recording = False
+            with patch('builtins.print') as output:
+                self.refresh()
+        self.assertEqual(self.recorder.device, 4)
+        output.assert_called_once_with('✅ System default output source changed: Headphones [Loopback] [WASAPI].')
+        self.play_ready_sound.assert_not_called()
+
+    def test_unrelated_default_events_do_not_request_refresh(self):
+        self.audio_devices.request_default_refresh('default_input')
+        self.assertFalse(self.audio_devices.refresh_pending)
+        self.use_default_input()
+        self.audio_devices.request_default_refresh('default_output')
+        self.assertFalse(self.audio_devices.refresh_pending)
+
+    def test_default_change_waits_for_recording_and_processing(self):
+        self.use_default_input()
+        self.recorder.is_recording = True
+        self.hosts[1]['default_input_device'] = 1
+        self.audio_devices.request_default_refresh('default_input')
+        with patch.object(self.recorder, 'cancel_recording') as cancel:
+            with patch('builtins.print') as output:
+                self.refresh()
+                self.manager.refresh_audio_devices()
+            cancel.assert_not_called()
+        output.assert_called_once_with(
+            '🎤 System default input changed; will switch after the current recording and transcription finish.'
+        )
+        self.assertTrue(self.recorder.is_recording)
+        self.assertEqual(self.recorder.device, 2)
+        self.recorder.is_recording = False
+        self.manager.is_processing = True
         self.refresh()
         self.assertEqual(self.recorder.device, 2)
+        self.manager.is_processing = False
+        self.refresh()
+        self.assertEqual(self.recorder.device, 1)
+        self.play_ready_sound.assert_not_called()
+
+    def test_latest_default_wins_after_recording(self):
+        self.use_default_input()
+        self.recorder.is_recording = True
+        self.hosts[1]['default_input_device'] = 1
+        self.audio_devices.request_default_refresh('default_input')
+        self.refresh()
+        self.hosts[1]['default_input_device'] = 2
+        self.audio_devices.request_default_refresh('default_input')
+        self.refresh()
+        self.recorder.is_recording = False
+        self.refresh()
+        self.assertEqual(self.recorder.device, 2)
+        self.play_ready_sound.assert_not_called()
+
+    def test_missing_default_does_not_fall_back_to_first_input(self):
+        self.use_default_input()
+        self.hosts[1]['default_input_device'] = -1
+        with self.assertLogs('src.whisper_key.audio_devices', level='WARNING'):
+            self.refresh()
+        self.assertEqual(self.recorder.device, -1)
+        self.assertFalse(self.manager._start_audio_recording())
+        self.hosts[1]['default_input_device'] = 1
+        self.refresh()
+        self.assertEqual(self.recorder.device, 1)
+        self.assertEqual(self.audio_devices.source_mode, 'default_input')
+        self.assertEqual(self.play_ready_sound.call_count, 2)
+
+    def test_default_reordering_does_not_announce_a_device_change(self):
+        self.use_default_input()
+        self.devices[1], self.devices[2] = self.devices[2], self.devices[1]
+        self.hosts[1]['default_input_device'] = 1
+        with patch('builtins.print') as output:
+            self.refresh()
+        output.assert_not_called()
+        self.play_ready_sound.assert_not_called()
+        self.assertEqual(self.recorder.device, 1)
+
+    def test_selecting_named_device_exits_default_mode(self):
+        self.use_default_input()
+        self.assertTrue(self.manager.request_audio_device_change('Yeti', 'MME'))
+        self.assertEqual(self.settings, {'source': 'device', 'host': 'MME', 'input_device': 'Yeti'})
+        self.hosts[1]['default_input_device'] = 1
+        self.audio_devices.request_default_refresh('default_input')
+        self.assertFalse(self.audio_devices.refresh_pending)
+        self.assertEqual(self.recorder.device, 0)
+
+    def test_default_notification_waits_until_recorder_accepts_device(self):
+        self.use_default_input()
+        self.hosts[1]['default_input_device'] = 1
+        original_resolve = self.recorder.resolve_device
+
+        def resolve_device(device_id):
+            if device_id == 1:
+                raise OSError('device unavailable')
+            return original_resolve(device_id)
+
+        with patch.object(self.recorder, 'resolve_device', side_effect=resolve_device):
+            with self.assertLogs('src.whisper_key.audio_devices', level='WARNING'):
+                self.refresh()
+        self.play_ready_sound.assert_not_called()
+        self.assertEqual(self.recorder.device, -1)
+        self.refresh()
+        self.play_ready_sound.assert_called_once_with()
+
+    def test_failed_default_mode_save_preserves_named_selection(self):
+        self.config.update_audio_source.side_effect = OSError('disk full')
+        with self.assertRaises(OSError):
+            self.manager.request_default_audio_source('default_input')
+        self.assertEqual(self.audio_devices.source_mode, 'device')
+        self.assertEqual(self.audio_devices.selected_name, 'Yeti')
+        self.assertFalse(self.audio_devices.refresh_pending)
+
+    def test_tray_default_selection_does_not_check_named_device(self):
+        self.use_default_input()
+        tray = SystemTray.__new__(SystemTray)
+        tray.state_manager = self.manager
+        items = list(tray._build_audio_source_menu())
+        self.assertEqual([item.text for item in items[:2]], ['System default input', 'System default output'])
+        self.assertTrue(items[0].checked)
+        self.assertFalse(items[1].checked)
+        self.assertEqual(tray._audio_source_label(), 'Source: System input')
+        self.assertNotIn('Specific device', [item.text for item in items])
+        wasapi = next(item for item in items if item.text == 'WASAPI')
+        self.assertFalse(wasapi.checked)
+        self.assertFalse(any(item.checked for item in wasapi.submenu))
+        tray._select_audio_device = Mock()
+        list(wasapi.submenu)[1](None)
+        tray._select_audio_device.assert_called_once_with('Webcam', 'Windows WASAPI')
+
+    def test_tray_marks_named_device_host_and_shortens_only_parent_label(self):
+        name = 'Microphone (A very long microphone device name)'
+        self.devices[1]['name'] = name
+        self.audio_devices.load()
+        self.assertTrue(self.manager.request_audio_device_change(name, 'Windows WASAPI'))
+        tray = SystemTray.__new__(SystemTray)
+        tray.state_manager = self.manager
+        items = list(tray._build_audio_source_menu())
+        wasapi = next(item for item in items if item.text == 'WASAPI')
+        mme = next(item for item in items if item.text == 'MME')
+        self.assertTrue(wasapi.checked)
+        self.assertTrue(wasapi.radio)
+        self.assertFalse(mme.checked)
+        self.assertFalse(items[0].checked)
+        self.assertEqual(tray._audio_source_label(), f'Source: {name[:23].rstrip()}…')
+        self.assertTrue(next(item for item in wasapi.submenu if item.text == name).checked)
+
+    def test_tray_keeps_defaults_selectable_without_devices(self):
+        self.use_default_input()
+        self.devices.clear()
+        self.hosts[1]['default_input_device'] = -1
+        with self.assertLogs('src.whisper_key.audio_devices', level='WARNING'):
+            self.refresh()
+        tray = SystemTray.__new__(SystemTray)
+        tray.state_manager = self.manager
+        items = list(tray._build_audio_source_menu())
+        self.assertTrue(items[0].enabled)
+        self.assertTrue(items[1].enabled)
+        self.assertFalse(items[-1].enabled)
 
     def test_manual_switch_cancels_recording_before_changing_source(self):
         self.recorder.is_recording = True
@@ -263,7 +476,7 @@ class AudioDevicesTests(unittest.TestCase):
 
     def test_host_change_selects_first_input_on_that_host(self):
         self.assertTrue(self.manager.set_audio_host('MME'))
-        self.config.update_audio_source.assert_called_once_with('MME', 'Yeti')
+        self.config.update_audio_source.assert_called_once_with('device', 'MME', 'Yeti')
         self.assertEqual(self.recorder.device, 0)
 
     def test_reselecting_current_host_preserves_named_device(self):
@@ -276,7 +489,7 @@ class AudioDevicesTests(unittest.TestCase):
         config.config = {'audio': self.settings.copy()}
         with patch.object(config, '_save_user_overrides', side_effect=OSError('disk full')):
             with self.assertRaises(OSError):
-                config.update_audio_source('MME', 'Webcam')
+                config.update_audio_source('default_input', None, None)
         self.assertEqual(config.config['audio'], self.settings)
 
     def test_stale_menu_selection_cannot_select_replacement_device(self):

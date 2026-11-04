@@ -113,6 +113,61 @@ class SystemTray:
 
         return items
 
+    def _audio_source_label(self):
+        source_mode, _, selected_name = self.state_manager.get_audio_source_selection()
+        if source_mode == 'default_input':
+            return 'Source: System input'
+        if source_mode == 'default_output':
+            return 'Source: System output'
+        device_label = selected_name if isinstance(selected_name, str) else 'Unavailable'
+        if len(device_label) > 24:
+            device_label = device_label[:23].rstrip() + '…'
+        return f'Source: {device_label}'
+
+    def _build_audio_source_menu(self):
+        source_mode, selected_host, selected_name = self.state_manager.get_audio_source_selection()
+
+        def select_default(mode):
+            return lambda icon, item: self._select_default_audio_source(mode)
+
+        def is_default_selected(mode):
+            return lambda item: source_mode == mode
+
+        def select_device(name, host):
+            return lambda icon, item: self._select_audio_device(name, host)
+
+        def is_device_selected(name, host):
+            return lambda item: source_mode == 'device' and (selected_host, selected_name) == (host, name)
+
+        def is_host_selected(host):
+            return lambda item: source_mode == 'device' and selected_host == host
+
+        items = [
+            pystray.MenuItem(label, select_default(mode), radio=True, checked=is_default_selected(mode))
+            for mode, label in self.state_manager.get_default_audio_sources()
+        ]
+        host_items = []
+        for host in self.state_manager.get_available_audio_hosts():
+            host_name = host['name']
+            device_items = [
+                pystray.MenuItem(
+                    device['name'], select_device(device['name'], host_name),
+                    radio=True, checked=is_device_selected(device['name'], host_name),
+                )
+                for device in self.state_manager.get_available_audio_devices(host_name)
+            ]
+            if device_items:
+                display_host = 'WASAPI' if host_name == 'Windows WASAPI' else host_name
+                host_items.append(pystray.MenuItem(
+                    display_host, pystray.Menu(*device_items), radio=True, checked=is_host_selected(host_name),
+                ))
+        items.append(pystray.Menu.SEPARATOR)
+        if host_items:
+            items.extend(host_items)
+        else:
+            items.append(pystray.MenuItem('No devices available', None, enabled=False))
+        return pystray.Menu(*items)
+
     def _create_menu(self):
         try:
             app_state = self.state_manager.get_application_state()
@@ -120,53 +175,6 @@ class SystemTray:
 
             auto_paste_enabled = self.config_manager.get_setting('clipboard', 'auto_paste')
             current_model = self.config_manager.get_setting('whisper', 'model')
-
-            available_hosts = self.state_manager.get_available_audio_hosts()
-            current_host = self.state_manager.get_current_audio_host()
-
-            def is_current_host(host_name):
-                return lambda item: current_host == host_name
-
-            def switch_host(host_name):
-                return lambda icon, item: self._select_audio_host(host_name)
-
-            audio_host_items = []
-            if available_hosts:
-                for host in available_hosts:
-                    host_name = host['name']
-                    audio_host_items.append(
-                        pystray.MenuItem(
-                            host_name,
-                            switch_host(host_name),
-                            radio=True,
-                            checked=is_current_host(host_name)
-                        )
-                    )
-
-            available_devices = self.state_manager.get_available_audio_devices(current_host)
-            current_device = self.state_manager.get_current_audio_device_id()
-
-            def is_current_device(dev_id):
-                return lambda item: current_device == dev_id
-
-            def switch_device(dev_name):
-                return lambda icon, item: self._select_audio_device(dev_name, current_host)
-
-            audio_device_items = []
-
-            if available_devices:
-                for device in available_devices:
-                    device_id = device['id']
-                    device_name = device['name']
-
-                    audio_device_items.append(
-                        pystray.MenuItem(
-                            device_name,
-                            switch_device(device['name']),
-                            radio=True,
-                            checked=is_current_device(device_id)
-                        )
-                    )
 
             model_sub_menu_items = self._build_model_menu_items(current_model, is_model_loading)
 
@@ -187,12 +195,8 @@ class SystemTray:
                 pystray.MenuItem("Open commands file...", self._open_commands_file) if voice_commands_enabled else None,
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(
-                    "Audio Host",
-                    pystray.Menu(*audio_host_items)
-                ) if audio_host_items else None,
-                pystray.MenuItem(
-                    f"Audio Source",
-                    pystray.Menu(*audio_device_items)
+                    self._audio_source_label(),
+                    self._build_audio_source_menu()
                 ),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Auto-paste", lambda icon, item: self._set_transcription_mode(True), radio=True, checked=lambda item: auto_paste_enabled),
@@ -292,6 +296,10 @@ class SystemTray:
             self.icon.menu = self._create_menu()
         else:
             self.logger.warning(f"Request to change audio device to '{device_name}' was not accepted")
+
+    def _select_default_audio_source(self, source_mode):
+        if self.state_manager.request_default_audio_source(source_mode):
+            self.icon.menu = self._create_menu()
 
     def _show_console(self, icon=None, item=None):
         console.show()
