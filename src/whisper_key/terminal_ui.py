@@ -8,6 +8,10 @@ DIM = "\x1b[2m"
 RESET = "\x1b[0m"
 
 
+def print_error(message):
+    print(f'\n{BOLD_RED}❌ {message}{RESET}', flush=True)
+
+
 def prompt_choice(title: str, options: list[tuple[str, str]], subtitle: str = None) -> int:
     all_texts = [title]
     if subtitle:

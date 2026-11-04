@@ -56,6 +56,7 @@ def setup_logging(config_manager: ConfigManager):
         console_level = log_config['console'].get('level', 'WARNING')
         console_handler.setLevel(getattr(logging, console_level))
         console_handler.setFormatter(formatter)
+        console_handler.addFilter(lambda record: not getattr(record, 'console_handled', False))
         root_logger.addHandler(console_handler)
 
 def setup_exception_handler():
@@ -286,7 +287,9 @@ def main():
             host_name=audio_config['host'],
             device_name=audio_config['input_device'],
             on_selection_changed=config_manager.update_audio_source,
+            on_source_status_changed=audio_feedback.play_ready_sound,
         )
+        audio_devices.print_startup_status()
 
         state_manager = StateManager(
             audio_recorder=None,
@@ -320,6 +323,7 @@ def main():
         audio_feedback.play_ready_sound()
         config_manager.print_startup_hotkey_instructions()
         print("   [CTRL+C] to quit", flush=True)
+        audio_devices.print_startup_warning()
 
         system_tray.apply_console_settings()
 

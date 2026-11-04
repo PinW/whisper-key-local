@@ -10,6 +10,7 @@ from src.whisper_key.audio_devices import AudioDeviceManager
 from src.whisper_key.audio_recorder import AudioRecorder
 from src.whisper_key.config_manager import ConfigManager
 from src.whisper_key.state_manager import StateManager
+from src.whisper_key.terminal_ui import BOLD_RED, RESET
 
 
 def input_device(name, host=1, rate=48000, channels=1):
@@ -40,8 +41,10 @@ class AudioDevicesTests(unittest.TestCase):
         self.config = Mock()
         self.config.get_setting.side_effect = lambda section, key: self.settings[key]
         self.config.update_audio_source.side_effect = self.save_selection
+        self.play_ready_sound = Mock()
         self.audio_devices = AudioDeviceManager(
-            self.settings['host'], self.settings['input_device'], self.config.update_audio_source
+            self.settings['host'], self.settings['input_device'], self.config.update_audio_source,
+            self.play_ready_sound,
         )
         self.recorder = AudioRecorder(on_vad_event=Mock(), vad_manager=Mock(is_available=lambda: False), device=1)
         self.manager = StateManager(
@@ -88,6 +91,61 @@ class AudioDevicesTests(unittest.TestCase):
         self.assertFalse(self.recorder.start_recording())
         self.assertFalse(self.manager.request_audio_device_change('Yeti', 'Windows WASAPI'))
 
+    def test_startup_missing_source_prints_error_once_and_logs_warning(self):
+        with patch('builtins.print') as output:
+            with self.assertLogs('src.whisper_key.audio_devices', level='WARNING') as logs:
+                audio_devices = AudioDeviceManager('Windows WASAPI', 'Missing microphone', Mock(), self.play_ready_sound)
+                output.assert_not_called()
+                audio_devices.print_startup_status()
+                output.assert_not_called()
+                audio_devices.print_startup_warning()
+                audio_devices.resolve('Missing microphone', 'Windows WASAPI')
+        output.assert_called_once_with(
+            f'\n{BOLD_RED}❌ Missing microphone [WASAPI] is unavailable; reconnect it or select another source.{RESET}',
+            flush=True,
+        )
+        self.assertEqual(len(logs.records), 1)
+        self.assertTrue(logs.records[0].console_handled)
+        self.play_ready_sound.assert_not_called()
+
+    def test_disconnect_and_reconnect_play_ready_sound_once_each(self):
+        self.play_ready_sound.assert_not_called()
+        self.devices[1] = input_device('Other microphone')
+        with self.assertLogs('src.whisper_key.audio_devices', level='WARNING'):
+            self.refresh()
+            self.refresh()
+        self.play_ready_sound.assert_called_once_with()
+        self.devices[1] = input_device('Yeti')
+        self.refresh()
+        self.refresh()
+        self.assertEqual(self.play_ready_sound.call_count, 2)
+
+    def test_startup_available_source_prints_indented_status(self):
+        with patch('builtins.print') as output:
+            self.audio_devices.print_startup_status()
+            self.audio_devices.print_startup_warning()
+        output.assert_called_once_with('   ✓ Audio source [Yeti] [WASAPI]')
+
+    def test_runtime_missing_source_prints_after_blank_line_without_indentation(self):
+        self.devices[1] = input_device('Other microphone')
+        with patch('builtins.print') as output:
+            with self.assertLogs('src.whisper_key.audio_devices', level='WARNING'):
+                self.refresh()
+        output.assert_called_once_with(
+            f"\n{BOLD_RED}❌ Yeti [WASAPI] is unavailable; reconnect it or select another source.{RESET}",
+            flush=True,
+        )
+
+    def test_reconnection_prints_recovery_once(self):
+        self.devices[1] = input_device('Other microphone')
+        with self.assertLogs('src.whisper_key.audio_devices', level='WARNING'):
+            self.refresh()
+        self.devices[1] = input_device('Yeti')
+        with patch('builtins.print') as output:
+            self.refresh()
+            self.refresh()
+        output.assert_called_once_with('\n✅ Audio source reconnected: [Yeti] [WASAPI].')
+
     def test_loopback_name_is_matched_exactly_and_outputs_are_excluded(self):
         name = 'Speakers (A very long audio device name) [Loopback]'
         self.devices.extend([input_device(name, channels=0), input_device(name)])
@@ -98,7 +156,7 @@ class AudioDevicesTests(unittest.TestCase):
             self.assertEqual(self.audio_devices.resolve('Speakers (A very long', 'Windows WASAPI'), -1)
 
     def test_numeric_setting_does_not_silently_select_reused_index(self):
-        with self.assertLogs('src.whisper_key.audio_devices', level='WARNING'):
+        with self.assertNoLogs('src.whisper_key.audio_devices', level='WARNING'):
             self.assertEqual(self.audio_devices.resolve(1, 'Windows WASAPI'), -1)
 
     def test_system_default_changes_do_not_change_selected_source(self):
