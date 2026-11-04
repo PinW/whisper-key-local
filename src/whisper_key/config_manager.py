@@ -338,6 +338,18 @@ class ConfigManager:
     def update_audio_host(self, host_name: Optional[str]):
         self.update_user_setting('audio', 'host', host_name)
 
+    def update_audio_source(self, host_name: Optional[str], device_name: Optional[str]):
+        previous_host = self.config['audio']['host']
+        previous_device = self.config['audio']['input_device']
+        self.config['audio']['host'] = host_name
+        self.config['audio']['input_device'] = device_name
+        try:
+            self._save_user_overrides()
+        except Exception:
+            self.config['audio']['host'] = previous_host
+            self.config['audio']['input_device'] = previous_device
+            raise
+
     def update_user_setting(self, section: str, key: str, value: Any):
         try:
             old_value = None

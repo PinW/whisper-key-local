@@ -27,7 +27,7 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
-def run_event_loop(shutdown_event):
+def run_event_loop(shutdown_event, on_idle):
     app = NSApplication.sharedApplication()
     while not shutdown_event.is_set():
         event = app.nextEventMatchingMask_untilDate_inMode_dequeue_(
@@ -38,3 +38,4 @@ def run_event_loop(shutdown_event):
         )
         if event:
             app.sendEvent_(event)
+        on_idle()

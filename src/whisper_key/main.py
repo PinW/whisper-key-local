@@ -14,6 +14,7 @@ import threading
 from .platform import app, permissions, console
 from .config_manager import ConfigManager
 from .audio_recorder import AudioRecorder
+from .audio_devices import AudioDeviceManager
 from .hotkey_listener import HotkeyListener
 from .whisper_engine import WhisperEngine
 from .voice_activity_detection import VadManager
@@ -68,7 +69,7 @@ def setup_exception_handler():
     
     sys.excepthook = exception_handler
 
-def setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager):
+def setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager, audio_devices):
     return AudioRecorder(
         channels=audio_config['channels'],
         dtype=audio_config['dtype'],
@@ -78,7 +79,8 @@ def setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_man
         vad_manager=vad_manager,
         streaming_manager=streaming_manager,
         on_streaming_result=state_manager.handle_streaming_result,
-        device=audio_config['input_device']
+        on_recording_error=state_manager.handle_recording_error,
+        device=audio_devices.device_id
     )
 
 def setup_vad(vad_config):
@@ -166,6 +168,14 @@ def setup_system_tray(tray_config, config_manager, state_manager, model_registry
         model_registry=model_registry,
         console_config=console_config
     )
+
+def check_auto_paste_permission_for_startup(auto_paste_enabled, config_manager, clipboard_manager) -> bool:
+    if not auto_paste_enabled or permissions.check_accessibility_permission():
+        return True
+    if not permissions.handle_missing_permission(config_manager):
+        return False
+    clipboard_manager.update_auto_paste(False)
+    return True
 
 def run_gpu_onboarding(config_manager, whisper_config):
     gpu_status = config_manager.config.get('onboarding', {}).get('gpu', 'pending')
@@ -272,6 +282,11 @@ def main():
         audio_feedback = setup_audio_feedback(audio_feedback_config)
         voice_command_manager = setup_voice_commands(voice_commands_config, clipboard_manager, log_transcriptions)
         text_postprocessor = setup_text_postprocessor(post_processing_config)
+        audio_devices = AudioDeviceManager(
+            host_name=audio_config['host'],
+            device_name=audio_config['input_device'],
+            on_selection_changed=config_manager.update_audio_source,
+        )
 
         state_manager = StateManager(
             audio_recorder=None,
@@ -283,9 +298,10 @@ def main():
             vad_manager=vad_manager,
             text_postprocessor=text_postprocessor,
             voice_command_manager=voice_command_manager,
-            terminal_title=terminal_title
+            terminal_title=terminal_title,
+            audio_devices=audio_devices,
         )
-        audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager)
+        audio_recorder = setup_audio_recorder(audio_config, state_manager, vad_manager, streaming_manager, audio_devices)
         system_tray = setup_system_tray(tray_config, config_manager, state_manager, model_registry, console_config)
         state_manager.attach_components(audio_recorder, system_tray)
         
@@ -293,13 +309,12 @@ def main():
 
         system_tray.start()
         terminal_title.start()
+        audio_devices.start()
 
-        if clipboard_config['auto_paste']:
-            if not permissions.check_accessibility_permission():
-                if not permissions.handle_missing_permission(config_manager):
-                    app.run_event_loop(shutdown_event)
-                    return
-                clipboard_manager.update_auto_paste(False)
+        if not check_auto_paste_permission_for_startup(
+            clipboard_config['auto_paste'], config_manager, clipboard_manager
+        ):
+            return
 
         print("🚀 Whisper Key ready!")
         audio_feedback.play_ready_sound()
@@ -308,7 +323,7 @@ def main():
 
         system_tray.apply_console_settings()
 
-        app.run_event_loop(shutdown_event)
+        app.run_event_loop(shutdown_event, state_manager.refresh_audio_devices)
             
     except KeyboardInterrupt:
         logger.info("Application shutting down...")

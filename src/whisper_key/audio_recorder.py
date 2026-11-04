@@ -25,6 +25,7 @@ class AudioRecorder:
                  vad_manager = None,
                  streaming_manager = None,
                  on_streaming_result: Callable[[str, bool], None] = None,
+                 on_recording_error: Callable[[], None] = None,
                  device = None):
 
         self.sample_rate = self.WHISPER_SAMPLE_RATE
@@ -32,6 +33,7 @@ class AudioRecorder:
         self.dtype = dtype
         self.max_duration = max_duration
         self.on_max_duration_reached = on_max_duration_reached
+        self.on_recording_error = on_recording_error
         self.is_recording = False
         self.audio_data = []
         self.recording_thread = None
@@ -75,39 +77,17 @@ class AudioRecorder:
             self.on_streaming_result(text, is_final)
 
     def resolve_device(self, device):
-        if device == "default" or device is None:
-            self.device = None
-            self._resolve_hostapi(None)
-        elif isinstance(device, int):
-            try:
-                device_info = sd.query_devices(device)
-                if device_info.get('max_input_channels', 0) > 0:
-                    self.device = device
-                    self._resolve_hostapi(device_info)
-                else:
-                    self.logger.warning(f"Selected device {device} has no input channels; using default input instead")
-                    self.device = None
-                    self._resolve_hostapi(None)
-            except Exception as e:
-                self.logger.warning(f"Failed to load device {device}: {e}. Falling back to default input")
-                self.device = None
-                self._resolve_hostapi(None)
-        else:
-            self.logger.warning(f"Invalid device parameter: {device}, using default")
-            self.device = None
-            self._resolve_hostapi(None)
-
-    def _resolve_hostapi(self, device_info):
-        try:
-            if device_info is None:
-                device_info = sd.query_devices(kind='input')
-            hostapi_index = device_info['hostapi']
-            self.device_hostapi = sd.query_hostapis(hostapi_index)['name']
-            self.device_native_rate = int(device_info['default_samplerate'])
-        except Exception as e:
-            self.logger.debug(f"Could not determine host API: {e}")
-            self.device_hostapi = None
-            self.device_native_rate = self.WHISPER_SAMPLE_RATE
+        self.device = -1
+        self.device_hostapi = None
+        self.device_native_rate = self.WHISPER_SAMPLE_RATE
+        if isinstance(device, int) and device >= 0:
+            device_info = sd.query_devices(device)
+            if device_info['max_input_channels'] > 0:
+                self.device_hostapi = sd.query_hostapis(device_info['hostapi'])['name']
+                self.device_native_rate = int(device_info['default_samplerate'])
+                self.device = device
+        if getattr(self, 'continuous_streaming', None):
+            self.continuous_streaming.set_recording_rate(self._get_recording_sample_rate())
 
     def _needs_resampling(self) -> bool:
         return self.device_hostapi and 'wasapi' in self.device_hostapi.lower()
@@ -132,19 +112,15 @@ class AudioRecorder:
                 self.logger.warning("Recording thread did not exit within timeout")
     
     def _test_audio_source(self):
-        try:
-            if self.device is not None:
-                device_info = sd.query_devices(self.device)
-                self.logger.info(f"Using device: {device_info['name']}")
-            else:
-                default_input = sd.query_devices(kind='input')
-                self.logger.info(f"Default source: {default_input['name']}")
-        except Exception as e:
-            self.logger.error(f"Audio source test failed: {e}")
-            raise
-    
+        if self.device >= 0:
+            device_info = sd.query_devices(self.device)
+            self.logger.info(f"Using device: {device_info['name']}")
+
     def start_recording(self):
-        if self.is_recording:
+        if self.is_recording or (self.recording_thread and self.recording_thread.is_alive()):
+            return False
+        if self.device < 0:
+            print('🎤 No audio source is available. Connect a microphone or select a source in the tray.')
             return False
 
         try:
@@ -244,12 +220,14 @@ class AudioRecorder:
                                 callback=audio_callback,
                                 dtype=self.STREAM_DTYPE,
                                 blocksize=blocksize,
-                                device=self.device):
+                                device=self.device) as stream:
 
                 # NOTE: WASAPI breaks if the calling thread is blocked or if audio
                 # playback runs from this thread. Reason unknown. Don't add synchronization
                 # or audio calls here — print messages before start_recording() returns instead.
                 while self.is_recording:
+                    if not stream.active:
+                        raise RuntimeError('Audio source disconnected or stopped')
                     if self._check_max_duration_exceeded():
                         break
 
@@ -259,6 +237,8 @@ class AudioRecorder:
             self.logger.error(f"Error during audio recording: {e}")
             print(f"❌ Recording failed: {e}")
             self.is_recording = False
+            if self.on_recording_error:
+                self.on_recording_error()
     
     def _check_max_duration_exceeded(self) -> bool:
         if self.max_duration > 0 and self.recording_start_time:
@@ -283,41 +263,5 @@ class AudioRecorder:
             return 0.0
         return len(audio_data) / self.sample_rate
 
-    def get_device_id(self) -> Optional[int]:
-        if self.device is not None:
-            return self.device
-        default_device_id = sd.query_devices(kind='input')['index']
-        return default_device_id
-
-    @staticmethod
-    def get_available_audio_devices(host_filter: Optional[str] = None):
-        try:
-            all_devices = sd.query_devices()
-            hostapis = sd.query_hostapis()
-        except Exception as e:
-            logging.getLogger(__name__).error(f"Failed to enumerate audio devices: {e}")
-            return []
-
-        devices = []
-        host_filter_lower = host_filter.lower() if host_filter else None
-
-        for idx, device in enumerate(all_devices):
-            if device.get('max_input_channels', 0) <= 0:
-                continue
-
-            hostapi_index = device['hostapi']
-            hostapi_info = hostapis[hostapi_index]
-            hostapi_name = hostapi_info['name']
-
-            if host_filter_lower and hostapi_name.lower() != host_filter_lower:
-                continue
-
-            devices.append({
-                'id': idx,
-                'name': device['name'],
-                'input_channels': device['max_input_channels'],
-                'sample_rate': device['default_samplerate'],
-                'hostapi': hostapi_name
-            })
-
-        return devices
+    def get_device_id(self) -> int:
+        return self.device
