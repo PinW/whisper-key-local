@@ -1,5 +1,6 @@
 from AppKit import NSApplication, NSApplicationActivationPolicyAccessory, NSEventMaskAny, NSDefaultRunLoopMode
-from Foundation import NSDate, NSObject
+from Foundation import NSDate, NSObject, NSThread
+from PyObjCTools import AppHelper
 
 class AppDelegate(NSObject):
     def applicationSupportsSecureRestorableState_(self, app):
@@ -13,6 +14,12 @@ def setup():
     app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
     _delegate = AppDelegate.alloc().init()
     app.setDelegate_(_delegate)
+
+def dispatch_ui(callback):
+    if NSThread.isMainThread():
+        callback()
+    else:
+        AppHelper.callAfter(callback)
 
 def getch():
     import tty

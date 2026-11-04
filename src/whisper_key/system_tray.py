@@ -5,7 +5,7 @@ from typing import Optional, TYPE_CHECKING
 from pathlib import Path
 
 from .utils import open_file
-from .platform import permissions, icons, console
+from .platform import app, permissions, icons, console
 
 try:
     import pystray
@@ -264,7 +264,7 @@ class SystemTray:
                 auto_paste = False
 
         self.state_manager.update_transcription_mode(auto_paste)
-        self.icon.menu = self._create_menu()
+        self.refresh_menu()
 
     def _select_model(self, model_key: str):
         try:
@@ -272,7 +272,7 @@ class SystemTray:
 
             if success:
                 self.config_manager.update_user_setting('whisper', 'model', model_key)
-                self.icon.menu = self._create_menu()
+                self.refresh_menu()
             else:
                 self.logger.warning(f"Request to change model to {model_key} was not accepted")
 
@@ -283,7 +283,7 @@ class SystemTray:
         try:
             success = self.state_manager.set_audio_host(host_name)
             if success:
-                self.icon.menu = self._create_menu()
+                self.refresh_menu()
             else:
                 self.logger.warning(f"Request to change audio host to {host_name} was not accepted")
         except Exception as e:
@@ -293,13 +293,13 @@ class SystemTray:
         success = self.state_manager.request_audio_device_change(device_name, host_name)
 
         if success:
-            self.icon.menu = self._create_menu()
+            self.refresh_menu()
         else:
             self.logger.warning(f"Request to change audio device to '{device_name}' was not accepted")
 
     def _select_default_audio_source(self, source_mode):
         if self.state_manager.request_default_audio_source(source_mode):
-            self.icon.menu = self._create_menu()
+            self.refresh_menu()
 
     def _show_console(self, icon=None, item=None):
         console.show()
@@ -319,21 +319,42 @@ class SystemTray:
             return
         
         self.current_state = new_state
-        
+        self._dispatch_ui_update(self._apply_state)
+
+    def _dispatch_ui_update(self, update):
+        icon = self.icon
+
+        def apply_update():
+            if not self.is_running or self.icon is not icon:
+                return
+            try:
+                update()
+            except Exception as error:
+                self.logger.error(f'Failed to update system tray: {error}')
+
         try:
-            self.icon.icon = self.icons[new_state]
-            self.icon.menu = self._create_menu()
-        except Exception as e:
-            self.logger.error(f"Failed to update tray icon: {e}")
+            app.dispatch_ui(apply_update)
+        except Exception as error:
+            self.logger.error(f'Failed to schedule system tray update: {error}')
+
+    def _apply_state(self):
+        self.icon.icon = self.icons[self.current_state]
+        self._apply_menu()
+
+    def _apply_menu(self):
+        self.icon.menu = self._create_menu()
 
     def refresh_menu(self):
-        if not self.icon:
+        if not self.is_running or not self.icon:
             return
+        self._dispatch_ui_update(self._apply_menu)
 
-        try:
-            self.icon.menu = self._create_menu()
-        except Exception as e:
-            self.logger.error(f"Failed to refresh tray menu: {e}")
+    def _setup_icon(self, icon):
+        def show_icon():
+            if self.icon is icon:
+                icon.visible = True
+
+        self._dispatch_ui_update(show_icon)
     
     def start(self):
         if not self.available:
@@ -354,14 +375,14 @@ class SystemTray:
                 menu=menu
             )
 
-            self.icon.run_detached()
-
             self.is_running = True
+            self.icon.run_detached(setup=self._setup_icon)
             print("   ✓ System tray icon is running...")
 
             return True
 
         except Exception as e:
+            self.is_running = False
             self.logger.error(f"Failed to start system tray: {e}")
             return False
     
@@ -369,9 +390,16 @@ class SystemTray:
         if not self.is_running:
             return
 
-        try:
-            self.icon.stop()
-            self.is_running = False
+        self.is_running = False
+        icon = self.icon
 
-        except Exception as e:
-            self.logger.error(f"Error stopping system tray: {e}")
+        def stop_icon():
+            try:
+                icon.stop()
+            except Exception as error:
+                self.logger.error(f'Error stopping system tray: {error}')
+
+        try:
+            app.dispatch_ui(stop_icon)
+        except Exception as error:
+            self.logger.error(f'Failed to schedule system tray shutdown: {error}')
