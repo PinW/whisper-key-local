@@ -193,7 +193,7 @@ audio: # Audio Recording Settings
 
     # Audio host API selection
     # null = let Whisper Key choose the best option (WASAPI on Windows, first available elsewhere)
-    # e.g., "WASAPI", "MME", "DirectSound", "Core Audio"
+    # e.g., "Windows WASAPI", "MME", "Windows DirectSound", "Core Audio"
     host: null
 
     # Audio channels
@@ -211,12 +211,9 @@ audio: # Audio Recording Settings
     max_duration: 900
 
     # Audio input device selection
-    # "default" = Use system default microphone (default behavior)
-    # <device_id> = Specific device ID number (set automatically when changed via system tray)
-    #
-    # Note: Device IDs are assigned by the operating system and may change if devices
-    # are plugged/unplugged. Use system tray to select device - it will save the ID here.
-    input_device: "default"
+    # Exact device name, matched together with audio.host
+    # null = select and remember the first available input on that host
+    input_device: null
 
 clipboard: # Clipboard Behavior
     # Automatically paste after transcription

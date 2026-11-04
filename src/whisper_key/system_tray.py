@@ -149,8 +149,8 @@ class SystemTray:
             def is_current_device(dev_id):
                 return lambda item: current_device == dev_id
 
-            def switch_device(dev_id, dev_name):
-                return lambda icon, item: self._select_audio_device(dev_id, dev_name)
+            def switch_device(dev_name):
+                return lambda icon, item: self._select_audio_device(dev_name, current_host)
 
             audio_device_items = []
 
@@ -162,7 +162,7 @@ class SystemTray:
                     audio_device_items.append(
                         pystray.MenuItem(
                             device_name,
-                            switch_device(device_id, device['name']),
+                            switch_device(device['name']),
                             radio=True,
                             checked=is_current_device(device_id)
                         )
@@ -285,14 +285,13 @@ class SystemTray:
         except Exception as e:
             self.logger.error(f"Error selecting audio host {host_name}: {e}")
 
-    def _select_audio_device(self, device_id: int, device_name: str):
-        success = self.state_manager.request_audio_device_change(device_id, device_name)
+    def _select_audio_device(self, device_name: str, host_name: str):
+        success = self.state_manager.request_audio_device_change(device_name, host_name)
 
         if success:
-            self.config_manager.update_user_setting('audio', 'input_device', device_id)
             self.icon.menu = self._create_menu()
         else:
-            self.logger.warning(f"Request to change audio device to {device_id} was not accepted")
+            self.logger.warning(f"Request to change audio device to '{device_name}' was not accepted")
 
     def _show_console(self, icon=None, item=None):
         console.show()
