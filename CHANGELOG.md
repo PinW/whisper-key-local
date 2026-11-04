@@ -5,16 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [0.8.4] - 2026-11-04
 
 ### Added
-- Audio devices refresh automatically when connected or disconnected, with status messages and recovery when the selected device reconnects (#70, #71)
-- Follow the system default microphone on Windows and macOS, or capture the default output on Windows. Automatic source changes wait until recording and transcription finish (#72)
+- Automatic audio device refresh (#70, #71)
+- System default input and Windows output capture (#72)
 
 ### Changed
-- Audio selections are saved by device name and host instead of numeric ID. If your settings contain an old numeric ID, select your source again from the tray
-- Fresh settings follow the system default input. The tray shows the selected source and groups specific devices by host
+- Audio devices saved by name; reselect old numeric selections in the tray
+- Simplified source menu; new installs use system default input
 
 ### Fixed
-- macOS tray updates run on the main thread to prevent off-thread AppKit crashes (#67)
-- Simulated Windows hotkeys include hardware scan codes, fixing auto-paste in apps that require them, including RustDesk (#69)
+- macOS tray crash when starting recording (#67)
+- Auto-paste compatibility with RustDesk and similar apps (#69)
 
 ## [0.8.3] - 2026-09-27
 
